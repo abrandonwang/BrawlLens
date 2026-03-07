@@ -1,30 +1,33 @@
 "use client"
 
 import { useState } from "react"
+import { usePathname } from "next/navigation"
 import { User, BarChart2, Trophy, Shield, Layers, Menu, X } from "lucide-react"
+import Link from "next/link"
 import "./NavBar.css"
 
 const navItems = [
-    { label: "My Profile", icon: User },
-    { label: "Stats", icon: BarChart2 },
-    { label: "Leaderboards", icon: Trophy },
-    { label: "Brawlers", icon: Shield },
-    { label: "Modes", icon: Layers },
+    { label: "My Profile", icon: User, activeOn: "/player" },
+    { label: "Stats", icon: BarChart2, activeOn: "/stats" },
+    { label: "Leaderboards", icon: Trophy, activeOn: "/leaderboards" },
+    { label: "Brawlers", icon: Shield, activeOn: "/brawlers" },
+    { label: "Modes", icon: Layers, activeOn: "/modes" },
 ]
 
 export default function NavBar() {
     const [menuOpen, setMenuOpen] = useState(false)
+    const pathname = usePathname()
 
     return (
         <nav className="navbar">
             <div className="navbar-content">
-                <span className="navbar-title">BrawlLens</span>
+                <Link href="/" className="navbar-title">BrawlLens</Link>
 
                 {/* Desktop nav */}
                 <div className="navbar-content-right">
-                    {navItems.map(({ label, icon: Icon }) => (
-                        <button key={label} className="nav-item">
-                            <Icon size={20} />
+                    {navItems.map(({ label, icon: Icon, activeOn }) => (
+                        <button key={label} className={`nav-item ${pathname.startsWith(activeOn) ? "nav-item-active" : ""}`}>
+                            <Icon size={16} />
                             <span>{label}</span>
                         </button>
                     ))}
