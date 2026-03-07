@@ -4,24 +4,28 @@
 
 import { PlayerBrawler } from "@/types/brawler";
 import BrawlerCard from "@/components/BrawlerCard"; 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 export default function Home() {
   const [userInput, setUserInput] = useState("");
   const [playerData, setPlayerData] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
+  const [notFound, setNotFound] = useState(false);
 
   async function handleSearch() {
     if (!userInput.trim()) return;
-    setLoading(true);
+    setPlayerData(null);
+    setNotFound(false);
     try {
       const response = await fetch(`/api/player?tag=${userInput}`);
       const data = await response.json();
-      setPlayerData(data);
+      if (data.reason) {
+        setNotFound(true);
+      } else {
+        setPlayerData(data);
+      }
     } catch (error) {
       console.error("Error fetching player data:", error);
-    } finally {
-      setLoading(false);
+      setNotFound(true);
     }
   }
 
@@ -47,17 +51,15 @@ export default function Home() {
         </span>
         <button className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded" onClick={handleSearch}>SAVE</button>
       </div>
-      {loading && <p>Loading...</p>} 
       {playerData && (
-        <div>
-          <h2>Player Data</h2>
-          <p>Name: {playerData.name}</p>
-          <p>Tag: {playerData.tag}</p>
-          <p>Trophies: {playerData.trophies}</p>
-          <p>Prestige: {playerData.totalPrestigeLevel}</p>
-          {playerData.brawlers?.map((brawler: PlayerBrawler) => (
-              <BrawlerCard key={brawler.id} {...brawler} />
-          ))}
+        <div className="fade-slide-in pb-8 px-8 bg-transparent text-graphite text-center flex flex-row items-center justify-center gap-4">
+          <p className="text-sm font-semibold">are you {playerData.name}?</p>
+          <button className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">GO</button>
+        </div>
+      )}
+      {notFound && (
+        <div className="fade-slide-in pb-8 px-8 text-center">
+          <p className="text-sm font-semibold text-red-500">Player not found. Check the tag and try again.</p>
         </div>
       )}
     </>
