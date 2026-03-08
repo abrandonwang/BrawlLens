@@ -9,19 +9,19 @@ BrawlLens is a full-stack Brawl Stars companion app that lets players track thei
 - **Player Lookup** — Enter any player tag to pull real-time stats from the Brawl Stars API
 - **Brawler Roster** — View all your brawlers with power levels, trophies, gadgets, star powers, gears, and hypercharges
 - **Progression Tracking** — See how far you are from maxing your account by comparing your unlocks against the full brawler catalog
+- **3D Homepage** — Animated 3D character rendered with Three.js; click the attack button to trigger the attack animation
 - **AI Draft Picker** *(planned)* — Get team composition recommendations based on map, mode, and brawler matchups
 
 ## Tech Stack
 
 - **Framework:** Next.js (App Router)
 - **Language:** TypeScript
-- **Styling:** Tailwind CSS + custom CSS
+- **Styling:** Tailwind CSS
+- **3D:** Three.js
 - **API:** Brawl Stars Official API
 - **Font:** Inter
 
 ## Getting Started
-
-### Prerequisites
 
 - Node.js 18+
 - A Brawl Stars API key from [developer.brawlstars.com](https://developer.brawlstars.com)
@@ -49,8 +49,6 @@ BrawlLens is a full-stack Brawl Stars companion app that lets players track thei
    npm run dev
    ```
 
-5. Open [http://localhost:3000](http://localhost:3000)
-
 ## Project Structure
 
 ```
@@ -67,7 +65,8 @@ src/
 │   ├── BrawlerCard.tsx          # Individual brawler display card
 │   ├── NavBar.tsx               # Site navigation
 │   ├── NavBar.css
-│   └── ScrambleText.tsx         # Animated placeholder text effect
+│   ├── ScrambleText.tsx         # Animated placeholder text effect
+│   └── ThreeScene.tsx           # Three.js 3D character with animation control
 └── types/
     └── brawler.ts               # TypeScript interfaces for API data
 ```
@@ -76,8 +75,6 @@ src/
 
 The app proxies all Brawl Stars API requests through Next.js API routes to keep the API key secure and avoid CORS issues.
 
-| Route | Description |
-|---|---|
 | `GET /api/brawlers` | Returns the full brawler catalog |
 | `GET /api/player?tag=TAG` | Returns player data for the given tag |
 
