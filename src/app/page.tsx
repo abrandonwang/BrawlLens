@@ -86,19 +86,29 @@ export default function Home() {
       >
       </button>
       {playerData && (
-    <div className="max-w-sm mx-auto mb-12 bg-white rounded-2xl p-7 text-center shadow-lg shadow-black/5 border border-black/5 animate-[slideUp_0.35s_ease-out]">
-      <p className="text-xl font-bold text-gray-900 mb-1">{playerData.name}</p>
-      <p className="text-sm text-gray-500 mb-4">
-      <span className="font-bold text-yellow-500">{playerData.trophies}</span> trophies
-      </p>
-      <button
-        onClick={() => router.push(`/player/${userInput}`)}
-        className="py-2.5 px-8 bg-blue-500 hover:bg-blue-600 text-white text-sm font-bold tracking-wide rounded-xl hover:-translate-y-0.5 transition-all cursor-pointer"
-      >
-        GO
-      </button>
-    </div>
-    )}
+        <div className="mt-6 w-full max-w-sm animate-[slideUp_0.35s_ease-out]">
+          <div className="bg-white rounded-2xl border border-black/6 shadow-xl shadow-black/8 overflow-hidden">
+            <div className="bg-gradient-to-r from-blue-500 to-cyan-500 px-6 py-4 flex items-center justify-between">
+              <div>
+                <p className="text-white font-black text-lg leading-tight">{playerData.name}</p>
+                <p className="text-blue-100 text-xs font-semibold tracking-wide mt-0.5">#{userInput.toUpperCase()}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-white font-black text-xl">{playerData.trophies.toLocaleString()}</p>
+                <p className="text-blue-100 text-xs font-semibold mt-0.5">trophies</p>
+              </div>
+            </div>
+            <div className="px-6 py-4">
+              <button
+                onClick={() => router.push(`/player/${userInput}`)}
+                className="w-full py-2.5 bg-blue-500 hover:bg-blue-600 text-white text-sm font-bold tracking-widest rounded-xl shadow-md shadow-blue-500/25 hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer"
+              >
+                VIEW PROFILE →
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {notFound && (
           <div className="text-center px-6 pb-8 animate-[slideUp_0.35s_ease-out]">
               <p className="inline-block text-sm font-semibold text-red-500 bg-red-50 px-5 py-2.5 rounded-xl border border-red-200">

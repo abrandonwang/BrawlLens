@@ -21,7 +21,8 @@ export default function ThreeScene({ attack }: { attack: number }) {
     const loader = new GLTFLoader()
     loader.load("/bibi_gamer_geo.glb", (gltf) => {
         const bibi = gltf.scene;
-        bibi.position.y = -1.20;
+        bibi.position.y = -0.8;
+        bibi.scale.set(0.5, 0.5, 0.5)
         bibi.rotation.y = Math.PI;
         scene.add(bibi)
 
@@ -34,7 +35,8 @@ export default function ThreeScene({ attack }: { attack: number }) {
 
     const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true })
     renderer.setSize(window.innerWidth, window.innerHeight)
-    mountRef.current?.appendChild(renderer.domElement)
+    const mount = mountRef.current
+    mount?.appendChild(renderer.domElement)
 
     const ambientLight = new THREE.AmbientLight(0xffffff, 1.3)
     scene.add(ambientLight)
@@ -43,16 +45,18 @@ export default function ThreeScene({ attack }: { attack: number }) {
     topLight.position.set(500, 500, 500);
     scene.add(topLight);
 
+    let animFrameId: number
     const reRender3D = () => {
-      requestAnimationFrame(reRender3D)
+      animFrameId = requestAnimationFrame(reRender3D)
       renderer.render(scene, camera)
       if (mixerRef.current) mixerRef.current.update(0.02);
     }
     reRender3D()
 
     return () => {
+      cancelAnimationFrame(animFrameId)
       renderer.dispose()
-      mountRef.current?.removeChild(renderer.domElement)
+      mount?.removeChild(renderer.domElement)
     }
   }, [])
 
