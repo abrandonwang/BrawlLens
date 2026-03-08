@@ -7,6 +7,7 @@ import { PlayerBrawler } from "@/types/brawler";
 import BrawlerCard from "@/components/BrawlerCard"; 
 import { useState, useEffect } from "react";
 import ScrambleText from "@/components/ScrambleText"
+import ThreeScene from "@/components/ThreeScene"
 
 const exampleTags = ["YP90U0YL", "2PP8LCQG", "QLCCRG20", "9RULJP8V"]
 
@@ -43,14 +44,15 @@ export default function Home() {
   }
 
   return (
-    <>
-      <div className="max-w-3xl mx-auto pt-20 pb-6 px-6 text-center">
+    <div className="w-full px-6 pt-16 pb-12 flex flex-col items-center text-center">
+      <ThreeScene />
+      <div className="max-w-3xl mx-auto mb-6">
           <h1 className="text-4xl font-extrabold leading-tight tracking-tight text-gray-900 mb-4">
               Improve Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-cyan-500">Brawl Stars</span> Experience
           </h1>
           <p className="text-lg text-gray-500">Track your progress. Master your picks.</p>
       </div>
-      <div className="max-w-lg mx-auto px-6 pb-12 text-center">
+      <div className="max-w-lg mx-auto text-center">
         <p className="text-xs font-bold tracking-widest text-blue-500 uppercase mb-3">Player Tag</p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <div className="relative flex items-center bg-white border-2 border-gray-300 rounded-xl shadow-sm focus-within:border-blue-500 focus-within:ring-3 focus-within:ring-blue-500/15 transition-all">
@@ -96,6 +98,6 @@ export default function Home() {
               </p>
           </div>
       )}
-    </>
+    </div>
   );
 }

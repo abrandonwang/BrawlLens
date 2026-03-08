@@ -23,7 +23,11 @@ html {
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
+  background-image:
+    linear-gradient(rgba(59, 130, 246, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(59, 130, 246, 0.08) 1px, transparent 1px);
+  background-size: 40px 40px;
   color: var(--graphite);
   font-family: var(--font-inter), sans-serif;
 }
