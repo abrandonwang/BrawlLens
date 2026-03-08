@@ -1,36 +1,96 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# BrawlLens
+
+**Track your progress. Master your picks.**
+
+BrawlLens is a full-stack Brawl Stars companion app that lets players track their brawler progression, view account completion stats, and (coming soon) get AI-powered draft recommendations.
+
+## Features
+
+- **Player Lookup** — Enter any player tag to pull real-time stats from the Brawl Stars API
+- **Brawler Roster** — View all your brawlers with power levels, trophies, gadgets, star powers, gears, and hypercharges
+- **Progression Tracking** — See how far you are from maxing your account by comparing your unlocks against the full brawler catalog
+- **AI Draft Picker** *(planned)* — Get team composition recommendations based on map, mode, and brawler matchups
+
+## Tech Stack
+
+- **Framework:** Next.js (App Router)
+- **Language:** TypeScript
+- **Styling:** Tailwind CSS + custom CSS
+- **API:** Brawl Stars Official API
+- **Font:** Inter
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- Node.js 18+
+- A Brawl Stars API key from [developer.brawlstars.com](https://developer.brawlstars.com)
+
+### Setup
+
+1. Clone the repo:
+   ```bash
+   git clone https://github.com/YOUR_USERNAME/brawl-tracker.git
+   cd brawl-tracker
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Create a `.env.local` file in the project root:
+   ```
+   BRAWL_API_KEY=your_api_key_here
+   ```
+
+4. Start the dev server:
+   ```bash
+   npm run dev
+   ```
+
+5. Open [http://localhost:3000](http://localhost:3000)
+
+## Project Structure
+
+```
+src/
+├── app/
+│   ├── api/
+│   │   ├── brawlers/route.ts    # Proxy → Brawl Stars brawler catalog
+│   │   └── player/route.ts      # Proxy → Brawl Stars player data
+│   ├── player/[tag]/page.tsx    # Dynamic player profile page
+│   ├── layout.tsx               # Root layout with navbar
+│   ├── globals.css              # Global styles and theme
+│   └── page.tsx                 # Homepage with search
+├── components/
+│   ├── BrawlerCard.tsx          # Individual brawler display card
+│   ├── NavBar.tsx               # Site navigation
+│   ├── NavBar.css
+│   └── ScrambleText.tsx         # Animated placeholder text effect
+└── types/
+    └── brawler.ts               # TypeScript interfaces for API data
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## API Routes
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+The app proxies all Brawl Stars API requests through Next.js API routes to keep the API key secure and avoid CORS issues.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Route | Description |
+|---|---|
+| `GET /api/brawlers` | Returns the full brawler catalog |
+| `GET /api/player?tag=TAG` | Returns player data for the given tag |
 
-## Learn More
+## Roadmap
 
-To learn more about Next.js, take a look at the following resources:
+- [ ] Styled player profile page with tabs
+- [ ] Brawler completion tracker (owned vs available)
+- [ ] Account progression percentage
+- [ ] Club member viewer
+- [ ] AI-powered draft picker
+- [ ] Brawler images and rarity colors
+- [ ] Mobile-optimized brawler grid
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## License
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+This project is not affiliated with or endorsed by Supercell.
