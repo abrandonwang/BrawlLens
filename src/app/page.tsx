@@ -110,7 +110,7 @@ export default function Home() {
         </div>
       )}
       {notFound && (
-          <div className="text-center px-6 pb-8 animate-[slideUp_0.35s_ease-out]">
+          <div className="text-center px-6 py-8 animate-[slideUp_0.35s_ease-out]">
               <p className="inline-block text-sm font-semibold text-red-500 bg-red-50 px-5 py-2.5 rounded-xl border border-red-200">
                   Player not found. Check the tag and try again.
               </p>
