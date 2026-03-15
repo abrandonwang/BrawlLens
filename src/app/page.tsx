@@ -39,26 +39,26 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex flex-col items-center justify-center px-6 py-16">
+    <div className="min-h-[calc(100vh-4rem)] flex flex-col items-center justify-center px-4 sm:px-6 py-10">
       <div className="w-full max-w-[1200px] flex flex-col gap-3">
 
         {/* ── Hero ── */}
         <div className="rounded-3xl bg-[#1c1c1f] overflow-hidden">
           <div className="h-1 w-full bg-gradient-to-r from-blue-600 to-cyan-500" />
-          <div className="flex items-center justify-between gap-8 px-14 py-16">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8 px-6 py-10 sm:px-10 lg:px-14 lg:py-16">
 
             {/* Left: text */}
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-bold tracking-[0.22em] text-blue-400/55 uppercase mb-5">
+              <p className="text-xs font-bold tracking-[0.22em] text-blue-400/55 uppercase mb-4">
                 Brawl Stars Analytics
               </p>
-              <h1 className="text-6xl font-black tracking-tight text-white leading-[1.06] mb-5">
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white leading-[1.06] mb-4">
                 Your Brawl Stars<br />
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">
                   companion.
                 </span>
               </h1>
-              <p className="text-sm text-white/35 leading-relaxed max-w-sm mb-8">
+              <p className="text-sm text-white/35 leading-relaxed max-w-sm mb-7">
                 Deep stats, brawler breakdowns, leaderboards, and more. Built for players who want to improve.
               </p>
               <button className="px-6 py-3 bg-white text-[#111113] text-sm font-bold rounded-2xl hover:bg-white/90 active:scale-95 transition-all cursor-pointer">
@@ -66,8 +66,8 @@ export default function Home() {
               </button>
             </div>
 
-            {/* Right: stat blocks */}
-            <div className="shrink-0 flex flex-col gap-3 w-64">
+            {/* Right: stat blocks — hidden on mobile */}
+            <div className="hidden lg:flex shrink-0 flex-col gap-3 w-64">
               {[
                 { value: "100+", label: "Brawlers tracked" },
                 { value: "20", label: "Game modes covered" },
@@ -84,7 +84,7 @@ export default function Home() {
         </div>
 
         {/* ── Player Tag ── */}
-        <div className="rounded-3xl bg-[#1c1c1f] px-14 py-8">
+        <div className="rounded-3xl bg-[#1c1c1f] px-6 py-7 sm:px-10 lg:px-14">
           <p className="text-xs font-bold tracking-[0.18em] text-white/30 uppercase mb-4">
             Find a Player
           </p>
@@ -106,7 +106,7 @@ export default function Home() {
             </div>
             <button
               onClick={handleSearch}
-              className="m-1.5 px-6 py-2.5 bg-blue-500 hover:bg-blue-400 active:scale-95 text-white text-xs font-bold tracking-widest rounded-xl transition-all cursor-pointer shrink-0"
+              className="m-1.5 px-4 sm:px-6 py-2.5 bg-blue-500 hover:bg-blue-400 active:scale-95 text-white text-xs font-bold tracking-widest rounded-xl transition-all cursor-pointer shrink-0"
             >
               SAVE
             </button>
@@ -147,7 +147,7 @@ export default function Home() {
         </div>
 
         {/* ── Feature cards ── */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {features.map(({ icon: Icon, label, desc }) => (
             <div key={label} className="rounded-3xl bg-[#1c1c1f] px-8 py-7">
               <Icon size={18} className="text-blue-400/70 mb-3" />

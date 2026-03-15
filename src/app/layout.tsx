@@ -23,10 +23,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>
+      <body className="flex flex-col min-h-screen">
         <MenuProvider>
           <NavBar/>
-          {children}
+          <div className="flex-1">{children}</div>
           <button className="fixed bottom-6 right-6 p-3 bg-white/8 rounded-full shadow-lg border border-white/10 text-white/50 hover:text-white hover:bg-white/12 transition-all cursor-pointer z-50">
             <Bell size={20} />
           </button>
