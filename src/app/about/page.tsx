@@ -1,6 +1,7 @@
 "use client"
 import { useState, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
+import { Send, CheckCircle } from "lucide-react"
 
 const sections = [
     { id: "about", label: "About" },
@@ -18,8 +19,8 @@ export default function About() {
     }, [searchParams])
 
     return (
-        <div className="max-w-[1200px] mx-auto px-6 py-10 lg:grid lg:grid-cols-[220px_1fr] lg:gap-16">
-            <aside className="sticky top-20 hidden lg:block border-r border-white/6 pr-6">
+        <div className="max-w-[1200px] mx-auto px-6 py-10 lg:grid lg:grid-cols-[220px_1fr] lg:gap-16 lg:items-start">
+            <aside className="self-stretch sticky top-20 hidden lg:block border-r border-white/6 pr-6">
                 <nav className="flex flex-col gap-4 text-sm">
                     {sections.map(({ id, label }) => (
                         <button
@@ -92,12 +93,12 @@ export default function About() {
                             <p className="text-sm font-bold text-white mb-1">Interested in advertising on BrawlLens?</p>
                             <p className="text-xs text-white/35">Reach thousands of Brawl Stars players daily.</p>
                         </div>
-                        <a
-                            href="mailto:ads@brawllens.com"
-                            className="shrink-0 px-4 py-2 bg-blue-500 hover:bg-blue-400 text-white text-xs font-bold tracking-wide rounded-xl transition-colors"
+                        <button
+                            onClick={() => setActive("contact")}
+                            className="shrink-0 px-4 py-2 bg-blue-500 hover:bg-blue-400 text-white text-xs font-bold tracking-wide rounded-xl transition-colors cursor-pointer"
                         >
                             Get in touch
-                        </a>
+                        </button>
                     </div>
                 </main>
             )}
@@ -150,44 +151,117 @@ export default function About() {
                 </main>
             )}
 
-            {active === "contact" && (
-                <main className="py-2 max-w-2xl">
-                    <h1 className="text-4xl font-black text-white mb-2">Contact</h1>
-                    <p className="text-sm text-white/30 mb-8">We'd love to hear from you.</p>
-
-                    <p className="text-sm text-white/50 leading-relaxed mb-10">
-                        Have a question, found a bug, or want to give feedback? Reach out — we read every message.
-                    </p>
-
-                    <div className="flex flex-col gap-3 mb-10">
-                        <div className="rounded-2xl bg-[#1c1c1f] border border-white/8 px-6 py-5">
-                            <p className="text-xs font-bold text-white/30 uppercase tracking-widest mb-1">General</p>
-                            <a href="mailto:hello@brawllens.com" className="text-sm text-blue-400 hover:text-blue-300 transition-colors">
-                                hello@brawllens.com
-                            </a>
-                        </div>
-                        <div className="rounded-2xl bg-[#1c1c1f] border border-white/8 px-6 py-5">
-                            <p className="text-xs font-bold text-white/30 uppercase tracking-widest mb-1">Bug Reports</p>
-                            <a href="mailto:bugs@brawllens.com" className="text-sm text-blue-400 hover:text-blue-300 transition-colors">
-                                bugs@brawllens.com
-                            </a>
-                        </div>
-                        <div className="rounded-2xl bg-[#1c1c1f] border border-white/8 px-6 py-5">
-                            <p className="text-xs font-bold text-white/30 uppercase tracking-widest mb-1">Advertising</p>
-                            <a href="mailto:ads@brawllens.com" className="text-sm text-blue-400 hover:text-blue-300 transition-colors">
-                                ads@brawllens.com
-                            </a>
-                        </div>
-                    </div>
-
-                    <div className="border-t border-white/6 mb-8" />
-
-                    <h2 className="text-base font-bold text-white mb-3">Response Time</h2>
-                    <p className="text-sm text-white/50 leading-relaxed">
-                        We typically respond within 1–3 business days. For urgent issues or bugs, please include as much detail as possible so we can help you faster.
-                    </p>
-                </main>
-            )}
+            {active === "contact" && <ContactSection />}
         </div>
+    )
+}
+
+function ContactSection() {
+    const [form, setForm] = useState({ name: "", email: "", subject: "general", message: "" })
+    const [submitted, setSubmitted] = useState(false)
+
+    function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
+        setForm(f => ({ ...f, [e.target.name]: e.target.value }))
+    }
+
+    function handleSubmit(e: React.FormEvent) {
+        e.preventDefault()
+        setSubmitted(true)
+    }
+
+    const inputClass = "w-full bg-[#111113] border border-white/8 rounded-xl px-4 py-3 text-sm text-white placeholder-white/20 outline-none focus:border-blue-500/50 transition-colors"
+
+    if (submitted) {
+        return (
+            <main className="py-2 max-w-2xl">
+                <div className="flex flex-col items-center justify-center py-24 text-center">
+                    <CheckCircle size={40} className="text-blue-400 mb-4" />
+                    <h2 className="text-xl font-bold text-white mb-2">Message sent</h2>
+                    <p className="text-sm text-white/40">We'll get back to you within 1–3 business days.</p>
+                    <button
+                        onClick={() => { setSubmitted(false); setForm({ name: "", email: "", subject: "general", message: "" }) }}
+                        className="mt-8 text-xs text-white/30 hover:text-white/60 transition-colors"
+                    >
+                        Send another message
+                    </button>
+                </div>
+            </main>
+        )
+    }
+
+    return (
+        <main className="py-2 max-w-2xl">
+            <h1 className="text-4xl font-black text-white mb-2">Contact</h1>
+            <p className="text-sm text-white/30 mb-8">We'd love to hear from you.</p>
+
+            <p className="text-sm text-white/50 leading-relaxed mb-10">
+                Have a question, found a bug, or want to give feedback? Fill out the form and we'll get back to you within 1–3 business days.
+            </p>
+
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="flex flex-col gap-1.5">
+                        <label className="text-xs font-semibold text-white/30 uppercase tracking-widest">Name</label>
+                        <input
+                            name="name"
+                            value={form.name}
+                            onChange={handleChange}
+                            required
+                            placeholder="Your name"
+                            className={inputClass}
+                        />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                        <label className="text-xs font-semibold text-white/30 uppercase tracking-widest">Email</label>
+                        <input
+                            name="email"
+                            type="email"
+                            value={form.email}
+                            onChange={handleChange}
+                            required
+                            placeholder="your@email.com"
+                            className={inputClass}
+                        />
+                    </div>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-semibold text-white/30 uppercase tracking-widest">Subject</label>
+                    <select
+                        name="subject"
+                        value={form.subject}
+                        onChange={handleChange}
+                        className={inputClass}
+                    >
+                        <option value="general">General Question</option>
+                        <option value="bug">Bug Report</option>
+                        <option value="feedback">Feedback</option>
+                        <option value="advertising">Advertising</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-semibold text-white/30 uppercase tracking-widest">Message</label>
+                    <textarea
+                        name="message"
+                        value={form.message}
+                        onChange={handleChange}
+                        required
+                        rows={6}
+                        placeholder="Tell us what's on your mind..."
+                        className={inputClass + " resize-none"}
+                    />
+                </div>
+
+                <button
+                    type="submit"
+                    className="flex items-center justify-center gap-2 w-full py-3 bg-blue-500 hover:bg-blue-400 active:scale-[0.98] text-white text-sm font-bold rounded-xl transition-all cursor-pointer"
+                >
+                    <Send size={15} />
+                    Send Message
+                </button>
+            </form>
+        </main>
     )
 }

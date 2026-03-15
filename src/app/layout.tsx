@@ -34,7 +34,7 @@ export default function RootLayout({
             <div className="max-w-[1200px] mx-auto px-6 py-6 flex items-center justify-between">
               <div className="flex items-center gap-6">
                 <a href="/about?section=privacy-policy" className="text-xs text-white/30 hover:text-white/60 transition-colors">Privacy Policy</a>
-                <a href="/about" className="text-xs text-white/30 hover:text-white/60 transition-colors">Contact</a>
+                <a href="/about?section=contact" className="text-xs text-white/30 hover:text-white/60 transition-colors">Contact</a>
               </div>
               <p className="text-xs text-white/20">© {new Date().getFullYear()} BrawlLens</p>
             </div>
