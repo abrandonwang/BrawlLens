@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { Send, CheckCircle } from "lucide-react"
 
@@ -10,6 +10,14 @@ const sections = [
 ]
 
 export default function About() {
+    return (
+        <Suspense>
+            <AboutContent />
+        </Suspense>
+    )
+}
+
+function AboutContent() {
     const searchParams = useSearchParams()
     const [active, setActive] = useState(searchParams.get("section") ?? "about")
 
