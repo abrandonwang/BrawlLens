@@ -3,9 +3,7 @@ import BrawlerCard from "@/components/BrawlerCard";
 
 export default async function PlayerProfile({ params }: { params: Promise<{ tag: string }> }) {
     const { tag } = await params;
-    const response = await fetch(`https://api.brawlstars.com/v1/players/%23${tag}`, {
-        headers: { "Authorization": `Bearer ${process.env.BRAWL_API_KEY}` }
-    });
+    const response = await fetch(`http://165.227.206.51:3000/player/${tag}`);
     const playerData = await response.json();
     return (
         <div className="max-w-5xl mx-auto px-6 py-10">
