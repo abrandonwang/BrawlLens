@@ -102,8 +102,8 @@ export default function NavBar() {
             </header>
 
             {/* Mobile */}
-            <header className="sticky top-0 z-50 bg-brawl-bg/95 backdrop-blur-md border-b border-white/10 lg:hidden">
-                <div className="flex items-center justify-between px-5 h-14">
+            <header className="sticky top-0 z-50 lg:hidden">
+                <div className="bg-[#161618]/95 backdrop-blur-md border-b border-white/10 flex items-center justify-between px-5 h-14">
                     <Link href="/" className="navbar-brand">
                         <img src={logo.src} width={26} height={26} alt="BrawlLens" />
                         <div className="navbar-title">BrawlLens</div>
@@ -117,7 +117,7 @@ export default function NavBar() {
                 </div>
 
                 {mobileOpen && (
-                    <nav className="border-t border-white/8 px-4 py-3 flex flex-col gap-1">
+                    <div className="absolute top-full left-0 right-0 bg-[#161618] border-b border-white/10 px-4 py-3 flex flex-col gap-1">
                         {navItems.map(({ label, icon: Icon, activeOn }) => {
                             const isActive = pathname.startsWith(activeOn)
                             if (label === "My Profile") {
@@ -147,7 +147,7 @@ export default function NavBar() {
                                 </Link>
                             )
                         })}
-                    </nav>
+                    </div>
                 )}
             </header>
         </>
