@@ -61,23 +61,23 @@ function AboutContent() {
                     <p className="text-sm text-white/30 mb-8">Free Brawl Stars analytics, built for players.</p>
 
                     <p className="text-sm text-white/50 leading-relaxed mb-10">
-                        BrawlLens is a free, open Brawl Stars companion built for players who want to go beyond the in-game stats. Whether you're grinding trophies, optimizing your brawler lineup, or just curious about your numbers — BrawlLens gives you the full picture.
+                        BrawlLens is a free Brawl Stars stats site built for players who actually care about their numbers. No account required, no setup. Just enter your player tag and get a full picture of your profile: trophies, brawler stats, ranks, and everything in between.
                     </p>
 
-                    <h2 className="text-base font-bold text-white mb-3">What We Offer</h2>
+                    <h2 className="text-base font-bold text-white mb-3">How It Works</h2>
                     <p className="text-sm text-white/50 leading-relaxed mb-8">
-                        All data is pulled directly from the official Brawl Stars API and is always up to date. No accounts required, no subscriptions, no paywalls — ever.
+                        Everything pulls straight from the official Brawl Stars API, so the data is always current. There are no accounts to create, no subscriptions to manage, and no features locked behind a paywall. It's all free, and it always will be.
                     </p>
 
                     <h2 className="text-base font-bold text-white mb-4">Key Features</h2>
                     <ul className="mb-10 space-y-2.5">
                         {[
-                            "Player profile with full brawler breakdown",
-                            "Trophy tracking and progression history",
-                            "Brawler stats — power, rank, gadgets, star powers",
+                            "Full player profile with per-brawler breakdown",
+                            "Trophy tracking and progression over time",
+                            "Brawler stats including power level, rank, gadgets, and star powers",
                             "Global and regional leaderboards",
-                            "Game mode coverage across all maps",
-                            "No login required — just your player tag",
+                            "Coverage across all game modes and maps",
+                            "No login required, just your player tag",
                         ].map((f) => (
                             <li key={f} className="flex items-center gap-3 text-sm text-white/50">
                                 <span className="w-1 h-1 rounded-full bg-blue-400 shrink-0" />
@@ -90,7 +90,7 @@ function AboutContent() {
 
                     <h2 className="text-base font-bold text-white mb-3">Disclaimer</h2>
                     <p className="text-sm text-white/50 leading-relaxed mb-10">
-                        This content is not affiliated with, endorsed, sponsored, or specifically approved by Supercell and Supercell is not responsible for it. For more information see{" "}
+                        Not affiliated with, endorsed, sponsored, or approved by Supercell. Supercell is not responsible for this site. For more info see{" "}
                         <a href="https://www.supercell.com/fan-content-policy/" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 transition-colors">
                             Supercell's Fan Content Policy
                         </a>.
@@ -117,44 +117,44 @@ function AboutContent() {
                     <p className="text-sm text-white/30 mb-8">Last updated March 2026</p>
 
                     <p className="text-sm text-white/50 leading-relaxed mb-8">
-                        Your privacy matters to us. This policy explains what information BrawlLens collects, how it's used, and what rights you have.
+                        We built BrawlLens to be as lightweight as possible, and that extends to data too. We don't want your info. Here's exactly what that means.
                     </p>
 
                     <div className="rounded-xl bg-blue-500/10 border-l-4 border-blue-500 px-5 py-4 mb-10">
                         <p className="text-xs font-bold text-blue-400 uppercase tracking-widest mb-1">Summary</p>
                         <p className="text-sm text-white/55 leading-relaxed">
-                            BrawlLens does not collect, store, or transmit any personal data to our servers. All player tags are saved locally on your device only.
+                            BrawlLens does not collect, store, or transmit any personal data. Player tags are saved locally on your own device and never touch our servers.
                         </p>
                     </div>
 
                     <h3 className="text-base font-bold text-white mb-2">What We Collect</h3>
                     <p className="text-sm text-white/50 leading-relaxed mb-8">
-                        We do not collect any personal information. Player tags you enter are stored in your browser's local storage and never leave your device. We do not have accounts, sign-ins, or user profiles on our end.
+                        Nothing. Player tags you enter are stored in your browser's local storage so the site remembers them between visits. That data never leaves your device. There are no accounts, no sign-ins, and nothing stored on our end.
                     </p>
 
                     <h3 className="text-base font-bold text-white mb-2">How Player Data Is Used</h3>
                     <p className="text-sm text-white/50 leading-relaxed mb-8">
-                        When you search for a player, your tag is sent to the official Brawl Stars API to retrieve publicly available game data. This is the same data visible in the game itself. We do not log, store, or share this data.
+                        When you look up a player, the tag is sent to the official Brawl Stars API to fetch publicly available game data. This is the same data visible inside the game itself. We don't log it, store it, or pass it anywhere.
                     </p>
 
                     <h3 className="text-base font-bold text-white mb-2">Cookies</h3>
                     <p className="text-sm text-white/50 leading-relaxed mb-8">
-                        We use minimal cookies necessary to keep the site functional. We do not use tracking cookies or third-party advertising cookies. You can disable cookies in your browser settings, though some features may not work as expected.
+                        We only use cookies that are necessary to keep the site running. There are no tracking cookies and no third-party ad cookies. You can disable cookies in your browser settings, though some features may stop working.
                     </p>
 
                     <h3 className="text-base font-bold text-white mb-2">Third Parties</h3>
                     <p className="text-sm text-white/50 leading-relaxed mb-8">
-                        BrawlLens uses the official Brawl Stars API (by Supercell) to retrieve game data. We do not share your information with any other third parties, advertisers, or analytics platforms.
+                        The only external service BrawlLens communicates with is the official Brawl Stars API. We don't work with advertisers, analytics providers, or any other third parties.
                     </p>
 
-                    <h3 className="text-base font-bold text-white mb-2">Children's Privacy</h3>
+                    <h3 className="text-base font-bold text-white mb-2">Young Players</h3>
                     <p className="text-sm text-white/50 leading-relaxed mb-8">
-                        BrawlLens does not knowingly collect any information from children under 13. Since we collect no personal data at all, this site is safe for players of all ages.
+                        Since we collect no personal data at all, BrawlLens is safe for players of any age. There's nothing to worry about here.
                     </p>
 
                     <h3 className="text-base font-bold text-white mb-2">Changes to This Policy</h3>
                     <p className="text-sm text-white/50 leading-relaxed">
-                        We may update this policy from time to time. Any changes will be posted on this page with an updated date. Continued use of the site after changes constitutes acceptance of the new policy.
+                        If anything changes, we'll update this page and bump the date at the top. Continuing to use the site after an update means you're okay with it.
                     </p>
                 </main>
             )}
@@ -185,7 +185,7 @@ function ContactSection() {
                 <div className="flex flex-col items-center justify-center py-24 text-center">
                     <CheckCircle size={40} className="text-blue-400 mb-4" />
                     <h2 className="text-xl font-bold text-white mb-2">Message sent</h2>
-                    <p className="text-sm text-white/40">We'll get back to you within 1–3 business days.</p>
+                    <p className="text-sm text-white/40">We'll get back to you within a few days.</p>
                     <button
                         onClick={() => { setSubmitted(false); setForm({ name: "", email: "", subject: "general", message: "" }) }}
                         className="mt-8 text-xs text-white/30 hover:text-white/60 transition-colors"
@@ -200,10 +200,10 @@ function ContactSection() {
     return (
         <main className="py-2 max-w-2xl">
             <h1 className="text-4xl font-black text-white mb-2">Contact</h1>
-            <p className="text-sm text-white/30 mb-8">We'd love to hear from you.</p>
+            <p className="text-sm text-white/30 mb-8">Drop us a line.</p>
 
             <p className="text-sm text-white/50 leading-relaxed mb-10">
-                Have a question, found a bug, or want to give feedback? Fill out the form and we'll get back to you within 1–3 business days.
+                Found a bug, have a feature request, or want to talk advertising? We read every message. Fill out the form below and we'll get back to you as soon as we can.
             </p>
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
