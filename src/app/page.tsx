@@ -1,7 +1,7 @@
 "use client"
 import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
-import { Swords, TrendingUp, Trophy } from "lucide-react"
+import { Swords, TrendingUp, Trophy, ArrowRight } from "lucide-react"
 import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
 
@@ -22,134 +22,94 @@ export default function Home() {
   }, [])
 
   useEffect(() => {
+    gsap.fromTo(".hero-animate", 
+        { opacity: 0, y: 40 }, 
+        { opacity: 1, y: 0, duration: 1, ease: "power4.out", stagger: 0.1 }
+    )
     const cards = cardsRef.current?.querySelectorAll<HTMLElement>(".feature-card")
     if (!cards) return
-
     cards.forEach((card, i) => {
       gsap.fromTo(card,
-        { y: 80, opacity: 0 },
+        { y: 60, opacity: 0 },
         {
-          y: 0,
-          opacity: 1,
-          duration: 0.8,
-          ease: "power3.out",
-          delay: i * 0.15,
-          scrollTrigger: {
-            trigger: card,
-            start: "top 85%",
-            toggleActions: "play none none none",
-          }
+          y: 0, opacity: 1, duration: 0.9, ease: "power3.out", delay: i * 0.1,
+          scrollTrigger: { trigger: card, start: "top 88%", toggleActions: "play none none none" }
         }
       )
     })
-
-    const footer = document.querySelector("footer")
-    if (footer) {
-      gsap.fromTo(footer,
-        { y: 40, opacity: 0 },
-        {
-          y: 0,
-          opacity: 1,
-          duration: 0.8,
-          ease: "power3.out",
-          scrollTrigger: {
-            trigger: footer,
-            start: "top 90%",
-            toggleActions: "play none none none",
-          }
-        }
-      )
-    }
-
-    return () => ScrollTrigger.getAll().forEach(t => t.kill())
   }, [])
 
   const handleSearch = () => {
-    const tag = userInput.trim().toUpperCase()
+    const tag = userInput.trim().replace("#", "").toUpperCase()
     if (tag) router.push(`/player/${tag}`)
   }
 
   return (
-    <main className="relative pt-64 pb-60 spotlight-bg">
+    <main className="relative pt-64 pb-16 spotlight-bg">
       <div className="max-w-[1440px] mx-auto px-10">
 
         {/* HERO SECTION */}
-        <section className="max-w-4xl mx-auto text-center space-y-12 mb-56">
-          <h1 className="text-7xl md:text-[130px] font-black tracking-[-0.08em] leading-[0.75] text-zinc-950">
-            The library <br />
-            <span className="text-zinc-500">for the best.</span>
-          </h1>
+        <section className="max-w-4xl mx-auto text-center space-y-12 mb-64">
+          <div className="space-y-4 hero-animate">
+            <h1 className="text-7xl md:text-[140px] font-black tracking-[-0.08em] leading-[0.75] text-zinc-950">
+              Brawl Stars <span className="text-blue-500">made clear.</span>
+            </h1>
+          </div>
 
-          <p className="text-2xl text-zinc-500 font-medium max-w-xl mx-auto leading-relaxed">
-            A specialized analytics suite for competitive Brawl Stars players.
+          <p className="hero-animate text-2xl text-zinc-500 font-medium max-w-xl mx-auto leading-relaxed">
+            Look up any player, track your brawlers, <br />and see what the best in the world are doing.
           </p>
 
-          <div className="relative max-w-xl mx-auto pt-10">
-            <div className="flex items-center p-2 bg-white border border-zinc-200 rounded-[32px] shadow-xl shadow-zinc-200/50 focus-within:border-black transition-all">
-              <span className="pl-6 pr-2 text-zinc-400 font-black text-2xl">#</span>
+          {/* SEARCH */}
+          <div className="hero-animate relative max-w-[600px] mx-auto pt-10">
+            <div className="flex items-center bg-white border border-zinc-200 rounded-2xl px-5 py-3 shadow-sm focus-within:border-zinc-400 transition-all duration-300">
+              <span className="text-zinc-400 font-black text-xl mr-2">#</span>
               <input
                 type="text"
                 value={userInput}
                 onChange={(e) => setUserInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                placeholder="PLAYER TAG"
-                className="flex-1 py-5 text-xl font-black outline-none placeholder:text-zinc-300 uppercase tracking-tighter"
+                placeholder="Enter player tag"
+                className="flex-1 bg-transparent py-2 text-lg font-bold outline-none text-zinc-950 placeholder:text-zinc-300 tracking-tight"
               />
               <button
                 onClick={handleSearch}
-                className="bg-zinc-950 text-white px-10 py-5 rounded-[26px] font-black text-xs uppercase tracking-widest hover:bg-black transition-all"
+                className="bg-blue-500 text-white px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-blue-600 transition-all duration-300 shrink-0"
               >
                 Search
               </button>
             </div>
+            <p className="mt-3 text-[10px] font-bold text-zinc-400 uppercase tracking-[0.3em] text-center">
+              Tap your profile icon in-game to find your tag 
+            </p>
           </div>
         </section>
 
         {/* FEATURE CARDS */}
-        <section ref={cardsRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-16">
+        <section ref={cardsRef} className="flex flex-col gap-6">
+          {[
+            { id: "01", title: "Brawlers",     desc: "Every brawler, every stat — powers, gadgets, and hidden values all in one place.", icon: Swords     },
+            { id: "02", title: "Meta",         desc: "Win rates and pick rates pulled from live global matches, updated constantly.",      icon: TrendingUp },
+            { id: "03", title: "Leaderboards", desc: "Track the top players worldwide and drill down by individual brawler.",             icon: Trophy     },
+          ].map((item) => (
+            <div key={item.id} className="feature-card opacity-0 group relative bg-zinc-100 hover:bg-zinc-200/60 border border-zinc-200 hover:border-zinc-300 rounded-[32px] px-12 py-12 flex items-center gap-10 cursor-pointer transition-all duration-500 overflow-hidden">
 
-          {/* Brawlers */}
-          <div className="feature-card m-card bg-white p-14 min-h-[550px] flex flex-col justify-between group opacity-0">
-            <div className="space-y-8">
-              <div className="w-14 h-14 bg-zinc-50 rounded-2xl flex items-center justify-center border border-zinc-100">
-                <Swords size={28} />
+              {/* Icon */}
+              <div className="w-16 h-16 rounded-3xl bg-blue-500 flex items-center justify-center shrink-0 shadow-xl shadow-blue-500/25 group-hover:scale-105 transition-transform duration-500">
+                <item.icon size={28} className="text-white" />
               </div>
-              <h3 className="text-4xl font-black tracking-tight">Brawlers</h3>
-              <p className="text-zinc-500 text-lg font-medium leading-relaxed">
-                Browse every brawler — stats, star powers, gadgets, and hyper charges all in one place.
-              </p>
-            </div>
-            <div className="text-zinc-100 font-black text-[120px] leading-none select-none group-hover:text-zinc-950 transition-colors duration-700">01</div>
-          </div>
 
-          {/* Meta */}
-          <div className="feature-card m-card bg-zinc-950 text-white p-14 min-h-[550px] flex flex-col justify-between group opacity-0">
-            <div className="space-y-8">
-              <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center">
-                <TrendingUp size={28} className="text-white" />
+              {/* Text */}
+              <div className="flex-1">
+                <h3 className="text-3xl font-black tracking-tight text-zinc-950">{item.title}</h3>
+                <p className="text-base font-medium text-zinc-500 mt-2 leading-relaxed max-w-lg">{item.desc}</p>
               </div>
-              <h3 className="text-4xl font-black tracking-tight">Meta</h3>
-              <p className="text-zinc-300 text-lg font-medium leading-relaxed">
-                See which brawlers are dominating right now. Win rates and pick rates updated from live matches.
-              </p>
-            </div>
-            <div className="text-white/10 font-black text-[120px] leading-none select-none group-hover:text-white/20 transition-colors duration-700">02</div>
-          </div>
 
-          {/* Leaderboards */}
-          <div className="feature-card m-card bg-white p-14 min-h-[550px] flex flex-col justify-between group opacity-0">
-            <div className="space-y-8">
-              <div className="w-14 h-14 bg-zinc-50 rounded-2xl flex items-center justify-center border border-zinc-100">
-                <Trophy size={28} />
-              </div>
-              <h3 className="text-4xl font-black tracking-tight">Leaderboards</h3>
-              <p className="text-zinc-500 text-lg font-medium leading-relaxed">
-                Track the top players globally and by brawler. See who's pushing trophies at the highest level.
-              </p>
-            </div>
-            <div className="text-zinc-100 font-black text-[120px] leading-none select-none group-hover:text-zinc-950 transition-colors duration-700">03</div>
-          </div>
+              {/* Arrow */}
+              <ArrowRight size={22} className="relative shrink-0 text-zinc-300 group-hover:text-blue-500 group-hover:translate-x-1 transition-all duration-300" />
 
+            </div>
+          ))}
         </section>
       </div>
     </main>

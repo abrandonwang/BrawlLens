@@ -19,7 +19,7 @@ export default function NavBar() {
     return (
         <>
             <div className="fixed top-6 left-0 right-0 z-[100] flex justify-center px-6">
-                <header className={`max-w-[1200px] w-full h-[72px] rounded-full flex items-center justify-between px-8 ${isDark ? "nav-pill-dark" : "nav-pill"}`}>
+                <header className={`max-w-[1200px] w-full h-[72px] rounded-full flex items-center justify-between px-8 backdrop-blur-2xl shadow-sm ${isDark ? "bg-zinc-900/95 border border-white/8" : "bg-zinc-200/95 border border-black/5"}`}>
                     
                     {/* LEFT: LOGO + SEARCH */}
                     <div className="flex items-center gap-4 shrink-0">
@@ -38,7 +38,7 @@ export default function NavBar() {
                         <button
                             onClick={() => setIsOpen(true)}
                             className={`flex items-center gap-3 px-4 py-2 rounded-2xl transition-all group ${
-                                isDark ? "bg-white/5 hover:bg-white/10" : "bg-zinc-100 hover:bg-zinc-200"
+                                isDark ? "bg-white/5 hover:bg-white/10" : "bg-white hover:bg-zinc-50"
                             }`}
                         >
                             <Search size={14} className={isDark ? "text-white/40" : "text-zinc-400"} />

@@ -7,6 +7,15 @@ import { MenuProvider } from "../context/MenuContext"
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
+export const metadata: Metadata = {
+  title: "BrawlLens - The Pro Library",
+  description: "Advanced analytics for competitive players.",
+  icons: {
+    // This creates the "Lens" logo as your favicon
+    icon: 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2240%22 fill=%22none%22 stroke=%22black%22 stroke-width=%2210%22/><circle cx=%2250%22 cy=%2250%22 r=%2210%22 fill=%22black%22/></svg>',
+  },
+};
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
