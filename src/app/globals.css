@@ -79,6 +79,3 @@ body.home-page {
   animation: marquee-scroll 30s linear infinite;
 }
 
-.marquee-outer:hover .marquee-inner {
-  animation-play-state: paused;
-}
