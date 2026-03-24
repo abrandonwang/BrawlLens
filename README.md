@@ -1,93 +1,25 @@
 # BrawlLens
 
-**Track your progress. Master your picks.**
-
-BrawlLens is a full-stack Brawl Stars companion app that lets players track their brawler progression, view account completion stats, and (coming soon) get AI-powered draft recommendations.
+A Brawl Stars stat tracker built with Next.js.
 
 ## Features
 
-- **Player Lookup** — Enter any player tag to pull real-time stats from the Brawl Stars API
-- **Brawler Roster** — View all your brawlers with power levels, trophies, gadgets, star powers, gears, and hypercharges
-- **Progression Tracking** — See how far you are from maxing your account by comparing your unlocks against the full brawler catalog
-- **3D Homepage** — Animated 3D character rendered with Three.js; click the attack button to trigger the attack animation
-- **AI Draft Picker** *(planned)* — Get team composition recommendations based on map, mode, and brawler matchups
+- **Player Lookup** — Search any player tag to view trophies, wins, and brawler roster sorted by trophies
+- **Brawler Catalog** — Browse all brawlers with rarity filtering and search
+- **About / Contact** — Privacy policy and contact form
 
 ## Tech Stack
 
-- **Framework:** Next.js (App Router)
-- **Language:** TypeScript
-- **Styling:** Tailwind CSS
-- **3D:** Three.js
-- **API:** Brawl Stars Official API
-- **Font:** Inter
+- Next.js (App Router), TypeScript, Tailwind CSS
+- Player data via self-hosted proxy; brawler catalog via [Brawlify API](https://brawlify.com/api)
 
 ## Getting Started
 
-- Node.js 18+
-- A Brawl Stars API key from [developer.brawlstars.com](https://developer.brawlstars.com)
-
-### Setup
-
-1. Clone the repo:
-   ```bash
-   git clone https://github.com/YOUR_USERNAME/brawl-tracker.git
-   cd brawl-tracker
-   ```
-
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-3. Create a `.env.local` file in the project root:
-   ```
-   BRAWL_API_KEY=your_api_key_here
-   ```
-
-4. Start the dev server:
-   ```bash
-   npm run dev
-   ```
-
-## Project Structure
-
-```
-src/
-├── app/
-│   ├── api/
-│   │   ├── brawlers/route.ts    # Proxy → Brawl Stars brawler catalog
-│   │   └── player/route.ts      # Proxy → Brawl Stars player data
-│   ├── player/[tag]/page.tsx    # Dynamic player profile page
-│   ├── layout.tsx               # Root layout with navbar
-│   ├── globals.css              # Global styles and theme
-│   └── page.tsx                 # Homepage with search
-├── components/
-│   ├── BrawlerCard.tsx          # Individual brawler display card
-│   ├── NavBar.tsx               # Site navigation
-│   ├── NavBar.css
-│   ├── ScrambleText.tsx         # Animated placeholder text effect
-│   └── ThreeScene.tsx           # Three.js 3D character with animation control
-└── types/
-    └── brawler.ts               # TypeScript interfaces for API data
+```bash
+npm install
+npm run dev
 ```
 
-## API Routes
+## Disclaimer
 
-The app proxies all Brawl Stars API requests through Next.js API routes to keep the API key secure and avoid CORS issues.
-
-| `GET /api/brawlers` | Returns the full brawler catalog |
-| `GET /api/player?tag=TAG` | Returns player data for the given tag |
-
-## Roadmap
-
-- [ ] Styled player profile page with tabs
-- [ ] Brawler completion tracker (owned vs available)
-- [ ] Account progression percentage
-- [ ] Club member viewer
-- [ ] AI-powered draft picker
-- [ ] Brawler images and rarity colors
-- [ ] Mobile-optimized brawler grid
-
-## License
-
-This project is not affiliated with or endorsed by Supercell.
+Not affiliated with or endorsed by Supercell.
