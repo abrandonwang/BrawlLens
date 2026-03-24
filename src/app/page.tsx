@@ -139,7 +139,7 @@ export default function Home() {
 
         <div className="marquee-outer flex">
           <div className="marquee-inner flex items-center gap-10 shrink-0">
-            {[...marqueeItems, ...marqueeItems, ...marqueeItems, ...marqueeItems].map((item, i) => (
+            {[...marqueeItems, ...marqueeItems].map((item, i) => (
               <div key={i} className="flex items-center gap-3 shrink-0">
                 <div className="w-1 h-1 rounded-full bg-zinc-400 shrink-0" />
                 <span className="text-[11px] font-black uppercase tracking-[0.25em] text-zinc-500 whitespace-nowrap">
