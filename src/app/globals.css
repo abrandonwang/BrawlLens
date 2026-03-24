@@ -1,53 +1,11 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #09090b;
-  --border: #f1f1f2;
-  --mouse-x: 50%;
-  --mouse-y: 50%;
+  --brand: #FFD400;
 }
 
 body {
-  background-color: var(--background);
-  color: var(--foreground);
+  background-color: #fcfdfe;
+  color: #09090b;
   font-family: var(--font-inter), sans-serif;
-  -webkit-font-smoothing: antialiased;
-  overscroll-behavior: none;
-}
-
-/* Mouse Glow Effect */
-.spotlight-bg {
-  background: radial-gradient(
-    800px circle at var(--mouse-x) var(--mouse-y),
-    rgba(240, 240, 245, 0.4),
-    transparent 80%
-  );
-}
-
-.m-card {
-  border: 1px solid var(--border);
-  border-radius: 48px;
-  transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.m-card:hover {
-  transform: translateY(-12px);
-  box-shadow: 0 40px 80px rgba(0,0,0,0.04);
-  border-color: #000;
-}
-
-/* The Navigation Pill Style */
-.nav-pill {
-  background: rgba(228, 228, 231, 0.95);
-  backdrop-filter: blur(24px);
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.04);
-}
-
-.nav-pill-dark {
-  background: rgba(24, 24, 27, 0.95);
-  backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
 }

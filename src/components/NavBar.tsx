@@ -19,16 +19,20 @@ export default function NavBar() {
     return (
         <>
             <div className="fixed top-6 left-0 right-0 z-[100] flex justify-center px-6">
-                <header className={`max-w-[1200px] w-full h-[72px] rounded-full flex items-center justify-between px-8 backdrop-blur-2xl shadow-sm ${isDark ? "bg-zinc-900/95 border border-white/8" : "bg-zinc-200/95 border border-black/5"}`}>
+                <header className={`max-w-[1200px] w-full h-[72px] rounded-full flex items-center justify-between px-8 backdrop-blur-2xl transition-all duration-500 ${
+                    isDark 
+                    ? "bg-zinc-900/95 border border-white/10 shadow-2xl" 
+                    : "bg-white/50 border border-white/80 shadow-lg shadow-mint-500/5" // New Mint Glass Light Mode
+                }`}>
                     
                     {/* LEFT: LOGO + SEARCH */}
                     <div className="flex items-center gap-4 shrink-0">
                         <Link href="/" className="flex items-center gap-3 group">
                             <div className="relative w-7 h-7 flex items-center justify-center">
-                                <div className={`absolute inset-0 border-[2.5px] rounded-full transition-colors ${isDark ? "border-white" : "border-black"}`} />
-                                <div className={`w-1 h-1 rounded-full transition-colors ${isDark ? "bg-white" : "bg-black"}`} />
+                                <div className={`absolute inset-0 border-[2.5px] rounded-full transition-colors ${isDark ? "border-white" : "border-zinc-900"}`} />
+                                <div className={`w-1 h-1 rounded-full transition-colors ${isDark ? "bg-white" : "bg-zinc-900"}`} />
                             </div>
-                            <span className={`text-base font-black tracking-[-0.04em] transition-colors hidden xl:block ${isDark ? "text-white" : "text-black"}`}>
+                            <span className={`text-base font-black tracking-[-0.04em] transition-colors hidden xl:block ${isDark ? "text-white" : "text-zinc-900"}`}>
                                 BrawlLens
                             </span>
                         </Link>
@@ -38,7 +42,7 @@ export default function NavBar() {
                         <button
                             onClick={() => setIsOpen(true)}
                             className={`flex items-center gap-3 px-4 py-2 rounded-2xl transition-all group ${
-                                isDark ? "bg-white/5 hover:bg-white/10" : "bg-white hover:bg-zinc-50"
+                                isDark ? "bg-white/5 hover:bg-white/10" : "bg-white/80 hover:bg-white shadow-sm"
                             }`}
                         >
                             <Search size={14} className={isDark ? "text-white/40" : "text-zinc-400"} />
@@ -46,8 +50,8 @@ export default function NavBar() {
                                 Quick Search
                             </span>
                             <div className="flex items-center gap-1 opacity-20 group-hover:opacity-40 transition-opacity hidden sm:flex">
-                                <Command size={10} className={isDark ? "text-white" : "text-black"} />
-                                <span className={`text-[9px] font-black ${isDark ? "text-white" : "text-black"}`}>K</span>
+                                <Command size={10} className={isDark ? "text-white" : "text-zinc-900"} />
+                                <span className={`text-[9px] font-black ${isDark ? "text-white" : "text-zinc-900"}`}>K</span>
                             </div>
                         </button>
                     </div>
@@ -61,15 +65,15 @@ export default function NavBar() {
                                     <Link
                                         key={item.label}
                                         href={item.href}
-                                        className={`relative text-sm font-semibold tracking-tight transition-colors duration-300 group ${
+                                        className={`relative text-sm font-bold tracking-tight transition-colors duration-300 group ${
                                             isActive
-                                                ? (isDark ? "text-white" : "text-black")
-                                                : (isDark ? "text-white/30 hover:text-white/60" : "text-zinc-400 hover:text-zinc-700")
+                                                ? (isDark ? "text-white" : "text-zinc-900")
+                                                : (isDark ? "text-white/30 hover:text-white/60" : "text-zinc-400 hover:text-zinc-900")
                                         }`}
                                     >
                                         {item.label}
-                                        <span className={`absolute -bottom-1 left-0 h-[2px] rounded-full transition-all duration-300 ${
-                                            isDark ? "bg-white" : "bg-black"
+                                        <span className={`absolute -bottom-1 left-0 h-[3px] rounded-full transition-all duration-300 ${
+                                            isDark ? "bg-white" : "bg-[#9df9d9]" // Mint underline for active
                                         } ${isActive ? "w-full" : "w-0 group-hover:w-full"}`} />
                                     </Link>
                                 )
@@ -79,7 +83,7 @@ export default function NavBar() {
                         <Link
                             href="/player/me"
                             className={`w-10 h-10 flex items-center justify-center rounded-full transition-all ${
-                                isDark ? "bg-white text-black" : "bg-black text-white hover:scale-105 active:scale-95 shadow-lg shadow-black/5"
+                                isDark ? "bg-white text-black" : "bg-zinc-900 text-white hover:scale-105 shadow-xl shadow-zinc-900/10"
                             }`}
                         >
                             <User size={16} />
@@ -88,24 +92,24 @@ export default function NavBar() {
                 </header>
             </div>
 
-            {/* SEARCH OVERLAY */}
+            {/* SEARCH OVERLAY (Updated Colors) */}
             {isOpen && (
-                <div className="fixed inset-0 z-[200] bg-zinc-950/20 backdrop-blur-xl flex items-start justify-center pt-[15vh] px-6">
-                    <div className="w-full max-w-xl bg-white rounded-[40px] shadow-2xl border border-zinc-100 overflow-hidden animate-fade-in">
+                <div className="fixed inset-0 z-[200] bg-white/40 backdrop-blur-xl flex items-start justify-center pt-[15vh] px-6">
+                    <div className="w-full max-w-xl bg-white rounded-[40px] shadow-2xl border border-white overflow-hidden animate-fade-in">
                         <div className="p-8 flex items-center gap-6 border-b border-zinc-50">
-                            <Search className="text-zinc-300" size={24} />
+                            <Search className="text-[#9df9d9]" size={24} />
                             <input 
                                 autoFocus 
                                 placeholder="ENTER PLAYER TAG..." 
-                                className="flex-1 bg-transparent border-none outline-none text-xl font-black tracking-tight placeholder:text-zinc-100 uppercase" 
+                                className="flex-1 bg-transparent border-none outline-none text-xl font-black tracking-tight placeholder:text-zinc-200 uppercase" 
                             />
                             <button onClick={() => setIsOpen(false)}><X size={24} className="text-zinc-300 hover:text-black"/></button>
                         </div>
-                        <div className="p-10 flex flex-col items-center gap-4">
-                            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-200">Suggested Tags</span>
+                        <div className="p-10 flex flex-col items-center gap-4 bg-zinc-50/50">
+                            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-300">Suggested Tags</span>
                             <div className="flex gap-2">
-                                <button className="px-4 py-2 bg-zinc-50 rounded-xl text-[10px] font-black text-zinc-400 hover:text-black transition-colors">#GRG0L2G</button>
-                                <button className="px-4 py-2 bg-zinc-50 rounded-xl text-[10px] font-black text-zinc-400 hover:text-black transition-colors">#2Y09VLLY</button>
+                                <button className="px-4 py-2 bg-white border border-zinc-100 rounded-xl text-[10px] font-black text-zinc-400 hover:border-[#9df9d9] hover:text-zinc-900 transition-all">#GRG0L2G</button>
+                                <button className="px-4 py-2 bg-white border border-zinc-100 rounded-xl text-[10px] font-black text-zinc-400 hover:border-[#9df9d9] hover:text-zinc-900 transition-all">#2Y09VLLY</button>
                             </div>
                         </div>
                     </div>

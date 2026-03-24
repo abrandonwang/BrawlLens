@@ -4,31 +4,29 @@ import Link from "next/link"
 
 export default function Footer() {
     const pathname = usePathname()
-    const isDark = pathname !== "/"
+    const isDark = pathname.startsWith("/brawlers") || pathname.startsWith("/player")
 
     return (
-        <footer className={`py-20 ${isDark ? "bg-black border-t border-white/5" : "bg-zinc-50"}`}>
-            <div className="max-w-[1440px] mx-auto px-10 flex flex-col md:flex-row justify-between items-center gap-8">
-                <div className="flex items-center gap-10">
-                    <span className={`text-[10px] font-black uppercase tracking-[0.3em] ${isDark ? "text-white" : "text-zinc-950"}`}>
-                        BrawlLens
-                    </span>
+        <footer className={`w-full border-t ${isDark ? "bg-black border-white/5" : "border-zinc-200/50"}`}>
+            <div className="max-w-7xl mx-auto px-10 py-5 flex flex-col md:flex-row justify-between items-center gap-4">
+                <p className={`text-sm font-medium ${isDark ? "text-white/30" : "text-zinc-500"}`}>
+                    © 2025 BrawlLens. All rights reserved.
+                </p>
+
+                <div className={`flex items-center gap-8 ${isDark ? "text-white/30" : "text-zinc-400"}`}>
                     <Link
                         href="/about?section=privacy-policy"
-                        className={`text-[10px] font-black uppercase tracking-[0.3em] transition-colors ${isDark ? "text-white/30 hover:text-white" : "text-zinc-300 hover:text-black"}`}
+                        className={`text-sm font-bold transition-colors ${isDark ? "hover:text-white" : "hover:text-zinc-900"}`}
                     >
-                        Privacy
+                        Privacy Policy
                     </Link>
                     <Link
                         href="/about?section=contact"
-                        className={`text-[10px] font-black uppercase tracking-[0.3em] transition-colors ${isDark ? "text-white/30 hover:text-white" : "text-zinc-300 hover:text-black"}`}
+                        className={`text-sm font-bold transition-colors ${isDark ? "hover:text-white" : "hover:text-zinc-900"}`}
                     >
                         Contact
                     </Link>
                 </div>
-                <p className={`text-[9px] font-bold uppercase tracking-widest ${isDark ? "text-white/20" : "text-zinc-300"}`}>
-                    Fan-made — not affiliated with Supercell.
-                </p>
             </div>
         </footer>
     )

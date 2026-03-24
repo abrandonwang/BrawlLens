@@ -19,12 +19,11 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} selection:bg-black selection:text-white`}>
+      <body className={`${inter.variable} selection:bg-black selection:text-white flex flex-col min-h-screen`}>
         <MenuProvider>
           <NavBar/>
           {children}
-          
-          <Footer />
+          <Footer/>
         </MenuProvider>
       </body>
     </html>
