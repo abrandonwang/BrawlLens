@@ -7,7 +7,7 @@ export default function Footer() {
     const isDark = pathname.startsWith("/brawlers") || pathname.startsWith("/player")
 
     return (
-        <footer className={`w-full border-t ${isDark ? "bg-black border-white/5" : "border-zinc-200/50"}`}>
+        <footer className={`relative z-10 w-full border-t ${isDark ? "bg-black border-white/5" : "border-zinc-200/50"}`}>
             <div className="max-w-[1200px] mx-auto px-10 py-5 flex flex-col md:flex-row justify-between items-center gap-4">
                 <p className={`text-sm font-medium ${isDark ? "text-white/30" : "text-zinc-500"}`}>
                     © 2025 BrawlLens. All rights reserved.
