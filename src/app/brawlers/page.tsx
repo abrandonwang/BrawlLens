@@ -20,7 +20,7 @@ export default async function Brawlers() {
 
                     <section className="mb-10">
                         <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-white mb-3">
-                            All {brawlers.length - 1} Brawl Stars Characters
+                            All {brawlers.length - 1} Brawlers (Mar 2026)
                         </h1>
                         <p className="text-white/40 text-sm leading-relaxed">
                             Browse every brawler in Brawl Stars. Click on a character to see detailed stats, star powers, gadgets, gears, buffs, and skins. The newest brawler is {newest?.name}.
