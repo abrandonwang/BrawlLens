@@ -7,7 +7,7 @@ export default function Footer() {
     if (pathname !== "/") return null
 
     return (
-        <footer className="relative z-10 w-full border-t border-zinc-200/50">
+        <footer className="relative z-10 w-full border-t border-zinc-200/60 bg-white/70 backdrop-blur-xl">
             <div className="px-8 py-4 flex items-center justify-between">
                 <p className="text-sm font-medium text-zinc-900">© 2025 BrawlLens. All rights reserved.</p>
                 <div className="flex items-center gap-1">

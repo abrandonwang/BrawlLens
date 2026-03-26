@@ -29,7 +29,7 @@ export default function NavBar() {
                                 <div className={`absolute inset-0 border-[2.5px] rounded-full transition-colors ${isDark ? "border-white" : "border-zinc-900"}`} />
                                 <div className={`w-1 h-1 rounded-full transition-colors ${isDark ? "bg-white" : "bg-zinc-900"}`} />
                             </div>
-                            <span className={`text-base font-black tracking-[-0.04em] transition-colors hidden xl:block ${isDark ? "text-white" : "text-zinc-900"}`}>
+                            <span className={`text-base font-black transition-colors hidden xl:block ${isDark ? "text-white" : "text-zinc-900"}`}>
                                 BrawlLens
                             </span>
                         </Link>
