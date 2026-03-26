@@ -1,6 +1,3 @@
-"use client"
-import { useState } from "react"
-import { Search } from "lucide-react"
 import Link from "next/link"
 
 interface Brawler {
@@ -10,23 +7,20 @@ interface Brawler {
     rarity: { id: number; name: string; color: string }
 }
 
+interface Props {
+    brawlers: Brawler[]
+    activeRarity: string | null
+    search: string
+}
+
 const RARITY_ORDER = [
     "Starting Brawler", "Common", "Rare", "Super Rare",
     "Epic", "Mythic", "Legendary", "Ultra Legendary",
 ]
 
-export default function BrawlerCatalog({ brawlers }: { brawlers: Brawler[] }) {
-    console.log(brawlers[0])
-    const [activeRarity, setActiveRarity] = useState<string | null>(null)
-    const [search, setSearch] = useState("")
-
-    const rarities: { name: string; color: string }[] = RARITY_ORDER.map(name => ({
-        name: name,
-        color: brawlers.find(b => b.rarity.name === name)?.rarity.color ?? "#fff"
-    })).filter(r => brawlers.some(b => b.rarity.name === r.name))
-
+export default function BrawlerCatalog({ brawlers, activeRarity, search }: Props) {
     const filtered = brawlers.filter(b => {
-        const matchesRarity = !activeRarity || b.rarity.name === activeRarity 
+        const matchesRarity = !activeRarity || b.rarity.name === activeRarity
         const matchesSearch = !search || b.name.toLowerCase().includes(search.toLowerCase())
         return matchesRarity && matchesSearch
     })
@@ -38,47 +32,6 @@ export default function BrawlerCatalog({ brawlers }: { brawlers: Brawler[] }) {
 
     return (
         <div>
-            <div className="flex items-center gap-3 w-full mb-10 overflow-x-auto pb-1">
-                <div className="flex items-center gap-2.5 bg-zinc-900 border border-white/10 rounded-xl px-4 py-2.5 shrink-0 transition-colors focus-within:bg-zinc-800 focus-within:border-white/25">
-                    <Search size={13} className="text-white/30" />
-                    <input
-                        value={search}
-                        onChange={e => setSearch(e.target.value)}
-                        placeholder="Search brawlers"
-                        className="bg-transparent text-sm text-white/80 outline-none placeholder:text-white/25 w-36"
-                    />
-                </div>
-
-                <div className="w-px h-5 bg-white/10 shrink-0" />
-
-                <div className="flex items-center gap-2 shrink-0">
-                    <button
-                        onClick={() => setActiveRarity(null)}
-                        className={`px-3.5 py-2 rounded-xl text-xs font-medium transition-colors ${!activeRarity ? "bg-white text-black" : "bg-zinc-900 border border-white/10 text-white/40 hover:text-white/70"}`}
-                    >
-                        All
-                    </button>
-                    {rarities.map(({ name, color }) => {
-                        const isActive = activeRarity === name 
-
-                        return (
-                            <button
-                                key={name}
-                                onClick={() => setActiveRarity(isActive ? null : name)}
-                                className={`cursor-pointer px-3.5 py-2 rounded-xl text-xs font-medium transition-all border ${!isActive && "text-white/40 hover:text-white/70"}`}
-                                style={{
-                                    color: isActive ? color : undefined,
-                                    borderColor: isActive ? color : "rgba(255,255,255,0.1)",
-                                    backgroundColor: isActive ? `${color}15` : "transparent",
-                                }}
-                            >
-                                {name}
-                            </button>
-                        )
-                    })}
-                </div>
-            </div>
-
             {/* GROUPED GRID */}
             <div className="space-y-10">
                 {RARITY_ORDER.map(rarity => {
@@ -95,7 +48,7 @@ export default function BrawlerCatalog({ brawlers }: { brawlers: Brawler[] }) {
                             </div>
                             <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12 gap-2">
                                 {group?.map(brawler => (
-                                    <Link href = {`/brawlers/${brawler.id}`} key={brawler.id} className="group cursor-pointer bg-zinc-900 border border-white/5 rounded-xl overflow-hidden hover:border-white/20 transition-all duration-100">
+                                    <Link href={`/brawlers/${brawler.id}`} key={brawler.id} className="group cursor-pointer bg-zinc-900 border border-white/5 rounded-xl overflow-hidden hover:border-white/20 transition-all duration-100">
                                         <div className="aspect-square p-1.5">
                                             <img
                                                 src={brawler.imageUrl2}

@@ -15,11 +15,11 @@ export default function NavBar() {
     const pathname = usePathname()
     const [isOpen, setIsOpen] = useState(false)
     
-    const isDark = pathname !== "/" && pathname !== "/about"
+    const isDark = pathname !== "/"
 
     return (
         <>
-            <div className={`sticky top-0 z-[100] w-full transition-all duration-300 ${isDark ? "bg-black border-b border-white/5" : ""}`}>
+            <div className={`w-full z-10 transition-all duration-300 ${isDark ? "bg-black border-b border-white/10" : "border-b border-zinc-100"}`}>
                 <header className="h-[72px] flex items-center justify-between px-8">
                     
                     {/* LEFT: LOGO + SEARCH */}

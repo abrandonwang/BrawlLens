@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { Search } from "lucide-react";
 
 // ─── Types ──────────────────────────────────────────────────────
 interface MapInfo {
@@ -82,15 +81,19 @@ function formatBrawlerName(name: string): string {
   return name.split(" ").map((w) => w.charAt(0) + w.slice(1).toLowerCase()).join(" ");
 }
 
+// ─── Props ──────────────────────────────────────────────────────
+interface Props {
+  selectedMode: string | null;
+  mapSearch: string;
+}
+
 // ─── Component ──────────────────────────────────────────────────
-export default function MetaDashboard() {
+export default function MetaDashboard({ selectedMode, mapSearch }: Props) {
   const [modes, setModes] = useState<ModeInfo[]>([]);
-  const [selectedMode, setSelectedMode] = useState<string | null>(null);
   const [selectedMap, setSelectedMap] = useState<string | null>(null);
   const [mapMeta, setMapMeta] = useState<MapMeta | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadingMap, setLoadingMap] = useState(false);
-  const [mapSearchQuery, setMapSearchQuery] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [minPicks, setMinPicks] = useState(10);
 
@@ -147,9 +150,9 @@ export default function MetaDashboard() {
   }, [modes, selectedMode, rotationMapNames, allUniqueMaps]);
 
   const displayedMaps = useMemo(() => {
-    if (!mapSearchQuery) return sortedMaps;
-    return sortedMaps.filter((m) => m.name.toLowerCase().includes(mapSearchQuery.toLowerCase()));
-  }, [sortedMaps, mapSearchQuery]);
+    if (!mapSearch) return sortedMaps;
+    return sortedMaps.filter((m) => m.name.toLowerCase().includes(mapSearch.toLowerCase()));
+  }, [sortedMaps, mapSearch]);
 
   // ─── Map click ───────────────────────────────────────────────
   const handleMapClick = useCallback((mapName: string) => {
@@ -193,52 +196,6 @@ export default function MetaDashboard() {
 
   return (
     <div className="space-y-6">
-
-      {/* ── Search + Mode Filter ────────────────────────────── */}
-      <div className="flex items-center gap-3 w-full overflow-x-auto pb-1">
-        {/* Search */}
-        <div className="flex items-center gap-2.5 bg-zinc-900 border border-white/10 rounded-xl px-4 py-2.5 shrink-0 transition-colors focus-within:bg-zinc-800 focus-within:border-white/25">
-          <Search size={13} className="text-white/30" />
-          <input
-            value={mapSearchQuery}
-            onChange={(e) => setMapSearchQuery(e.target.value)}
-            placeholder="Search maps"
-            className="bg-transparent text-sm text-white/80 outline-none placeholder:text-white/25 w-32"
-          />
-        </div>
-
-        <div className="w-px h-5 bg-white/10 shrink-0" />
-
-        {/* Mode buttons */}
-        <div className="flex items-center gap-2 shrink-0">
-          <button
-            onClick={() => setSelectedMode(null)}
-            className={`px-3.5 py-2 rounded-xl text-xs font-medium transition-colors ${
-              selectedMode === null ? "bg-white text-black" : "bg-zinc-900 border border-white/10 text-white/40 hover:text-white/70"
-            }`}
-          >
-            All
-          </button>
-          {modes.map((m) => {
-            const isActive = selectedMode === m.mode;
-            const color = getModeColor(m.mode);
-            return (
-              <button
-                key={m.mode}
-                onClick={() => setSelectedMode(isActive ? null : m.mode)}
-                className={`cursor-pointer px-3.5 py-2 rounded-xl text-xs font-medium transition-all border ${!isActive && "text-white/40 hover:text-white/70"}`}
-                style={{
-                  color: isActive ? color : undefined,
-                  borderColor: isActive ? color : "rgba(255,255,255,0.1)",
-                  backgroundColor: isActive ? `${color}15` : "transparent",
-                }}
-              >
-                {getModeName(m.mode)}
-              </button>
-            );
-          })}
-        </div>
-      </div>
 
       {/* ── Map Grid ───────────────────────────────────────── */}
       {!selectedMap && (

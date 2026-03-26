@@ -1,4 +1,5 @@
 import BrawlerDetail from "@/components/BrawlerDetail"
+import PageSidebar from "@/components/PageSidebar"
 
 export default async function BrawlerPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
@@ -6,11 +7,10 @@ export default async function BrawlerPage({ params }: { params: Promise<{ id: st
     const brawler = await res.json()
 
     return (
-        <div className="bg-black flex-1">
-            <main className="pt-32 pb-16">
-                <div className="max-w-[1200px] mx-auto px-10">
-                    <BrawlerDetail brawler={brawler} />
-                </div>
+        <div className="bg-black flex-1 flex">
+            <PageSidebar />
+            <main className="flex-1 min-w-0 pt-10 pb-16 px-8">
+                <BrawlerDetail brawler={brawler} />
             </main>
         </div>
     )
