@@ -1,6 +1,7 @@
 "use client"
 import { useState } from "react"
 import { Search } from "lucide-react"
+import Link from "next/link"
 
 interface Brawler {
     id: number
@@ -94,7 +95,7 @@ export default function BrawlerCatalog({ brawlers }: { brawlers: Brawler[] }) {
                             </div>
                             <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12 gap-2">
                                 {group?.map(brawler => (
-                                    <div key={brawler.id} className="group cursor-pointer bg-zinc-900 border border-white/5 rounded-xl overflow-hidden hover:border-white/20 transition-all duration-100">
+                                    <Link href = {`/brawlers/${brawler.id}`} key={brawler.id} className="group cursor-pointer bg-zinc-900 border border-white/5 rounded-xl overflow-hidden hover:border-white/20 transition-all duration-100">
                                         <div className="aspect-square p-1.5">
                                             <img
                                                 src={brawler.imageUrl2}
@@ -106,7 +107,7 @@ export default function BrawlerCatalog({ brawlers }: { brawlers: Brawler[] }) {
                                             <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
                                             <p className="text-[10px] font-medium text-white/70 truncate">{brawler.name}</p>
                                         </div>
-                                    </div>
+                                    </Link>
                                 ))}
                             </div>
                         </section>

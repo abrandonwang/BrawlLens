@@ -67,53 +67,35 @@ export default function BrawlerDetail({ brawler }: { brawler: Brawler }) {
                         </span>
                     </div>
                     {brawler.class.name !== "Unknown" && (
-                        <p className="text-white/30 text-sm mb-4">{brawler.class.name}</p>
+                        <p className="text-white/50 text-sm mb-4">{brawler.class.name}</p>
                     )}
-                    <p className="text-white/50 text-sm leading-relaxed max-w-xl">
+                    <p className="text-white/70 text-sm leading-relaxed max-w-xl">
                         {brawler.description}
                     </p>
                 </div>
             </div>
 
             <div className="flex items-center gap-2 mb-6">
-                {/* TODO 7: Create two tab buttons — "Star Powers" and "Gadgets"
-                    Each button should:
-                    a) On click, set activeTab to "starPowers" or "gadgets"
-                    b) Have different styling when active vs inactive
-                    
-                    Use this className pattern (same idea as the rarity buttons):
-                    - Active:   "bg-white text-black"
-                    - Inactive: "bg-zinc-900 border border-white/10 text-white/40 hover:text-white/70"
-                    
-                    Both should have these base classes:
-                    "px-4 py-2 rounded-xl text-sm font-medium transition-colors cursor-pointer"
-                */}
                 <button
                     onClick = {() => setActiveTab("starPowers")}
                     className = {`px-4 py-2 rounded-xl text-sm font-medium transition-colors cursor-pointer ${activeTab === "starPowers" ? "bg-white text-black" : "bg-zinc-900 border border-white/10 text-white/40 hover:text-white/70"}`}
                 >Star Powers</button>
+                <button
+                    onClick = {() => setActiveTab("gadgets")}
+                    className = {`px-4 py-2 rounded-xl text-sm font-medium transition-colors cursor-pointer ${activeTab === "gadgets" ? "bg-white text-black" : "bg-zinc-900 border border-white/10 text-white/40 hover:text-white/70"}`}
+                >Gadgets</button>
             </div>
 
-            {/* ABILITY CARDS */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {/* TODO 8: Map over `items` and render a card for each one.
-                    Each card should show:
-                    - The ability's image (item.imageUrl)
-                    - The ability's name (item.name)
-                    - The ability's description (item.description)
-                    
-                    Don't forget the `key` prop!
-                    
-                    Here's the card shell (CSS already done for you):
-                    
-                    <div key={???} className="flex items-start gap-4 bg-zinc-900 border border-white/5 rounded-xl p-4 hover:border-white/15 transition-colors">
-                        <img src={???} alt={???} className="w-12 h-12 object-contain shrink-0" />
+                {items.map(item => (
+                    <div key={item.id} className="flex items-start gap-4 bg-zinc-900 border border-white/5 rounded-xl p-4 hover:border-white/15 transition-colors">
+                        <img src={item.imageUrl} alt={item.name} className="w-12 h-12 object-contain shrink-0" />
                         <div>
-                            <h3 className="text-sm font-semibold text-white mb-1">{???}</h3>
-                            <p className="text-xs text-white/40 leading-relaxed">{???}</p>
+                            <h3 className="text-sm font-semibold text-white mb-1">{item.name}</h3>
+                            <p className="text-xs text-white/60 leading-relaxed">{item.description}</p>
                         </div>
                     </div>
-                */}
+                ))}
             </div>
         </div>
     )
