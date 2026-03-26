@@ -75,13 +75,13 @@ function AboutContent() {
                             </div>
                         </div>
 
-                        <div className="p-8 bg-zinc-950 rounded-[32px] text-white flex items-center justify-between group cursor-pointer">
+                        <a href="https://supercell.com/en/fan-content-policy/" target="_blank" rel="noopener noreferrer" className="p-8 bg-zinc-950 rounded-[32px] text-white flex items-center justify-between group cursor-pointer">
                             <div>
                                 <h4 className="text-lg font-bold">Fan Content Policy</h4>
                                 <p className="text-zinc-500 text-sm mt-1">Supercell is not responsible for this site.</p>
                             </div>
                             <ArrowUpRight className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-                        </div>
+                        </a>
                     </main>
                 )}
 
