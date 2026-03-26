@@ -10,7 +10,7 @@ export default async function PlayerProfile({ params }: { params: Promise<{ tag:
     const club = player.club as { name?: string }
 
     return (
-        <div className="bg-black flex-1 -mt-[80px] pt-[80px]">
+        <div className="bg-black flex-1">
             <main className="pt-32 pb-32">
                 <div className="max-w-[1200px] mx-auto px-10">
 

@@ -48,24 +48,8 @@ export default function Home() {
 
 
       {/* CONTENT LAYER */}
-      <section className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 pt-32 pb-20">
+      <section className="relative z-10 flex-1 flex flex-col items-center justify-center px-6">
         <div className="w-full max-w-[640px] mx-auto text-center">
-
-          {/* Live badge */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full border border-white/50 bg-white/40 backdrop-blur-md mb-10 shadow-sm"
-          >
-            <span className="relative flex h-1.5 w-1.5 shrink-0">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
-            </span>
-            <span className="text-[10px] font-black uppercase tracking-[0.25em] text-zinc-600">
-              Live · Brawl Stars API
-            </span>
-          </motion.div>
 
           {/* Headline */}
           <motion.div variants={stagger} initial="hidden" animate="show" className="mb-8">
@@ -97,7 +81,7 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55, delay: 0.6, ease: [0.16, 1, 0.3, 1] }}
           >
-            <div className="group flex items-center bg-white/60 backdrop-blur-xl border border-white/80 rounded-2xl px-4 sm:px-6 py-3 sm:py-4 shadow-xl shadow-indigo-500/5 focus-within:border-zinc-400 focus-within:bg-white transition-all">
+            <div className="group flex items-center bg-white/60 backdrop-blur-xl border border-white/80 rounded-2xl px-4 sm:px-6 py-3 sm:py-4 shadow-xl shadow-zinc-300/60 focus-within:border-zinc-400 focus-within:bg-white transition-all">
               <span className="text-zinc-400 font-black text-lg sm:text-xl mr-2 shrink-0">#</span>
               <input
                 type="text"

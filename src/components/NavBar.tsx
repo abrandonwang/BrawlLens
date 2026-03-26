@@ -19,12 +19,8 @@ export default function NavBar() {
 
     return (
         <>
-            <div className="fixed top-6 left-0 right-0 z-[100] flex justify-center px-6">
-                <header className={`max-w-[1200px] w-full h-[72px] rounded-full flex items-center justify-between px-8 backdrop-blur-2xl transition-all duration-500 ${
-                    isDark 
-                    ? "bg-zinc-900/95 border border-white/10 shadow-2xl" 
-                    : "bg-white/50 border border-white/80 shadow-lg shadow-mint-500/5" // New Mint Glass Light Mode
-                }`}>
+            <div className={`sticky top-0 z-[100] w-full transition-all duration-300 ${isDark ? "bg-black border-b border-white/5" : ""}`}>
+                <header className="h-[72px] flex items-center justify-between px-8">
                     
                     {/* LEFT: LOGO + SEARCH */}
                     <div className="flex items-center gap-4 shrink-0">
@@ -66,10 +62,10 @@ export default function NavBar() {
                                     <Link
                                         key={item.label}
                                         href={item.href}
-                                        className={`font-mono text-xs tracking-tight transition-all duration-200 px-3 py-1.5 rounded-sm ${
+                                        className={`font-mono text-xs font-bold tracking-tight transition-all duration-200 px-3 py-1.5 rounded-sm ${
                                             isActive
                                                 ? (isDark ? "bg-[#FFD400] text-black font-bold" : "bg-zinc-900 text-white font-bold")
-                                                : (isDark ? "text-white/50 hover:text-white/80 hover:bg-white/5" : "text-zinc-600 hover:text-zinc-900 hover:bg-black/5")
+                                                : (isDark ? "text-white/70 hover:text-white hover:bg-white/5" : "text-black hover:text-zinc-950 hover:bg-black/5")
                                         }`}
                                     >
                                         {item.label}
@@ -89,7 +85,6 @@ export default function NavBar() {
                     </div>
                 </header>
             </div>
-
             {/* SEARCH OVERLAY (Updated Colors) */}
             {isOpen && (
                 <div className="fixed inset-0 z-[200] bg-white/40 backdrop-blur-xl flex items-start justify-center pt-[15vh] px-6">
