@@ -4,7 +4,7 @@ import Link from "next/link"
 
 export default function Footer() {
     const pathname = usePathname()
-    const isDark = pathname.startsWith("/brawlers") || pathname.startsWith("/player")
+    const isDark = pathname.startsWith("/brawlers") || pathname.startsWith("/player") || pathname.startsWith("/meta")
 
     return (
         <footer className={`relative z-10 w-full border-t ${isDark ? "bg-black border-white/5" : "border-zinc-200/50"}`}>

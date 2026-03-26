@@ -7,10 +7,10 @@ export default function MetaPage() {
         <div className="max-w-[1200px] mx-auto px-10">
           <section className="mb-10">
             <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-white mb-3">
-              Meta Tier Lists
+              Maps
             </h1>
             <p className="text-white/40 text-sm leading-relaxed">
-              Win rates per brawler on every active map — powered by{" "}
+              Win rates per brawler on every active map. Powered by{" "}
               <span className="text-white/60 font-semibold">
                 battle data from top-ranked players
               </span>{" "}

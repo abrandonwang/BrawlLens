@@ -9,113 +9,68 @@ const supabase = createClient(
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const map = searchParams.get("map");
-  const mode = searchParams.get("mode");
 
-  // If a specific map is requested → return brawler win rates for that map
+  // ── Brawler win rates for a specific map ────────────────
   if (map) {
     const { data, error } = await supabase.rpc("get_map_meta", {
       map_name: map,
     });
 
-    // If the RPC doesn't exist yet, fall back to a raw query approach
     if (error) {
-      // Fallback: manual join query via two separate calls
-      const { data: battles } = await supabase
-        .from("battles")
-        .select("id")
-        .eq("map", map);
-
-      if (!battles || battles.length === 0) {
-        return NextResponse.json({ brawlers: [], totalBattles: 0 });
-      }
-
-      const battleIds = battles.map((b) => b.id);
-
-      // Supabase doesn't support GROUP BY directly via the client,
-      // so we'll fetch all battle_players for these battles and aggregate in JS
-      const allPlayers: any[] = [];
-      // Fetch in chunks of 500 battle IDs
-      for (let i = 0; i < battleIds.length; i += 500) {
-        const chunk = battleIds.slice(i, i + 500);
-        const { data: players } = await supabase
-          .from("battle_players")
-          .select("brawler_id, brawler_name, won")
-          .in("battle_id", chunk);
-        if (players) allPlayers.push(...players);
-      }
-
-      // Aggregate
-      const stats = new Map<
-        number,
-        { name: string; picks: number; wins: number }
-      >();
-      for (const p of allPlayers) {
-        const existing = stats.get(p.brawler_id) || {
-          name: p.brawler_name,
-          picks: 0,
-          wins: 0,
-        };
-        existing.picks++;
-        if (p.won) existing.wins++;
-        stats.set(p.brawler_id, existing);
-      }
-
-      const brawlers = Array.from(stats.entries())
-        .map(([id, s]) => ({
-          brawlerId: id,
-          name: s.name,
-          picks: s.picks,
-          wins: s.wins,
-          winRate: Math.round((s.wins / s.picks) * 10000) / 100,
-        }))
-        .sort((a, b) => b.winRate - a.winRate);
-
-      return NextResponse.json({
-        map,
-        totalBattles: battles.length,
-        brawlers,
-      });
+      console.error("get_map_meta error:", error.message);
+      return NextResponse.json({ map, totalBattles: 0, brawlers: [] });
     }
 
-    return NextResponse.json(data);
+    // Get total battles for this map
+    const { count } = await supabase
+      .from("battles")
+      .select("*", { count: "exact", head: true })
+      .eq("map", map);
+
+    const brawlers = (data || []).map((row: any) => ({
+      brawlerId: row.brawler_id,
+      name: row.brawler_name,
+      picks: Number(row.picks),
+      wins: Number(row.wins),
+      winRate: Number(row.win_rate),
+    }));
+
+    return NextResponse.json({
+      map,
+      totalBattles: count || 0,
+      brawlers,
+    });
   }
 
-  // If mode is specified → return maps for that mode
-  // If neither → return all modes with their maps and battle counts
-  let query = supabase
-    .from("battles")
-    .select("mode, map", { count: "exact" });
+  // ── All modes and maps with battle counts ───────────────
+  const { data, error } = await supabase.rpc("get_modes_and_maps");
 
-  if (mode) {
-    query = query.eq("mode", mode);
-  }
-
-  // Get distinct mode/map combos with counts
-  // Again, Supabase client doesn't do GROUP BY, so fetch and aggregate
-  const { data: battles, error: bErr } = await supabase
-    .from("battles")
-    .select("mode, map");
-
-  if (bErr || !battles) {
+  if (error) {
+    console.error("get_modes_and_maps error:", error.message);
     return NextResponse.json({ modes: [] });
   }
 
-  // Aggregate: mode → map → count
-  const modeMap = new Map<string, Map<string, number>>();
-  for (const b of battles) {
-    if (mode && b.mode !== mode) continue;
-    if (!modeMap.has(b.mode)) modeMap.set(b.mode, new Map());
-    const maps = modeMap.get(b.mode)!;
-    maps.set(b.map, (maps.get(b.map) || 0) + 1);
+  // Group by mode
+  const modeMap = new Map<
+    string,
+    { totalBattles: number; maps: { name: string; battles: number }[] }
+  >();
+
+  for (const row of data || []) {
+    if (!modeMap.has(row.mode)) {
+      modeMap.set(row.mode, { totalBattles: 0, maps: [] });
+    }
+    const entry = modeMap.get(row.mode)!;
+    const count = Number(row.battle_count);
+    entry.totalBattles += count;
+    entry.maps.push({ name: row.map, battles: count });
   }
 
   const modes = Array.from(modeMap.entries())
-    .map(([modeName, maps]) => ({
-      mode: modeName,
-      totalBattles: Array.from(maps.values()).reduce((a, b) => a + b, 0),
-      maps: Array.from(maps.entries())
-        .map(([mapName, count]) => ({ name: mapName, battles: count }))
-        .sort((a, b) => b.battles - a.battles),
+    .map(([mode, info]) => ({
+      mode,
+      totalBattles: info.totalBattles,
+      maps: info.maps.sort((a, b) => b.battles - a.battles),
     }))
     .sort((a, b) => b.totalBattles - a.totalBattles);
 

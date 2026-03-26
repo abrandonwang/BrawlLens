@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 
-// ─── Types ──────────────────────────────────────────────────────
 interface MapInfo {
   name: string;
   battles: number;
@@ -29,7 +28,6 @@ interface MapMeta {
   brawlers: BrawlerStat[];
 }
 
-// ─── Friendly mode names ────────────────────────────────────────
 const MODE_LABELS: Record<string, string> = {
   brawlBall: "Brawl Ball",
   gemGrab: "Gem Grab",
@@ -48,7 +46,6 @@ function getModeName(mode: string): string {
   return MODE_LABELS[mode] || mode.charAt(0).toUpperCase() + mode.slice(1);
 }
 
-// ─── Tier color based on win rate ───────────────────────────────
 function getTierInfo(winRate: number): { label: string; color: string; bg: string } {
   if (winRate >= 58) return { label: "S", color: "text-red-400", bg: "bg-red-400/10 border-red-400/20" };
   if (winRate >= 54) return { label: "A", color: "text-orange-400", bg: "bg-orange-400/10 border-orange-400/20" };
@@ -57,12 +54,10 @@ function getTierInfo(winRate: number): { label: string; color: string; bg: strin
   return { label: "D", color: "text-zinc-400", bg: "bg-zinc-400/10 border-zinc-400/20" };
 }
 
-// ─── Brawler image URL from Brawlify CDN ────────────────────────
 function getBrawlerImage(brawlerId: number): string {
   return `https://cdn.brawlify.com/brawlers/borderless/${brawlerId}.png`;
 }
 
-// ─── Map image from Brawlify CDN ────────────────────────────────
 function getMapImage(mapName: string): string {
   // This won't always match perfectly — we'd need event_id for exact mapping.
   // For now, we'll skip map images and just show names.
@@ -132,7 +127,6 @@ export default function MetaDashboard() {
 
   return (
     <div className="space-y-8">
-      {/* ── Mode Tabs ──────────────────────────────────────── */}
       <div className="flex flex-wrap gap-2">
         {modes.map((m) => (
           <button
@@ -158,7 +152,6 @@ export default function MetaDashboard() {
         ))}
       </div>
 
-      {/* ── Map Grid ───────────────────────────────────────── */}
       {currentMode && !selectedMap && (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
           {currentMode.maps.map((map) => (
@@ -178,7 +171,6 @@ export default function MetaDashboard() {
         </div>
       )}
 
-      {/* ── Back Button ────────────────────────────────────── */}
       {selectedMap && (
         <button
           onClick={() => setSelectedMap(null)}
@@ -201,7 +193,6 @@ export default function MetaDashboard() {
         </button>
       )}
 
-      {/* ── Brawler Tier List ──────────────────────────────── */}
       {selectedMap && loadingMap && (
         <div className="flex items-center justify-center py-20">
           <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin" />
@@ -225,7 +216,6 @@ export default function MetaDashboard() {
             </p>
           ) : (
             <div className="space-y-2">
-              {/* Header */}
               <div className="grid grid-cols-[48px_1fr_80px_80px_100px] gap-3 px-4 py-2 text-xs font-bold text-white/20 uppercase tracking-wider">
                 <span></span>
                 <span>Brawler</span>
@@ -243,7 +233,6 @@ export default function MetaDashboard() {
                       key={brawler.brawlerId}
                       className="grid grid-cols-[48px_1fr_80px_80px_100px] gap-3 items-center px-4 py-3 rounded-xl bg-white/[0.02] hover:bg-white/[0.05] transition-colors"
                     >
-                      {/* Brawler Icon */}
                       <div className="w-10 h-10 rounded-lg bg-white/5 overflow-hidden flex items-center justify-center">
                         <img
                           src={getBrawlerImage(brawler.brawlerId)}
@@ -255,25 +244,21 @@ export default function MetaDashboard() {
                         />
                       </div>
 
-                      {/* Name */}
                       <span className="text-white font-semibold text-sm truncate">
                         {brawler.name.charAt(0) +
                           brawler.name.slice(1).toLowerCase()}
                       </span>
 
-                      {/* Win Rate */}
                       <span
                         className={`text-right font-bold text-sm ${tier.color}`}
                       >
                         {brawler.winRate.toFixed(1)}%
                       </span>
 
-                      {/* Picks */}
                       <span className="text-right text-white/30 text-sm">
                         {brawler.picks.toLocaleString()}
                       </span>
 
-                      {/* Tier Badge */}
                       <div className="flex justify-end">
                         <span
                           className={`
