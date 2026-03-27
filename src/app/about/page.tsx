@@ -2,6 +2,7 @@
 import { useState, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { User, Layers, Map, Trophy, Zap, ArrowUpRight, Check, X } from "lucide-react"
+import { sendContactEmail } from "@/app/actions/contact"
 
 const sections = [
     { id: "about", label: "About" },
@@ -186,35 +187,7 @@ function AboutPage() {
                         </div>
 
                         <div className="max-w-2xl space-y-6">
-                            <form className="space-y-4">
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-xs font-medium text-white/50 mb-2">Name</label>
-                                        <input
-                                            placeholder="Your name"
-                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-white/30 transition-colors placeholder:text-white/20"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-medium text-white/50 mb-2">Email</label>
-                                        <input
-                                            placeholder="your@email.com"
-                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-white/30 transition-colors placeholder:text-white/20"
-                                        />
-                                    </div>
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-medium text-white/50 mb-2">Message</label>
-                                    <textarea
-                                        rows={6}
-                                        placeholder="What's on your mind?"
-                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-white/30 transition-colors resize-none placeholder:text-white/20"
-                                    />
-                                </div>
-                                <button className="px-6 py-3 bg-white text-black text-sm font-bold rounded-xl hover:bg-white/90 transition-colors">
-                                    Send message
-                                </button>
-                            </form>
+                            <ContactForm />
 
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
                                 {[
@@ -233,5 +206,74 @@ function AboutPage() {
                 )}
             </main>
         </>
+    )
+}
+
+function ContactForm() {
+    const [pending, setPending] = useState(false)
+    const [status, setStatus] = useState<"idle" | "success" | "error">("idle")
+
+    async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
+        e.preventDefault()
+        setPending(true)
+        const result = await sendContactEmail(new FormData(e.currentTarget))
+        setPending(false)
+        setStatus(result.error ? "error" : "success")
+    }
+
+    if (status === "success") {
+        return (
+            <div className="border border-white/8 rounded-2xl p-8 bg-white/[0.02] flex flex-col items-start gap-2">
+                <Check size={20} className="text-green-400" />
+                <p className="text-sm font-semibold text-white">Message sent.</p>
+                <p className="text-xs text-white/40">I'll get back to you within a few days.</p>
+            </div>
+        )
+    }
+
+    return (
+        <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+                <div>
+                    <label className="block text-xs font-medium text-white/50 mb-2">Name</label>
+                    <input
+                        name="name"
+                        placeholder="Your name"
+                        required
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-white/30 transition-colors placeholder:text-white/20"
+                    />
+                </div>
+                <div>
+                    <label className="block text-xs font-medium text-white/50 mb-2">Email</label>
+                    <input
+                        name="email"
+                        type="email"
+                        placeholder="your@email.com"
+                        required
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-white/30 transition-colors placeholder:text-white/20"
+                    />
+                </div>
+            </div>
+            <div>
+                <label className="block text-xs font-medium text-white/50 mb-2">Message</label>
+                <textarea
+                    name="message"
+                    rows={6}
+                    placeholder="What's on your mind?"
+                    required
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-white/30 transition-colors resize-none placeholder:text-white/20"
+                />
+            </div>
+            {status === "error" && (
+                <p className="text-xs text-red-400">Failed to send. Please try again.</p>
+            )}
+            <button
+                type="submit"
+                disabled={pending}
+                className="px-6 py-3 bg-white text-black text-sm font-bold rounded-xl hover:bg-white/90 transition-colors disabled:opacity-50"
+            >
+                {pending ? "Sending..." : "Send message"}
+            </button>
+        </form>
     )
 }
