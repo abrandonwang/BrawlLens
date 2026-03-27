@@ -1,10 +1,11 @@
 "use client"
 import { useState, useEffect, useRef } from "react"
-import { Search, X, User, Menu, LayoutGrid, Map, Trophy, Info, ArrowRight } from "lucide-react"
+import { Search, X, User, Menu, LayoutGrid, Map, Trophy, Info, ArrowRight, MessageSquare } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 
 const navItems = [
+    { label: "Chat", href: "/" },
     { label: "Brawlers", href: "/brawlers" },
     { label: "Maps", href: "/meta" },
     { label: "Leaderboards", href: "/leaderboards" },
@@ -12,6 +13,7 @@ const navItems = [
 ]
 
 const searchItems = [
+    { label: "Chat", href: "/", icon: MessageSquare },
     { label: "Brawlers", href: "/brawlers", icon: LayoutGrid },
     { label: "Maps", href: "/meta", icon: Map },
     { label: "Leaderboards", href: "/leaderboards", icon: Trophy },
@@ -73,7 +75,7 @@ export default function NavBar() {
                     {/* Nav */}
                     <nav className="hidden lg:flex items-center justify-center gap-1">
                         {navItems.map((item) => {
-                            const isActive = pathname.startsWith(item.href)
+                            const isActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href)
                             return (
                                 <Link
                                     key={item.label}
@@ -124,7 +126,7 @@ export default function NavBar() {
                     >
                         <nav className="flex flex-col p-1.5 gap-0.5">
                             {navItems.map((item) => {
-                                const isActive = pathname.startsWith(item.href)
+                                const isActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href)
                                 return (
                                     <Link
                                         key={item.label}

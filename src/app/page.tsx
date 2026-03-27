@@ -12,6 +12,8 @@ export default function Home() {
   const [userInput, setUserInput] = useState("")
   const [mounted, setMounted] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const [messages, setMessages] = useState<{ role: string; content: string }[]>([])
+  const [streaming, setStreaming] = useState(false)
 
   useEffect(() => { setMounted(true) }, [])
 
@@ -29,9 +31,38 @@ export default function Home() {
     }
   }
 
-  function handleSubmit() {
-    if (!userInput.trim()) return
-    // routing logic will go here
+  async function handleSubmit() {
+    if (!userInput.trim() || streaming) return
+    
+    const userMessage = { role: "user", content: userInput.trim() };
+    const newMessage = [...messages, userMessage];
+    setMessages(newMessage);
+    setUserInput("");
+    setStreaming(true);
+
+    const res = await fetch("/api/chat", {
+      method: "POST",
+      headers: {
+        "Content-type": "application/json"
+      },
+      body: JSON.stringify({ messages: newMessage }),
+    });
+
+    const reader = res.body!.getReader();
+    const decoder = new TextDecoder();
+    let fullText = "";
+
+    setMessages([...newMessage, { role: "assistant", content: "" }])
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      fullText += decoder.decode(value);
+      setMessages([...newMessage, { role: "assistant", content: fullText }])
+    }
+
+    setStreaming(false)
   }
 
   return (
@@ -56,6 +87,22 @@ export default function Home() {
               </button>
             ))}
           </div>
+
+          {messages.length > 0 && (
+            <div className="w-full max-w-xl mb-6 space-y-3 overflow-y-auto max-h-[60vh]">
+              {messages.map((msg, i) => (
+                <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                  <div className={`max-w-[85%] px-4 py-2.5 text-sm leading-relaxed rounded-2xl ${
+                    msg.role === "user"
+                      ? "bg-white/[0.08] text-white"
+                      : "text-white/80"
+                  }`}>
+                    {msg.content}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* Input */}
           <div className="relative border border-white/10 bg-white/[0.04] focus-within:border-white/20 transition-colors">
