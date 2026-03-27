@@ -34,7 +34,7 @@ export default function BrawlerPageClient({ brawlers, newest }: Props) {
     )
 
     return (
-        <div className="flex-1 flex flex-col lg:flex-row min-h-0">
+        <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
             <BrawlersSidebar
                 rarities={rarities}
                 activeRarity={activeRarity}
@@ -42,7 +42,7 @@ export default function BrawlerPageClient({ brawlers, newest }: Props) {
                 search={search}
                 setSearch={setSearch}
             />
-            <main className="flex-1 min-w-0 pt-10 pb-16 px-8">
+            <main className="flex-1 min-w-0 pt-6 pb-6 px-8 overflow-y-auto">
                 <section className="mb-10">
                     <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-white mb-3">
                         All {brawlers.length - 1} Brawlers (Mar 2026)

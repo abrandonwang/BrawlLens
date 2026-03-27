@@ -39,7 +39,7 @@ const features = [
 
 export default function About() {
     return (
-        <div className="bg-black flex-1 flex flex-col lg:flex-row">
+        <div className="bg-black h-[calc(100dvh-52px)] flex flex-col lg:flex-row overflow-hidden">
             <Suspense>
                 <AboutPage />
             </Suspense>
@@ -54,7 +54,7 @@ function AboutPage() {
 
     return (
         <>
-            <aside className="w-full lg:w-64 shrink-0 lg:sticky lg:top-0 h-auto lg:h-[calc(100dvh-52px)] border-b lg:border-b-0 lg:border-r border-white/10 py-5 lg:py-10 px-5 flex flex-row lg:flex-col gap-1.5 overflow-x-auto lg:overflow-y-auto">
+            <aside className="w-full lg:w-64 shrink-0 h-auto lg:h-full border-b lg:border-b-0 lg:border-r border-white/10 py-5 lg:py-10 px-5 flex flex-row lg:flex-col gap-1.5 overflow-x-auto lg:overflow-y-auto">
                 {sections.map(({ id, label }) => (
                     <button
                         key={id}
@@ -66,7 +66,7 @@ function AboutPage() {
                 ))}
             </aside>
 
-            <main className="flex-1 min-w-0 pt-10 pb-20 px-12">
+            <main className="flex-1 min-w-0 pt-6 pb-6 px-12 overflow-y-auto">
                 <div className="flex items-center gap-2 text-xs text-white/30 mb-10">
                     <span>BrawlLens</span>
                     <span>›</span>

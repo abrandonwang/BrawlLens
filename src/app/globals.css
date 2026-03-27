@@ -81,5 +81,5 @@ body.home-page {
 }
 
 #nprogress .bar {
-  top: 52px !important;
+  top: 0 !important;
 }

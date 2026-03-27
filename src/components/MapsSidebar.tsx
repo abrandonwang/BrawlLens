@@ -54,7 +54,7 @@ const linkActive = `${linkBase} bg-[#FFD400] text-black`
 
 export default function MapsSidebar({ modes, selectedMode, setSelectedMode, mapSearch, setMapSearch }: Props) {
   return (
-    <aside className="w-full lg:w-64 shrink-0 lg:sticky lg:top-0 h-auto lg:h-[calc(100dvh-52px)] border-b lg:border-b-0 lg:border-r border-white/10 py-5 lg:py-10 px-5 flex flex-row lg:flex-col gap-1.5 overflow-x-auto lg:overflow-y-auto">
+    <aside className="w-full lg:w-64 shrink-0 h-auto lg:h-full border-b lg:border-b-0 lg:border-r border-white/10 py-5 lg:py-10 px-5 flex flex-row lg:flex-col gap-1.5 overflow-x-auto lg:overflow-y-auto">
       {/* Search */}
       <div className="flex items-center gap-2.5 bg-white/10 border border-white/20 rounded px-4 py-2.5 mb-4">
         <Search size={13} className="text-white/60 shrink-0" />
