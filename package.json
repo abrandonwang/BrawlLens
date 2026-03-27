@@ -6,7 +6,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "collect": "tsx scripts/collect-battles.ts",
+    "collector:start": "pm2 start ecosystem.config.js",
+    "collector:stop": "pm2 stop brawllens-collector",
+    "collector:restart": "pm2 restart brawllens-collector",
+    "collector:logs": "pm2 logs brawllens-collector",
+    "collector:status": "pm2 status"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.80.0",
@@ -20,6 +26,7 @@
     "nextjs-toploader": "^3.9.17",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "react-markdown": "^10.1.0",
     "resend": "^6.9.4",
     "three": "^0.183.2",
     "tsx": "^4.21.0"

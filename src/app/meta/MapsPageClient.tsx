@@ -7,18 +7,20 @@ import MapsSidebar from "@/components/MapsSidebar"
 interface ModeInfo {
   mode: string
   totalBattles: number
+  maps: { name: string; battles: number }[]
 }
 
 export default function MapsPageClient() {
   const [modes, setModes] = useState<ModeInfo[]>([])
+  const [loading, setLoading] = useState(true)
   const [selectedMode, setSelectedMode] = useState<string | null>(null)
   const [mapSearch, setMapSearch] = useState("")
 
   useEffect(() => {
     fetch("/api/meta")
       .then(r => r.json())
-      .then(data => setModes(data.modes || []))
-      .catch(() => {})
+      .then(data => { setModes(data.modes || []); setLoading(false) })
+      .catch(() => setLoading(false))
   }, [])
 
   return (
@@ -32,10 +34,10 @@ export default function MapsPageClient() {
       />
       <main className="flex-1 min-w-0 pt-6 pb-6 px-8 overflow-y-auto">
         <section className="mb-10">
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-white mb-3">Brawl Stars Maps | Current Rotations</h1>
-          <p className="text-white/60 text-sm leading-relaxed">Browse all active maps across game modes with best brawlers and win rates for each map. Powered by <span className="text-white/80 font-semibold">battle data from top-ranked players</span> across 6 regions.</p>
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-white mb-3">Maps</h1>
+          <p className="text-white/40 text-sm leading-relaxed">Win rates per brawler across every map, powered by battle data from top-ranked players across 6 regions.</p>
         </section>
-        <MetaDashboard selectedMode={selectedMode} mapSearch={mapSearch} />
+        <MetaDashboard modes={modes} loading={loading} selectedMode={selectedMode} mapSearch={mapSearch} />
       </main>
     </>
   )

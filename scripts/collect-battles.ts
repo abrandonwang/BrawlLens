@@ -269,26 +269,34 @@ function printStats(processed: number, total: number) {
   );
 }
 
-// ─── Main ───────────────────────────────────────────────────────
-async function main() {
-  console.log("=== BrawlLens Battle Collector (v2 — Optimized) ===\n");
+// ─── Reset all tags for next cycle ──────────────────────────────
+async function resetAllTags() {
+  console.log("\n  Resetting all tags for next cycle...");
+  const { error } = await supabase
+    .from("harvested_tags")
+    .update({ processed_at: null })
+    .not("player_tag", "is", null);
+  if (error) console.error(`  Reset error: ${error.message}`);
+  else console.log("  Tags reset. Starting new cycle.\n");
+}
 
+// ─── Run one full pass ───────────────────────────────────────────
+async function runCycle(cycle: number) {
   const { count: totalCount } = await supabase
     .from("harvested_tags")
     .select("*", { count: "exact", head: true });
 
-  const { count: processedCount } = await supabase
-    .from("harvested_tags")
-    .select("*", { count: "exact", head: true })
-    .not("processed_at", "is", null);
-
   const total = totalCount || 0;
-  let processed = processedCount || 0;
+  let processed = 0;
 
-  console.log(`Total: ${total} | Done: ${processed} | Remaining: ${total - processed}`);
-  console.log(`Concurrency: ${CONCURRENCY} | DB flush every: ${DB_BATCH_SIZE} tags\n`);
+  console.log(`\n=== Cycle ${cycle} | ${total} tags | ${new Date().toISOString()} ===\n`);
 
   startTime = Date.now();
+  totalBattlesSaved = 0;
+  totalPlayersSaved = 0;
+  totalRequests = 0;
+  total429s = 0;
+  totalSkipped = 0;
 
   while (true) {
     const tags = await getUnprocessedTags(1000);
@@ -300,8 +308,6 @@ async function main() {
 
     for (let i = 0; i < tags.length; i += CONCURRENCY) {
       const group = tags.slice(i, i + CONCURRENCY);
-
-      // Fire concurrent requests
       const results = await Promise.all(group.map((tag) => processTag(tag)));
 
       for (let k = 0; k < results.length; k++) {
@@ -310,7 +316,6 @@ async function main() {
         accTags.push(group[k]);
       }
 
-      // Flush when we've accumulated enough
       if (accTags.length >= DB_BATCH_SIZE) {
         await flushToDB(accBattles, accPlayers, accTags);
         processed += accTags.length;
@@ -321,23 +326,29 @@ async function main() {
       }
     }
 
-    // Flush remainder
     if (accTags.length > 0) {
       await flushToDB(accBattles, accPlayers, accTags);
       processed += accTags.length;
       printStats(processed, total);
-      accBattles = [];
-      accPlayers = [];
-      accTags = [];
     }
   }
 
   const elapsed = (Date.now() - startTime) / 1000;
-  console.log("\n=== DONE ===");
-  console.log(`Time: ${Math.floor(elapsed / 3600)}h ${Math.floor((elapsed % 3600) / 60)}m`);
-  console.log(`API requests: ${totalRequests} | 429s: ${total429s}`);
-  console.log(`Battles: ${totalBattlesSaved} | Player rows: ${totalPlayersSaved}`);
-  console.log(`Skipped: ${totalSkipped}`);
+  console.log(`\n=== Cycle ${cycle} complete | ${Math.floor(elapsed / 3600)}h ${Math.floor((elapsed % 3600) / 60)}m ===`);
+  console.log(`Battles: ${totalBattlesSaved} | Players: ${totalPlayersSaved} | 429s: ${total429s} | Skipped: ${totalSkipped}`);
+}
+
+// ─── Main (runs forever) ─────────────────────────────────────────
+async function main() {
+  console.log("=== BrawlLens Battle Collector — Continuous Mode ===");
+  console.log(`Concurrency: ${CONCURRENCY} | Flush every: ${DB_BATCH_SIZE} tags\n`);
+
+  let cycle = 1;
+  while (true) {
+    await runCycle(cycle);
+    await resetAllTags();
+    cycle++;
+  }
 }
 
 main().catch(console.error);
