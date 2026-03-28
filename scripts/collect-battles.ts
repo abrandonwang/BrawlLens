@@ -367,13 +367,21 @@ async function runCycle(cycle: number) {
 }
 
 // ─── Main (runs forever) ─────────────────────────────────────────
+async function leaderboardLoop() {
+  while (true) {
+    await fetchAndSaveLeaderboards();
+    await sleep(5 * 60 * 1000);
+  }
+}
+
 async function main() {
   console.log("=== BrawlLens Battle Collector — Continuous Mode ===");
   console.log(`Concurrency: ${CONCURRENCY} | Flush every: ${DB_BATCH_SIZE} tags\n`);
 
+  leaderboardLoop();
+
   let cycle = 1;
   while (true) {
-    await fetchAndSaveLeaderboards();
     await runCycle(cycle);
     await resetAllTags();
     cycle++;
