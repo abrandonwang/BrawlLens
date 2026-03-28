@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic"
 
 import { Trophy } from "lucide-react"
+import { createClient } from "@supabase/supabase-js"
 
 const REGIONS = [
   { code: "global", label: "Global" },
@@ -12,36 +13,31 @@ const REGIONS = [
 ]
 
 interface Player {
-  tag: string
-  name: string
-  trophies: number
   rank: number
-  club?: { name: string }
+  player_tag: string
+  player_name: string
+  trophies: number
+  club_name: string | null
+  updated_at: string
 }
 
 async function fetchLeaderboard(region: string): Promise<Player[]> {
-  try {
-    const res = await fetch(
-      `https://api.brawlstars.com/v1/rankings/${region}/players`,
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.BRAWL_API_KEY}`,
-          "Cache-Control": "no-cache",
-          "Pragma": "no-cache",
-        },
-        cache: "no-store",
-      }
-    )
-    if (!res.ok && res.status !== 304) {
-      console.error(`Leaderboard fetch failed [${region}]: ${res.status} ${res.statusText}`)
-      return []
-    }
-    const data = await res.json()
-    return data.items || []
-  } catch (e) {
-    console.error(`Leaderboard fetch error [${region}]:`, e)
+  const supabase = createClient(
+    process.env.SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_KEY!
+  )
+  const { data, error } = await supabase
+    .from("leaderboards")
+    .select("rank, player_tag, player_name, trophies, club_name, updated_at")
+    .eq("region", region)
+    .order("rank", { ascending: true })
+    .limit(50)
+
+  if (error) {
+    console.error(`Leaderboard fetch error [${region}]:`, error.message)
     return []
   }
+  return data || []
 }
 
 export default async function LeaderboardsPage() {
@@ -49,7 +45,9 @@ export default async function LeaderboardsPage() {
     REGIONS.map(async (r) => ({ ...r, players: await fetchLeaderboard(r.code) }))
   )
 
-  const global = allData[0]
+  const updatedAt = allData[0]?.players[0]?.updated_at
+    ? new Date(allData[0].players[0].updated_at).toLocaleString()
+    : null
 
   return (
     <div className="bg-black h-[calc(100dvh-52px)] flex flex-col lg:flex-row overflow-hidden">
@@ -62,19 +60,21 @@ export default async function LeaderboardsPage() {
             {allData.map((r) => (
               <div key={r.code} className="flex items-center justify-between px-3 py-1.5 text-xs font-semibold text-white/50 whitespace-nowrap">
                 <span>{r.label}</span>
-                <span className="text-white/25 text-[10px]">{r.players.length} players</span>
+                <span className="text-white/25 text-[10px]">{r.players.length}</span>
               </div>
             ))}
           </div>
+          {updatedAt && (
+            <p className="text-[10px] text-white/20 mt-6 px-3">Updated {updatedAt}</p>
+          )}
         </div>
       </aside>
 
       {/* Main */}
       <main className="flex-1 min-w-0 overflow-y-auto pt-6 pb-6 px-8">
-
         <section className="mb-10">
           <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-white mb-3">Leaderboards</h1>
-          <p className="text-white/40 text-sm leading-relaxed">Top 200 players globally and by region, ranked by trophies.</p>
+          <p className="text-white/40 text-sm leading-relaxed">Top 50 players by region, ranked by trophies.</p>
         </section>
 
         <div className="space-y-12">
@@ -86,10 +86,9 @@ export default async function LeaderboardsPage() {
               </div>
 
               {region.players.length === 0 ? (
-                <p className="text-white/25 text-sm py-8">No data available.</p>
+                <p className="text-white/25 text-sm py-8">No data yet — collector hasn&apos;t run for this region.</p>
               ) : (
                 <div className="space-y-1">
-                  {/* Header */}
                   <div className="grid grid-cols-[32px_1fr_auto_auto] gap-4 px-3 py-2 text-[10px] font-bold text-white/30 uppercase tracking-widest">
                     <span>#</span>
                     <span>Player</span>
@@ -97,24 +96,24 @@ export default async function LeaderboardsPage() {
                     <span className="text-right">Trophies</span>
                   </div>
 
-                  {region.players.slice(0, 50).map((player, i) => (
+                  {region.players.map((player, i) => (
                     <div
-                      key={player.tag}
+                      key={player.player_tag}
                       className="grid grid-cols-[32px_1fr_auto_auto] gap-4 items-center px-3 py-2.5 bg-white/[0.02] hover:bg-white/[0.04] transition-colors"
                     >
                       <span className={`text-xs font-black tabular-nums ${
                         i === 0 ? "text-[#FFD400]" : i === 1 ? "text-white/60" : i === 2 ? "text-orange-400/70" : "text-white/25"
                       }`}>
-                        {i + 1}
+                        {player.rank}
                       </span>
 
                       <div className="min-w-0">
-                        <p className="text-sm font-semibold text-white truncate">{player.name}</p>
-                        <p className="text-[10px] text-white/25 font-mono">{player.tag}</p>
+                        <p className="text-sm font-semibold text-white truncate">{player.player_name}</p>
+                        <p className="text-[10px] text-white/25 font-mono">{player.player_tag}</p>
                       </div>
 
                       <span className="hidden sm:block text-xs text-white/30 truncate max-w-[140px]">
-                        {player.club?.name ?? "—"}
+                        {player.club_name ?? "—"}
                       </span>
 
                       <div className="flex items-center gap-1.5 justify-end">

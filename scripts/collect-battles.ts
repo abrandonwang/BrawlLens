@@ -269,6 +269,34 @@ function printStats(processed: number, total: number) {
   );
 }
 
+// ─── Leaderboards ───────────────────────────────────────────────
+const LEADERBOARD_REGIONS = ["global", "US", "KR", "BR", "DE", "JP"];
+
+async function fetchAndSaveLeaderboards() {
+  console.log("  Updating leaderboards...");
+  for (const region of LEADERBOARD_REGIONS) {
+    const data = await apiFetch(`/rankings/${region}/players`);
+    if (!data?.items?.length) {
+      console.log(`    [${region}] no data`);
+      continue;
+    }
+    const rows = data.items.map((p: any, i: number) => ({
+      region,
+      rank: i + 1,
+      player_tag: p.tag,
+      player_name: p.name,
+      trophies: p.trophies,
+      club_name: p.club?.name ?? null,
+      updated_at: new Date().toISOString(),
+    }));
+    const { error } = await supabase
+      .from("leaderboards")
+      .upsert(rows, { onConflict: "region,rank" });
+    if (error) console.error(`    [${region}] DB error: ${error.message}`);
+    else console.log(`    [${region}] saved ${rows.length} players`);
+  }
+}
+
 // ─── Reset all tags for next cycle ──────────────────────────────
 async function resetAllTags() {
   console.log("\n  Resetting all tags for next cycle...");
@@ -345,6 +373,7 @@ async function main() {
 
   let cycle = 1;
   while (true) {
+    await fetchAndSaveLeaderboards();
     await runCycle(cycle);
     await resetAllTags();
     cycle++;
