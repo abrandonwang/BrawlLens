@@ -1,7 +1,7 @@
 "use client"
 import { useState, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
-import { User, Layers, Map, Trophy, Zap, ArrowUpRight, Check, X } from "lucide-react"
+import { ArrowUpRight } from "lucide-react"
 import { sendContactEmail } from "@/app/actions/contact"
 
 const sections = [
@@ -14,32 +14,9 @@ const linkBase = "text-xs font-semibold tracking-tight transition-all duration-2
 const linkInactive = `${linkBase} text-white/50 hover:text-white hover:bg-white/5`
 const linkActive = `${linkBase} bg-[#FFD400] text-black`
 
-const features = [
-    {
-        icon: User,
-        title: "Player Profiles",
-        description: "Look up any player by tag. See trophies, rank, club, and a full breakdown of every brawler they own sorted by performance.",
-    },
-    {
-        icon: Layers,
-        title: "Brawler Catalog",
-        description: "Every brawler in the game, organized by rarity. Tap into any brawler to see their star powers, gadgets, and description.",
-    },
-    {
-        icon: Map,
-        title: "Map Meta",
-        description: "Win rates per brawler across every active map and game mode, powered by battle data collected from top-ranked players across 6 regions.",
-    },
-    {
-        icon: Trophy,
-        title: "Leaderboards",
-        description: "Global and regional rankings updated in real time. See who's at the top and how you stack up.",
-    },
-]
-
 export default function About() {
     return (
-        <div className="bg-black h-[calc(100dvh-52px)] flex flex-col lg:flex-row overflow-hidden">
+        <div className="bg-black h-[calc(100dvh-52px)] flex flex-col lg:flex-row overflow-hidden font-sans antialiased text-white/90">
             <Suspense>
                 <AboutPage />
             </Suspense>
@@ -54,6 +31,7 @@ function AboutPage() {
 
     return (
         <>
+            {/* Sidebar remains exactly the same as requested */}
             <aside className="w-full lg:w-64 shrink-0 h-auto lg:h-full border-b lg:border-b-0 lg:border-r border-white/10 py-5 lg:py-10 px-5 flex flex-row lg:flex-col gap-1.5 overflow-x-auto lg:overflow-y-auto">
                 {sections.map(({ id, label }) => (
                     <button
@@ -66,144 +44,129 @@ function AboutPage() {
                 ))}
             </aside>
 
-            <main className="flex-1 min-w-0 pt-6 pb-6 px-12 overflow-y-auto">
-                <div className="flex items-center gap-2 text-xs text-white/30 mb-10">
-                    <span>BrawlLens</span>
-                    <span>›</span>
-                    <span className="text-white/60">{activeSection?.label}</span>
-                </div>
+            {/* Redesigned minimal documentation-style content */}
+            <main className="flex-1 overflow-y-auto selection:bg-[#FFD400] selection:text-black">
+                <div className="max-w-2xl mx-auto py-16 px-8 lg:px-12">
+                    
+                    {/* Breadcrumbs */}
+                    <nav className="flex items-center gap-2 text-[13px] text-white/40 mb-12 border-b border-white/10 pb-4">
+                        <span className="hover:text-white/60 cursor-default">BrawlLens</span>
+                        <span className="text-white/20">/</span>
+                        <span className="text-white/80">{activeSection?.label}</span>
+                    </nav>
 
-                {/* About */}
-                {active === "about" && (
-                    <div className="space-y-14">
-                        <div>
-                            <p className="text-xs text-[#FFD400] font-bold mb-4 tracking-widest uppercase">Why this exists</p>
-                            <h1 className="text-4xl font-black text-white tracking-tight leading-tight mb-5">
-                                A stat site that doesn't get in your way.
-                            </h1>
-                            <p className="text-white/60 leading-relaxed text-base">
-                                I built BrawlLens because every other Brawl Stars tracker was slow, cluttered with ads, or buried the data I actually wanted. This is my attempt at something cleaner — fast, focused, and free.
-                            </p>
-                        </div>
+                    {/* About Section */}
+                    {active === "about" && (
+                        <article className="space-y-10">
+                            <section>
+                                <h1 className="text-3xl font-bold tracking-tight mb-6">Introduction</h1>
+                                <p className="text-[15px] leading-7 text-white/70 mb-4">
+                                    BrawlLens is a specialized statistics platform designed for Brawl Stars players. 
+                                    Unlike most trackers, this site prioritizes performance and clarity, removing ads 
+                                    and unnecessary visual clutter to provide direct access to game data.
+                                </p>
+                                <p className="text-[15px] leading-7 text-white/70">
+                                    The project is maintained as a free resource for the community, pulling live data 
+                                    directly from official channels and independent battle collectors.
+                                </p>
+                            </section>
 
-                        <div>
-                            <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest mb-5">What's inside</p>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
-                                {features.map(({ icon: Icon, title, description }) => (
-                                    <div key={title} className="border border-white/8 rounded p-5 bg-white/[0.02] hover:bg-white/[0.04] transition-colors">
-                                        <div className="flex items-center gap-3 mb-3">
-                                            <div className="w-8 h-8 rounded bg-[#FFD400]/10 border border-[#FFD400]/20 flex items-center justify-center shrink-0">
-                                                <Icon size={15} className="text-[#FFD400]" />
-                                            </div>
-                                            <h3 className="text-sm font-semibold text-white">{title}</h3>
+                            <section className="space-y-6">
+                                <h2 className="text-xl font-semibold border-b border-white/10 pb-2">Core Features</h2>
+                                <div className="space-y-6">
+                                    {[
+                                        { title: "Player Profiles", desc: "Detailed breakdown of trophies, rankings, and brawler-specific performance metrics." },
+                                        { title: "Brawler Catalog", desc: "A clean database of star powers, gadgets, and technical descriptions for every brawler." },
+                                        { title: "Map Meta", desc: "Win rate analysis across active maps and modes using global high-rank data." },
+                                        { title: "Leaderboards", desc: "Real-time global and regional rankings for competitive tracking." },
+                                    ].map(f => (
+                                        <div key={f.title}>
+                                            <h3 className="text-[15px] font-bold text-white mb-1">{f.title}</h3>
+                                            <p className="text-[14px] text-white/50 leading-6">{f.desc}</p>
                                         </div>
-                                        <p className="text-xs text-white/50 leading-relaxed">{description}</p>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="border border-white/8 rounded p-5 bg-white/[0.02] flex items-center gap-4">
-                            <div className="w-8 h-8 rounded bg-white/10 flex items-center justify-center shrink-0">
-                                <Zap size={15} className="text-white/60" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <p className="text-sm font-semibold text-white">Live data, always</p>
-                                <p className="text-xs text-white/40 mt-0.5">Everything pulls from the official Brawl Stars API and my own battle collector. No stale cache.</p>
-                            </div>
-                        </div>
-
-                        <div className="border border-white/8 rounded-md p-4 flex items-center justify-between">
-                            <div>
-                                <p className="text-xs font-medium text-white">Fan Content Policy</p>
-                                <p className="text-xs text-white/40 mt-0.5">Supercell is not responsible for this site.</p>
-                            </div>
-                            <a
-                                href="https://supercell.com/en/fan-content-policy/"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-1 text-xs text-white/40 hover:text-white transition-colors shrink-0"
-                            >
-                                View <ArrowUpRight size={12} />
-                            </a>
-                        </div>
-                    </div>
-                )}
-
-                {/* Privacy */}
-                {active === "privacy-policy" && (
-                    <div className="space-y-10">
-                        <div>
-                            <p className="text-xs text-[#FFD400] font-bold mb-4 tracking-widest uppercase">Zero tracking</p>
-                            <h1 className="text-4xl font-black text-white tracking-tight mb-4">Your data stays yours.</h1>
-                            <p className="text-white/60 leading-relaxed">BrawlLens doesn't collect personal data, run ads, or share anything with third parties.</p>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl">
-                            <div className="border border-white/8 rounded p-5 bg-white/[0.02]">
-                                <p className="text-xs font-bold text-white/40 uppercase tracking-widest mb-4">What I don't collect</p>
-                                <ul className="space-y-2.5">
-                                    {[
-                                        "Your IP address",
-                                        "Browser or device info",
-                                        "Browsing behavior",
-                                        "Cookies of any kind",
-                                        "Analytics or tracking pixels",
-                                        "Personal information",
-                                    ].map(item => (
-                                        <li key={item} className="flex items-center gap-2.5 text-sm text-white/60">
-                                            <X size={13} className="text-red-400/70 shrink-0" />
-                                            {item}
-                                        </li>
                                     ))}
-                                </ul>
+                                </div>
+                            </section>
+
+                            <section className="pt-6 border-t border-white/10">
+                                <h2 className="text-sm font-bold uppercase tracking-wider text-white/30 mb-4">Legal</h2>
+                                <p className="text-xs text-white/40 leading-5 italic">
+                                    This content is not affiliated with, endorsed, sponsored, or specifically approved by Supercell 
+                                    and Supercell is not responsible for it. For more information see Supercell’s Fan Content Policy.
+                                </p>
+                                <a 
+                                    href="https://supercell.com/en/fan-content-policy/" 
+                                    className="inline-flex items-center gap-1 text-xs text-[#FFD400] mt-3 hover:underline"
+                                >
+                                    Fan Content Policy <ArrowUpRight size={12} />
+                                </a>
+                            </section>
+                        </article>
+                    )}
+
+                    {/* Privacy Section */}
+                    {active === "privacy-policy" && (
+                        <article className="space-y-10">
+                            <section>
+                                <h1 className="text-3xl font-bold tracking-tight mb-6">Privacy Policy</h1>
+                                <p className="text-[15px] leading-7 text-white/70">
+                                    BrawlLens is designed to be as non-intrusive as possible. We do not use trackers, 
+                                    third-party analytics, or persistent cookies.
+                                </p>
+                            </section>
+
+                            <div className="grid grid-cols-1 gap-10">
+                                <section>
+                                    <h2 className="text-lg font-semibold mb-4 text-white/90">Data Collection</h2>
+                                    <p className="text-[14px] text-white/50 leading-relaxed mb-4">
+                                        We do not collect or store any of the following information:
+                                    </p>
+                                    <ul className="list-disc list-inside space-y-2 text-[14px] text-white/50 ml-2">
+                                        <li>IP addresses or geolocation data</li>
+                                        <li>Browser or hardware specifications</li>
+                                        <li>Behavioral analytics or clickstream data</li>
+                                        <li>Personal identity information</li>
+                                    </ul>
+                                </section>
+
+                                <section>
+                                    <h2 className="text-lg font-semibold mb-4 text-white/90">Local Storage</h2>
+                                    <p className="text-[14px] text-white/50 leading-relaxed">
+                                        Any "saved" data, such as your player tag or favorite brawlers, is stored 
+                                        strictly within your browser's local storage. This data is never transmitted 
+                                        to our servers and remains entirely under your control.
+                                    </p>
+                                </section>
                             </div>
+                        </article>
+                    )}
 
-                            <div className="border border-white/8 rounded p-5 bg-white/[0.02]">
-                                <p className="text-xs font-bold text-white/40 uppercase tracking-widest mb-4">What I do store</p>
-                                <ul className="space-y-2.5">
-                                    {[
-                                        "Player tags you choose to save (locally on your device only)",
-                                        "Nothing else.",
-                                    ].map(item => (
-                                        <li key={item} className="flex items-start gap-2.5 text-sm text-white/60">
-                                            <Check size={13} className="text-green-400/70 shrink-0 mt-0.5" />
-                                            {item}
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                )}
+                    {/* Contact Section */}
+                    {active === "contact" && (
+                        <article className="space-y-10">
+                            <section>
+                                <h1 className="text-3xl font-bold tracking-tight mb-6">Contact</h1>
+                                <p className="text-[15px] leading-7 text-white/70">
+                                    Feedback and bug reports are welcome. I typically respond to inquiries 
+                                    within 48 hours.
+                                </p>
+                            </section>
 
-                {/* Contact */}
-                {active === "contact" && (
-                    <div className="space-y-10">
-                        <div>
-                            <p className="text-xs text-[#FFD400] font-bold mb-4 tracking-widest uppercase">Get in touch</p>
-                            <h1 className="text-4xl font-black text-white tracking-tight mb-2">I'm listening.</h1>
-                            <p className="text-white/50 text-sm">Found a bug, have a feature idea, or just want to say hi?</p>
-                        </div>
-
-                        <div className="max-w-2xl space-y-6">
                             <ContactForm />
 
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-                                {[
-                                    { label: "Bug reports", note: "I'll investigate and push a fix as soon as I can." },
-                                    { label: "Feature requests", note: "I read every one. No promises, but I do consider them." },
-                                    { label: "General feedback", note: "Always appreciated. Good or bad." },
-                                ].map(({ label, note }) => (
-                                    <div key={label} className="border border-white/8 rounded p-4 bg-white/[0.02]">
-                                        <p className="text-xs font-semibold text-white/70 mb-1">{label}</p>
-                                        <p className="text-xs text-white/40 leading-relaxed">{note}</p>
-                                    </div>
-                                ))}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-8 pt-8 border-t border-white/5">
+                                <div>
+                                    <h4 className="text-xs font-bold text-white uppercase mb-2">Technical Issues</h4>
+                                    <p className="text-xs text-white/40 leading-5">Please include your player tag and browser version if reporting a visual bug.</p>
+                                </div>
+                                <div>
+                                    <h4 className="text-xs font-bold text-white uppercase mb-2">Feature Requests</h4>
+                                    <p className="text-xs text-white/40 leading-5">Suggestions for map data visualizations or brawler metrics are highly encouraged.</p>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                )}
+                        </article>
+                    )}
+                </div>
             </main>
         </>
     )
@@ -223,57 +186,58 @@ function ContactForm() {
 
     if (status === "success") {
         return (
-            <div className="border border-white/8 rounded p-8 bg-white/[0.02] flex flex-col items-start gap-2">
-                <Check size={20} className="text-green-400" />
-                <p className="text-sm font-semibold text-white">Message sent.</p>
-                <p className="text-xs text-white/40">I'll get back to you within a few days.</p>
+            <div className="bg-white/5 border border-white/10 p-6 rounded text-sm text-white/70">
+                <p className="font-bold text-white mb-1">Message received.</p>
+                <p>Thank you for reaching out.</p>
             </div>
         )
     }
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-                <div>
-                    <label className="block text-xs font-medium text-white/50 mb-2">Name</label>
-                    <input
-                        name="name"
-                        placeholder="Your name"
-                        required
-                        className="w-full bg-white/5 border border-white/10 rounded-md px-4 py-3 text-sm text-white outline-none focus:border-white/30 transition-colors placeholder:text-white/20"
-                    />
+        <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                        <label className="text-[13px] font-medium text-white/50">Name</label>
+                        <input
+                            name="name"
+                            required
+                            className="w-full bg-white/[0.03] border border-white/10 rounded px-3 py-2 text-sm outline-none focus:border-white/30 transition-colors"
+                        />
+                    </div>
+                    <div className="space-y-1.5">
+                        <label className="text-[13px] font-medium text-white/50">Email</label>
+                        <input
+                            name="email"
+                            type="email"
+                            required
+                            className="w-full bg-white/[0.03] border border-white/10 rounded px-3 py-2 text-sm outline-none focus:border-white/30 transition-colors"
+                        />
+                    </div>
                 </div>
-                <div>
-                    <label className="block text-xs font-medium text-white/50 mb-2">Email</label>
-                    <input
-                        name="email"
-                        type="email"
-                        placeholder="your@email.com"
+                <div className="space-y-1.5">
+                    <label className="text-[13px] font-medium text-white/50">Message</label>
+                    <textarea
+                        name="message"
+                        rows={5}
                         required
-                        className="w-full bg-white/5 border border-white/10 rounded-md px-4 py-3 text-sm text-white outline-none focus:border-white/30 transition-colors placeholder:text-white/20"
+                        className="w-full bg-white/[0.03] border border-white/10 rounded px-3 py-2 text-sm outline-none focus:border-white/30 transition-colors resize-none"
                     />
                 </div>
             </div>
-            <div>
-                <label className="block text-xs font-medium text-white/50 mb-2">Message</label>
-                <textarea
-                    name="message"
-                    rows={6}
-                    placeholder="What's on your mind?"
-                    required
-                    className="w-full bg-white/5 border border-white/10 rounded-md px-4 py-3 text-sm text-white outline-none focus:border-white/30 transition-colors resize-none placeholder:text-white/20"
-                />
+
+            <div className="flex items-center gap-4">
+                <button
+                    type="submit"
+                    disabled={pending}
+                    className="bg-white text-black px-4 py-2 text-[13px] font-bold rounded hover:bg-white/90 transition-colors disabled:opacity-50"
+                >
+                    {pending ? "Sending..." : "Submit Message"}
+                </button>
+                {status === "error" && (
+                    <span className="text-xs text-red-400">An error occurred. Please try again.</span>
+                )}
             </div>
-            {status === "error" && (
-                <p className="text-xs text-red-400">Failed to send. Please try again.</p>
-            )}
-            <button
-                type="submit"
-                disabled={pending}
-                className="px-6 py-3 bg-white text-black text-sm font-bold rounded-md hover:bg-white/90 transition-colors disabled:opacity-50"
-            >
-                {pending ? "Sending..." : "Send message"}
-            </button>
         </form>
     )
 }

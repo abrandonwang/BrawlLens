@@ -1,17 +1,23 @@
 import { NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 
 export async function GET() {
-  const res = await fetch("https://api.brawlstars.com/v1/events/rotation", {
-    headers: {
-      Authorization: `Bearer ${process.env.BRAWL_API_KEY}`,
-    },
-    next: { revalidate: 300 }, // Cache for 5 minutes
-  });
+  const supabase = createClient(
+    process.env.SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_KEY!
+  );
 
-  if (!res.ok) {
-    return NextResponse.json([], { status: res.status });
+  const { data, error } = await supabase
+    .from("rotation")
+    .select("data")
+    .eq("id", 1)
+    .single();
+
+  if (error || !data) {
+    return NextResponse.json([]);
   }
 
-  const data = await res.json();
-  return NextResponse.json(data);
+  const res = NextResponse.json(data.data);
+  res.headers.set("Cache-Control", "s-maxage=300, stale-while-revalidate=600");
+  return res;
 }

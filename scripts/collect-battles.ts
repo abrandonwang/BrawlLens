@@ -271,6 +271,20 @@ function printStats(processed: number, total: number) {
   );
 }
 
+// ─── Rotation ───────────────────────────────────────────────────
+async function fetchAndSaveRotation() {
+  const data = await apiFetch("/events/rotation");
+  if (!data?.length) {
+    console.log("  [rotation] no data");
+    return;
+  }
+  const { error } = await supabase
+    .from("rotation")
+    .upsert({ id: 1, data, updated_at: new Date().toISOString() }, { onConflict: "id" });
+  if (error) console.error(`  [rotation] DB error: ${error.message}`);
+  else console.log(`  [rotation] saved ${data.length} events`);
+}
+
 // ─── Leaderboards ───────────────────────────────────────────────
 const LEADERBOARD_REGIONS = ["global", "US", "KR", "BR", "DE", "JP"];
 
@@ -372,6 +386,7 @@ async function runCycle(cycle: number) {
 async function leaderboardLoop() {
   while (true) {
     await fetchAndSaveLeaderboards();
+    await fetchAndSaveRotation();
     await sleep(5 * 60 * 1000);
   }
 }
