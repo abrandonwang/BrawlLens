@@ -31,7 +31,6 @@ function AboutPage() {
 
     return (
         <>
-            {/* Sidebar remains exactly the same as requested */}
             <aside className="w-full lg:w-64 shrink-0 h-auto lg:h-full border-b lg:border-b-0 lg:border-r border-white/10 py-5 lg:py-10 px-5 flex flex-row lg:flex-col gap-1.5 overflow-x-auto lg:overflow-y-auto">
                 {sections.map(({ id, label }) => (
                     <button
@@ -44,7 +43,6 @@ function AboutPage() {
                 ))}
             </aside>
 
-            {/* Redesigned minimal documentation-style content */}
             <main className="flex-1 overflow-y-auto selection:bg-[#FFD400] selection:text-black">
                 <div className="max-w-2xl mx-auto py-16 px-8 lg:px-12">
                     
@@ -59,7 +57,7 @@ function AboutPage() {
                     {active === "about" && (
                         <article className="space-y-10">
                             <section>
-                                <h1 className="text-3xl font-bold tracking-tight mb-6">Introduction</h1>
+                                <h1 className="text-3xl font-bold tracking-tight mb-6">About BrawlLens</h1>
                                 <p className="text-[15px] leading-7 text-white/70 mb-4">
                                     BrawlLens is a specialized statistics platform designed for Brawl Stars players. 
                                     Unlike most trackers, this site prioritizes performance and clarity, removing ads 

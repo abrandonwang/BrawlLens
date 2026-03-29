@@ -12,21 +12,21 @@ export async function GET(request: Request) {
 
   // ── Brawler win rates for a specific map ────────────────
   if (map) {
-    const { data, error } = await supabase.rpc("get_map_meta", {
-      map_name: map,
-    });
+    const { data, error } = await supabase
+      .from("map_brawler_stats")
+      .select("brawler_id, brawler_name, picks, wins, win_rate")
+      .eq("map", map)
+      .order("picks", { ascending: false });
 
     if (error) {
-      console.error("get_map_meta error:", error.message);
+      console.error("map_brawler_stats error:", error.message);
       return NextResponse.json({ map, totalBattles: 0, brawlers: [] });
     }
 
-    const { count } = await supabase
-      .from("battles")
-      .select("*", { count: "exact", head: true })
-      .eq("map", map);
+    const rows = data || [];
+    const totalBattles = rows.reduce((sum, r) => sum + Number(r.picks), 0) / 6;
 
-    const brawlers = (data || []).map((row: any) => ({
+    const brawlers = rows.map((row: any) => ({
       brawlerId: row.brawler_id,
       name: row.brawler_name,
       picks: Number(row.picks),
@@ -34,16 +34,19 @@ export async function GET(request: Request) {
       winRate: Number(row.win_rate),
     }));
 
-    const res = NextResponse.json({ map, totalBattles: count || 0, brawlers });
+    const res = NextResponse.json({ map, totalBattles: Math.round(totalBattles), brawlers });
     res.headers.set("Cache-Control", "s-maxage=300, stale-while-revalidate=600");
     return res;
   }
 
   // ── All modes and maps with battle counts ───────────────
-  const { data, error } = await supabase.rpc("get_modes_and_maps");
+  const { data, error } = await supabase
+    .from("map_stats")
+    .select("map, mode, battle_count")
+    .order("battle_count", { ascending: false });
 
   if (error) {
-    console.error("get_modes_and_maps error:", error.message);
+    console.error("map_stats error:", error.message);
     return NextResponse.json({ modes: [] });
   }
 

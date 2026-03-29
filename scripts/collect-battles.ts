@@ -144,7 +144,6 @@ function parseBattle(entry: any, fetchedTag: string): { battle: any; players: an
     duration: battle.duration || null,
   };
 
-  const starTag = battle.starPlayer?.tag || null;
   const playerRows: any[] = [];
 
   for (let t = 0; t < 2; t++) {
@@ -155,11 +154,8 @@ function parseBattle(entry: any, fetchedTag: string): { battle: any; players: an
         player_tag: p.tag,
         brawler_id: p.brawler.id,
         brawler_name: p.brawler.name,
-        brawler_power: p.brawler.power,
-        brawler_trophies: p.brawler.trophies,
         team_num: t,
         won,
-        is_star_player: p.tag === starTag,
       });
     }
   }
@@ -313,6 +309,14 @@ async function fetchAndSaveLeaderboards() {
   }
 }
 
+// ─── Aggregate win rates into summary table ──────────────────────
+async function aggregateStats() {
+  console.log("\n  Aggregating map brawler stats...");
+  const { error } = await supabase.rpc("refresh_map_brawler_stats");
+  if (error) console.error(`  Aggregation error: ${error.message}`);
+  else console.log("  Stats aggregated.");
+}
+
 // ─── Reset all tags for next cycle ──────────────────────────────
 async function resetAllTags() {
   console.log("\n  Resetting all tags for next cycle...");
@@ -400,6 +404,7 @@ async function main() {
   let cycle = 1;
   while (true) {
     await runCycle(cycle);
+    await aggregateStats();
     await resetAllTags();
     cycle++;
     console.log("  Sleeping 4h before next cycle...");

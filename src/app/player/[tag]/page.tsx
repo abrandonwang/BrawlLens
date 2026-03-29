@@ -1,10 +1,28 @@
+import { notFound } from "next/navigation"
 import { Player, PlayerBrawler } from "@/types/brawler"
 import BrawlerCard from "@/components/BrawlerCard"
 
+const PLAYER_API_URL = process.env.PLAYER_API_URL || "http://165.227.206.51:3000";
+
 export default async function PlayerProfile({ params }: { params: Promise<{ tag: string }> }) {
     const { tag } = await params
-    const response = await fetch(`http://165.227.206.51:3000/player/${tag}`, { cache: "no-store" })
-    const player: Player = await response.json()
+
+    let player: Player
+    try {
+        const response = await fetch(`${PLAYER_API_URL}/player/${tag}`, { cache: "no-store" })
+        if (response.status === 404) notFound()
+        if (!response.ok) throw new Error(`Status ${response.status}`)
+        player = await response.json()
+    } catch {
+        return (
+            <div className="bg-black flex-1 flex items-center justify-center min-h-screen">
+                <div className="text-center">
+                    <p className="text-white/40 text-lg font-bold">Could not load player</p>
+                    <p className="text-white/20 text-sm mt-2">The player API is unavailable. Try again later.</p>
+                </div>
+            </div>
+        )
+    }
 
     const sorted = [...(player.brawlers ?? [])].sort((a, b) => b.trophies - a.trophies)
     const club = player.club as { name?: string }
