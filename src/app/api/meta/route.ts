@@ -10,7 +10,6 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const map = searchParams.get("map");
 
-  // ── Brawler win rates for a specific map ────────────────
   if (map) {
     const { data, error } = await supabase
       .from("map_brawler_stats")
@@ -39,7 +38,6 @@ export async function GET(request: Request) {
     return res;
   }
 
-  // ── All modes and maps with battle counts ───────────────
   const { data, error } = await supabase
     .from("map_stats")
     .select("map, mode, battle_count")
