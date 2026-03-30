@@ -112,80 +112,84 @@ async function executeTool(name: string, input: Record<string, string>): Promise
   return "Unknown tool"
 }
 
+type AssistantBlock = { type: "text"; text: string } | { type: "tool_use"; id: string; name: string; input: Record<string, string> }
+
+async function runStream(
+  messages: Anthropic.MessageParam[],
+  controller: ReadableStreamDefaultController,
+  encoder: TextEncoder,
+  depth = 0
+): Promise<void> {
+  if (depth > 5) return
+
+  const stream = client.messages.stream({
+    model: "claude-sonnet-4-6",
+    max_tokens: 1024,
+    system: SYSTEM_PROMPT,
+    tools,
+    messages,
+  })
+
+  const assistantContent: AssistantBlock[] = []
+  const toolUseBlocks: { id: string; name: string; input: Record<string, string> }[] = []
+  let currentToolUse: { id: string; name: string; inputJson: string } | null = null
+
+  for await (const event of stream) {
+    if (event.type === "content_block_start") {
+      if (event.content_block.type === "tool_use") {
+        currentToolUse = { id: event.content_block.id, name: event.content_block.name, inputJson: "" }
+        assistantContent.push({ type: "tool_use", id: event.content_block.id, name: event.content_block.name, input: {} })
+      } else if (event.content_block.type === "text") {
+        assistantContent.push({ type: "text", text: "" })
+      }
+    } else if (event.type === "content_block_delta") {
+      if (event.delta.type === "text_delta") {
+        controller.enqueue(encoder.encode(event.delta.text))
+        const last = assistantContent[assistantContent.length - 1]
+        if (last?.type === "text") last.text += event.delta.text
+      } else if (event.delta.type === "input_json_delta" && currentToolUse) {
+        currentToolUse.inputJson += event.delta.partial_json
+      }
+    } else if (event.type === "content_block_stop" && currentToolUse) {
+      const parsed = JSON.parse(currentToolUse.inputJson || "{}")
+      const block = assistantContent.find(b => b.type === "tool_use" && b.id === currentToolUse!.id)
+      if (block?.type === "tool_use") block.input = parsed
+      toolUseBlocks.push({ id: currentToolUse.id, name: currentToolUse.name, input: parsed })
+      currentToolUse = null
+    }
+  }
+
+  const finalMsg = await stream.finalMessage()
+
+  if (finalMsg.stop_reason === "tool_use" && toolUseBlocks.length > 0) {
+    const toolResults = await Promise.all(
+      toolUseBlocks.map(async tb => ({
+        type: "tool_result" as const,
+        tool_use_id: tb.id,
+        content: await executeTool(tb.name, tb.input)
+      }))
+    )
+
+    await runStream(
+      [
+        ...messages,
+        { role: "assistant", content: assistantContent },
+        { role: "user", content: toolResults },
+      ],
+      controller,
+      encoder,
+      depth + 1
+    )
+  }
+}
+
 export async function POST(request: Request) {
   const { messages } = await request.json()
   const encoder = new TextEncoder()
 
   const readable = new ReadableStream({
     async start(controller) {
-      const stream = client.messages.stream({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 1024,
-        system: SYSTEM_PROMPT,
-        tools,
-        messages,
-      })
-
-      type AssistantBlock = { type: "text"; text: string } | { type: "tool_use"; id: string; name: string; input: Record<string, string> }
-      const toolUseBlocks: { id: string; name: string; input: Record<string, string> }[] = []
-      let currentToolUse: { id: string; name: string; inputJson: string } | null = null
-      const assistantContent: AssistantBlock[] = []
-
-      for await (const event of stream) {
-        if (event.type === "content_block_start") {
-          if (event.content_block.type === "tool_use") {
-            currentToolUse = { id: event.content_block.id, name: event.content_block.name, inputJson: "" }
-            assistantContent.push({ type: "tool_use", id: event.content_block.id, name: event.content_block.name, input: {} })
-          } else if (event.content_block.type === "text") {
-            assistantContent.push({ type: "text", text: "" })
-          }
-        } else if (event.type === "content_block_delta") {
-          if (event.delta.type === "text_delta") {
-            controller.enqueue(encoder.encode(event.delta.text))
-            const last = assistantContent[assistantContent.length - 1]
-            if (last?.type === "text") last.text += event.delta.text
-          } else if (event.delta.type === "input_json_delta" && currentToolUse) {
-            currentToolUse.inputJson += event.delta.partial_json
-          }
-        } else if (event.type === "content_block_stop" && currentToolUse) {
-          const parsed = JSON.parse(currentToolUse.inputJson || "{}")
-          const block = assistantContent.find(b => b.type === "tool_use" && b.id === currentToolUse!.id)
-          if (block?.type === "tool_use") block.input = parsed
-          toolUseBlocks.push({ id: currentToolUse.id, name: currentToolUse.name, input: parsed })
-          currentToolUse = null
-        }
-      }
-
-      const finalMsg = await stream.finalMessage()
-
-      if (finalMsg.stop_reason === "tool_use" && toolUseBlocks.length > 0) {
-        const toolResults = await Promise.all(
-          toolUseBlocks.map(async tb => ({
-            type: "tool_result" as const,
-            tool_use_id: tb.id,
-            content: await executeTool(tb.name, tb.input)
-          }))
-        )
-
-        const stream2 = client.messages.stream({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 1024,
-          system: SYSTEM_PROMPT,
-          tools,
-          messages: [
-            ...messages,
-            { role: "assistant", content: assistantContent },
-            { role: "user", content: toolResults }
-          ]
-        })
-
-        for await (const event of stream2) {
-          if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
-            controller.enqueue(encoder.encode(event.delta.text))
-          }
-        }
-      }
-
+      await runStream(messages, controller, encoder)
       controller.close()
     }
   })
