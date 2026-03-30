@@ -96,12 +96,12 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch 
 
   useEffect(() => {
     Promise.all([
-      fetch("https://api.brawlify.com/v1/events").then((r) => r.json()).catch(() => ({ active: [] })),
+      fetch("/api/rotation").then((r) => r.json()).catch(() => []),
       fetch("https://api.brawlify.com/v1/maps").then((r) => r.json()).catch(() => ({ list: [] })),
-    ]).then(([eventsData, mapsData]) => {
+    ]).then(([rotationData, mapsData]) => {
       const activeNames = new Set<string>();
-      for (const event of eventsData?.active || []) {
-        if (event.map?.name) activeNames.add(event.map.name);
+      for (const slot of rotationData || []) {
+        if (slot.event?.map) activeNames.add(slot.event.map);
       }
       setRotationMapNames(activeNames);
 
