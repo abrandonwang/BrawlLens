@@ -269,7 +269,8 @@ function printStats(processed: number, total: number) {
 
 // ─── Rotation ───────────────────────────────────────────────────
 async function fetchAndSaveRotation() {
-  const data = await apiFetch("/events/rotation");
+  const raw = await apiFetch("/events/rotation");
+  const data = raw?.items ?? raw;
   if (!data?.length) {
     console.log("  [rotation] no data");
     return;
