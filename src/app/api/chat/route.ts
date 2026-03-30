@@ -25,7 +25,9 @@ Formatting rules — always follow these:
 - Links should be natural and placed in context, not just appended at the end
 - Keep responses concise — 3 to 6 sentences or equivalent bullets per topic
 - Be direct and helpful like a knowledgeable teammate, not a formal assistant
-- When presenting win rate data, mention the pick count so the user knows how statistically significant it is`
+- When presenting win rate data, mention the pick count so the user knows how statistically significant it is
+- Sentences should always end with a period, exclamation mark, or question mark — never an ellipsis, and should have a space after it. Never end a sentence with a colon or dash.`
+
 
 const tools: Anthropic.Tool[] = [
   {
@@ -57,7 +59,18 @@ const tools: Anthropic.Tool[] = [
       type: "object" as const,
       properties: {}
     }
-  }
+  },
+  {
+    name: "get_player_info",
+    description: "Get basic info about a player by their tag, including their top brawlers and recent performance. Use this when a user mentions a player tag or asks about a specific player's stats.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        player_tag: { type: "string", description: "The player's tag, starting with # (e.g. #123ABC)" }
+      },
+      required: ["player_tag"]
+    }
+  },
 ]
 
 async function executeTool(name: string, input: Record<string, string>): Promise<string> {
@@ -107,6 +120,9 @@ async function executeTool(name: string, input: Record<string, string>): Promise
     if (!data?.length) return "No map data available."
 
     return data.map(r => `${r.map} (${r.mode}): ${r.battle_count} battles`).join("\n")
+  }
+
+  if (name === "get_player_info") {
   }
 
   return "Unknown tool"
@@ -169,6 +185,9 @@ async function runStream(
         content: await executeTool(tb.name, tb.input)
       }))
     )
+
+    const hasText = assistantContent.some(b => b.type === "text" && b.text.trim())
+    if (hasText) controller.enqueue(encoder.encode("\n\n"))
 
     await runStream(
       [
