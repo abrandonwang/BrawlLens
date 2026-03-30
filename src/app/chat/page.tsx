@@ -104,7 +104,7 @@ function ChatPage() {
   }
 
   return (
-    <main className="flex-1 flex flex-col bg-[#111] overflow-hidden">
+    <main className="fixed top-[52px] left-0 right-0 bottom-0 flex flex-col bg-[#111]">
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-8">
