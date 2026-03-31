@@ -6,7 +6,7 @@ export default async function BrawlerPage({ params }: { params: Promise<{ id: st
     const brawler = await res.json()
 
     return (
-        <div className="bg-black h-[calc(100dvh-52px)] flex flex-col lg:flex-row overflow-hidden">
+        <div className="bg-white h-[calc(100dvh-52px)] flex flex-col lg:flex-row overflow-hidden dark:bg-black">
             <BrawlerDetailClient brawler={brawler} />
         </div>
     )

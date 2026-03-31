@@ -8,11 +8,11 @@ import type { Components } from "react-markdown"
 
 const markdownComponents: Components = {
   p: ({ children }) => <p className="mb-3 last:mb-0">{children}</p>,
-  strong: ({ children }) => <strong className="text-white font-semibold">{children}</strong>,
+  strong: ({ children }) => <strong className="text-zinc-900 font-semibold dark:text-white">{children}</strong>,
   ul: ({ children }) => <ul className="mb-3 space-y-1">{children}</ul>,
   li: ({ children }) => (
     <li className="flex gap-2">
-      <span className="text-white/30 mt-0.5 shrink-0">—</span>
+      <span className="text-zinc-400 mt-0.5 shrink-0 dark:text-white/30">—</span>
       <span>{children}</span>
     </li>
   ),
@@ -104,7 +104,7 @@ function ChatPage() {
   }
 
   return (
-    <main className="fixed top-[52px] left-0 right-0 bottom-0 flex flex-col bg-[#111]">
+    <main className="fixed top-[52px] left-0 right-0 bottom-0 flex flex-col bg-white dark:bg-[#111]">
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-8">
@@ -113,10 +113,10 @@ function ChatPage() {
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center min-h-[50vh] text-center px-4">
               <div className="relative w-10 h-10 flex items-center justify-center mb-6">
-                <div className="absolute inset-0 border-2 rounded-full border-white/20" />
-                <div className="w-2 h-2 rounded-full bg-white/30" />
+                <div className="absolute inset-0 border-2 rounded-full border-zinc-300 dark:border-white/20" />
+                <div className="w-2 h-2 rounded-full bg-zinc-400 dark:bg-white/30" />
               </div>
-              <p className="text-white/50 text-sm mb-6">What do you want to know?</p>
+              <p className="text-zinc-500 text-sm mb-6 dark:text-white/50">What do you want to know?</p>
               <div className="flex flex-wrap gap-2 justify-center max-w-md">
                 {[
                   "Best brawlers for Gem Grab",
@@ -128,7 +128,7 @@ function ChatPage() {
                   <button
                     key={s}
                     onClick={() => { setUserInput(s); textareaRef.current?.focus() }}
-                    className="text-[11px] text-white/35 border border-white/8 bg-white/[0.03] px-3 py-1.5 hover:text-white/70 hover:border-white/15 transition-colors"
+                    className="text-[11px] text-zinc-500 border border-black/8 bg-black/[0.03] px-3 py-1.5 hover:text-zinc-800 hover:border-black/15 transition-colors dark:text-white/35 dark:border-white/8 dark:bg-white/[0.03] dark:hover:text-white/70 dark:hover:border-white/15"
                   >
                     {s}
                   </button>
@@ -140,20 +140,20 @@ function ChatPage() {
           {messages.map((msg, i) => (
             <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
               {msg.role === "assistant" && (
-                <div className="w-6 h-6 rounded-full border border-white/20 flex items-center justify-center shrink-0 mr-3 mt-0.5">
-                  <div className="w-1.5 h-1.5 rounded-full bg-white/40" />
+                <div className="w-6 h-6 rounded-full border border-zinc-300 flex items-center justify-center shrink-0 mr-3 mt-0.5 dark:border-white/20">
+                  <div className="w-1.5 h-1.5 rounded-full bg-zinc-400 dark:bg-white/40" />
                 </div>
               )}
               <div className={`max-w-[80%] text-sm leading-relaxed ${
                 msg.role === "user"
-                  ? "bg-white/8 text-white px-4 py-2.5"
-                  : "text-white/70"
+                  ? "bg-black/8 text-zinc-900 px-4 py-2.5 dark:bg-white/8 dark:text-white"
+                  : "text-zinc-700 dark:text-white/70"
               }`}>
                 {msg.role === "assistant" ? (
                   <>
                     <ReactMarkdown components={markdownComponents}>{msg.content}</ReactMarkdown>
                     {streaming && i === messages.length - 1 && (
-                      <span className="inline-block w-1.5 h-4 bg-white/40 ml-0.5 animate-pulse align-middle" />
+                      <span className="inline-block w-1.5 h-4 bg-zinc-400 ml-0.5 animate-pulse align-middle dark:bg-white/40" />
                     )}
                   </>
                 ) : (
@@ -168,10 +168,10 @@ function ChatPage() {
       </div>
 
       {/* Input */}
-      <div className="border-t border-white/8 px-4 py-4">
+      <div className="border-t border-black/8 px-4 py-4 dark:border-white/8">
         <div className="max-w-2xl mx-auto">
-          <div className="relative border border-white/10 bg-white/[0.04] focus-within:border-white/20 transition-colors flex items-center">
-            <Link href="/" className="p-3 text-white/25 hover:text-white/50 transition-colors shrink-0">
+          <div className="relative border border-black/10 bg-black/[0.04] focus-within:border-black/20 transition-colors flex items-center dark:border-white/10 dark:bg-white/[0.04] dark:focus-within:border-white/20">
+            <Link href="/" className="p-3 text-zinc-400 hover:text-zinc-600 transition-colors shrink-0 dark:text-white/25 dark:hover:text-white/50">
               <RotateCcw size={14} />
             </Link>
             <textarea
@@ -181,12 +181,12 @@ function ChatPage() {
               onChange={handleInput}
               onKeyDown={handleKeyDown}
               placeholder="Ask a follow-up..."
-              className="flex-1 bg-transparent py-3 text-sm text-white placeholder:text-white/20 outline-none resize-none leading-relaxed max-h-40 overflow-y-auto"
+              className="flex-1 bg-transparent py-3 text-sm text-zinc-900 placeholder:text-zinc-400 outline-none resize-none leading-relaxed max-h-40 overflow-y-auto dark:text-white dark:placeholder:text-white/20"
             />
             <button
               onClick={handleSubmit}
               disabled={!userInput.trim() || streaming}
-              className="m-2 w-7 h-7 flex items-center justify-center bg-white text-black disabled:bg-white/10 disabled:text-white/20 hover:bg-white/90 transition-colors shrink-0"
+              className="m-2 w-7 h-7 flex items-center justify-center bg-zinc-900 text-white disabled:bg-black/10 disabled:text-black/20 hover:bg-zinc-700 transition-colors shrink-0 dark:bg-white dark:text-black dark:disabled:bg-white/10 dark:disabled:text-white/20 dark:hover:bg-white/90"
             >
               <ArrowUp size={13} />
             </button>

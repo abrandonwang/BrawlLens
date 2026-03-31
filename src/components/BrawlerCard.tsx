@@ -12,10 +12,10 @@ function rankColor(rank: number) {
 
 export default function BrawlerCard({ id, name, power, rank, trophies, highestTrophies, gadgets, starPowers, hyperCharges, gears, prestigeLevel }: PlayerBrawler) {
     return (
-        <div className="bg-zinc-900 border border-white/5 rounded-3xl overflow-hidden hover:-translate-y-1 hover:border-white/10 hover:shadow-xl hover:shadow-black/40 transition-all duration-300">
+        <div className="bg-zinc-100 border border-black/5 rounded-3xl overflow-hidden hover:-translate-y-1 hover:border-black/10 hover:shadow-xl hover:shadow-black/10 transition-all duration-300 dark:bg-zinc-900 dark:border-white/5 dark:hover:border-white/10 dark:hover:shadow-black/40">
 
             {/* Image area */}
-            <div className="relative bg-zinc-800/50 h-36 flex items-end justify-center overflow-hidden">
+            <div className="relative bg-zinc-200/50 h-36 flex items-end justify-center overflow-hidden dark:bg-zinc-800/50">
                 <img
                     src={`https://cdn.brawlify.com/brawlers/borderless/${id}.png`}
                     alt={name}
@@ -34,24 +34,24 @@ export default function BrawlerCard({ id, name, power, rank, trophies, highestTr
             {/* Info area */}
             <div className="p-4 space-y-3">
                 <div>
-                    <h3 className="font-black text-sm tracking-tight truncate text-white">{name}</h3>
+                    <h3 className="font-black text-sm tracking-tight truncate text-zinc-900 dark:text-white">{name}</h3>
                     <div className="flex items-baseline gap-1 mt-0.5">
-                        <span className="text-sm font-black text-white">{trophies.toLocaleString()}</span>
-                        <span className="text-[10px] text-white/20 font-bold">/ {highestTrophies.toLocaleString()}</span>
+                        <span className="text-sm font-black text-zinc-900 dark:text-white">{trophies.toLocaleString()}</span>
+                        <span className="text-[10px] text-zinc-400 font-bold dark:text-white/20">/ {highestTrophies.toLocaleString()}</span>
                     </div>
                 </div>
 
                 <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="text-[10px] font-black bg-white text-black px-2 py-0.5 rounded-full">
+                    <span className="text-[10px] font-black bg-zinc-900 text-white px-2 py-0.5 rounded-full dark:bg-white dark:text-black">
                         PWR {power}
                     </span>
                     {gadgets.length > 0 && (
-                        <span className="text-[10px] font-bold text-white/40 bg-white/5 px-2 py-0.5 rounded-full border border-white/5">
+                        <span className="text-[10px] font-bold text-zinc-500 bg-black/5 px-2 py-0.5 rounded-full border border-black/5 dark:text-white/40 dark:bg-white/5 dark:border-white/5">
                             {gadgets.length}G
                         </span>
                     )}
                     {starPowers.length > 0 && (
-                        <span className="text-[10px] font-bold text-white/40 bg-white/5 px-2 py-0.5 rounded-full border border-white/5">
+                        <span className="text-[10px] font-bold text-zinc-500 bg-black/5 px-2 py-0.5 rounded-full border border-black/5 dark:text-white/40 dark:bg-white/5 dark:border-white/5">
                             {starPowers.length}SP
                         </span>
                     )}
@@ -61,7 +61,7 @@ export default function BrawlerCard({ id, name, power, rank, trophies, highestTr
                         </span>
                     )}
                     {gears.length > 0 && (
-                        <span className="text-[10px] font-bold text-white/40 bg-white/5 px-2 py-0.5 rounded-full border border-white/5">
+                        <span className="text-[10px] font-bold text-zinc-500 bg-black/5 px-2 py-0.5 rounded-full border border-black/5 dark:text-white/40 dark:bg-white/5 dark:border-white/5">
                             {gears.length}GR
                         </span>
                     )}

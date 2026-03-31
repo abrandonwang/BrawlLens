@@ -49,7 +49,7 @@ export default function BrawlerDetail({ brawler, activeTab }: Props) {
 
                 <div className="flex-1">
                     <div className="flex items-center gap-3 mb-3">
-                        <h1 className="text-3xl font-bold text-white">{brawler.name}</h1>
+                        <h1 className="text-3xl font-bold text-zinc-900 dark:text-white">{brawler.name}</h1>
                         <span
                             className="px-3 py-1 rounded-lg text-xs font-semibold"
                             style={{ color: rarityColor, backgroundColor: `${rarityColor}15`, border: `1px solid ${rarityColor}40` }}
@@ -58,25 +58,25 @@ export default function BrawlerDetail({ brawler, activeTab }: Props) {
                         </span>
                     </div>
                     {brawler.class.name !== "Unknown" && (
-                        <p className="text-white/50 text-sm mb-4">{brawler.class.name}</p>
+                        <p className="text-zinc-500 text-sm mb-4 dark:text-white/50">{brawler.class.name}</p>
                     )}
-                    <p className="text-white/70 text-sm leading-relaxed max-w-xl">
+                    <p className="text-zinc-600 text-sm leading-relaxed max-w-xl dark:text-white/70">
                         {brawler.description}
                     </p>
                 </div>
             </div>
 
-            <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest mb-4">
+            <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-4 dark:text-white/30">
                 {activeTab === "starPowers" ? "Star Powers" : "Gadgets"}
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {items.map(item => (
-                    <div key={item.id} className="flex items-start gap-4 bg-zinc-900 border border-white/5 rounded-md p-4 hover:border-white/15 transition-colors">
+                    <div key={item.id} className="flex items-start gap-4 bg-zinc-100 border border-black/5 rounded-md p-4 hover:border-black/15 transition-colors dark:bg-zinc-900 dark:border-white/5 dark:hover:border-white/15">
                         <img src={item.imageUrl} alt={item.name} className="w-12 h-12 object-contain shrink-0" />
                         <div>
-                            <h3 className="text-sm font-semibold text-white mb-1">{item.name}</h3>
-                            <p className="text-xs text-white/60 leading-relaxed">{item.description}</p>
+                            <h3 className="text-sm font-semibold text-zinc-900 mb-1 dark:text-white">{item.name}</h3>
+                            <p className="text-xs text-zinc-500 leading-relaxed dark:text-white/60">{item.description}</p>
                         </div>
                     </div>
                 ))}

@@ -1,12 +1,13 @@
 @import "tailwindcss";
 
+@variant dark (&:where(.dark, .dark *));
+
 :root {
   --brand: #FFD400;
 }
 
 html {
   overscroll-behavior: none;
-  background-color: hsl(230, 20%, 97%);
 }
 
 body {
@@ -16,68 +17,13 @@ body {
   overscroll-behavior: none;
 }
 
+.dark body {
+  background-color: #111;
+  color: #fff;
+}
+
 body.home-page {
   background-color: transparent;
-}
-
-/* ── Ambient orbs ── */
-@keyframes orb-drift-a {
-  0%, 100% { transform: translate(0px, 0px) scale(1); }
-  33%       { transform: translate(40px, -30px) scale(1.06); }
-  66%       { transform: translate(-25px, 18px) scale(0.96); }
-}
-
-@keyframes orb-drift-b {
-  0%, 100% { transform: translate(0px, 0px) scale(1); }
-  33%       { transform: translate(-45px, 28px) scale(0.94); }
-  66%       { transform: translate(30px, -38px) scale(1.08); }
-}
-
-.orb {
-  position: absolute;
-  border-radius: 9999px;
-  pointer-events: none;
-}
-
-.orb-1 {
-  width: 700px;
-  height: 700px;
-  background: radial-gradient(circle, rgba(129, 140, 248, 0.09) 0%, transparent 65%);
-  top: -220px;
-  left: -180px;
-  filter: blur(60px);
-  animation: orb-drift-a 22s ease-in-out infinite;
-}
-
-.orb-2 {
-  width: 600px;
-  height: 600px;
-  background: radial-gradient(circle, rgba(167, 139, 250, 0.07) 0%, transparent 65%);
-  bottom: -150px;
-  right: -150px;
-  filter: blur(60px);
-  animation: orb-drift-b 28s ease-in-out infinite;
-}
-
-.orb-3 {
-  width: 500px;
-  height: 500px;
-  background: radial-gradient(circle, rgba(96, 165, 250, 0.05) 0%, transparent 65%);
-  top: 40%;
-  left: 55%;
-  filter: blur(70px);
-  animation: orb-drift-a 35s ease-in-out infinite reverse;
-}
-
-/* ── Marquee ── */
-@keyframes marquee-scroll {
-  from { transform: translate3d(0, 0, 0); }
-  to   { transform: translate3d(-50%, 0, 0); }
-}
-
-.marquee-inner {
-  animation: marquee-scroll 30s linear infinite;
-  will-change: transform;
 }
 
 #nprogress .bar {

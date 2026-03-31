@@ -32,7 +32,6 @@ export default function BrawlerCatalog({ brawlers, activeRarity, search }: Props
 
     return (
         <div>
-            {/* GROUPED GRID */}
             <div className="space-y-10">
                 {RARITY_ORDER.map(rarity => {
                     const group = grouped[rarity]
@@ -48,7 +47,7 @@ export default function BrawlerCatalog({ brawlers, activeRarity, search }: Props
                             </div>
                             <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12 gap-2">
                                 {group?.map(brawler => (
-                                    <Link href={`/brawlers/${brawler.id}`} key={brawler.id} className="group cursor-pointer bg-zinc-900 border border-white/5 rounded-md overflow-hidden hover:border-white/20 transition-all duration-100">
+                                    <Link href={`/brawlers/${brawler.id}`} key={brawler.id} className="group cursor-pointer bg-zinc-100 border border-black/5 rounded-md overflow-hidden hover:border-black/20 transition-all duration-100 dark:bg-zinc-900 dark:border-white/5 dark:hover:border-white/20">
                                         <div className="aspect-square p-1.5">
                                             <img
                                                 src={brawler.imageUrl2}
@@ -58,7 +57,7 @@ export default function BrawlerCatalog({ brawlers, activeRarity, search }: Props
                                         </div>
                                         <div className="px-2 pb-2 flex items-center gap-1.5">
                                             <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
-                                            <p className="text-[10px] font-medium text-white/70 truncate">{brawler.name}</p>
+                                            <p className="text-[10px] font-medium text-zinc-600 truncate dark:text-white/70">{brawler.name}</p>
                                         </div>
                                     </Link>
                                 ))}

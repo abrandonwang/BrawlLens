@@ -164,7 +164,7 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch 
   if (loading) {
     return (
       <div className="flex items-center justify-center py-32">
-        <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+        <div className="w-5 h-5 border-2 border-black/20 border-t-zinc-900 rounded-full animate-spin dark:border-white/20 dark:border-t-white" />
       </div>
     );
   }
@@ -172,8 +172,8 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch 
   if (modes.length === 0) {
     return (
       <div className="text-center py-32">
-        <p className="text-white/40 text-lg font-medium">No battle data yet</p>
-        <p className="text-white/20 text-sm mt-2">The collector is still running. Check back soon.</p>
+        <p className="text-zinc-500 text-lg font-medium dark:text-white/40">No battle data yet</p>
+        <p className="text-zinc-400 text-sm mt-2 dark:text-white/20">The collector is still running. Check back soon.</p>
       </div>
     );
   }
@@ -193,7 +193,7 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch 
                 onClick={() => handleMapClick(map.name)}
                 className="group relative text-left transition-all duration-200 hover:opacity-90"
               >
-                <div className="aspect-[4/3] relative bg-white/[0.03] border border-white/[0.06] overflow-hidden">
+                <div className="aspect-[4/3] relative bg-black/[0.03] border border-black/[0.06] overflow-hidden dark:bg-white/[0.03] dark:border-white/[0.06]">
                   {imageUrl ? (
                     <img
                       src={imageUrl}
@@ -231,7 +231,7 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch 
         <div>
           <div className="flex items-start gap-4 mb-6">
             {mapImageLookup.get(selectedMap) && (
-              <div className="w-20 overflow-hidden shrink-0 border border-white/10">
+              <div className="w-20 overflow-hidden shrink-0 border border-black/10 dark:border-white/10">
                 <img src={mapImageLookup.get(selectedMap)!} alt={selectedMap} className="w-full h-full object-cover" />
               </div>
             )}

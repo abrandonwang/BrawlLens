@@ -38,10 +38,10 @@ export default function Home() {
   }
 
   return (
-    <main className="flex-1 flex flex-col bg-[#111] overflow-hidden">
+    <main className="flex-1 flex flex-col bg-white overflow-hidden dark:bg-[#111]">
       <section className={`flex-1 flex flex-col items-center justify-center px-6 py-16 transition-opacity duration-500 ${mounted ? "opacity-100" : "opacity-0"}`}>
 
-        <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight mb-8 text-center">
+        <h1 className="text-2xl md:text-3xl font-bold text-zinc-900 tracking-tight mb-8 text-center dark:text-white">
           Ask me anything about <span className="text-[#FFD400]">Brawl</span> <span className="text-red-400">Stars</span>.
         </h1>
 
@@ -52,7 +52,7 @@ export default function Home() {
               <button
                 key={s}
                 onClick={() => setUserInput(s)}
-                className="text-[11px] text-white/35 border border-white/8 bg-white/[0.03] px-3 py-1.5 hover:text-white/70 hover:border-white/15 transition-colors"
+                className="text-[11px] text-zinc-500 border border-black/8 bg-black/[0.03] px-3 py-1.5 hover:text-zinc-800 hover:border-black/15 transition-colors dark:text-white/35 dark:border-white/8 dark:bg-white/[0.03] dark:hover:text-white/70 dark:hover:border-white/15"
               >
                 {s}
               </button>
@@ -60,7 +60,7 @@ export default function Home() {
           </div>
 
           {/* Input */}
-          <div className="relative border border-white/10 bg-white/[0.04] focus-within:border-white/20 transition-colors">
+          <div className="relative border border-black/10 bg-black/[0.04] focus-within:border-black/20 transition-colors dark:border-white/10 dark:bg-white/[0.04] dark:focus-within:border-white/20">
             <textarea
               ref={textareaRef}
               rows={1}
@@ -68,12 +68,12 @@ export default function Home() {
               onChange={handleInput}
               onKeyDown={handleKeyDown}
               placeholder="Ask anything — player tag, brawler, map, club..."
-              className="w-full bg-transparent px-4 py-4 pr-14 text-sm text-white placeholder:text-white/20 outline-none resize-none leading-relaxed max-h-40 overflow-y-auto"
+              className="w-full bg-transparent px-4 py-4 pr-14 text-sm text-zinc-900 placeholder:text-zinc-400 outline-none resize-none leading-relaxed max-h-40 overflow-y-auto dark:text-white dark:placeholder:text-white/20"
             />
             <button
               onClick={handleSubmit}
               disabled={!userInput.trim()}
-              className="absolute right-3 bottom-3 w-8 h-8 flex items-center justify-center bg-white text-black disabled:bg-white/10 disabled:text-white/20 hover:bg-white/90 transition-colors"
+              className="absolute right-3 bottom-3 w-8 h-8 flex items-center justify-center bg-zinc-900 text-white disabled:bg-black/10 disabled:text-black/20 hover:bg-zinc-700 transition-colors dark:bg-white dark:text-black dark:disabled:bg-white/10 dark:disabled:text-white/20 dark:hover:bg-white/90"
             >
               <ArrowUp size={14} />
             </button>

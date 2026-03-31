@@ -1,8 +1,9 @@
 "use client"
 import { useState, useEffect, useRef } from "react"
-import { Search, X, User, Menu, LayoutGrid, Map, Trophy, Info, ArrowRight, MessageSquare } from "lucide-react"
+import { Search, X, User, Menu, LayoutGrid, Map, Trophy, Info, ArrowRight, MessageSquare, Sun, Moon } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
+import { useTheme } from "next-themes"
 
 const navItems = [
     { label: "Chat", href: "/chat" },
@@ -23,6 +24,7 @@ const searchItems = [
 export default function NavBar() {
     const pathname = usePathname()
     const router = useRouter()
+    const { theme, setTheme } = useTheme()
     const [isSearchOpen, setIsSearchOpen] = useState(false)
     const [isMenuOpen, setIsMenuOpen] = useState(false)
     const [query, setQuery] = useState("")
@@ -58,17 +60,17 @@ export default function NavBar() {
 
     return (
         <>
-            <div className="fixed top-0 left-0 right-0 z-[100] bg-[#111] border-b border-white/8">
+            <div className="fixed top-0 left-0 right-0 z-[100] bg-white border-b border-black/8 dark:bg-[#111] dark:border-white/8">
                 <header className="h-[52px] grid grid-cols-3 items-center px-4 md:px-6">
 
                     {/* Logo */}
                     <div className="flex items-center">
                         <Link href="/" className="flex items-center gap-2.5">
                             <div className="relative w-6 h-6 flex items-center justify-center shrink-0">
-                                <div className="absolute inset-0 border-2 rounded-full border-white" />
-                                <div className="w-1 h-1 rounded-full bg-white" />
+                                <div className="absolute inset-0 border-2 rounded-full border-zinc-900 dark:border-white" />
+                                <div className="w-1 h-1 rounded-full bg-zinc-900 dark:bg-white" />
                             </div>
-                            <span className="text-sm font-black text-white">BrawlLens</span>
+                            <span className="text-sm font-black text-zinc-900 dark:text-white">BrawlLens</span>
                         </Link>
                     </div>
 
@@ -81,7 +83,9 @@ export default function NavBar() {
                                     key={item.label}
                                     href={item.href}
                                     className={`whitespace-nowrap text-xs font-bold tracking-tight transition-all duration-200 px-3 py-1.5 rounded ${
-                                        isActive ? "bg-[#FFD400] text-black" : "text-white/60 hover:text-white hover:bg-white/8"
+                                        isActive
+                                            ? "bg-[#FFD400] text-black"
+                                            : "text-zinc-600 hover:text-zinc-900 hover:bg-black/8 dark:text-white/60 dark:hover:text-white dark:hover:bg-white/8"
                                     }`}
                                 >
                                     {item.label}
@@ -95,21 +99,28 @@ export default function NavBar() {
                     <div className="flex items-center justify-end gap-2">
                         <button
                             onClick={() => setIsSearchOpen(true)}
-                            className="p-2 rounded transition-colors text-white/50 hover:text-white hover:bg-white/8"
+                            className="p-2 rounded transition-colors text-zinc-500 hover:text-zinc-900 hover:bg-black/8 dark:text-white/50 dark:hover:text-white dark:hover:bg-white/8"
                         >
                             <Search size={16} />
                         </button>
 
+                        <button
+                            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                            className="p-2 rounded transition-colors text-zinc-500 hover:text-zinc-900 hover:bg-black/8 dark:text-white/50 dark:hover:text-white dark:hover:bg-white/8"
+                        >
+                            {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+                        </button>
+
                         <Link
                             href="/player/me"
-                            className="w-8 h-8 flex items-center justify-center rounded-full transition-all shrink-0 bg-white text-black hover:bg-zinc-100"
+                            className="w-8 h-8 flex items-center justify-center rounded-full transition-all shrink-0 bg-zinc-900 text-white hover:bg-zinc-700 dark:bg-white dark:text-black dark:hover:bg-zinc-100"
                         >
                             <User size={14} />
                         </Link>
 
                         <button
                             onClick={() => setIsMenuOpen(!isMenuOpen)}
-                            className="p-2 lg:hidden transition-colors text-white/60 hover:text-white"
+                            className="p-2 lg:hidden transition-colors text-zinc-600 hover:text-zinc-900 dark:text-white/60 dark:hover:text-white"
                         >
                             {isMenuOpen ? <X size={18} /> : <Menu size={18} />}
                         </button>
@@ -121,7 +132,7 @@ export default function NavBar() {
             {isMenuOpen && (
                 <div className="fixed inset-0 z-[150] lg:hidden" onClick={() => setIsMenuOpen(false)}>
                     <div
-                        className="absolute top-[56px] right-4 w-44 rounded-lg shadow-2xl border border-white/10 bg-zinc-900 overflow-hidden animate-in zoom-in-95 slide-in-from-top-1 duration-150"
+                        className="absolute top-[56px] right-4 w-44 rounded-lg shadow-2xl border border-black/10 bg-white overflow-hidden animate-in zoom-in-95 slide-in-from-top-1 duration-150 dark:border-white/10 dark:bg-zinc-900"
                         onClick={e => e.stopPropagation()}
                     >
                         <nav className="flex flex-col p-1.5 gap-0.5">
@@ -132,7 +143,9 @@ export default function NavBar() {
                                         key={item.label}
                                         href={item.href}
                                         className={`text-xs font-bold px-3 py-2.5 rounded-md transition-all ${
-                                            isActive ? "bg-[#FFD400] text-black" : "text-white/60 hover:text-white hover:bg-white/5"
+                                            isActive
+                                                ? "bg-[#FFD400] text-black"
+                                                : "text-zinc-600 hover:text-zinc-900 hover:bg-black/5 dark:text-white/60 dark:hover:text-white dark:hover:bg-white/5"
                                         }`}
                                     >
                                         {item.label}
@@ -154,38 +167,36 @@ export default function NavBar() {
                     onClick={() => setIsSearchOpen(false)}
                 >
                     <div
-                        className="w-full max-w-lg bg-[#1a1a1a] border border-white/10 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150"
+                        className="w-full max-w-lg bg-white border border-black/10 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150 dark:bg-[#1a1a1a] dark:border-white/10"
                         onClick={e => e.stopPropagation()}
                     >
-                        {/* Input row */}
-                        <div className="flex items-center gap-3 px-4 border-b border-white/8">
-                            <Search size={15} className="text-white/30 shrink-0" />
+                        <div className="flex items-center gap-3 px-4 border-b border-black/8 dark:border-white/8">
+                            <Search size={15} className="text-zinc-400 shrink-0 dark:text-white/30" />
                             <input
                                 ref={inputRef}
                                 value={query}
                                 onChange={e => setQuery(e.target.value)}
                                 onKeyDown={e => e.key === "Enter" && isTag && handlePlayerSearch()}
                                 placeholder="Type something to search..."
-                                className="flex-1 bg-transparent py-4 text-sm text-white placeholder:text-white/25 outline-none"
+                                className="flex-1 bg-transparent py-4 text-sm text-zinc-900 placeholder:text-zinc-400 outline-none dark:text-white dark:placeholder:text-white/25"
                             />
                             <button
                                 onClick={() => setIsSearchOpen(false)}
-                                className="text-[11px] font-bold text-white/30 border border-white/10 px-2 py-1 hover:text-white/60 transition-colors"
+                                className="text-[11px] font-bold text-zinc-400 border border-black/10 px-2 py-1 hover:text-zinc-600 transition-colors dark:text-white/30 dark:border-white/10 dark:hover:text-white/60"
                             >
                                 Esc
                             </button>
                         </div>
 
-                        {/* Results */}
                         <div className="py-2">
                             {query && isTag && (
                                 <button
                                     onClick={handlePlayerSearch}
-                                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-white/70 hover:bg-white/5 hover:text-white transition-colors"
+                                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-zinc-700 hover:bg-black/5 hover:text-zinc-900 transition-colors dark:text-white/70 dark:hover:bg-white/5 dark:hover:text-white"
                                 >
-                                    <User size={15} className="text-white/30 shrink-0" />
+                                    <User size={15} className="text-zinc-400 shrink-0 dark:text-white/30" />
                                     <span className="flex-1 text-left">Search player <span className="text-[#FFD400] font-bold">#{query.replace(/^#/, "")}</span></span>
-                                    <ArrowRight size={13} className="text-white/20" />
+                                    <ArrowRight size={13} className="text-zinc-300 dark:text-white/20" />
                                 </button>
                             )}
 
@@ -194,15 +205,15 @@ export default function NavBar() {
                                     key={href}
                                     href={href}
                                     onClick={() => setIsSearchOpen(false)}
-                                    className="flex items-center gap-3 px-4 py-3 text-sm text-white/60 hover:bg-white/5 hover:text-white transition-colors"
+                                    className="flex items-center gap-3 px-4 py-3 text-sm text-zinc-600 hover:bg-black/5 hover:text-zinc-900 transition-colors dark:text-white/60 dark:hover:bg-white/5 dark:hover:text-white"
                                 >
-                                    <Icon size={15} className="text-white/30 shrink-0" />
+                                    <Icon size={15} className="text-zinc-400 shrink-0 dark:text-white/30" />
                                     <span className="flex-1">{label}</span>
                                 </Link>
                             ))}
 
                             {filtered.length === 0 && !isTag && (
-                                <p className="px-4 py-6 text-xs text-white/25 text-center">No results for &quot;{query}&quot;</p>
+                                <p className="px-4 py-6 text-xs text-zinc-400 text-center dark:text-white/25">No results for &quot;{query}&quot;</p>
                             )}
                         </div>
                     </div>

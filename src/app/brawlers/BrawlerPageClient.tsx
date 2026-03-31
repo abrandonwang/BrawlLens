@@ -44,10 +44,10 @@ export default function BrawlerPageClient({ brawlers, newest }: Props) {
             />
             <main className="flex-1 min-w-0 pt-6 pb-6 px-8 overflow-y-auto">
                 <section className="mb-10">
-                    <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-white mb-3">
+                    <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-zinc-900 mb-3 dark:text-white">
                         All {brawlers.length - 1} Brawlers (Mar 2026)
                     </h1>
-                    <p className="text-white/40 text-sm leading-relaxed">
+                    <p className="text-zinc-500 text-sm leading-relaxed dark:text-white/40">
                         Browse every brawler in Brawl Stars. Click on a character to see detailed stats, star powers, gadgets, gears, buffs, and skins. The newest brawler is {newest}.
                     </p>
                 </section>
