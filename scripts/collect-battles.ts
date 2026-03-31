@@ -211,7 +211,6 @@ async function flushToDB(battles: any[], players: any[], processedTags: string[]
     }
   }
 
-  // Write players in chunks of 500
   for (let i = 0; i < dedupedPlayers.length; i += 500) {
     const chunk = dedupedPlayers.slice(i, i + 500);
     const { error } = await supabase
@@ -222,7 +221,6 @@ async function flushToDB(battles: any[], players: any[], processedTags: string[]
     }
   }
 
-  // Mark tags as processed
   for (let i = 0; i < processedTags.length; i += 500) {
     const chunk = processedTags.slice(i, i + 500);
     await supabase
@@ -235,7 +233,6 @@ async function flushToDB(battles: any[], players: any[], processedTags: string[]
   totalPlayersSaved += dedupedPlayers.length;
 }
 
-// ─── Get Unprocessed Tags ───────────────────────────────────────
 async function getUnprocessedTags(limit: number): Promise<string[]> {
   const { data, error } = await supabase
     .from("harvested_tags")
@@ -250,7 +247,6 @@ async function getUnprocessedTags(limit: number): Promise<string[]> {
   return (data || []).map((r: any) => r.player_tag);
 }
 
-// ─── Print Stats ────────────────────────────────────────────────
 function printStats(processed: number, total: number) {
   const elapsed = (Date.now() - startTime) / 1000;
   const tagsPerSec = processed / elapsed;
@@ -267,7 +263,6 @@ function printStats(processed: number, total: number) {
   );
 }
 
-// ─── Rotation ───────────────────────────────────────────────────
 async function fetchAndSaveRotation() {
   const raw = await apiFetch("/events/rotation");
   const data = raw?.items ?? raw;
@@ -282,7 +277,6 @@ async function fetchAndSaveRotation() {
   else console.log(`  [rotation] saved ${data.length} events`);
 }
 
-// ─── Leaderboards ───────────────────────────────────────────────
 const LEADERBOARD_REGIONS = ["global", "US", "KR", "BR", "DE", "JP"];
 
 async function fetchAndSaveLeaderboards() {
@@ -314,8 +308,20 @@ async function fetchAndSaveLeaderboards() {
 async function aggregateStats() {
   console.log("\n  Aggregating map brawler stats...");
   const { error } = await supabase.rpc("refresh_map_brawler_stats");
-  if (error) console.error(`  Aggregation error: ${error.message}`);
-  else console.log("  Stats aggregated.");
+  if (error) {
+    console.error(`  Aggregation error: ${error.message}`);
+    return;
+  }
+  console.log("  Stats aggregated.");
+
+  // Truncate raw battle data — the summary tables are all the app needs.
+  // This keeps the DB well under the free tier limit.
+  console.log("  Pruning raw battle data...");
+  const { error: e1 } = await supabase.from("battle_players").delete().neq("battle_id", "");
+  if (e1) console.error(`  Prune error (battle_players): ${e1.message}`);
+  const { error: e2 } = await supabase.from("battles").delete().neq("id", "");
+  if (e2) console.error(`  Prune error (battles): ${e2.message}`);
+  else console.log("  Raw battle data pruned.");
 }
 
 // ─── Reset all tags for next cycle ──────────────────────────────
