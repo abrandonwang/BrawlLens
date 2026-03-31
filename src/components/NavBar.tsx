@@ -25,10 +25,12 @@ export default function NavBar() {
     const pathname = usePathname()
     const router = useRouter()
     const { theme, setTheme } = useTheme()
+    const [mounted, setMounted] = useState(false)
     const [isSearchOpen, setIsSearchOpen] = useState(false)
     const [isMenuOpen, setIsMenuOpen] = useState(false)
     const [query, setQuery] = useState("")
     const inputRef = useRef<HTMLInputElement>(null)
+    useEffect(() => { setMounted(true) }, [])
     useEffect(() => { setIsMenuOpen(false) }, [pathname])
 
     useEffect(() => {
@@ -108,7 +110,7 @@ export default function NavBar() {
                             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
                             className="p-2 rounded transition-colors text-zinc-500 hover:text-zinc-900 hover:bg-black/8 dark:text-white/50 dark:hover:text-white dark:hover:bg-white/8"
                         >
-                            {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+                            {mounted && (theme === "dark" ? <Sun size={16} /> : <Moon size={16} />)}
                         </button>
 
                         <Link
