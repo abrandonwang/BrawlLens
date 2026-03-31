@@ -327,12 +327,20 @@ async function aggregateStats() {
 // ─── Reset all tags for next cycle ──────────────────────────────
 async function resetAllTags() {
   console.log("\n  Resetting all tags for next cycle...");
-  const { error } = await supabase
-    .from("harvested_tags")
-    .update({ processed_at: null })
-    .not("player_tag", "is", null);
-  if (error) console.error(`  Reset error: ${error.message}`);
-  else console.log("  Tags reset. Starting new cycle.\n");
+  let total = 0;
+  while (true) {
+    const { data, error } = await supabase
+      .from("harvested_tags")
+      .select("player_tag")
+      .not("processed_at", "is", null)
+      .limit(500);
+    if (error) { console.error(`  Reset error: ${error.message}`); break; }
+    if (!data?.length) break;
+    const tags = data.map((r: any) => r.player_tag);
+    await supabase.from("harvested_tags").update({ processed_at: null }).in("player_tag", tags);
+    total += tags.length;
+  }
+  console.log(`  Tags reset (${total}). Starting new cycle.\n`);
 }
 
 // ─── Run one full pass ───────────────────────────────────────────
