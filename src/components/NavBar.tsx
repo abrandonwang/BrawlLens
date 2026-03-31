@@ -84,7 +84,7 @@ export default function NavBar() {
                                     href={item.href}
                                     className={`whitespace-nowrap text-xs font-bold tracking-tight transition-all duration-200 px-3 py-1.5 rounded ${
                                         isActive
-                                            ? "bg-[#FFD400] text-black"
+                                            ? "bg-red-500 text-white dark:bg-[#FFD400] dark:text-black"
                                             : "text-zinc-600 hover:text-zinc-900 hover:bg-black/8 dark:text-white/60 dark:hover:text-white dark:hover:bg-white/8"
                                     }`}
                                 >
@@ -144,7 +144,7 @@ export default function NavBar() {
                                         href={item.href}
                                         className={`text-xs font-bold px-3 py-2.5 rounded-md transition-all ${
                                             isActive
-                                                ? "bg-[#FFD400] text-black"
+                                                ? "bg-red-500 text-white dark:bg-[#FFD400] dark:text-black"
                                                 : "text-zinc-600 hover:text-zinc-900 hover:bg-black/5 dark:text-white/60 dark:hover:text-white dark:hover:bg-white/5"
                                         }`}
                                     >
@@ -195,7 +195,7 @@ export default function NavBar() {
                                     className="w-full flex items-center gap-3 px-4 py-3 text-sm text-zinc-700 hover:bg-black/5 hover:text-zinc-900 transition-colors dark:text-white/70 dark:hover:bg-white/5 dark:hover:text-white"
                                 >
                                     <User size={15} className="text-zinc-400 shrink-0 dark:text-white/30" />
-                                    <span className="flex-1 text-left">Search player <span className="text-[#FFD400] font-bold">#{query.replace(/^#/, "")}</span></span>
+                                    <span className="flex-1 text-left">Search player <span className="text-red-500 dark:text-[#FFD400] font-bold">#{query.replace(/^#/, "")}</span></span>
                                     <ArrowRight size={13} className="text-zinc-300 dark:text-white/20" />
                                 </button>
                             )}

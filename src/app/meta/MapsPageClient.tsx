@@ -35,7 +35,7 @@ export default function MapsPageClient() {
       <main className="flex-1 min-w-0 pt-6 pb-6 px-8 overflow-y-auto">
         <section className="mb-10">
           <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-black dark:text-white mb-3">Maps</h1>
-          <p className="text-black dark:text-white/40 text-sm leading-relaxed">Win rates per brawler across every map, powered by battle data from top-ranked players across 6 regions.</p>
+          <p className="text-zinc-500 dark:text-white/40 text-sm leading-relaxed">Win rates per brawler across every map, powered by battle data from top-ranked players across 6 regions.</p>
         </section>
         <MetaDashboard modes={modes} loading={loading} selectedMode={selectedMode} mapSearch={mapSearch} />
       </main>

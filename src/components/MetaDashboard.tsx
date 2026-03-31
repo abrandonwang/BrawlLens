@@ -238,23 +238,23 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch 
             <div>
               <button
                 onClick={() => { setSelectedMap(null); setMapMeta(null); }}
-                className="flex items-center gap-1.5 text-white/30 hover:text-white/60 transition-colors text-xs font-bold uppercase tracking-wider mb-2"
+                className="flex items-center gap-1.5 text-zinc-400 hover:text-zinc-700 dark:text-white/30 dark:hover:text-white/60 transition-colors text-xs font-bold uppercase tracking-wider mb-2"
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M19 12H5" /><path d="m12 19-7-7 7-7" />
                 </svg>
                 {selectedMode ? getModeName(selectedMode) : "All Maps"}
               </button>
-              <h2 className="text-2xl font-bold text-white leading-tight">{selectedMap}</h2>
+              <h2 className="text-2xl font-bold text-zinc-900 dark:text-white leading-tight">{selectedMap}</h2>
               {mapMeta && (
-                <p className="text-white/40 text-sm mt-1">{mapMeta.totalBattles.toLocaleString()} battles sampled</p>
+                <p className="text-zinc-400 dark:text-white/40 text-sm mt-1">{mapMeta.totalBattles.toLocaleString()} battles sampled</p>
               )}
             </div>
           </div>
 
           {loadingMap && (
             <div className="flex items-center justify-center py-20">
-              <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+              <div className="w-5 h-5 border-2 border-black/20 border-t-zinc-900 rounded-full animate-spin dark:border-white/20 dark:border-t-white" />
             </div>
           )}
 
@@ -262,7 +262,7 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch 
             <div>
               <div className="flex flex-col sm:flex-row gap-3 mb-4">
                 <div className="relative flex-1">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/20">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-white/20">
                     <circle cx="11" cy="11" r="8" /><path d="m21 21-4.34-4.34" />
                   </svg>
                   <input
@@ -270,15 +270,15 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch 
                     placeholder="Search brawler..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full bg-white/[0.04] border border-white/[0.08] pl-10 pr-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-white/20 transition-colors"
+                    className="w-full bg-black/[0.04] border border-black/[0.08] dark:bg-white/[0.04] dark:border-white/[0.08] pl-10 pr-4 py-2.5 text-sm text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-white/20 focus:outline-none focus:border-black/20 dark:focus:border-white/20 transition-colors"
                   />
                 </div>
-                <div className="flex items-center gap-2 text-xs text-white/50">
+                <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-white/50">
                   <span className="whitespace-nowrap font-medium">Min picks:</span>
                   <select
                     value={minPicks}
                     onChange={(e) => setMinPicks(Number(e.target.value))}
-                    className="bg-white/[0.04] border border-white/[0.08] px-2.5 py-2.5 text-sm text-white focus:outline-none focus:border-white/20 transition-colors"
+                    className="bg-black/[0.04] border border-black/[0.08] dark:bg-white/[0.04] dark:border-white/[0.08] px-2.5 py-2.5 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-black/20 dark:focus:border-white/20 transition-colors"
                   >
                     <option value={5}>5+</option>
                     <option value={10}>10+</option>
@@ -289,13 +289,13 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch 
                 </div>
               </div>
 
-              <p className="text-white/30 text-xs mb-4">{filteredBrawlers.length} brawlers</p>
+              <p className="text-zinc-400 dark:text-white/30 text-xs mb-4">{filteredBrawlers.length} brawlers</p>
 
               {filteredBrawlers.length === 0 ? (
-                <p className="text-white/30 text-center py-16">No brawlers match your filters.</p>
+                <p className="text-zinc-400 dark:text-white/30 text-center py-16">No brawlers match your filters.</p>
               ) : (
                 <div className="space-y-1">
-                  <div className="grid grid-cols-[44px_1fr_100px_70px_36px] sm:grid-cols-[44px_1fr_120px_80px_80px_36px] gap-3 px-3 py-2 text-[10px] font-bold text-white/30 uppercase tracking-widest">
+                  <div className="grid grid-cols-[44px_1fr_100px_70px_36px] sm:grid-cols-[44px_1fr_120px_80px_80px_36px] gap-3 px-3 py-2 text-[10px] font-bold text-zinc-400 dark:text-white/30 uppercase tracking-widest">
                     <span></span>
                     <span>Brawler</span>
                     <span>Win Rate</span>
@@ -309,20 +309,20 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch 
                     return (
                       <div
                         key={brawler.brawlerId}
-                        className="grid grid-cols-[44px_1fr_100px_70px_36px] sm:grid-cols-[44px_1fr_120px_80px_80px_36px] gap-3 items-center px-3 py-2.5 bg-white/[0.02] hover:bg-white/[0.04] transition-all duration-150"
+                        className="grid grid-cols-[44px_1fr_100px_70px_36px] sm:grid-cols-[44px_1fr_120px_80px_80px_36px] gap-3 items-center px-3 py-2.5 bg-black/[0.02] hover:bg-black/[0.04] dark:bg-white/[0.02] dark:hover:bg-white/[0.04] transition-all duration-150"
                       >
-                        <div className="w-9 h-9 bg-white/[0.04] overflow-hidden flex items-center justify-center">
+                        <div className="w-9 h-9 bg-black/[0.04] dark:bg-white/[0.04] overflow-hidden flex items-center justify-center">
                           <img src={getBrawlerImage(brawler.brawlerId)} alt={brawler.name} width={32} height={32} className="object-contain" loading="lazy" />
                         </div>
-                        <span className="text-white font-semibold text-sm truncate">{formatBrawlerName(brawler.name)}</span>
+                        <span className="text-zinc-900 dark:text-white font-semibold text-sm truncate">{formatBrawlerName(brawler.name)}</span>
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-bold tabular-nums shrink-0" style={{ color: tier.color }}>{brawler.winRate.toFixed(1)}%</span>
-                          <div className="flex-1 h-1 bg-white/[0.04] overflow-hidden hidden sm:block">
+                          <div className="flex-1 h-1 bg-black/[0.04] dark:bg-white/[0.04] overflow-hidden hidden sm:block">
                             <div className="h-full transition-all duration-500" style={{ width: `${getBarWidth(brawler.winRate)}%`, backgroundColor: tier.color, opacity: 0.5 }} />
                           </div>
                         </div>
-                        <span className="text-right text-white/40 text-sm tabular-nums hidden sm:block">{brawler.wins.toLocaleString()}</span>
-                        <span className="text-right text-white/40 text-sm tabular-nums">{brawler.picks.toLocaleString()}</span>
+                        <span className="text-right text-zinc-400 dark:text-white/40 text-sm tabular-nums hidden sm:block">{brawler.wins.toLocaleString()}</span>
+                        <span className="text-right text-zinc-400 dark:text-white/40 text-sm tabular-nums">{brawler.picks.toLocaleString()}</span>
                         <div className="flex justify-center">
                           <span className="inline-flex items-center justify-center w-7 h-7 text-[10px] font-black" style={{ color: tier.color, backgroundColor: tier.bg, borderWidth: 1, borderColor: tier.border }}>{tier.label}</span>
                         </div>

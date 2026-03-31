@@ -20,7 +20,7 @@ interface RegionData {
 
 const linkBase = "text-xs font-semibold tracking-tight transition-all duration-200 px-3 py-1.5 text-left whitespace-nowrap"
 const linkInactive = `${linkBase} text-zinc-500 hover:text-zinc-900 hover:bg-black/5 dark:text-white/50 dark:hover:text-white dark:hover:bg-white/5`
-const linkActive = `${linkBase} bg-[#FFD400] text-black`
+const linkActive = `${linkBase} bg-red-500 text-white dark:bg-[#FFD400] dark:text-black`
 
 export default function LeaderboardsClient({ allData, updatedAt }: { allData: RegionData[]; updatedAt: string | null }) {
   const [activeRegion, setActiveRegion] = useState<string | null>(null)
@@ -112,7 +112,7 @@ export default function LeaderboardsClient({ allData, updatedAt }: { allData: Re
                       className="grid grid-cols-[32px_1fr_auto_auto] gap-4 items-center px-3 py-2.5 bg-black/[0.02] hover:bg-black/[0.04] transition-colors dark:bg-white/[0.02] dark:hover:bg-white/[0.04]"
                     >
                       <span className={`text-xs font-black tabular-nums ${
-                        i === 0 ? "text-[#FFD400]" : i === 1 ? "text-zinc-500 dark:text-white/60" : i === 2 ? "text-orange-400/70" : "text-zinc-400 dark:text-white/25"
+                        i === 0 ? "text-red-500 dark:text-[#FFD400]" : i === 1 ? "text-zinc-500 dark:text-white/60" : i === 2 ? "text-orange-400/70" : "text-zinc-400 dark:text-white/25"
                       }`}>
                         {player.rank}
                       </span>
@@ -127,8 +127,8 @@ export default function LeaderboardsClient({ allData, updatedAt }: { allData: Re
                       </span>
 
                       <div className="flex items-center gap-1.5 justify-end">
-                        <Trophy size={11} className="text-[#FFD400]/50 shrink-0" />
-                        <span className="text-sm font-bold text-[#FFD400]/80 tabular-nums">
+                        <Trophy size={11} className="text-red-500/50 dark:text-[#FFD400]/50 shrink-0" />
+                        <span className="text-sm font-bold text-red-500/80 dark:text-[#FFD400]/80 tabular-nums">
                           {player.trophies.toLocaleString()}
                         </span>
                       </div>

@@ -12,7 +12,7 @@ const sections = [
 
 const linkBase = "text-xs font-semibold tracking-tight transition-all duration-200 px-3 py-1.5 text-left"
 const linkInactive = `${linkBase} text-zinc-500 hover:text-zinc-900 hover:bg-black/5 dark:text-white/50 dark:hover:text-white dark:hover:bg-white/5`
-const linkActive = `${linkBase} bg-[#FFD400] text-black`
+const linkActive = `${linkBase} bg-red-500 text-white dark:bg-[#FFD400] dark:text-black`
 
 export default function About() {
     return (
@@ -76,7 +76,7 @@ function AboutPage() {
                                 </p>
                                 <a
                                     href="https://supercell.com/en/fan-content-policy/"
-                                    className="inline-flex items-center gap-1 text-xs text-[#FFD400] mt-2 hover:underline"
+                                    className="inline-flex items-center gap-1 text-xs text-red-500 dark:text-[#FFD400] mt-2 hover:underline"
                                 >
                                     Fan Content Policy <ArrowUpRight size={12} />
                                 </a>

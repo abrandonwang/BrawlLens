@@ -23,7 +23,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={`${inter.variable} flex flex-col min-h-dvh`}>
         <ThemeProvider>
           <MenuProvider>
-            <NextTopLoader color='#FFD400' showSpinner={false}/>
+            <NextTopLoader color='#ef4444' showSpinner={false}/>
             <NavBar/>
             {children}
             <Footer/>

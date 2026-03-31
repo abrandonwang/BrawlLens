@@ -19,7 +19,7 @@ const markdownComponents: Components = {
   a: ({ href, children }) => (
     <Link
       href={href ?? "/"}
-      className="inline-flex items-center gap-1 text-[#FFD400] font-semibold border-b border-[#FFD400]/30 hover:border-[#FFD400] transition-colors"
+      className="inline-flex items-center gap-1 text-red-500 dark:text-[#FFD400] font-semibold border-b border-red-500/30 dark:border-[#FFD400]/30 hover:border-red-500 dark:hover:border-[#FFD400] transition-colors"
     >
       {children}
     </Link>

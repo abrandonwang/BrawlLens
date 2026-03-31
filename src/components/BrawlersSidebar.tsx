@@ -12,7 +12,7 @@ interface Props {
 
 const linkBase = "text-xs font-semibold tracking-tight transition-all duration-200 px-3 py-1.5 rounded text-left whitespace-nowrap"
 const linkInactive = `${linkBase} text-zinc-500 hover:text-zinc-900 hover:bg-black/5 dark:text-white/50 dark:hover:text-white dark:hover:bg-white/5`
-const linkActive = `${linkBase} bg-[#FFD400] text-black`
+const linkActive = `${linkBase} bg-red-500 text-white dark:bg-[#FFD400] dark:text-black`
 
 export default function BrawlersSidebar({ rarities, activeRarity, setActiveRarity, search, setSearch }: Props) {
     return (
