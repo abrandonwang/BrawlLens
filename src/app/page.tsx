@@ -38,7 +38,7 @@ export default function Home() {
   }
 
   return (
-    <main className="flex-1 flex flex-col bg-white overflow-hidden dark:bg-[#111]">
+    <main className="flex-1 flex flex-col overflow-hidden">
       <section className={`flex-1 flex flex-col items-center justify-center px-6 py-16 transition-opacity duration-500 ${mounted ? "opacity-100" : "opacity-0"}`}>
 
         <h1 className="text-2xl md:text-3xl font-bold text-zinc-900 tracking-tight mb-8 text-center dark:text-white">
