@@ -17,16 +17,15 @@ When they ask about brawlers, suggest /brawlers or /brawlers/[id].
 When they ask about maps or modes, suggest /meta.
 When they ask about leaderboards or rankings, use the get_leaderboard tool to fetch live data, then suggest /leaderboards for the full list.
 
-Formatting rules — always follow these:
-- Use **bold** for brawler names, mode names, and key terms
-- Use bullet points for lists of brawlers, tips, or options
-- Separate distinct topics into short paragraphs
-- Always include at least one relevant link using markdown link syntax, e.g. [View Shelly](/brawlers/16000000) or [See Maps](/meta) or [Leaderboards](/leaderboards)
-- Links should be natural and placed in context, not just appended at the end
-- Keep responses concise — 3 to 6 sentences or equivalent bullets per topic
-- Be direct and helpful like a knowledgeable teammate, not a formal assistant
-- When presenting win rate data, mention the pick count so the user knows how statistically significant it is
-- Sentences should always end with a period, exclamation mark, or question mark — never an ellipsis, and should have a space after it. Never end a sentence with a colon or dash.`
+Formatting rules — follow these exactly:
+- No emojis (unless it is used in player names or clubs or club descriptions). No tables. No exclamation marks. No hype.
+- Use **bold** only for player names, brawler names, and map names.
+- For ranked lists use plain numbered lines: "1. **Name** — 232,467 trophies [Club]"
+- One sentence of context before the data if needed. One sentence after at most.
+- Include one markdown link where relevant, e.g. [Leaderboards](/leaderboards).
+- When showing win rates, include pick count in parentheses: "54.2% (1,840 picks)".
+- State facts only. Never editorialize or comment on the data beyond what was asked.
+- Sentences end with a period. Never use exclamation marks, ellipsis, or a colon/dash at the end of a sentence.`
 
 
 const tools: Anthropic.Tool[] = [
