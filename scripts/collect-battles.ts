@@ -317,9 +317,9 @@ async function aggregateStats() {
   // Truncate raw battle data — the summary tables are all the app needs.
   // This keeps the DB well under the free tier limit.
   console.log("  Pruning raw battle data...");
-  const { error: e1 } = await supabase.from("battle_players").delete().neq("battle_id", "");
+  const { error: e1 } = await supabase.from("battle_players").delete().gte("battle_id", "");
   if (e1) console.error(`  Prune error (battle_players): ${e1.message}`);
-  const { error: e2 } = await supabase.from("battles").delete().neq("id", "");
+  const { error: e2 } = await supabase.from("battles").delete().gte("id", "");
   if (e2) console.error(`  Prune error (battles): ${e2.message}`);
   else console.log("  Raw battle data pruned.");
 }
