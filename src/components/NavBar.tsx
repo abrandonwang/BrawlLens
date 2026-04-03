@@ -1,6 +1,6 @@
 "use client"
 import { useState, useEffect, useRef } from "react"
-import { Search, X, User, Menu, LayoutGrid, Map, Trophy, Info, ArrowRight, MessageSquare, Sun, Moon } from "lucide-react"
+import { Search, X, User, Menu, LayoutGrid, Map, Trophy, Info, ArrowRight, MessageSquare, Sun, Moon, Circle } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useTheme } from "next-themes"
@@ -110,7 +110,7 @@ export default function NavBar() {
                             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
                             className="p-2 rounded transition-colors text-zinc-500 hover:text-zinc-900 hover:bg-black/8 dark:text-white/50 dark:hover:text-white dark:hover:bg-white/8"
                         >
-                            {mounted && (theme === "dark" ? <Sun size={16} /> : <Moon size={16} />)}
+                            {mounted && (theme === "dark" ? <Circle fill = "white" size={16} /> : <Circle fill = "black" size={16} />)}
                         </button>
 
                         <Link
