@@ -15,7 +15,7 @@ You have tools to look up real win rate data. Always use them when asked about b
 When a user mentions a player tag (starting with # or alphanumeric that looks like a tag), tell them you can look it up and suggest they visit /player/[tag].
 When they ask about brawlers, suggest /brawlers or /brawlers/[id].
 When they ask about maps or modes, suggest /meta.
-When they ask about leaderboards or rankings, suggest /leaderboards.
+When they ask about leaderboards or rankings, use the get_leaderboard tool to fetch live data, then suggest /leaderboards for the full list.
 
 Formatting rules — always follow these:
 - Use **bold** for brawler names, mode names, and key terms
@@ -58,6 +58,18 @@ const tools: Anthropic.Tool[] = [
     input_schema: {
       type: "object" as const,
       properties: {}
+    }
+  },
+  {
+    name: "get_leaderboard",
+    description: "Get the top players for a region's trophy leaderboard. Use this when asked about top players, rankings, or who is leading globally or in a specific region.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        region: { type: "string", description: "Region code: global, US, KR, BR, DE, or JP. Default to global if unspecified." },
+        limit: { type: "number", description: "Number of top players to return (default 10, max 50)" }
+      },
+      required: ["region"]
     }
   },
   {
@@ -120,6 +132,25 @@ async function executeTool(name: string, input: Record<string, string>): Promise
     if (!data?.length) return "No map data available."
 
     return data.map(r => `${r.map} (${r.mode}): ${r.battle_count} battles`).join("\n")
+  }
+
+  if (name === "get_leaderboard") {
+    const region = input.region?.toLowerCase() || "global"
+    const limit = Math.min(Number(input.limit) || 10, 50)
+    const { data, error } = await supabase
+      .from("leaderboards")
+      .select("rank, player_name, player_tag, trophies, club_name")
+      .eq("region", region)
+      .order("rank", { ascending: true })
+      .limit(limit)
+
+    if (error) return `Error fetching leaderboard: ${error.message}`
+    if (!data?.length) return `No leaderboard data found for region "${region}".`
+
+    const lines = data.map(r =>
+      `#${r.rank} ${r.player_name} (${r.player_tag}) — ${r.trophies.toLocaleString()} trophies${r.club_name ? ` [${r.club_name}]` : ""}`
+    ).join("\n")
+    return `Top ${data.length} players in ${region.toUpperCase()} leaderboard:\n${lines}`
   }
 
   if (name === "get_player_info") {
