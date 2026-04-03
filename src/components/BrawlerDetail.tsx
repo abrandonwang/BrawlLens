@@ -27,9 +27,10 @@ interface Brawler {
 interface Props {
     brawler: Brawler
     activeTab: "starPowers" | "gadgets"
+    setActiveTab: (tab: "starPowers" | "gadgets") => void
 }
 
-export default function BrawlerDetail({ brawler, activeTab }: Props) {
+export default function BrawlerDetail({ brawler, activeTab, setActiveTab }: Props) {
     const items = activeTab === "starPowers" ? brawler.starPowers : brawler.gadgets
     const rarityColor = brawler.rarity.color
 
@@ -40,11 +41,7 @@ export default function BrawlerDetail({ brawler, activeTab }: Props) {
                     className="w-48 h-48 rounded-lg border-2 p-4 shrink-0 flex items-center justify-center"
                     style={{ borderColor: rarityColor, backgroundColor: `${rarityColor}10` }}
                 >
-                    <img
-                        src={brawler.imageUrl2}
-                        alt={brawler.name}
-                        className="w-full h-full object-contain"
-                    />
+                    <img src={brawler.imageUrl2} alt={brawler.name} className="w-full h-full object-contain" />
                 </div>
 
                 <div className="flex-1">
@@ -66,9 +63,20 @@ export default function BrawlerDetail({ brawler, activeTab }: Props) {
                 </div>
             </div>
 
-            <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-4 dark:text-white/30">
-                {activeTab === "starPowers" ? "Star Powers" : "Gadgets"}
-            </p>
+            <div className="flex gap-1.5 mb-4">
+                <button
+                    onClick={() => setActiveTab("starPowers")}
+                    className={`text-xs font-semibold px-3 py-1.5 rounded transition-all duration-200 ${activeTab === "starPowers" ? "bg-red-500 text-white dark:bg-[#FFD400] dark:text-black" : "text-zinc-500 hover:text-zinc-900 hover:bg-black/5 dark:text-white/50 dark:hover:text-white dark:hover:bg-white/5"}`}
+                >
+                    Star Powers
+                </button>
+                <button
+                    onClick={() => setActiveTab("gadgets")}
+                    className={`text-xs font-semibold px-3 py-1.5 rounded transition-all duration-200 ${activeTab === "gadgets" ? "bg-red-500 text-white dark:bg-[#FFD400] dark:text-black" : "text-zinc-500 hover:text-zinc-900 hover:bg-black/5 dark:text-white/50 dark:hover:text-white dark:hover:bg-white/5"}`}
+                >
+                    Gadgets
+                </button>
+            </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {items.map(item => (
