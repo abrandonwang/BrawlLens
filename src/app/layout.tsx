@@ -20,7 +20,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} flex flex-col min-h-dvh overflow-y-auto`}>
+      <body suppressHydrationWarning className={`${inter.variable} flex flex-col min-h-dvh overflow-y-auto bg-white dark:bg-[#111]`}>
         <ThemeProvider>
           <MenuProvider>
             <NextTopLoader color='#ef4444' showSpinner={false}/>

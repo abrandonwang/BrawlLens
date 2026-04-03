@@ -18,9 +18,6 @@ interface RegionData {
   players: Player[]
 }
 
-const linkBase = "text-xs font-semibold tracking-tight transition-all duration-200 px-3 py-1.5 text-left whitespace-nowrap"
-const linkInactive = `${linkBase} text-zinc-500 hover:text-zinc-900 hover:bg-black/5 dark:text-white/50 dark:hover:text-white dark:hover:bg-white/5`
-const linkActive = `${linkBase} bg-red-500 text-white dark:bg-[#FFD400] dark:text-black`
 
 export default function LeaderboardsClient({ allData, updatedAt }: { allData: RegionData[]; updatedAt: string | null }) {
   const [activeRegion, setActiveRegion] = useState<string | null>(null)
@@ -38,7 +35,7 @@ export default function LeaderboardsClient({ allData, updatedAt }: { allData: Re
     }))
 
   return (
-    <div className="bg-white flex flex-col dark:bg-black">
+    <div className="flex flex-col">
       {/* Main */}
       <main className="flex-1 min-w-0 pt-6 pb-6 px-8 overflow-y-auto">
         <section className="mb-8">
@@ -57,22 +54,16 @@ export default function LeaderboardsClient({ allData, updatedAt }: { allData: Re
               />
             </div>
 
-            {/* Regions */}
-            <div className="flex flex-row gap-1.5 overflow-x-auto scrollbar-none pb-1 md:pb-0">
-              <button onClick={() => setActiveRegion(null)} className={activeRegion === null ? linkActive : linkInactive}>
-                All
-              </button>
-
+            <select
+              value={activeRegion ?? ""}
+              onChange={e => setActiveRegion(e.target.value || null)}
+              className="bg-black/10 border border-black/20 rounded px-3 py-2.5 text-xs text-zinc-900 outline-none dark:bg-white/10 dark:border-white/20 dark:text-white"
+            >
+              <option value="">All Regions</option>
               {allData.map((r) => (
-                <button
-                  key={r.code}
-                  onClick={() => setActiveRegion(activeRegion === r.code ? null : r.code)}
-                  className={activeRegion === r.code ? linkActive : linkInactive}
-                >
-                  {r.label}
-                </button>
+                <option key={r.code} value={r.code}>{r.label}</option>
               ))}
-            </div>
+            </select>
 
             {updatedAt && (
               <p className="text-[10px] text-zinc-400 dark:text-white/20 ml-auto hidden md:block">Updated {updatedAt}</p>

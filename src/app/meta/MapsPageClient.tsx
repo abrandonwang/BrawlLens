@@ -37,13 +37,6 @@ function getModeName(mode: string): string {
   return MODE_CONFIG[mode]?.label || mode.charAt(0).toUpperCase() + mode.slice(1).replace(/([A-Z])/g, " $1")
 }
 
-function getModeColor(mode: string): string {
-  return MODE_CONFIG[mode]?.color || "#ffffff"
-}
-
-const linkBase = "text-xs font-semibold tracking-tight transition-all duration-200 px-3 py-1.5 rounded text-left whitespace-nowrap"
-const linkInactive = `${linkBase} text-zinc-500 hover:text-zinc-900 hover:bg-black/5 dark:text-white/50 dark:hover:text-white dark:hover:bg-white/5`
-const linkActive = `${linkBase} bg-red-500 text-white dark:bg-[#FFD400] dark:text-black`
 
 export default function MapsPageClient() {
   const [modes, setModes] = useState<ModeInfo[]>([])
@@ -77,30 +70,16 @@ export default function MapsPageClient() {
               />
             </div>
 
-            {/* Filters */}
-            <div className="flex flex-row gap-1.5 overflow-x-auto scrollbar-none pb-1 md:pb-0">
-              <button
-                onClick={() => setSelectedMode(null)}
-                className={selectedMode === null ? linkActive : linkInactive}
-              >
-                All
-              </button>
-
-              {modes.map((m) => {
-                const isActive = selectedMode === m.mode
-                const color = getModeColor(m.mode)
-                return (
-                  <button
-                    key={m.mode}
-                    onClick={() => setSelectedMode(isActive ? null : m.mode)}
-                    className={isActive ? linkBase : linkInactive}
-                    style={isActive ? { backgroundColor: `${color}20`, color } : undefined}
-                  >
-                    {getModeName(m.mode)}
-                  </button>
-                )
-              })}
-            </div>
+            <select
+              value={selectedMode ?? ""}
+              onChange={e => setSelectedMode(e.target.value || null)}
+              className="bg-black/10 border border-black/20 rounded px-3 py-2.5 text-xs text-zinc-900 outline-none dark:bg-white/10 dark:border-white/20 dark:text-white"
+            >
+              <option value="">All Modes</option>
+              {modes.map((m) => (
+                <option key={m.mode} value={m.mode}>{getModeName(m.mode)}</option>
+              ))}
+            </select>
           </div>
         </section>
         <MetaDashboard modes={modes} loading={loading} selectedMode={selectedMode} mapSearch={mapSearch} />
