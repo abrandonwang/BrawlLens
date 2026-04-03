@@ -38,35 +38,25 @@ export default function BrawlerDetailClient({ brawler }: { brawler: Brawler }) {
     const [activeTab, setActiveTab] = useState<"starPowers" | "gadgets">("starPowers")
 
     return (
-        <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
-            <aside className="w-full lg:w-64 shrink-0 h-auto lg:h-full border-b lg:border-b-0 lg:border-r border-black/10 py-5 lg:py-10 px-5 flex flex-row lg:flex-col gap-1.5 overflow-x-auto lg:overflow-y-auto dark:border-white/10">
+        <div className="flex flex-col px-8 pt-6 pb-10">
+            <div className="flex items-center gap-3 mb-6">
                 <Link
                     href="/brawlers"
-                    className="flex items-center gap-2 text-xs font-semibold text-zinc-400 hover:text-zinc-900 transition-colors px-3 py-1.5 mb-2 shrink-0 dark:text-white/40 dark:hover:text-white"
+                    className="flex items-center gap-1.5 text-xs font-semibold text-zinc-400 hover:text-zinc-900 transition-colors dark:text-white/40 dark:hover:text-white"
                 >
                     <ArrowLeft size={13} />
                     Back
                 </Link>
-
-                <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest px-3 mb-1 hidden lg:block dark:text-white/30">View</p>
-
-                <button
-                    onClick={() => setActiveTab("starPowers")}
-                    className={activeTab === "starPowers" ? linkActive : linkInactive}
-                >
-                    Star Powers
-                </button>
-                <button
-                    onClick={() => setActiveTab("gadgets")}
-                    className={activeTab === "gadgets" ? linkActive : linkInactive}
-                >
-                    Gadgets
-                </button>
-            </aside>
-
-            <main className="flex-1 min-w-0 pt-6 pb-6 px-8 overflow-y-auto">
-                <BrawlerDetail brawler={brawler} activeTab={activeTab} />
-            </main>
+                <div className="flex gap-1.5">
+                    <button onClick={() => setActiveTab("starPowers")} className={activeTab === "starPowers" ? linkActive : linkInactive}>
+                        Star Powers
+                    </button>
+                    <button onClick={() => setActiveTab("gadgets")} className={activeTab === "gadgets" ? linkActive : linkInactive}>
+                        Gadgets
+                    </button>
+                </div>
+            </div>
+            <BrawlerDetail brawler={brawler} activeTab={activeTab} />
         </div>
     )
 }

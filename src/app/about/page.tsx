@@ -16,7 +16,7 @@ const linkActive = `${linkBase} bg-red-500 text-white dark:bg-[#FFD400] dark:tex
 
 export default function About() {
     return (
-        <div className="bg-white flex flex-col overflow-hidden text-zinc-900 dark:bg-black dark:text-white/90">
+        <div className="flex flex-col text-zinc-900 dark:text-white/90">
             <Suspense>
                 <AboutPage />
             </Suspense>
