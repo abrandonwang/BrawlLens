@@ -38,53 +38,46 @@ export default function LeaderboardsClient({ allData, updatedAt }: { allData: Re
     }))
 
   return (
-    <div className="bg-white h-[calc(100dvh-52px)] flex flex-col lg:flex-row overflow-hidden dark:bg-black">
-
-      {/* Sidebar */}
-      <aside className="w-full lg:w-64 shrink-0 h-auto lg:h-full border-b lg:border-b-0 lg:border-r border-black/10 flex flex-col lg:overflow-y-auto dark:border-white/10">
-
-        {/* Search */}
-        <div className="px-4 pt-4 pb-3 lg:px-5 lg:pt-10 lg:pb-4">
-          <div className="flex items-center gap-2.5 bg-black/10 border border-black/20 px-4 py-2.5 dark:bg-white/10 dark:border-white/20">
-            <Search size={13} className="text-zinc-500 shrink-0 dark:text-white/60" />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search players"
-              className="bg-transparent text-xs text-zinc-900 outline-none placeholder:text-zinc-400 w-full dark:text-white dark:placeholder:text-white/40"
-            />
-          </div>
-        </div>
-
-        {/* Regions */}
-        <div className="lg:px-5 lg:pb-10 flex flex-row lg:flex-col gap-1.5 overflow-x-auto lg:overflow-x-visible px-4 pb-3 lg:pb-0 scrollbar-none">
-          <p className="hidden lg:block text-[10px] font-bold text-zinc-400 uppercase tracking-widest px-3 mb-1 dark:text-white/30">Region</p>
-
-          <button onClick={() => setActiveRegion(null)} className={activeRegion === null ? linkActive : linkInactive}>
-            All
-          </button>
-
-          {allData.map((r) => (
-            <button
-              key={r.code}
-              onClick={() => setActiveRegion(activeRegion === r.code ? null : r.code)}
-              className={activeRegion === r.code ? linkActive : linkInactive}
-            >
-              {r.label}
-            </button>
-          ))}
-        </div>
-
-        {updatedAt && (
-          <p className="hidden lg:block text-[10px] text-zinc-400 mt-auto px-8 pb-6 dark:text-white/20">Updated {updatedAt}</p>
-        )}
-      </aside>
-
+    <div className="bg-white flex flex-col dark:bg-black">
       {/* Main */}
-      <main className="flex-1 min-w-0 overflow-y-auto pt-6 pb-6 px-8">
-        <section className="mb-10">
+      <main className="flex-1 min-w-0 pt-6 pb-6 px-8 overflow-y-auto">
+        <section className="mb-8">
           <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-zinc-900 mb-3 dark:text-white">Leaderboards</h1>
-          <p className="text-zinc-500 text-sm leading-relaxed dark:text-white/40">Top 200 players by region, ranked by trophies.</p>
+          <p className="text-zinc-500 text-sm leading-relaxed dark:text-white/40 mb-8">Top 200 players by region, ranked by trophies.</p>
+
+          <div className="flex flex-col md:flex-row md:items-center gap-4 mb-10">
+            {/* Search */}
+            <div className="flex items-center gap-2.5 bg-black/10 border border-black/20 rounded px-4 py-2.5 dark:bg-white/10 dark:border-white/20 w-full md:w-64">
+              <Search size={13} className="text-zinc-500 shrink-0 dark:text-white/60" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search players"
+                className="bg-transparent text-xs text-zinc-900 outline-none placeholder:text-zinc-400 w-full dark:text-white dark:placeholder:text-white/40"
+              />
+            </div>
+
+            {/* Regions */}
+            <div className="flex flex-row gap-1.5 overflow-x-auto scrollbar-none pb-1 md:pb-0">
+              <button onClick={() => setActiveRegion(null)} className={activeRegion === null ? linkActive : linkInactive}>
+                All
+              </button>
+
+              {allData.map((r) => (
+                <button
+                  key={r.code}
+                  onClick={() => setActiveRegion(activeRegion === r.code ? null : r.code)}
+                  className={activeRegion === r.code ? linkActive : linkInactive}
+                >
+                  {r.label}
+                </button>
+              ))}
+            </div>
+
+            {updatedAt && (
+              <p className="text-[10px] text-zinc-400 dark:text-white/20 ml-auto hidden md:block">Updated {updatedAt}</p>
+            )}
+          </div>
         </section>
 
         <div className="space-y-12">

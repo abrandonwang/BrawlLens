@@ -315,32 +315,19 @@ async function aggregateStats() {
   console.log("  Stats aggregated.");
 
   // Truncate raw battle data — the summary tables are all the app needs.
-  // This keeps the DB well under the free tier limit.
+  // TRUNCATE is far cheaper on disk I/O than a full-table DELETE.
   console.log("  Pruning raw battle data...");
-  const { error: e1 } = await supabase.from("battle_players").delete().gte("battle_id", "");
-  if (e1) console.error(`  Prune error (battle_players): ${e1.message}`);
-  const { error: e2 } = await supabase.from("battles").delete().gte("id", "");
-  if (e2) console.error(`  Prune error (battles): ${e2.message}`);
+  const { error: e1 } = await supabase.rpc("truncate_battle_tables");
+  if (e1) console.error(`  Prune error: ${e1.message}`);
   else console.log("  Raw battle data pruned.");
 }
 
 // ─── Reset all tags for next cycle ──────────────────────────────
 async function resetAllTags() {
   console.log("\n  Resetting all tags for next cycle...");
-  let total = 0;
-  while (true) {
-    const { data, error } = await supabase
-      .from("harvested_tags")
-      .select("player_tag")
-      .not("processed_at", "is", null)
-      .limit(500);
-    if (error) { console.error(`  Reset error: ${error.message}`); break; }
-    if (!data?.length) break;
-    const tags = data.map((r: any) => r.player_tag);
-    await supabase.from("harvested_tags").update({ processed_at: null }).in("player_tag", tags);
-    total += tags.length;
-  }
-  console.log(`  Tags reset (${total}). Starting new cycle.\n`);
+  const { error } = await supabase.rpc("reset_harvested_tags");
+  if (error) console.error(`  Reset error: ${error.message}`);
+  else console.log("  Tags reset. Starting new cycle.\n");
 }
 
 // ─── Run one full pass ───────────────────────────────────────────
@@ -406,7 +393,7 @@ async function leaderboardLoop() {
   while (true) {
     await fetchAndSaveLeaderboards();
     await fetchAndSaveRotation();
-    await sleep(5 * 60 * 1000);
+    await sleep(30 * 60 * 1000);
   }
 }
 
