@@ -7,7 +7,7 @@ export default function Footer() {
     if (pathname !== "/") return null
 
     return (
-        <footer className="w-full bg-zinc-100 border-t border-black/8 dark:bg-[#111] dark:border-white/8">
+        <footer className="w-full bg-white border-t border-black/8 dark:bg-[#111] dark:border-white/8">
             <div className="px-4 md:px-6 h-[52px] flex items-center justify-center sm:justify-between">
                 <p className="hidden sm:block text-xs font-medium text-zinc-400 dark:text-white/25">© 2025 BrawlLens.</p>
                 <div className="flex items-center overflow-hidden">
