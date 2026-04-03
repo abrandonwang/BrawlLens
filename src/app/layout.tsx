@@ -20,12 +20,14 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} flex flex-col min-h-dvh`}>
+      <body className={`${inter.variable} flex flex-col min-h-dvh overflow-y-auto`}>
         <ThemeProvider>
           <MenuProvider>
             <NextTopLoader color='#ef4444' showSpinner={false}/>
             <NavBar/>
-            {children}
+            <div className="flex flex-col max-w-[1080px] mx-auto w-full">
+              {children}
+            </div>
             <Footer/>
           </MenuProvider>
         </ThemeProvider>

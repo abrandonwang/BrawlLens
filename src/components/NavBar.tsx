@@ -63,7 +63,7 @@ export default function NavBar() {
     return (
         <>
             <div className="fixed top-0 left-0 right-0 z-[100] bg-white border-b border-black/8 dark:bg-[#111] dark:border-white/8">
-                <header className="h-[52px] grid grid-cols-3 items-center px-4 md:px-6">
+                <header className="h-[52px] grid grid-cols-3 items-center px-4 md:px-6 max-w-[1080px] mx-auto w-full">
 
                     {/* Logo */}
                     <div className="flex items-center">
