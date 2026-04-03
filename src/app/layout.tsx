@@ -25,7 +25,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <MenuProvider>
             <ThemedTopLoader />
             <NavBar/>
-            <div className="flex flex-col max-w-[1080px] mx-auto w-full">
+            <div className="flex flex-col flex-1 max-w-[1080px] mx-auto w-full">
               {children}
             </div>
             <Footer/>

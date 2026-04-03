@@ -30,12 +30,12 @@ function AboutPage() {
 
     return (
         <main className="flex-1 overflow-y-auto px-8 pt-8 pb-10 lg:px-12 lg:pt-12">
-            <div className="flex flex-row gap-1.5 overflow-x-auto scrollbar-none mb-10 pb-1">
+            <div className="flex flex-row gap-1 overflow-x-auto scrollbar-none mb-10 w-fit bg-black/[0.04] border border-black/[0.08] rounded-md p-1 dark:bg-white/[0.04] dark:border-white/[0.08]">
                 {sections.map(({ id, label }) => (
                     <button
                         key={id}
                         onClick={() => setActive(id)}
-                        className={active === id ? linkActive : linkInactive}
+                        className={active === id ? `${linkActive} rounded` : `${linkInactive} rounded`}
                     >
                         {label}
                     </button>
