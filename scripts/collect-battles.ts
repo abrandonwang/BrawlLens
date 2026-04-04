@@ -318,7 +318,7 @@ async function aggregateStats() {
   // TRUNCATE is far cheaper on disk I/O than a full-table DELETE.
   console.log("  Pruning raw battle data...");
   const { error: e1 } = await supabase.rpc("truncate_battle_tables");
-  if (e1) console.error(`  Prune error: ${e1.message}`);
+  if (e1) console.error(`  ⚠️  CRITICAL: Failed to prune battle data! Tables may continue growing. Error: ${e1.message}`);
   else console.log("  Raw battle data pruned.");
 }
 
@@ -332,6 +332,15 @@ async function resetAllTags() {
 
 // ─── Run one full pass ───────────────────────────────────────────
 async function runCycle(cycle: number) {
+  // Safety valve: if battle_players ballooned (e.g. cleanup failed last cycle), aggregate now.
+  const { count: bpCount } = await supabase
+    .from("battle_players")
+    .select("*", { count: "exact", head: true });
+  if ((bpCount ?? 0) > 1_000_000) {
+    console.log(`  [safety] battle_players has ${bpCount} rows — running aggregateStats() before collecting.`);
+    await aggregateStats();
+  }
+
   const { count: totalCount } = await supabase
     .from("harvested_tags")
     .select("*", { count: "exact", head: true });
@@ -358,7 +367,14 @@ async function runCycle(cycle: number) {
 
     for (let i = 0; i < tags.length; i += CONCURRENCY) {
       const group = tags.slice(i, i + CONCURRENCY);
-      const results = await Promise.all(group.map((tag) => processTag(tag)));
+      const results = await Promise.all(
+        group.map((tag) =>
+          processTag(tag).catch((err) => {
+            console.error(`  Error processing tag ${tag}:`, err);
+            return { battles: [], players: [] };
+          })
+        )
+      );
 
       for (let k = 0; k < results.length; k++) {
         accBattles.push(...results[k].battles);
@@ -405,7 +421,11 @@ async function main() {
 
   let cycle = 1;
   while (true) {
-    await runCycle(cycle);
+    try {
+      await runCycle(cycle);
+    } catch (err) {
+      console.error(`  [cycle ${cycle}] runCycle threw — proceeding to cleanup:`, err);
+    }
     await aggregateStats();
     await resetAllTags();
     cycle++;
