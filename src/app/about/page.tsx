@@ -45,7 +45,6 @@ function AboutPage() {
             {active === "about" && (
                 <article className="space-y-12">
                     <section>
-                        <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-3 dark:text-white/30">What is BrawlLens</p>
                         <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-zinc-900 mb-4 dark:text-white">A stats platform built for serious Brawl Stars players.</h1>
                         <p className="text-zinc-500 text-sm leading-relaxed dark:text-white/40">
                             BrawlLens aggregates live battle data from top-ranked players across six global regions to surface statistics that actually matter in competitive play. No ads, no account required, no clutter. Just fast, accurate data from the game.
@@ -113,7 +112,6 @@ function AboutPage() {
             {active === "privacy-policy" && (
                 <article className="space-y-12">
                     <section>
-                        <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-3 dark:text-white/30">Privacy Policy</p>
                         <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-zinc-900 mb-4 dark:text-white">Your data stays yours.</h1>
                         <p className="text-zinc-500 text-sm leading-relaxed dark:text-white/40">
                             BrawlLens does not use trackers, third-party analytics, or persistent cookies. The site exists to show you game data, not to collect information about you.
@@ -148,7 +146,6 @@ function AboutPage() {
 
             {active === "contact" && (
                 <article>
-                    <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-3 dark:text-white/30">Contact</p>
                     <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-zinc-900 mb-2 dark:text-white">Get in touch.</h1>
                     <p className="text-zinc-500 text-sm leading-relaxed mb-8 dark:text-white/40">
                         Bug reports, feature requests, and general feedback are all welcome. Typically respond within 48 hours.
