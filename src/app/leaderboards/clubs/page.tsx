@@ -1,0 +1,39 @@
+export const dynamic = "force-dynamic"
+
+import { createClient } from "@supabase/supabase-js"
+import ClubsClient from "./ClubsClient"
+
+const REGIONS = [
+  { code: "global", label: "Global" },
+  { code: "US", label: "United States" },
+  { code: "KR", label: "Korea" },
+  { code: "BR", label: "Brazil" },
+  { code: "DE", label: "Germany" },
+  { code: "JP", label: "Japan" },
+]
+
+async function fetchClubLeaderboard(region: string) {
+  const supabase = createClient(
+    process.env.SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_KEY!
+  )
+  const { data, error } = await supabase
+    .from("club_leaderboards")
+    .select("rank, club_tag, club_name, trophies, member_count, updated_at")
+    .eq("region", region)
+    .order("rank", { ascending: true })
+    .limit(200)
+
+  if (error) {
+    console.error(`Club leaderboard fetch error [${region}]:`, error.message)
+    return []
+  }
+  return data || []
+}
+
+export default async function ClubsLeaderboardPage() {
+  const allData = await Promise.all(
+    REGIONS.map(async (r) => ({ ...r, clubs: await fetchClubLeaderboard(r.code) }))
+  )
+  return <ClubsClient allData={allData} />
+}

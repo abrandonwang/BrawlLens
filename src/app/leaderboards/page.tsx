@@ -1,44 +1,45 @@
-export const dynamic = "force-dynamic"
+import Link from "next/link"
+import { ArrowRight } from "lucide-react"
 
-import { createClient } from "@supabase/supabase-js"
-import LeaderboardsClient from "./LeaderboardsClient"
-
-const REGIONS = [
-  { code: "global", label: "Global" },
-  { code: "US", label: "United States" },
-  { code: "KR", label: "Korea" },
-  { code: "BR", label: "Brazil" },
-  { code: "DE", label: "Germany" },
-  { code: "JP", label: "Japan" },
+const categories = [
+  {
+    label: "Players",
+    desc: "Top 200 trophy earners across 6 regions.",
+    href: "/leaderboards/players",
+  },
+  {
+    label: "Clubs",
+    desc: "Top 200 clubs by combined trophies.",
+    href: "/leaderboards/clubs",
+  },
+  {
+    label: "Brawlers",
+    desc: "Top 200 players per brawler, globally.",
+    href: "/leaderboards/brawlers",
+  },
 ]
 
-async function fetchLeaderboard(region: string) {
-  const supabase = createClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_KEY!
+export default function LeaderboardsHub() {
+  return (
+    <main className="flex-1 px-8 pt-8 pb-16 lg:px-12 lg:pt-12">
+      <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-zinc-900 dark:text-white mb-2">Leaderboards</h1>
+      <p className="text-sm text-zinc-500 dark:text-white/40 mb-12">Rankings across players, clubs, and brawlers.</p>
+
+      <div className="flex flex-col border border-black/[0.08] dark:border-white/[0.08] divide-y divide-black/[0.08] dark:divide-white/[0.08]">
+        {categories.map(({ label, desc, href }) => (
+          <Link
+            key={href}
+            href={href}
+            className="group flex items-center justify-between px-6 py-5 bg-transparent hover:bg-black/[0.02] dark:hover:bg-white/[0.03] transition-colors"
+          >
+            <div>
+              <p className="text-base font-bold text-zinc-900 dark:text-white">{label}</p>
+              <p className="text-xs text-zinc-500 dark:text-white/40 mt-0.5">{desc}</p>
+            </div>
+            <ArrowRight size={15} className="text-zinc-400 dark:text-white/30 shrink-0 group-hover:translate-x-0.5 transition-transform" />
+          </Link>
+        ))}
+      </div>
+    </main>
   )
-  const { data, error } = await supabase
-    .from("leaderboards")
-    .select("rank, player_tag, player_name, trophies, club_name, updated_at")
-    .eq("region", region)
-    .order("rank", { ascending: true })
-    .limit(200)
-
-  if (error) {
-    console.error(`Leaderboard fetch error [${region}]:`, error.message)
-    return []
-  }
-  return data || []
-}
-
-export default async function LeaderboardsPage() {
-  const allData = await Promise.all(
-    REGIONS.map(async (r) => ({ ...r, players: await fetchLeaderboard(r.code) }))
-  )
-
-  const updatedAt = allData[0]?.players[0]?.updated_at
-    ? new Date(allData[0].players[0].updated_at).toLocaleString()
-    : null
-
-  return <LeaderboardsClient allData={allData} updatedAt={updatedAt} />
 }
