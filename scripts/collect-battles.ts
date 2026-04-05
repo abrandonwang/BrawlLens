@@ -280,7 +280,7 @@ async function fetchAndSaveRotation() {
 const LEADERBOARD_REGIONS = ["global", "US", "KR", "BR", "DE", "JP"];
 
 async function fetchAndSaveLeaderboards() {
-  console.log("  Updating leaderboards...");
+  console.log("  Updating player leaderboards...");
   for (const region of LEADERBOARD_REGIONS) {
     const data = await apiFetch(`/rankings/${region}/players`);
     if (!data?.items?.length) {
@@ -302,6 +302,59 @@ async function fetchAndSaveLeaderboards() {
     if (error) console.error(`    [${region}] DB error: ${error.message}`);
     else console.log(`    [${region}] saved ${rows.length} players`);
   }
+}
+
+async function fetchAndSaveClubLeaderboards() {
+  console.log("  Updating club leaderboards...");
+  for (const region of LEADERBOARD_REGIONS) {
+    const data = await apiFetch(`/rankings/${region}/clubs`);
+    if (!data?.items?.length) {
+      console.log(`    [clubs/${region}] no data`);
+      continue;
+    }
+    const rows = data.items.map((c: any, i: number) => ({
+      region,
+      rank: i + 1,
+      club_tag: c.tag,
+      club_name: c.name,
+      trophies: c.trophies,
+      member_count: c.memberCount ?? null,
+      updated_at: new Date().toISOString(),
+    }));
+    const { error } = await supabase
+      .from("club_leaderboards")
+      .upsert(rows, { onConflict: "region,rank" });
+    if (error) console.error(`    [clubs/${region}] DB error: ${error.message}`);
+    else console.log(`    [clubs/${region}] saved ${rows.length} clubs`);
+  }
+}
+
+async function fetchAndSaveBrawlerLeaderboards() {
+  console.log("  Updating brawler leaderboards (global)...");
+  const brawlerData = await apiFetch("/brawlers");
+  if (!brawlerData?.items?.length) {
+    console.log("    [brawlers] could not fetch brawler list");
+    return;
+  }
+  for (const brawler of brawlerData.items) {
+    const data = await apiFetch(`/rankings/global/brawlers/${brawler.id}`);
+    if (!data?.items?.length) continue;
+    const rows = data.items.map((p: any, i: number) => ({
+      brawler_id: brawler.id,
+      brawler_name: brawler.name,
+      rank: i + 1,
+      player_tag: p.tag,
+      player_name: p.name,
+      trophies: p.trophies,
+      club_name: p.club?.name ?? null,
+      updated_at: new Date().toISOString(),
+    }));
+    const { error } = await supabase
+      .from("brawler_leaderboards")
+      .upsert(rows, { onConflict: "brawler_id,rank" });
+    if (error) console.error(`    [brawler/${brawler.name}] DB error: ${error.message}`);
+  }
+  console.log(`    [brawlers] done (${brawlerData.items.length} brawlers)`);
 }
 
 // ─── Aggregate win rates into summary table ──────────────────────
@@ -410,6 +463,8 @@ async function runCycle(cycle: number) {
 async function leaderboardLoop() {
   while (true) {
     await fetchAndSaveLeaderboards();
+    await fetchAndSaveClubLeaderboards();
+    await fetchAndSaveBrawlerLeaderboards();
     await fetchAndSaveRotation();
     await sleep(30 * 60 * 1000);
   }
