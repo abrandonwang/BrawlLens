@@ -119,7 +119,7 @@ export default function BrawlerRankingClient({ data, brawlerName }: { data: Play
       <div className="mt-16 border border-black/[0.08] dark:border-white/[0.08] bg-black/[0.02] dark:bg-white/[0.02] p-8 max-w-2xl mx-auto text-center">
         <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 dark:text-white/30 mb-4">About Brawler Rankings</p>
         <p className="text-sm text-zinc-500 dark:text-white/40 leading-relaxed">
-          Brawler rankings show the top 200 global players for {brawlerName}, ranked by trophies earned with that brawler. Data is sourced from the official Brawl Stars API and refreshed every 30 minutes. Click any player to view their full profile.
+          Brawler rankings show the top 200 global players for {brawlerName}, ranked by trophies earned with that brawler. Rankings are updated every 30 minutes using real-time data. Click any player to view their full profile.
         </p>
       </div>
     </main>

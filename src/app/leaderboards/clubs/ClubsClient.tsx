@@ -182,7 +182,7 @@ export default function ClubsClient({ allData }: { allData: RegionData[] }) {
         <div className="mt-16 border border-black/[0.08] dark:border-white/[0.08] bg-black/[0.02] dark:bg-white/[0.02] p-8 max-w-2xl mx-auto text-center">
           <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 dark:text-white/30 mb-4">About Club Rankings</p>
           <p className="text-sm text-zinc-500 dark:text-white/40 leading-relaxed">
-            Club rankings reflect the top 200 clubs by combined trophies across six regions. Data is sourced from the official Brawl Stars API and refreshed every 30 minutes.
+            Club rankings reflect the top 200 clubs by combined trophies across six regions using real-time data refreshed every 30 minutes.
           </p>
         </div>
       </main>

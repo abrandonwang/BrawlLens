@@ -184,7 +184,7 @@ export default function LeaderboardsClient({ allData }: { allData: RegionData[];
         <div className="mt-16 border border-black/[0.08] dark:border-white/[0.08] bg-black/[0.02] dark:bg-white/[0.02] p-8 max-w-2xl mx-auto text-center">
           <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 dark:text-white/30 mb-4">About Player Rankings</p>
           <p className="text-sm text-zinc-500 dark:text-white/40 leading-relaxed">
-            Player rankings are sourced directly from the official Brawl Stars API and reflect the top 200 trophy earners across six regions: Global, United States, Korea, Brazil, Germany, and Japan. Rankings update automatically every 30 minutes. Trophies shown represent a player's current season total. Click any player to view their full profile.
+            Player rankings reflect the top 200 trophy earners across six regions: Global, United States, Korea, Brazil, Germany, and Japan. Rankings update automatically every 30 minutes using real-time data. Trophies shown represent a player's current season total. Click any player to view their full profile.
           </p>
         </div>
       </main>

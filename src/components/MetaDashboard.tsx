@@ -93,6 +93,7 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch 
   const [minPicks, setMinPicks] = useState(10);
   const [mapImageLookup, setMapImageLookup] = useState<Map<string, string>>(new Map());
   const [rotationMapNames, setRotationMapNames] = useState<Set<string>>(new Set());
+  const [mapPage, setMapPage] = useState(0);
 
   useEffect(() => {
     Promise.all([
@@ -140,6 +141,12 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch 
     return sortedMaps.filter((m) => m.name.toLowerCase().includes(mapSearch.toLowerCase()));
   }, [sortedMaps, mapSearch]);
 
+  useEffect(() => { setMapPage(0); }, [displayedMaps]);
+
+  const MAP_PAGE_SIZE = 8;
+  const mapTotalPages = Math.ceil(displayedMaps.length / MAP_PAGE_SIZE);
+  const paginatedMaps = displayedMaps.slice(mapPage * MAP_PAGE_SIZE, (mapPage + 1) * MAP_PAGE_SIZE);
+
   const handleMapClick = useCallback((mapName: string) => {
     setSelectedMap(mapName);
     setMapMeta(null);
@@ -183,8 +190,9 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch 
 
       {/* Map Grid */}
       {!selectedMap && (
+        <>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-          {displayedMaps.map((map) => {
+          {paginatedMaps.map((map) => {
             const imageUrl = mapImageLookup.get(map.name);
             const isLive = rotationMapNames.has(map.name);
             return (
@@ -193,20 +201,19 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch 
                 onClick={() => handleMapClick(map.name)}
                 className="group relative text-left transition-all duration-200 hover:opacity-90"
               >
-                <div className="aspect-[4/3] relative bg-black/[0.03] border border-black/[0.06] overflow-hidden dark:bg-white/[0.03] dark:border-white/[0.06]">
+                <div className="relative bg-black/[0.03] border border-black/[0.06] overflow-hidden dark:bg-white/[0.03] dark:border-white/[0.06]">
                   {imageUrl ? (
                     <img
                       src={imageUrl}
                       alt={map.name}
-                      className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity duration-300"
+                      className="w-full h-auto object-contain group-hover:opacity-90 transition-opacity duration-200"
                       loading="lazy"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center">
+                    <div className="aspect-[3/4] w-full flex items-center justify-center">
                       <div className="w-12 h-12 opacity-20" style={{ backgroundColor: getModeColor(selectedMode || "") }} />
                     </div>
                   )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
 
                   {isLive && (
                     <div className="absolute top-2 right-2 flex items-center gap-1 px-1.5 py-0.5 bg-green-500/20 border border-green-500/30">
@@ -214,16 +221,62 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch 
                       <span className="text-green-400 text-[9px] font-bold uppercase tracking-wider">Live</span>
                     </div>
                   )}
-
-                  <div className="absolute bottom-0 left-0 right-0 p-3">
-                    <h3 className="text-white font-bold text-xs truncate leading-tight">{map.name}</h3>
-                    <p className="text-white/40 text-[10px] mt-0.5">{map.battles.toLocaleString()} battles</p>
-                  </div>
+                </div>
+                <div className="px-2 py-2 border-t border-black/[0.06] dark:border-white/[0.06]">
+                  <h3 className="text-zinc-900 dark:text-white font-bold text-xs truncate leading-tight">{map.name}</h3>
+                  <p className="text-zinc-400 dark:text-white/40 text-[10px] mt-0.5">{map.battles.toLocaleString()} battles</p>
                 </div>
               </button>
             );
           })}
         </div>
+
+        {mapTotalPages > 1 && (
+          <div className="flex items-center justify-center gap-1 mt-4">
+            <button
+              onClick={() => setMapPage(p => p - 1)}
+              disabled={mapPage === 0}
+              className="w-7 h-7 flex items-center justify-center text-zinc-400 hover:text-zinc-900 hover:bg-black/5 disabled:opacity-30 disabled:cursor-not-allowed transition-colors rounded dark:text-white/40 dark:hover:text-white dark:hover:bg-white/5"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+            </button>
+            {(() => {
+              const pages: (number | "...")[] = [];
+              for (let i = 0; i < mapTotalPages; i++) {
+                if (i === 0 || i === mapTotalPages - 1 || (i >= mapPage - 1 && i <= mapPage + 1)) {
+                  pages.push(i);
+                } else if (pages[pages.length - 1] !== "...") {
+                  pages.push("...");
+                }
+              }
+              return pages.map((p, i) =>
+                p === "..." ? (
+                  <span key={`ellipsis-${i}`} className="w-7 h-7 flex items-center justify-center text-xs text-zinc-400 dark:text-white/30">…</span>
+                ) : (
+                  <button
+                    key={p}
+                    onClick={() => setMapPage(p)}
+                    className={`w-7 h-7 text-xs font-semibold rounded transition-colors ${
+                      p === mapPage
+                        ? "bg-red-500 text-white dark:bg-[#FFD400] dark:text-black"
+                        : "text-zinc-400 hover:text-zinc-900 hover:bg-black/5 dark:text-white/40 dark:hover:text-white dark:hover:bg-white/5"
+                    }`}
+                  >
+                    {p + 1}
+                  </button>
+                )
+              );
+            })()}
+            <button
+              onClick={() => setMapPage(p => p + 1)}
+              disabled={mapPage === mapTotalPages - 1}
+              className="w-7 h-7 flex items-center justify-center text-zinc-400 hover:text-zinc-900 hover:bg-black/5 disabled:opacity-30 disabled:cursor-not-allowed transition-colors rounded dark:text-white/40 dark:hover:text-white dark:hover:bg-white/5"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+            </button>
+          </div>
+        )}
+        </>
       )}
 
       {/* Map Detail */}
