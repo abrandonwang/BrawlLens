@@ -45,7 +45,7 @@ function AboutPage() {
             {active === "about" && (
                 <article className="space-y-12">
                     <section>
-                        <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-zinc-900 mb-4 dark:text-white">A stats platform built for serious Brawl Stars players.</h1>
+                        <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-zinc-900 mb-4 dark:text-white">A data platform built for Brawl Stars players.</h1>
                         <p className="text-zinc-500 text-sm leading-relaxed dark:text-white/40">
                             BrawlLens aggregates live battle data from top-ranked players across six global regions to surface statistics that actually matter in competitive play. No ads, no account required, no clutter. Just fast, accurate data from the game.
                         </p>
