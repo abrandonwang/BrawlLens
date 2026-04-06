@@ -41,7 +41,7 @@ export default function Home() {
     <main className="flex-1 flex flex-col overflow-hidden">
       <section className={`flex-1 flex flex-col items-center justify-center px-6 py-16 transition-opacity duration-500 ${mounted ? "opacity-100" : "opacity-0"}`}>
 
-        <div className="glass w-full max-w-xl px-8 py-10">
+        <div className="w-full max-w-xl px-8 py-10">
         <div className="mb-8 text-center">
           <p className="text-base font-medium text-zinc-600 dark:text-white/60 mb-1">Ask me anything about</p>
           <p className="text-3xl md:text-4xl leading-none">

@@ -10,16 +10,18 @@ const supabase = createClient(
 
 const SYSTEM_PROMPT = `You are BrawlLens AI, an assistant built into BrawlLens — a Brawl Stars analytics platform powered by real battle data from top-ranked players across 6 regions.
 
-You have tools to look up real win rate data. Always use them when asked about brawler performance, map stats, or win rates, (never guess or make up numbers) important!.
+You have tools to look up real data. Always use them when asked about brawler performance, map stats, win rates, player rankings, club rankings, or brawler rankings. Never guess or make up numbers.
 
 When a user mentions a player tag (starting with # or alphanumeric that looks like a tag), tell them you can look it up and suggest they visit /player/[tag].
 When they ask about brawlers, suggest /brawlers or /brawlers/[id].
 When they ask about maps or modes, suggest /meta.
-When they ask about leaderboards or rankings, use the get_leaderboard tool to fetch live data, then suggest /leaderboards for the full list.
+When they ask about player leaderboards or top players, use the get_leaderboard tool, then suggest /leaderboards/players.
+When they ask about club rankings or top clubs, use the get_club_leaderboard tool, then suggest /leaderboards/clubs.
+When they ask about a specific brawler's top players or brawler rankings, use the get_brawler_leaderboard tool, then suggest /leaderboards/brawlers.
 
 Formatting rules — follow these exactly:
 - No emojis (unless it is used in player names or clubs or club descriptions). No tables. No exclamation marks. No hype.
-- Use **bold** only for player names, brawler names, and map names.
+- Use **bold** only for player names, brawler names, club names, and map names.
 - For ranked lists use plain numbered lines: "1. **Name** — 232,467 trophies [Club]"
 - One sentence of context before the data if needed. One sentence after at most.
 - Include one markdown link where relevant, e.g. [Leaderboards](/leaderboards).
@@ -80,6 +82,30 @@ const tools: Anthropic.Tool[] = [
         player_tag: { type: "string", description: "The player's tag, starting with # (e.g. #123ABC)" }
       },
       required: ["player_tag"]
+    }
+  },
+  {
+    name: "get_club_leaderboard",
+    description: "Get the top clubs for a region's trophy leaderboard. Use this when asked about top clubs, club rankings, or which clubs are leading globally or in a specific region.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        region: { type: "string", description: "Region code: global, US, KR, BR, DE, or JP. Default to global if unspecified." },
+        limit: { type: "number", description: "Number of top clubs to return (default 10, max 50)" }
+      },
+      required: ["region"]
+    }
+  },
+  {
+    name: "get_brawler_leaderboard",
+    description: "Get the top players for a specific brawler globally. Use this when asked about the best players for a brawler or who ranks highest with a specific brawler.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        brawler_name: { type: "string", description: "The brawler name to look up (partial match works)" },
+        limit: { type: "number", description: "Number of top players to return (default 10, max 50)" }
+      },
+      required: ["brawler_name"]
     }
   },
 ]
@@ -153,6 +179,44 @@ async function executeTool(name: string, input: Record<string, string>): Promise
   }
 
   if (name === "get_player_info") {
+  }
+
+  if (name === "get_club_leaderboard") {
+    const region = input.region?.toLowerCase() || "global"
+    const limit = Math.min(Number(input.limit) || 10, 50)
+    const { data, error } = await supabase
+      .from("club_leaderboards")
+      .select("rank, club_name, club_tag, trophies, member_count")
+      .eq("region", region)
+      .order("rank", { ascending: true })
+      .limit(limit)
+
+    if (error) return `Error fetching club leaderboard: ${error.message}`
+    if (!data?.length) return `No club leaderboard data found for region "${region}".`
+
+    const lines = data.map(r =>
+      `#${r.rank} ${r.club_name} (${r.club_tag}) — ${r.trophies.toLocaleString()} trophies, ${r.member_count} members`
+    ).join("\n")
+    return `Top ${data.length} clubs in ${region.toUpperCase()} leaderboard:\n${lines}`
+  }
+
+  if (name === "get_brawler_leaderboard") {
+    const limit = Math.min(Number(input.limit) || 10, 50)
+    const { data, error } = await supabase
+      .from("brawler_leaderboards")
+      .select("rank, player_name, player_tag, trophies, club_name, brawler_name")
+      .ilike("brawler_name", `%${input.brawler_name}%`)
+      .order("rank", { ascending: true })
+      .limit(limit)
+
+    if (error) return `Error fetching brawler leaderboard: ${error.message}`
+    if (!data?.length) return `No brawler leaderboard data found for "${input.brawler_name}".`
+
+    const brawlerName = data[0].brawler_name
+    const lines = data.map(r =>
+      `#${r.rank} ${r.player_name} (${r.player_tag}) — ${r.trophies.toLocaleString()} trophies${r.club_name ? ` [${r.club_name}]` : ""}`
+    ).join("\n")
+    return `Top ${data.length} players for ${brawlerName} (global):\n${lines}`
   }
 
   return "Unknown tool"

@@ -5,7 +5,7 @@ import NavBar from "../components/NavBar"
 import Footer from "../components/Footer"
 import { MenuProvider } from "../context/MenuContext"
 import { ThemeProvider } from "../components/ThemeProvider"
-import NextTopLoader from "nextjs-toploader";
+import TopLoader from "../components/TopLoader"
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
@@ -23,7 +23,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body suppressHydrationWarning className={`${inter.variable} flex flex-col min-h-dvh overflow-y-auto bg-white dark:bg-[#111]`}>
         <ThemeProvider>
           <MenuProvider>
-            <NextTopLoader color='#ef4444' showSpinner={false}/>
+            <TopLoader />
             <NavBar/>
             <div className="flex flex-col flex-1 max-w-[1080px] mx-auto w-full">
               {children}
