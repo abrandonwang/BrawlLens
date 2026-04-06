@@ -45,9 +45,9 @@ export default function Home() {
         <div className="mb-8 text-center">
           <p className="text-base font-medium text-zinc-600 dark:text-white/60 mb-1">Ask me anything about</p>
           <p className="text-3xl md:text-4xl leading-none">
-            <span style={{ fontFamily: "Nougat", color: "#e8a800", WebkitTextStroke: "2px rgba(0,0,0,0.25)" }}>BRAWL</span>
+            <span style={{ fontFamily: "Nougat", color: "#e8a800", WebkitTextStroke: "2px rgba(0,0,0)" }}>BRAWL</span>
             {" "}
-            <span style={{ fontFamily: "Nougat", WebkitTextStroke: "2px rgba(0,0,0,0.25)" }} className="text-red-500">STARS</span>.
+            <span style={{ fontFamily: "Nougat", WebkitTextStroke: "2px rgba(0,0,0)" }} className="text-red-500">STARS</span>.
           </p>
         </div>
 
