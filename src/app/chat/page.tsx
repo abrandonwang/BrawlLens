@@ -103,40 +103,47 @@ function ChatPage() {
     setStreaming(false)
   }
 
+  const inputBox = (placeholder: string) => (
+    <div className="relative border border-black/10 bg-black/[0.04] focus-within:border-black/20 transition-colors flex items-center dark:border-white/10 dark:bg-white/[0.04] dark:focus-within:border-white/20">
+      <Link href="/" className="p-3 text-zinc-400 hover:text-zinc-600 transition-colors shrink-0 dark:text-white/25 dark:hover:text-white/50">
+        <RotateCcw size={14} />
+      </Link>
+      <textarea
+        ref={textareaRef}
+        rows={1}
+        value={userInput}
+        onChange={handleInput}
+        onKeyDown={handleKeyDown}
+        placeholder={placeholder}
+        className="flex-1 bg-transparent py-3 text-sm text-zinc-900 placeholder:text-zinc-400 outline-none resize-none leading-relaxed max-h-40 overflow-y-auto dark:text-white dark:placeholder:text-white/20"
+      />
+      <button
+        onClick={handleSubmit}
+        disabled={!userInput.trim() || streaming}
+        className="m-2 w-7 h-7 flex items-center justify-center bg-zinc-900 text-white disabled:bg-black/10 disabled:text-black/20 hover:bg-zinc-700 transition-colors shrink-0 dark:bg-white dark:text-black dark:disabled:bg-white/10 dark:disabled:text-white/20 dark:hover:bg-white/90"
+      >
+        <ArrowUp size={13} />
+      </button>
+    </div>
+  )
+
+  if (messages.length === 0) {
+    return (
+      <main className="fixed top-[52px] left-0 right-0 bottom-0 flex flex-col items-center justify-center bg-white dark:bg-[#111] px-4">
+        <div className="w-full max-w-2xl">
+          <h1 className="text-2xl font-bold text-zinc-900 dark:text-white mb-4 text-center">Your Brawl Stars AI agent</h1>
+          {inputBox("Ask anything about players, brawlers, maps, clubs...")}
+        </div>
+      </main>
+    )
+  }
+
   return (
     <main className="fixed top-[52px] left-0 right-0 bottom-0 flex flex-col bg-white dark:bg-[#111]">
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-8">
         <div className="max-w-2xl mx-auto space-y-6">
-
-          {messages.length === 0 && (
-            <div className="flex flex-col items-center justify-center min-h-[50vh] text-center px-4">
-              <div className="relative w-10 h-10 flex items-center justify-center mb-6">
-                <div className="absolute inset-0 border-2 rounded-full border-zinc-300 dark:border-white/20" />
-                <div className="w-2 h-2 rounded-full bg-zinc-400 dark:bg-white/30" />
-              </div>
-              <p className="text-zinc-500 text-sm mb-6 dark:text-white/50">What do you want to know?</p>
-              <div className="flex flex-wrap gap-2 justify-center max-w-md">
-                {[
-                  "Best brawlers for Gem Grab",
-                  "Show me #GRG0L2G's stats",
-                  "Top players leaderboard",
-                  "What counters Bibi?",
-                  "Current map rotation",
-                ].map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => { setUserInput(s); textareaRef.current?.focus() }}
-                    className="text-[11px] text-zinc-500 border border-black/8 bg-black/[0.03] px-3 py-1.5 hover:text-zinc-800 hover:border-black/15 transition-colors dark:text-white/35 dark:border-white/8 dark:bg-white/[0.03] dark:hover:text-white/70 dark:hover:border-white/15"
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
           {messages.map((msg, i) => (
             <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
               {msg.role === "assistant" && (
@@ -162,35 +169,14 @@ function ChatPage() {
               </div>
             </div>
           ))}
-
           <div ref={bottomRef} />
         </div>
       </div>
 
       {/* Input */}
-      <div className="border-t border-black/8 px-4 py-4 dark:border-white/8">
+      <div className="px-4 py-4">
         <div className="max-w-2xl mx-auto">
-          <div className="relative border border-black/10 bg-black/[0.04] focus-within:border-black/20 transition-colors flex items-center dark:border-white/10 dark:bg-white/[0.04] dark:focus-within:border-white/20">
-            <Link href="/" className="p-3 text-zinc-400 hover:text-zinc-600 transition-colors shrink-0 dark:text-white/25 dark:hover:text-white/50">
-              <RotateCcw size={14} />
-            </Link>
-            <textarea
-              ref={textareaRef}
-              rows={1}
-              value={userInput}
-              onChange={handleInput}
-              onKeyDown={handleKeyDown}
-              placeholder="Ask a follow-up..."
-              className="flex-1 bg-transparent py-3 text-sm text-zinc-900 placeholder:text-zinc-400 outline-none resize-none leading-relaxed max-h-40 overflow-y-auto dark:text-white dark:placeholder:text-white/20"
-            />
-            <button
-              onClick={handleSubmit}
-              disabled={!userInput.trim() || streaming}
-              className="m-2 w-7 h-7 flex items-center justify-center bg-zinc-900 text-white disabled:bg-black/10 disabled:text-black/20 hover:bg-zinc-700 transition-colors shrink-0 dark:bg-white dark:text-black dark:disabled:bg-white/10 dark:disabled:text-white/20 dark:hover:bg-white/90"
-            >
-              <ArrowUp size={13} />
-            </button>
-          </div>
+          {inputBox("Ask a follow-up...")}
         </div>
       </div>
 

@@ -28,6 +28,12 @@ function rankBg(rank: number) {
   return "bg-black/[0.02] dark:bg-white/[0.02] border-l-2 border-l-transparent hover:bg-black/[0.05] dark:hover:bg-white/[0.05]"
 }
 
+function formatNum(n: number) {
+  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + "M"
+  if (n >= 1_000) return (n / 1_000).toFixed(1) + "K"
+  return n.toString()
+}
+
 function rankColor(rank: number) {
   if (rank === 1) return "text-[#FFD400]"
   if (rank === 2) return "text-zinc-400"
@@ -132,7 +138,7 @@ export default function ClubsClient({ allData }: { allData: RegionData[] }) {
                           <div className="flex items-center gap-1.5 justify-end">
                             <Trophy size={12} className="text-red-500/50 dark:text-[#FFD400]/50 shrink-0" />
                             <span className="text-base font-bold text-red-500/80 dark:text-[#FFD400]/80 tabular-nums">
-                              {club.trophies.toLocaleString()}
+                              {formatNum(club.trophies)}
                             </span>
                           </div>
                         </div>
