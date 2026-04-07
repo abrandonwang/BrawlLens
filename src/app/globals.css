@@ -52,3 +52,45 @@ body.home-page {
 #nprogress .bar {
   top: 0 !important;
 }
+
+/* ── Glow card subtle shift border ── */
+@keyframes color-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.glow-gadget, .glow-starpower, .glow-hypercharge, .glow-buffied {
+  background-size: 200% 200% !important;
+  animation: color-shift 5s ease infinite !important;
+  transition: opacity 0.3s ease;
+}
+
+.glow-gadget {
+  background: linear-gradient(45deg, #16a34a, #4ade80, #22c55e, #16a34a);
+}
+
+.glow-starpower {
+  background: linear-gradient(45deg, #ca8a04, #FFD400, #eab308, #ca8a04);
+}
+
+.glow-hypercharge {
+  background: linear-gradient(45deg, #7c3aed, #a855f7, #c084fc, #9333ea, #7c3aed);
+}
+
+.glow-buffied {
+  background: linear-gradient(45deg, #0ea5e9, #6366f1, #a78bfa, #22d3ee, #0ea5e9);
+  animation-duration: 3s !important;
+}
+
+/* ── Buffied button animated gradient ── */
+@keyframes glow-btn-shift {
+  0%   { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+.btn-buffied {
+  background: linear-gradient(90deg, #0ea5e9, #6366f1, #a78bfa, #22d3ee, #38bdf8, #818cf8, #0ea5e9);
+  background-size: 200% 100%;
+  animation: glow-btn-shift 2.5s linear infinite;
+}

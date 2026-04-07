@@ -26,7 +26,7 @@ function rankColor(rank: number) {
   if (rank === 1) return "text-[#FFD400]"
   if (rank === 2) return "text-zinc-400"
   if (rank === 3) return "text-orange-400"
-  return "text-zinc-400 dark:text-white/25"
+  return "text-zinc-400 dark:text-white/45"
 }
 
 export default function BrawlerRankingClient({ data, brawlerName }: { data: Player[]; brawlerName: string }) {
@@ -36,14 +36,14 @@ export default function BrawlerRankingClient({ data, brawlerName }: { data: Play
 
   return (
     <main className="flex-1 px-8 pt-6 pb-16 lg:px-12">
-      <Link href="/leaderboards/brawlers" className="inline-flex items-center gap-1.5 text-xs text-zinc-400 dark:text-white/30 hover:text-zinc-700 dark:hover:text-white/60 transition-colors mb-6">
+      <Link href="/leaderboards/brawlers" className="inline-flex items-center gap-1.5 text-xs text-zinc-400 dark:text-white/50 hover:text-zinc-700 dark:hover:text-white/60 transition-colors mb-6">
         <ArrowLeft size={12} /> Brawler Rankings
       </Link>
       <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-zinc-900 dark:text-white mb-2">{brawlerName}</h1>
       <p className="text-sm text-zinc-500 dark:text-white/40 mb-10">Top 200 global players ranked by {brawlerName} trophies.</p>
 
       <div className="space-y-1">
-        <div className="grid grid-cols-[52px_1fr_auto_auto_24px] gap-4 px-5 py-2 text-[10px] font-bold text-zinc-400 uppercase tracking-widest dark:text-white/30">
+        <div className="grid grid-cols-[52px_1fr_auto_auto_24px] gap-4 px-5 py-2 text-[10px] font-bold text-zinc-400 uppercase tracking-widest dark:text-white/50">
           <span>#</span>
           <span>Player</span>
           <span className="hidden sm:block">Club</span>
@@ -63,10 +63,10 @@ export default function BrawlerRankingClient({ data, brawlerName }: { data: Play
 
             <div className="min-w-0">
               <p className="text-base font-semibold text-zinc-900 truncate dark:text-white">{player.player_name}</p>
-              <p className="text-xs text-zinc-400 font-mono dark:text-white/25">{player.player_tag}</p>
+              <p className="text-xs text-zinc-400 font-mono dark:text-white/45">{player.player_tag}</p>
             </div>
 
-            <span className="hidden sm:block text-sm text-zinc-400 truncate max-w-[160px] dark:text-white/30">
+            <span className="hidden sm:block text-sm text-zinc-400 truncate max-w-[160px] dark:text-white/50">
               {player.club_name ?? "—"}
             </span>
 
@@ -77,7 +77,7 @@ export default function BrawlerRankingClient({ data, brawlerName }: { data: Play
               </span>
             </div>
 
-            <ArrowRight size={14} className="text-zinc-400 dark:text-white/30" />
+            <ArrowRight size={14} className="text-zinc-400 dark:text-white/50" />
           </Link>
         ))}
       </div>
@@ -117,7 +117,7 @@ export default function BrawlerRankingClient({ data, brawlerName }: { data: Play
       )}
 
       <div className="mt-16 border border-black/[0.08] dark:border-white/[0.08] bg-black/[0.02] dark:bg-white/[0.02] p-8 max-w-2xl mx-auto text-center">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 dark:text-white/30 mb-4">About Brawler Rankings</p>
+        <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 dark:text-white/50 mb-4">About Brawler Rankings</p>
         <p className="text-sm text-zinc-500 dark:text-white/40 leading-relaxed">
           Brawler rankings show the top 200 global players for {brawlerName}, ranked by trophies earned with that brawler. Rankings are updated every 30 minutes using real-time data. Click any player to view their full profile.
         </p>

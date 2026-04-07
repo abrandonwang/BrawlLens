@@ -18,7 +18,7 @@ export default async function PlayerProfile({ params }: { params: Promise<{ tag:
             <div className="bg-white flex-1 flex items-center justify-center min-h-screen dark:bg-black">
                 <div className="text-center">
                     <p className="text-zinc-500 text-lg font-bold dark:text-white/40">Could not load player</p>
-                    <p className="text-zinc-400 text-sm mt-2 dark:text-white/20">The player API is unavailable. Try again later.</p>
+                    <p className="text-zinc-400 text-sm mt-2 dark:text-white/40">The player API is unavailable. Try again later.</p>
                 </div>
             </div>
         )
@@ -34,12 +34,12 @@ export default async function PlayerProfile({ params }: { params: Promise<{ tag:
 
                     {/* HERO */}
                     <section className="mb-20">
-                        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400 mb-4 dark:text-white/20">#{tag}</p>
+                        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400 mb-4 dark:text-white/40">#{tag}</p>
                         <h1 className="text-6xl md:text-[100px] font-black tracking-[-0.06em] leading-[0.85] text-zinc-900 mb-6 dark:text-white">
                             {player.name}
                         </h1>
                         {club?.name && (
-                            <p className="text-sm font-bold text-zinc-400 mt-4 dark:text-white/30">{club.name}</p>
+                            <p className="text-sm font-bold text-zinc-400 mt-4 dark:text-white/50">{club.name}</p>
                         )}
                     </section>
 
@@ -55,7 +55,7 @@ export default async function PlayerProfile({ params }: { params: Promise<{ tag:
                     <section>
                         <div className="flex items-end justify-between mb-10">
                             <h2 className="text-4xl font-black tracking-tight text-zinc-900 dark:text-white">{sorted.length} Brawlers</h2>
-                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 dark:text-white/20">Sorted by trophies</p>
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 dark:text-white/40">Sorted by trophies</p>
                         </div>
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                             {sorted.map((brawler: PlayerBrawler) => (
@@ -73,9 +73,9 @@ export default async function PlayerProfile({ params }: { params: Promise<{ tag:
 function StatCard({ label, value, sub }: { label: string; value: string; sub?: string }) {
     return (
         <div className="bg-zinc-100 border border-black/5 rounded-[28px] p-8 dark:bg-zinc-900 dark:border-white/5">
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 mb-3 dark:text-white/30">{label}</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 mb-3 dark:text-white/50">{label}</p>
             <p className="text-3xl font-black tracking-tight text-zinc-900 dark:text-white">{value}</p>
-            {sub && <p className="text-xs font-bold text-zinc-400 mt-1 dark:text-white/20">{sub}</p>}
+            {sub && <p className="text-xs font-bold text-zinc-400 mt-1 dark:text-white/40">{sub}</p>}
         </div>
     )
 }

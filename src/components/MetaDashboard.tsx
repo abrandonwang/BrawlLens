@@ -116,8 +116,8 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch 
   if (modes.length === 0) {
     return (
       <div className="text-center py-32">
-        <p className="text-zinc-500 text-lg font-medium dark:text-white/40">No battle data yet</p>
-        <p className="text-zinc-400 text-sm mt-2 dark:text-white/20">The collector is still running. Check back soon.</p>
+        <p className="text-zinc-500 text-lg font-medium dark:text-white/60">No battle data yet</p>
+        <p className="text-zinc-400 text-sm mt-2 dark:text-white/60">The collector is still running. Check back soon.</p>
       </div>
     );
   }
@@ -156,7 +156,7 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch 
               </div>
               <div className="px-2 py-2 border-t border-black/[0.06] dark:border-white/[0.06]">
                 <h3 className="text-zinc-900 dark:text-white font-bold text-xs truncate leading-tight">{map.name}</h3>
-                <p className="text-zinc-400 dark:text-white/40 text-[10px] mt-0.5">{map.battles.toLocaleString()} battles</p>
+                <p className="text-zinc-400 dark:text-white/60 text-[10px] mt-0.5">{map.battles.toLocaleString()} battles</p>
               </div>
             </Link>
           );
@@ -168,7 +168,7 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch 
           <button
             onClick={() => setMapPage(p => p - 1)}
             disabled={mapPage === 0}
-            className="w-7 h-7 flex items-center justify-center text-zinc-400 hover:text-zinc-900 hover:bg-black/5 disabled:opacity-30 disabled:cursor-not-allowed transition-colors rounded dark:text-white/40 dark:hover:text-white dark:hover:bg-white/5"
+            className="w-7 h-7 flex items-center justify-center text-zinc-400 hover:text-zinc-900 hover:bg-black/5 disabled:opacity-30 disabled:cursor-not-allowed transition-colors rounded dark:text-white/60 dark:hover:text-white dark:hover:bg-white/5"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
           </button>
@@ -191,7 +191,7 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch 
                   className={`w-7 h-7 text-xs font-semibold rounded transition-colors ${
                     p === mapPage
                       ? "bg-red-500 text-white dark:bg-[#FFD400] dark:text-black"
-                      : "text-zinc-400 hover:text-zinc-900 hover:bg-black/5 dark:text-white/40 dark:hover:text-white dark:hover:bg-white/5"
+                      : "text-zinc-400 hover:text-zinc-900 hover:bg-black/5 dark:text-white/60 dark:hover:text-white dark:hover:bg-white/5"
                   }`}
                 >
                   {p + 1}
@@ -202,7 +202,7 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch 
           <button
             onClick={() => setMapPage(p => p + 1)}
             disabled={mapPage === mapTotalPages - 1}
-            className="w-7 h-7 flex items-center justify-center text-zinc-400 hover:text-zinc-900 hover:bg-black/5 disabled:opacity-30 disabled:cursor-not-allowed transition-colors rounded dark:text-white/40 dark:hover:text-white dark:hover:bg-white/5"
+            className="w-7 h-7 flex items-center justify-center text-zinc-400 hover:text-zinc-900 hover:bg-black/5 disabled:opacity-30 disabled:cursor-not-allowed transition-colors rounded dark:text-white/60 dark:hover:text-white dark:hover:bg-white/5"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
           </button>

@@ -38,7 +38,7 @@ function rankColor(rank: number) {
   if (rank === 1) return "text-[#FFD400]"
   if (rank === 2) return "text-zinc-400"
   if (rank === 3) return "text-orange-400"
-  return "text-zinc-400 dark:text-white/25"
+  return "text-zinc-400 dark:text-white/45"
 }
 
 export default function ClubsClient({ allData }: { allData: RegionData[] }) {
@@ -65,7 +65,7 @@ export default function ClubsClient({ allData }: { allData: RegionData[] }) {
     <div className="flex flex-col">
       <main className="flex-1 min-w-0 pt-6 pb-16 px-8 overflow-y-auto">
         <section className="mb-8">
-          <Link href="/leaderboards" className="inline-flex items-center gap-1.5 text-xs text-zinc-400 dark:text-white/30 hover:text-zinc-700 dark:hover:text-white/60 transition-colors mb-6">
+          <Link href="/leaderboards" className="inline-flex items-center gap-1.5 text-xs text-zinc-400 dark:text-white/50 hover:text-zinc-700 dark:hover:text-white/60 transition-colors mb-6">
             <ArrowLeft size={12} /> Leaderboards
           </Link>
           <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-zinc-900 mb-3 dark:text-white">Clubs</h1>
@@ -103,11 +103,11 @@ export default function ClubsClient({ allData }: { allData: RegionData[] }) {
             return (
               <section key={region.code}>
                 {region.clubs.length === 0 ? (
-                  <p className="text-zinc-400 text-sm py-8 dark:text-white/25">No data yet.</p>
+                  <p className="text-zinc-400 text-sm py-8 dark:text-white/45">No data yet.</p>
                 ) : (
                   <>
                     <div className="space-y-1">
-                      <div className="grid grid-cols-[52px_1fr_auto_auto] gap-4 px-5 py-2 text-[10px] font-bold text-zinc-400 uppercase tracking-widest dark:text-white/30">
+                      <div className="grid grid-cols-[52px_1fr_auto_auto] gap-4 px-5 py-2 text-[10px] font-bold text-zinc-400 uppercase tracking-widest dark:text-white/50">
                         <span>#</span>
                         <span>Club</span>
                         <span className="hidden sm:block">Members</span>
@@ -125,12 +125,12 @@ export default function ClubsClient({ allData }: { allData: RegionData[] }) {
 
                           <div className="min-w-0">
                             <p className="text-base font-semibold text-zinc-900 truncate dark:text-white">{club.club_name}</p>
-                            <p className="text-xs text-zinc-400 font-mono dark:text-white/25">{club.club_tag}</p>
+                            <p className="text-xs text-zinc-400 font-mono dark:text-white/45">{club.club_tag}</p>
                           </div>
 
                           <div className="hidden sm:flex items-center gap-1.5">
-                            <Users size={11} className="text-zinc-400 dark:text-white/30 shrink-0" />
-                            <span className="text-sm text-zinc-400 dark:text-white/30 tabular-nums">
+                            <Users size={11} className="text-zinc-400 dark:text-white/50 shrink-0" />
+                            <span className="text-sm text-zinc-400 dark:text-white/50 tabular-nums">
                               {club.member_count ?? "—"}
                             </span>
                           </div>
@@ -186,7 +186,7 @@ export default function ClubsClient({ allData }: { allData: RegionData[] }) {
         </div>
 
         <div className="mt-16 border border-black/[0.08] dark:border-white/[0.08] bg-black/[0.02] dark:bg-white/[0.02] p-8 max-w-2xl mx-auto text-center">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 dark:text-white/30 mb-4">About Club Rankings</p>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 dark:text-white/50 mb-4">About Club Rankings</p>
           <p className="text-sm text-zinc-500 dark:text-white/40 leading-relaxed">
             Club rankings reflect the top 200 clubs by combined trophies across six regions using real-time data refreshed every 30 minutes.
           </p>

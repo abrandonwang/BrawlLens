@@ -173,7 +173,7 @@ export default function NavBar() {
                         onClick={e => e.stopPropagation()}
                     >
                         <div className="flex items-center gap-3 px-4 border-b border-black/8 dark:border-white/8">
-                            <Search size={15} className="text-zinc-400 shrink-0 dark:text-white/30" />
+                            <Search size={15} className="text-zinc-400 shrink-0 dark:text-white/50" />
                             <input
                                 ref={inputRef}
                                 value={query}
@@ -184,7 +184,7 @@ export default function NavBar() {
                             />
                             <button
                                 onClick={() => setIsSearchOpen(false)}
-                                className="text-[11px] font-bold text-zinc-400 border border-black/10 px-2 py-1 hover:text-zinc-600 transition-colors dark:text-white/30 dark:border-white/10 dark:hover:text-white/60"
+                                className="text-[11px] font-bold text-zinc-400 border border-black/10 px-2 py-1 hover:text-zinc-600 transition-colors dark:text-white/50 dark:border-white/10 dark:hover:text-white/60"
                             >
                                 Esc
                             </button>
@@ -196,9 +196,9 @@ export default function NavBar() {
                                     onClick={handlePlayerSearch}
                                     className="w-full flex items-center gap-3 px-4 py-3 text-sm text-zinc-700 hover:bg-black/5 hover:text-zinc-900 transition-colors dark:text-white/70 dark:hover:bg-white/5 dark:hover:text-white"
                                 >
-                                    <User size={15} className="text-zinc-400 shrink-0 dark:text-white/30" />
+                                    <User size={15} className="text-zinc-400 shrink-0 dark:text-white/50" />
                                     <span className="flex-1 text-left">Search player <span className="text-red-500 dark:text-[#FFD400] font-bold">#{query.replace(/^#/, "")}</span></span>
-                                    <ArrowRight size={13} className="text-zinc-300 dark:text-white/20" />
+                                    <ArrowRight size={13} className="text-zinc-300 dark:text-white/40" />
                                 </button>
                             )}
 
@@ -209,13 +209,13 @@ export default function NavBar() {
                                     onClick={() => setIsSearchOpen(false)}
                                     className="flex items-center gap-3 px-4 py-3 text-sm text-zinc-600 hover:bg-black/5 hover:text-zinc-900 transition-colors dark:text-white/60 dark:hover:bg-white/5 dark:hover:text-white"
                                 >
-                                    <Icon size={15} className="text-zinc-400 shrink-0 dark:text-white/30" />
+                                    <Icon size={15} className="text-zinc-400 shrink-0 dark:text-white/50" />
                                     <span className="flex-1">{label}</span>
                                 </Link>
                             ))}
 
                             {filtered.length === 0 && !isTag && (
-                                <p className="px-4 py-6 text-xs text-zinc-400 text-center dark:text-white/25">No results for &quot;{query}&quot;</p>
+                                <p className="px-4 py-6 text-xs text-zinc-400 text-center dark:text-white/45">No results for &quot;{query}&quot;</p>
                             )}
                         </div>
                     </div>

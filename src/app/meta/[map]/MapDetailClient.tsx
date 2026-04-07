@@ -68,7 +68,7 @@ export default function MapDetailClient({ mapName, imageUrl, totalBattles, brawl
 
   return (
     <main className="flex-1 px-4 sm:px-8 pt-6 pb-16 max-w-7xl mx-auto w-full">
-      <Link href="/meta" className="inline-flex items-center gap-1.5 text-xs text-zinc-400 dark:text-white/30 hover:text-zinc-700 dark:hover:text-white/60 transition-colors mb-6">
+      <Link href="/meta" className="inline-flex items-center gap-1.5 text-xs text-zinc-400 dark:text-white/50 hover:text-zinc-700 dark:hover:text-white/60 transition-colors mb-6">
         <ArrowLeft size={12} /> Maps
       </Link>
 
@@ -84,7 +84,7 @@ export default function MapDetailClient({ mapName, imageUrl, totalBattles, brawl
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-zinc-900 dark:text-white mb-1 sm:mb-2 truncate">
             {mapName}
           </h1>
-          <p className="text-xs sm:text-sm text-zinc-400 dark:text-white/30">{totalBattles.toLocaleString()} battles</p>
+          <p className="text-xs sm:text-sm text-zinc-400 dark:text-white/50">{totalBattles.toLocaleString()} battles</p>
         </div>
 
         {imageUrl && (
@@ -97,7 +97,7 @@ export default function MapDetailClient({ mapName, imageUrl, totalBattles, brawl
       {/* Filters */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
         <div className="relative w-full lg:max-w-xs">
-          <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-white/20" />
+          <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-white/40" />
           <input
             type="text"
             placeholder="Search brawler..."
@@ -142,16 +142,16 @@ export default function MapDetailClient({ mapName, imageUrl, totalBattles, brawl
         </div>
       </div>
 
-      <p className="text-zinc-400 dark:text-white/30 text-[10px] uppercase tracking-widest mb-4">{filtered.length} brawlers</p>
+      <p className="text-zinc-400 dark:text-white/50 text-[10px] uppercase tracking-widest mb-4">{filtered.length} brawlers</p>
 
       {filtered.length === 0 ? (
         <div className="text-center py-20 border border-dashed border-black/10 dark:border-white/10">
-          <p className="text-zinc-400 dark:text-white/30 text-sm">No brawlers match your filters.</p>
+          <p className="text-zinc-400 dark:text-white/50 text-sm">No brawlers match your filters.</p>
         </div>
       ) : (
         <div className="min-w-full">
           {/* Table Header */}
-          <div className={`grid ${gridLayout} gap-2 sm:gap-4 px-3 py-2 text-[9px] sm:text-[10px] font-bold text-zinc-400 dark:text-white/30 uppercase tracking-widest border-b border-black/5 dark:border-white/5`}>
+          <div className={`grid ${gridLayout} gap-2 sm:gap-4 px-3 py-2 text-[9px] sm:text-[10px] font-bold text-zinc-400 dark:text-white/50 uppercase tracking-widest border-b border-black/5 dark:border-white/5`}>
             <span />
             <span>Brawler</span>
             <span>Win Rate</span>

@@ -46,13 +46,13 @@ function AboutPage() {
                 <article className="space-y-12">
                     <section>
                         <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-zinc-900 mb-4 dark:text-white">A data platform built for Brawl Stars players.</h1>
-                        <p className="text-zinc-500 text-sm leading-relaxed dark:text-white/40">
+                        <p className="text-zinc-500 text-sm leading-relaxed dark:text-white/60">
                             BrawlLens aggregates live battle data from top-ranked players across six global regions to surface statistics that actually matter in competitive play. No ads, no account required, no clutter. Just fast, accurate data from the game.
                         </p>
                     </section>
 
                     <section>
-                        <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-5 dark:text-white/30">Features</p>
+                        <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-5 dark:text-white/50">Features</p>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {[
                                 {
@@ -82,21 +82,21 @@ function AboutPage() {
                             ].map(f => (
                                 <div key={f.title} className="bg-black/[0.02] border border-black/[0.06] p-5 dark:bg-white/[0.02] dark:border-white/[0.06]">
                                     <h3 className="text-sm font-bold text-zinc-900 mb-2 dark:text-white">{f.title}</h3>
-                                    <p className="text-sm text-zinc-500 leading-relaxed dark:text-white/40">{f.desc}</p>
+                                    <p className="text-sm text-zinc-500 leading-relaxed dark:text-white/60">{f.desc}</p>
                                 </div>
                             ))}
                         </div>
                     </section>
 
                     <section>
-                        <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-3 dark:text-white/30">Data</p>
-                        <p className="text-sm text-zinc-500 leading-relaxed dark:text-white/40">
+                        <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-3 dark:text-white/50">Data</p>
+                        <p className="text-sm text-zinc-500 leading-relaxed dark:text-white/60">
                             Battle data is collected continuously from the official Brawl Stars API across six regions: US, Europe, Asia, Latin America, Middle East, and Africa. Only matches from players in the top trophy ranges are included, keeping the dataset relevant to competitive play. Aggregated statistics are refreshed regularly so win rates reflect the current meta.
                         </p>
                     </section>
 
                     <section className="pt-6 border-t border-black/8 dark:border-white/8">
-                        <p className="text-xs text-zinc-400 leading-5 dark:text-white/30">
+                        <p className="text-xs text-zinc-400 leading-5 dark:text-white/50">
                             This content is not affiliated with, endorsed, sponsored, or specifically approved by Supercell. Supercell is not responsible for it.
                         </p>
                         <a
@@ -113,13 +113,13 @@ function AboutPage() {
                 <article className="space-y-12">
                     <section>
                         <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-zinc-900 mb-4 dark:text-white">Your data stays yours.</h1>
-                        <p className="text-zinc-500 text-sm leading-relaxed dark:text-white/40">
+                        <p className="text-zinc-500 text-sm leading-relaxed dark:text-white/60">
                             BrawlLens does not use trackers, third-party analytics, or persistent cookies. The site exists to show you game data, not to collect information about you.
                         </p>
                     </section>
 
                     <section>
-                        <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-5 dark:text-white/30">What we do not collect</p>
+                        <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-5 dark:text-white/50">What we do not collect</p>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {[
                                 { title: "IP Addresses", desc: "No IP addresses or geolocation data are logged or stored." },
@@ -129,15 +129,15 @@ function AboutPage() {
                             ].map(f => (
                                 <div key={f.title} className="bg-black/[0.02] border border-black/[0.06] p-5 dark:bg-white/[0.02] dark:border-white/[0.06]">
                                     <h3 className="text-sm font-bold text-zinc-900 mb-2 dark:text-white">{f.title}</h3>
-                                    <p className="text-sm text-zinc-500 leading-relaxed dark:text-white/40">{f.desc}</p>
+                                    <p className="text-sm text-zinc-500 leading-relaxed dark:text-white/60">{f.desc}</p>
                                 </div>
                             ))}
                         </div>
                     </section>
 
                     <section>
-                        <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-3 dark:text-white/30">Local Storage</p>
-                        <p className="text-sm text-zinc-500 leading-relaxed dark:text-white/40">
+                        <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-3 dark:text-white/50">Local Storage</p>
+                        <p className="text-sm text-zinc-500 leading-relaxed dark:text-white/60">
                             Your theme preference is stored in your browser's local storage so the site remembers your setting between visits. This data never leaves your device and is never transmitted to our servers.
                         </p>
                     </section>
@@ -147,7 +147,7 @@ function AboutPage() {
             {active === "contact" && (
                 <article>
                     <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-zinc-900 mb-2 dark:text-white">Get in touch.</h1>
-                    <p className="text-zinc-500 text-sm leading-relaxed mb-8 dark:text-white/40">
+                    <p className="text-zinc-500 text-sm leading-relaxed mb-8 dark:text-white/60">
                         Bug reports, feature requests, and general feedback are all welcome. Typically respond within 48 hours.
                     </p>
                     <ContactForm />
@@ -180,7 +180,7 @@ function ContactForm() {
     }
 
     const inputClass = "w-full bg-black/[0.04] border border-black/[0.08] px-3 py-2.5 text-sm text-zinc-900 outline-none focus:border-black/20 transition-colors dark:bg-white/[0.04] dark:border-white/[0.08] dark:text-white dark:focus:border-white/20"
-    const labelClass = "text-[10px] font-bold text-zinc-400 uppercase tracking-widest dark:text-white/30"
+    const labelClass = "text-[10px] font-bold text-zinc-400 uppercase tracking-widest dark:text-white/50"
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4 max-w-xl">
@@ -200,7 +200,7 @@ function ContactForm() {
                     {["Bug report", "Feature request", "Feedback"].map(t => (
                         <label key={t} className="flex items-center gap-1.5 cursor-pointer">
                             <input type="radio" name="type" value={t} defaultChecked={t === "Feedback"} className="accent-red-500 dark:accent-[#FFD400]" />
-                            <span className="text-xs text-zinc-500 dark:text-white/40">{t}</span>
+                            <span className="text-xs text-zinc-500 dark:text-white/60">{t}</span>
                         </label>
                     ))}
                 </div>

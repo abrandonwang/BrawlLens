@@ -1,23 +1,8 @@
 "use client"
 
-import { useState } from "react"
 import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import BrawlerDetail from "@/components/BrawlerDetail"
-
-interface StarPower {
-    id: number
-    name: string
-    description: string
-    imageUrl: string
-}
-
-interface Gadget {
-    id: number
-    name: string
-    description: string
-    imageUrl: string
-}
 
 interface Brawler {
     id: number
@@ -26,14 +11,11 @@ interface Brawler {
     imageUrl2: string
     rarity: { id: number; name: string; color: string }
     class: { id: number; name: string }
-    starPowers: StarPower[]
-    gadgets: Gadget[]
+    starPowers: { id: number; name: string; description: string; imageUrl: string }[]
+    gadgets: { id: number; name: string; description: string; imageUrl: string }[]
 }
 
-
 export default function BrawlerDetailClient({ brawler }: { brawler: Brawler }) {
-    const [activeTab, setActiveTab] = useState<"starPowers" | "gadgets">("starPowers")
-
     return (
         <div className="flex flex-col px-8 pt-6 pb-10">
             <Link
@@ -43,7 +25,7 @@ export default function BrawlerDetailClient({ brawler }: { brawler: Brawler }) {
                 <ArrowLeft size={13} />
                 Back
             </Link>
-            <BrawlerDetail brawler={brawler} activeTab={activeTab} setActiveTab={setActiveTab} />
+            <BrawlerDetail brawler={brawler} />
         </div>
     )
 }

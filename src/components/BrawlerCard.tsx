@@ -37,7 +37,7 @@ export default function BrawlerCard({ id, name, power, rank, trophies, highestTr
                     <h3 className="font-black text-sm tracking-tight truncate text-zinc-900 dark:text-white">{name}</h3>
                     <div className="flex items-baseline gap-1 mt-0.5">
                         <span className="text-sm font-black text-zinc-900 dark:text-white">{trophies.toLocaleString()}</span>
-                        <span className="text-[10px] text-zinc-400 font-bold dark:text-white/20">/ {highestTrophies.toLocaleString()}</span>
+                        <span className="text-[10px] text-zinc-400 font-bold dark:text-white/40">/ {highestTrophies.toLocaleString()}</span>
                     </div>
                 </div>
 

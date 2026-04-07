@@ -43,7 +43,7 @@ export default function BrawlerCatalog({ brawlers, activeRarity, search }: Props
                         <section key={rarity}>
                             <div className="flex items-center gap-2 mb-4">
                                 <div className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ backgroundColor: color }} />
-                                <h2 className="text-sm font-semibold" style={{ color }}>{rarity}</h2>
+                                <h2 className="text-sm font-semibold text-zinc-700 dark:text-white/70">{rarity}</h2>
                             </div>
                             <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12 gap-2">
                                 {group?.map(brawler => (

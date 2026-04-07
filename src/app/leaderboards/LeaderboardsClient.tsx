@@ -38,7 +38,7 @@ function rankColor(rank: number) {
   if (rank === 1) return "text-[#FFD400]"
   if (rank === 2) return "text-zinc-400"
   if (rank === 3) return "text-orange-400"
-  return "text-zinc-400 dark:text-white/25"
+  return "text-zinc-400 dark:text-white/45"
 }
 
 export default function LeaderboardsClient({ allData }: { allData: RegionData[]; updatedAt?: string | null }) {
@@ -66,7 +66,7 @@ export default function LeaderboardsClient({ allData }: { allData: RegionData[];
     <div className="flex flex-col">
       <main className="flex-1 min-w-0 pt-6 pb-16 px-8 overflow-y-auto">
         <section className="mb-8">
-          <Link href="/leaderboards" className="inline-flex items-center gap-1.5 text-xs text-zinc-400 dark:text-white/30 hover:text-zinc-700 dark:hover:text-white/60 transition-colors mb-6">
+          <Link href="/leaderboards" className="inline-flex items-center gap-1.5 text-xs text-zinc-400 dark:text-white/50 hover:text-zinc-700 dark:hover:text-white/60 transition-colors mb-6">
             <ArrowLeft size={12} /> Leaderboards
           </Link>
           <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-zinc-900 mb-3 dark:text-white">Players</h1>
@@ -104,11 +104,11 @@ export default function LeaderboardsClient({ allData }: { allData: RegionData[];
             return (
               <section key={region.code}>
                 {region.players.length === 0 ? (
-                  <p className="text-zinc-400 text-sm py-8 dark:text-white/25">No data yet.</p>
+                  <p className="text-zinc-400 text-sm py-8 dark:text-white/45">No data yet.</p>
                 ) : (
                   <>
                     <div className="space-y-1">
-                      <div className="grid grid-cols-[52px_1fr_auto_auto_24px] gap-4 px-5 py-2 text-[10px] font-bold text-zinc-400 uppercase tracking-widest dark:text-white/30">
+                      <div className="grid grid-cols-[52px_1fr_auto_auto_24px] gap-4 px-5 py-2 text-[10px] font-bold text-zinc-400 uppercase tracking-widest dark:text-white/50">
                         <span>#</span>
                         <span>Player</span>
                         <span className="hidden sm:block">Club</span>
@@ -128,10 +128,10 @@ export default function LeaderboardsClient({ allData }: { allData: RegionData[];
 
                           <div className="min-w-0">
                             <p className="text-base font-semibold text-zinc-900 truncate dark:text-white">{player.player_name}</p>
-                            <p className="text-xs text-zinc-400 font-mono dark:text-white/25">{player.player_tag}</p>
+                            <p className="text-xs text-zinc-400 font-mono dark:text-white/45">{player.player_tag}</p>
                           </div>
 
-                          <span className="hidden sm:block text-sm text-zinc-400 truncate max-w-[160px] dark:text-white/30">
+                          <span className="hidden sm:block text-sm text-zinc-400 truncate max-w-[160px] dark:text-white/50">
                             {player.club_name ?? "—"}
                           </span>
 
@@ -142,7 +142,7 @@ export default function LeaderboardsClient({ allData }: { allData: RegionData[];
                             </span>
                           </div>
 
-                          <ArrowRight size={14} className="text-zinc-400 dark:text-white/30" />
+                          <ArrowRight size={14} className="text-zinc-400 dark:text-white/50" />
                         </Link>
                       ))}
                     </div>
@@ -188,7 +188,7 @@ export default function LeaderboardsClient({ allData }: { allData: RegionData[];
         </div>
 
         <div className="mt-16 border border-black/[0.08] dark:border-white/[0.08] bg-black/[0.02] dark:bg-white/[0.02] p-8 max-w-2xl mx-auto text-center">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 dark:text-white/30 mb-4">About Player Rankings</p>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 dark:text-white/50 mb-4">About Player Rankings</p>
           <p className="text-sm text-zinc-500 dark:text-white/40 leading-relaxed">
             Player rankings reflect the top 200 trophy earners across six regions: Global, United States, Korea, Brazil, Germany, and Japan. Rankings update automatically every 30 minutes using real-time data. Trophies shown represent a player's current season total. Click any player to view their full profile.
           </p>
