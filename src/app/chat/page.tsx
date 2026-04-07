@@ -131,8 +131,8 @@ function ChatPage() {
     return (
       <main className="fixed top-[52px] left-0 right-0 bottom-0 flex flex-col items-center justify-center bg-white dark:bg-[#111] px-4">
         <div className="w-full max-w-2xl">
-          <h1 className="text-2xl font-bold text-zinc-900 dark:text-white mb-4 text-center">Your Brawl Stars AI agent</h1>
-          {inputBox("Ask anything about players, brawlers, maps, clubs...")}
+          <h1 className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-white mb-4 text-center">Your Brawl Stars AI agent</h1>
+          {inputBox("Ask about players, brawlers, maps, clubs...")}
         </div>
       </main>
     )
@@ -142,18 +142,18 @@ function ChatPage() {
     <main className="fixed top-[52px] left-0 right-0 bottom-0 flex flex-col bg-white dark:bg-[#111]">
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-8">
-        <div className="max-w-2xl mx-auto space-y-6">
+      <div className="flex-1 overflow-y-auto px-3 sm:px-4 py-5 sm:py-8">
+        <div className="max-w-2xl mx-auto space-y-4 sm:space-y-6">
           {messages.map((msg, i) => (
             <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
               {msg.role === "assistant" && (
-                <div className="w-6 h-6 rounded-full border border-zinc-300 flex items-center justify-center shrink-0 mr-3 mt-0.5 dark:border-white/20">
+                <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full border border-zinc-300 flex items-center justify-center shrink-0 mr-2 sm:mr-3 mt-0.5 dark:border-white/20">
                   <div className="w-1.5 h-1.5 rounded-full bg-zinc-400 dark:bg-white/40" />
                 </div>
               )}
-              <div className={`max-w-[80%] text-sm leading-relaxed ${
+              <div className={`max-w-[88%] sm:max-w-[80%] text-sm leading-relaxed ${
                 msg.role === "user"
-                  ? "bg-black/8 text-zinc-900 px-4 py-2.5 dark:bg-white/8 dark:text-white"
+                  ? "bg-black/8 text-zinc-900 px-3 sm:px-4 py-2 sm:py-2.5 dark:bg-white/8 dark:text-white"
                   : "text-zinc-700 dark:text-white/70"
               }`}>
                 {msg.role === "assistant" ? (
@@ -174,7 +174,7 @@ function ChatPage() {
       </div>
 
       {/* Input */}
-      <div className="px-4 py-4">
+      <div className="px-3 sm:px-4 py-3 sm:py-4">
         <div className="max-w-2xl mx-auto">
           {inputBox("Ask a follow-up...")}
         </div>
