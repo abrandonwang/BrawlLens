@@ -1,6 +1,6 @@
 "use client"
 import { useState, useEffect, useRef } from "react"
-import { Search, X, User, Menu, LayoutGrid, Map, Trophy, Info, ArrowRight, MessageSquare, Sun, Moon, Circle } from "lucide-react"
+import { Search, X, User, Menu, LayoutGrid, Map, Trophy, Info, ArrowRight, MessageSquare } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useTheme } from "next-themes"
@@ -67,12 +67,12 @@ export default function NavBar() {
 
                     {/* Logo */}
                     <div className="flex items-center">
-                        <Link href="/" className="flex items-center gap-2.5">
-                            <div className="relative w-6 h-6 flex items-center justify-center shrink-0">
+                        <Link href="/" className="flex items-center gap-2">
+                            <div className="relative w-5 h-5 flex items-center justify-center shrink-0">
                                 <div className="absolute inset-0 border-2 rounded-full border-zinc-900 dark:border-white" />
-                                <div className="w-1 h-1 rounded-full bg-zinc-900 dark:bg-white" />
+                                <div className="w-[4px] h-[4px] rounded-full bg-zinc-900 dark:bg-white" />
                             </div>
-                            <span className="text-sm font-black text-zinc-900 dark:text-white">BrawlLens</span>
+                            <span className="text-sm font-semibold tracking-tight text-zinc-900 dark:text-white">BrawlLens</span>
                         </Link>
                     </div>
 
@@ -84,10 +84,10 @@ export default function NavBar() {
                                 <Link
                                     key={item.label}
                                     href={item.href}
-                                    className={`whitespace-nowrap text-xs font-bold tracking-tight transition-all duration-200 px-3 py-1.5 rounded ${
+                                    className={`whitespace-nowrap text-xs font-medium tracking-tight transition-all duration-200 px-3 py-1.5 ${
                                         isActive
-                                            ? "bg-red-500 text-white dark:bg-[#FFD400] dark:text-black"
-                                            : "text-zinc-600 hover:text-zinc-900 hover:bg-black/8 dark:text-white/60 dark:hover:text-white dark:hover:bg-white/8"
+                                            ? "bg-zinc-900 text-white dark:bg-white dark:text-black"
+                                            : "text-zinc-500 hover:text-zinc-900 hover:bg-black/8 dark:text-white/75 dark:hover:text-white dark:hover:bg-white/8"
                                     }`}
                                 >
                                     {item.label}
@@ -98,28 +98,33 @@ export default function NavBar() {
                     <div className="lg:hidden" />
 
                     {/* Actions */}
-                    <div className="flex items-center justify-end gap-2">
+                    <div className="flex items-center justify-end gap-1.5">
+                        {/* Search — utility icon, always visible */}
                         <button
                             onClick={() => setIsSearchOpen(true)}
-                            className="p-2 rounded transition-colors text-zinc-500 hover:text-zinc-900 hover:bg-black/8 dark:text-white/50 dark:hover:text-white dark:hover:bg-white/8"
+                            className="p-2 transition-colors text-zinc-500 hover:text-zinc-900 hover:bg-black/[0.05] dark:text-white/65 dark:hover:text-white dark:hover:bg-white/[0.05]"
                         >
-                            <Search size={16} />
+                            <Search size={15} />
                         </button>
 
+                        {/* Theme toggle — solid fill, inverted to current theme */}
                         <button
                             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                            className="p-2 rounded transition-colors text-zinc-500 hover:text-zinc-900 hover:bg-black/8 dark:text-white/50 dark:hover:text-white dark:hover:bg-white/8"
+                            className="hidden sm:flex items-center h-[30px] px-3 text-xs font-semibold transition-colors bg-zinc-900 text-white hover:bg-zinc-700 dark:bg-white dark:text-black dark:hover:bg-zinc-100"
                         >
-                            {mounted && (theme === "dark" ? <Circle fill = "white" size={16} /> : <Circle fill = "black" size={16} />)}
+                            {mounted ? (theme === "dark" ? "Light" : "Dark") : ""}
                         </button>
 
+                        {/* Profile — "Dashboard" style: rectangular bordered button */}
                         <Link
                             href="/player/me"
-                            className="w-8 h-8 flex items-center justify-center rounded-full transition-all shrink-0 bg-zinc-900 text-white hover:bg-zinc-700 dark:bg-white dark:text-black dark:hover:bg-zinc-100"
+                            className="hidden sm:flex items-center gap-1.5 h-[30px] px-3 border border-black/10 dark:border-white/15 text-xs font-medium text-zinc-700 hover:text-zinc-900 dark:text-white/80 dark:hover:text-white transition-colors"
                         >
-                            <User size={14} />
+                            <User size={13} />
+                            <span>Profile</span>
                         </Link>
 
+                        {/* Mobile hamburger */}
                         <button
                             onClick={() => setIsMenuOpen(!isMenuOpen)}
                             className="p-2 lg:hidden transition-colors text-zinc-600 hover:text-zinc-900 dark:text-white/60 dark:hover:text-white"
@@ -144,10 +149,10 @@ export default function NavBar() {
                                     <Link
                                         key={item.label}
                                         href={item.href}
-                                        className={`text-xs font-bold px-3 py-2.5 rounded-md transition-all ${
+                                        className={`text-xs font-medium px-3 py-2.5 transition-all ${
                                             isActive
-                                                ? "bg-red-500 text-white dark:bg-[#FFD400] dark:text-black"
-                                                : "text-zinc-600 hover:text-zinc-900 hover:bg-black/5 dark:text-white/60 dark:hover:text-white dark:hover:bg-white/5"
+                                                ? "bg-zinc-900 text-white dark:bg-white dark:text-black"
+                                                : "text-zinc-500 hover:text-zinc-900 hover:bg-black/5 dark:text-white/75 dark:hover:text-white dark:hover:bg-white/5"
                                         }`}
                                     >
                                         {item.label}
