@@ -39,10 +39,8 @@ export default function Home() {
 
   return (
     <main className={`flex-1 flex flex-col transition-opacity duration-500 ${mounted ? "opacity-100" : "opacity-0"}`}>
-      {/* Hero Section */}
       <section className="flex-1 flex flex-col items-center justify-center px-6 py-32">
         <div className="w-full max-w-2xl flex flex-col items-center text-center">
-          {/* Heading */}
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-zinc-900 dark:text-white leading-[1.1] mb-4">
             Ask me anything{" "}
             <span className="text-zinc-400">about</span>
@@ -51,14 +49,11 @@ export default function Home() {
             <span style={{ fontFamily: "Nougat" }} className="text-red-500">STARS</span>
           </h1>
 
-          {/* Subtitle */}
           <p className="text-base text-zinc-500 dark:text-white/50 mb-10">
             Stats, brawlers, maps, and leaderboards all in one place.
           </p>
 
-          {/* Search area */}
           <div className="w-full max-w-xl">
-            {/* Suggestions */}
             <div className="mb-3 flex flex-wrap gap-2 justify-center">
               {suggestions.map((s) => (
                 <button
@@ -71,7 +66,6 @@ export default function Home() {
               ))}
             </div>
 
-            {/* Input */}
             <div className="relative">
               <textarea
                 ref={textareaRef}

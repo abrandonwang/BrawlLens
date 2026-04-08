@@ -11,7 +11,6 @@ export interface BrawlerBuffies {
 
 export const BUFFIES: Record<number, BrawlerBuffies> = {
 
-  // SHELLY (Wave 1)
   16000000: {
     gadgets: {
       "Fast Forward": "Shelly dashes forward and becomes invulnerable for 0.5 seconds. The dash direction can be aimed.",
@@ -22,7 +21,6 @@ export const BUFFIES: Record<number, BrawlerBuffies> = {
     hypercharge: "Super projectiles travel significantly faster and cover more distance.",
   },
 
-  // COLT (Wave 1)
   16000001: {
     gadgets: {
       "Speedloader": "Fires two quick shots that slow enemies. Each hit also steals one ammo from the target.",
@@ -34,7 +32,6 @@ export const BUFFIES: Record<number, BrawlerBuffies> = {
     hypercharge: "Fires the same number of bullets in a much shorter timeframe, releasing the Super faster.",
   },
 
-  // BULL (Wave 2)
   16000002: {
     gadgets: {
       "T-Bone Missile": "Marks the target for 5 seconds. Bull gains 50% lifesteal against marked targets.",
@@ -47,7 +44,6 @@ export const BUFFIES: Record<number, BrawlerBuffies> = {
     hypercharge: "Main attack pierces all enemies hit, but deals slightly less damage at long range.",
   },
 
-  // NITA (Wave 2)
   16000008: {
     gadgets: {
       "Bear Paws": "Bruce's next attack deals 50% bonus damage after using this gadget.",
@@ -60,7 +56,6 @@ export const BUFFIES: Record<number, BrawlerBuffies> = {
     hypercharge: "Main attacks gain increased speed, width, and range during Hypercharge.",
   },
 
-  // MORTIS (Wave 1)
   16000011: {
     gadgets: {
       "Combo Spinner": "The spin is now aimable in any direction and deals bonus damage to low-health enemies.",
@@ -72,7 +67,6 @@ export const BUFFIES: Record<number, BrawlerBuffies> = {
     hypercharge: "A phantom strike hits the same area a short delay after the initial attack.",
   },
 
-  // CROW (Wave 2)
   16000012: {
     gadgets: {
       "Instapoison": "Refreshes the poison duration on all currently poisoned enemies and grants Crow a shield.",
@@ -85,7 +79,6 @@ export const BUFFIES: Record<number, BrawlerBuffies> = {
     hypercharge: "Hypercharged main attacks pierce through enemies and return to Crow after reaching max distance.",
   },
 
-  // BO (Wave 2)
   16000014: {
     gadgets: {
       "Super Totem": "The totem's effect radius is significantly increased.",
@@ -98,7 +91,6 @@ export const BUFFIES: Record<number, BrawlerBuffies> = {
     hypercharge: "Shoots a 4th arrow with each shot, and every arrow has an increased area damage radius.",
   },
 
-  // BIBI (Wave 2)
   16000026: {
     gadgets: {
       "Vitamin Booster": "Instantly charges Bibi's Home Run bar. The next attack after activation restores 60% of damage dealt as health.",
@@ -111,7 +103,6 @@ export const BUFFIES: Record<number, BrawlerBuffies> = {
     hypercharge: "Super has a shorter wind-up time before releasing.",
   },
 
-  // EMZ (Wave 1)
   16000030: {
     gadgets: {
       "Friendzoner": "Enemies pushed into walls by Friendzoner are stunned on impact.",
@@ -123,7 +114,6 @@ export const BUFFIES: Record<number, BrawlerBuffies> = {
     hypercharge: "The spray poisons enemies, dealing damage over time and creating a lingering poison cloud for area control.",
   },
 
-  // LEON (Wave 2)
   16000023: {
     gadgets: {
       "Clone Projector": "Can be reactivated while the clone is active to swap positions with the clone.",
@@ -136,7 +126,6 @@ export const BUFFIES: Record<number, BrawlerBuffies> = {
     hypercharge: "Main attacks deal at least 75% of their normal damage regardless of distance.",
   },
 
-  // SPIKE (Wave 1)
   16000005: {
     gadgets: {
       "Popping Pincushion": "Enemies hit by all three needles from the gadget become rooted in place.",
@@ -148,7 +137,6 @@ export const BUFFIES: Record<number, BrawlerBuffies> = {
     hypercharge: "Basic attack grenades detonate twice, each time dealing full damage and covering a larger area.",
   },
 
-  // FRANK (Wave 1)
   16000020: {
     gadgets: {
       "Active Noise Canceling": "The soundwave can now be aimed. Frank becomes immune to crowd control and destroys incoming projectiles during the effect.",
