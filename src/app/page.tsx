@@ -74,7 +74,7 @@ export default function Home() {
                 onChange={handleInput}
                 onKeyDown={handleKeyDown}
                 placeholder="Ask anything..."
-                className="w-full bg-white border border-zinc-200 rounded-xl px-4 sm:px-5 py-3 sm:py-4 pr-12 text-sm sm:text-[15px] text-zinc-900 placeholder:text-zinc-400 placeholder:text-xs sm:placeholder:text-sm outline-none resize-none leading-relaxed max-h-40 overflow-y-auto shadow-sm focus:border-zinc-300 focus:shadow-md transition-all dark:bg-zinc-900 dark:border-zinc-800 dark:text-white dark:placeholder:text-zinc-500 dark:focus:border-zinc-700"
+                className="w-full bg-white border border-zinc-200 rounded-xl px-4 sm:px-5 pt-[14px] pb-[13px] sm:pt-[18px] sm:pb-[17px] pr-12 text-sm sm:text-[15px] text-zinc-900 placeholder:text-zinc-400 placeholder:text-xs sm:placeholder:text-sm outline-none resize-none leading-none max-h-40 overflow-y-auto shadow-sm focus:border-zinc-300 focus:shadow-md transition-all dark:bg-zinc-900 dark:border-zinc-800 dark:text-white dark:placeholder:text-zinc-500 dark:focus:border-zinc-700"
               />
               <button
                 onClick={handleSubmit}
