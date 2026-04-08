@@ -63,10 +63,10 @@ export default function NavBar() {
     return (
         <>
             <div className="fixed top-0 left-0 right-0 z-[100] bg-white border-b border-black/8 dark:bg-[#111] dark:border-white/8">
-                <header className="h-[52px] grid grid-cols-3 items-center px-4 md:px-6 max-w-[1080px] mx-auto w-full">
+                <header className="h-[52px] flex items-center justify-between px-4 md:px-6 max-w-[1080px] mx-auto w-full">
 
-                    {/* Logo */}
-                    <div className="flex items-center">
+                    {/* Left: Logo */}
+                    <div className="flex items-center flex-1">
                         <Link href="/" className="flex items-center gap-2">
                             <div className="relative w-5 h-5 flex items-center justify-center shrink-0">
                                 <div className="absolute inset-0 border-2 rounded-full border-zinc-900 dark:border-white" />
@@ -76,18 +76,18 @@ export default function NavBar() {
                         </Link>
                     </div>
 
-                    {/* Nav */}
-                    <nav className="hidden lg:flex items-center justify-center gap-1">
+                    {/* Center: Nav */}
+                    <nav className="hidden lg:flex items-center justify-center gap-1 flex-1">
                         {navItems.map((item) => {
                             const isActive = pathname.startsWith(item.href)
                             return (
                                 <Link
                                     key={item.label}
                                     href={item.href}
-                                    className={`whitespace-nowrap text-xs font-medium tracking-tight transition-all duration-200 px-3 py-1.5 ${
+                                    className={`whitespace-nowrap text-xs font-semibold tracking-tight transition-all duration-200 px-3 py-1.5 ${
                                         isActive
                                             ? "bg-zinc-900 text-white dark:bg-white dark:text-black"
-                                            : "text-zinc-500 hover:text-zinc-900 hover:bg-black/8 dark:text-white/75 dark:hover:text-white dark:hover:bg-white/8"
+                                            : "text-zinc-600 hover:text-zinc-950 hover:bg-black/8 dark:text-white/90 dark:hover:text-white dark:hover:bg-white/8"
                                     }`}
                                 >
                                     {item.label}
@@ -95,10 +95,9 @@ export default function NavBar() {
                             )
                         })}
                     </nav>
-                    <div className="lg:hidden" />
 
-                    {/* Actions */}
-                    <div className="flex items-center justify-end gap-1.5">
+                    {/* Right: Actions */}
+                    <div className="flex items-center justify-end gap-1.5 flex-1">
                         {/* Search — utility icon, always visible */}
                         <button
                             onClick={() => setIsSearchOpen(true)}
@@ -107,18 +106,18 @@ export default function NavBar() {
                             <Search size={15} />
                         </button>
 
-                        {/* Theme toggle — solid fill, inverted to current theme */}
+                        {/* Theme toggle */}
                         <button
                             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                            className="hidden sm:flex items-center h-[30px] px-3 text-xs font-semibold transition-colors bg-zinc-900 text-white hover:bg-zinc-700 dark:bg-white dark:text-black dark:hover:bg-zinc-100"
+                            className="hidden sm:flex items-center h-[30px] px-3 text-xs font-medium border border-black/10 bg-black/[0.03] text-zinc-700 hover:text-zinc-900 hover:bg-black/[0.06] transition-colors dark:border-white/15 dark:bg-white/[0.03] dark:text-white/80 dark:hover:text-white dark:hover:bg-white/[0.06]"
                         >
                             {mounted ? (theme === "dark" ? "Light" : "Dark") : ""}
                         </button>
 
-                        {/* Profile — "Dashboard" style: rectangular bordered button */}
+                        {/* Profile */}
                         <Link
                             href="/player/me"
-                            className="hidden sm:flex items-center gap-1.5 h-[30px] px-3 border border-black/10 dark:border-white/15 text-xs font-medium text-zinc-700 hover:text-zinc-900 dark:text-white/80 dark:hover:text-white transition-colors"
+                            className="hidden sm:flex items-center gap-1.5 h-[30px] px-3 border border-black/10 bg-black/[0.03] text-xs font-medium text-zinc-700 hover:text-zinc-900 hover:bg-black/[0.06] transition-colors dark:border-white/15 dark:bg-white/[0.03] dark:text-white/80 dark:hover:text-white dark:hover:bg-white/[0.06]"
                         >
                             <User size={13} />
                             <span>Profile</span>
