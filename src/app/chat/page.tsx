@@ -81,11 +81,24 @@ function ChatPage() {
     setMessages(history)
     setStreaming(true)
 
-    const res = await fetch("/api/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ messages: history }),
-    })
+    let res: Response
+    try {
+      res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: history }),
+      })
+    } catch {
+      setMessages([...history, { role: "assistant", content: "Something went wrong. Please try again." }])
+      setStreaming(false)
+      return
+    }
+
+    if (!res.ok) {
+      setMessages([...history, { role: "assistant", content: "Something went wrong. Please try again." }])
+      setStreaming(false)
+      return
+    }
 
     const reader = res.body!.getReader()
     const decoder = new TextDecoder()
@@ -96,7 +109,7 @@ function ChatPage() {
     while (true) {
       const { done, value } = await reader.read()
       if (done) break
-      fullText += decoder.decode(value)
+      fullText += decoder.decode(value, { stream: true })
       setMessages([...history, { role: "assistant", content: fullText }])
     }
 
