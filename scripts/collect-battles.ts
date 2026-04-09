@@ -412,6 +412,9 @@ async function runCycle(cycle: number) {
   total429s = 0;
   totalSkipped = 0;
 
+  const MID_CYCLE_CLEANUP_INTERVAL = 10_000;
+  let lastCleanup = 0;
+
   while (true) {
     const tags = await getUnprocessedTags(1000);
     if (tags.length === 0) break;
@@ -444,6 +447,16 @@ async function runCycle(cycle: number) {
         accBattles = [];
         accPlayers = [];
         accTags = [];
+
+        if (processed - lastCleanup >= MID_CYCLE_CLEANUP_INTERVAL) {
+          console.log(`\n  Mid-cycle cleanup at ${processed} tags...`);
+          try {
+            await aggregateStats();
+          } catch (err) {
+            console.error("  Mid-cycle cleanup failed (continuing):", err);
+          }
+          lastCleanup = processed;
+        }
       }
     }
 
