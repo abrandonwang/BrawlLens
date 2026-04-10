@@ -27,7 +27,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body
         suppressHydrationWarning
-        className={`${inter.variable} flex flex-col min-h-dvh overflow-y-auto bg-[#f5f5f5] dark:bg-[#0a0a0a]`}
+        className={`${inter.variable} flex flex-col min-h-dvh overflow-y-auto bg-white dark:bg-[#111]`}
       >
         <ThemeProvider>
           <MenuProvider>
