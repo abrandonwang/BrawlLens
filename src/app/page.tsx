@@ -59,7 +59,7 @@ export default function Home() {
                 <button
                   key={s}
                   onClick={() => setUserInput(s)}
-                  className="text-[11px] text-zinc-500 bg-white border border-zinc-200 px-3 py-1.5 rounded-full hover:bg-zinc-50 hover:border-zinc-300 hover:text-zinc-700 transition-colors dark:bg-zinc-900 dark:border-zinc-700 dark:text-white/50 dark:hover:bg-zinc-800 dark:hover:border-zinc-600 dark:hover:text-white/70"
+                  className="text-[11px] text-zinc-500 bg-white border border-zinc-200 px-3 py-1.5 hover:bg-zinc-50 hover:border-zinc-300 hover:text-zinc-700 transition-colors dark:bg-zinc-900 dark:border-zinc-700 dark:text-white/50 dark:hover:bg-zinc-800 dark:hover:border-zinc-600 dark:hover:text-white/70"
                 >
                   {s}
                 </button>

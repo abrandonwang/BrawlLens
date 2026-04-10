@@ -117,8 +117,8 @@ function ChatPage() {
   }
 
   const inputBox = (placeholder: string) => (
-    <div className="relative border border-black/10 bg-black/[0.04] focus-within:border-black/20 transition-colors flex items-center dark:border-white/10 dark:bg-white/[0.04] dark:focus-within:border-white/20">
-      <Link href="/" className="p-3 text-zinc-400 hover:text-zinc-600 transition-colors shrink-0 dark:text-white/25 dark:hover:text-white/50">
+    <div className="relative">
+      <Link href="/" className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 transition-colors dark:text-zinc-500 dark:hover:text-zinc-300">
         <RotateCcw size={14} />
       </Link>
       <textarea
@@ -128,14 +128,14 @@ function ChatPage() {
         onChange={handleInput}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
-        className="flex-1 bg-transparent py-3 text-sm text-zinc-900 placeholder:text-zinc-400 outline-none resize-none leading-relaxed max-h-40 overflow-y-auto dark:text-white dark:placeholder:text-white/20"
+        className="w-full bg-white border border-zinc-200 rounded-xl pl-9 pr-12 py-3 sm:py-[14px] text-sm sm:text-[15px] text-zinc-900 placeholder:text-zinc-400 outline-none resize-none leading-5 overflow-hidden max-h-40 overflow-y-auto shadow-sm focus:border-zinc-300 focus:shadow-md transition-all dark:bg-zinc-900 dark:border-zinc-800 dark:text-white dark:placeholder:text-zinc-500 dark:focus:border-zinc-700"
       />
       <button
         onClick={handleSubmit}
         disabled={!userInput.trim() || streaming}
-        className="m-2 w-7 h-7 flex items-center justify-center bg-zinc-900 text-white disabled:bg-black/10 disabled:text-black/20 hover:bg-zinc-700 transition-colors shrink-0 dark:bg-white dark:text-black dark:disabled:bg-white/10 dark:disabled:text-white/20 dark:hover:bg-white/90"
+        className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center bg-zinc-900 text-white rounded-lg disabled:bg-zinc-200 disabled:text-zinc-400 disabled:cursor-not-allowed hover:bg-zinc-700 hover:scale-105 active:scale-95 transition-all dark:bg-white dark:text-zinc-900 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-600 dark:hover:bg-zinc-300"
       >
-        <ArrowUp size={13} />
+        <ArrowUp size={14} />
       </button>
     </div>
   )

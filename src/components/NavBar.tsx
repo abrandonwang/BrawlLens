@@ -131,7 +131,7 @@ export default function NavBar() {
             {/* Theme toggle */}
             <button
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="hidden sm:flex items-center h-[30px] px-3 text-xs font-medium border border-black/10 bg-black/[0.03] text-zinc-700 hover:text-zinc-900 hover:bg-black/[0.06] transition-colors dark:border-white/15 dark:bg-white/[0.03] dark:text-white/80 dark:hover:text-white dark:hover:bg-white/[0.06]"
+              className="hidden sm:flex items-center h-[30px] px-3 text-xs font-semibold transition-colors bg-zinc-900 text-white hover:bg-zinc-700 dark:bg-white dark:text-black dark:hover:bg-zinc-200"
             >
               {mounted ? (theme === "dark" ? "Light" : "Dark") : ""}
             </button>
