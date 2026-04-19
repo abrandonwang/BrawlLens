@@ -24,7 +24,7 @@ Your tools provide real data. Always use them when asked about:
 Never guess or make up numbers. If data is unavailable, say so clearly.
 
 Navigation guidance:
-- When users ask about a specific brawler's details or abilities, suggest /brawlers or /brawlers/[brawler-name].
+- When users ask about a specific brawler's details or abilities, suggest /brawlers or /brawlers/[brawler-name-lowercase] (e.g. Jacky → /brawlers/jacky, El Primo → /brawlers/el-primo, replace spaces with hyphens).
 - When they ask about current maps or game modes, use get_all_maps, then suggest /meta.
 - When they ask about top players, use get_leaderboard with the appropriate region, then suggest [Leaderboards](/leaderboards).
 - When they ask about top clubs, use get_club_leaderboard with the appropriate region, then suggest [Club Leaderboards](/leaderboards/clubs).
@@ -33,13 +33,15 @@ Navigation guidance:
 
 Formatting rules — follow these exactly:
 - No emojis (unless used in player names, club names, or official game content).
-- No markdown tables.
 - No exclamation marks.
 - Use **bold** only for: player names, brawler names, club names, and map names.
-- For ranked lists, use plain numbered format: "1. **Player Name** (#TAG) — 50,000 trophies [**Club Name**]"
+- Use markdown tables whenever presenting comparative data (win rates across brawlers, leaderboard rankings, brawler stats across maps). Tables should have concise column headers.
+- For leaderboards use a table with columns: Rank | Player | Tag | Trophies | Club.
+- For brawler stats use a table with columns: Brawler | Win Rate | Picks.
+- For map comparisons use a table with columns: Map | Win Rate | Picks.
 - One sentence of context before the data if needed. One sentence after at most.
 - Include one markdown link where relevant, e.g. [Leaderboards](/leaderboards).
-- When showing win rates, include pick count in parentheses: "54.2% (1,840 picks)".
+- When showing win rates, always include pick count.
 - State facts only. Never editorialize or comment on the data beyond what was asked.
 - Every sentence ends with a period. Never use exclamation marks, ellipses, or colons/dashes at the end of sentences.
 - Be concise and direct. Avoid hedging language like "probably," "likely," or "seems."
@@ -84,7 +86,7 @@ const tools: Anthropic.Tool[] = [
     input_schema: {
       type: "object" as const,
       properties: {
-        region: { type: "string", description: "Region code: global, US, KR, BR, DE, or JP. Default to global if unspecified." },
+        region: { type: "string", description: "Region code: global, US, KR, BR, DE, or JP. Default to global if unspecified. If user says EU or Europe, use DE." },
         limit: { type: "number", description: "Number of top players to return (default 10, max 50)" }
       },
       required: ["region"]
@@ -107,7 +109,7 @@ const tools: Anthropic.Tool[] = [
     input_schema: {
       type: "object" as const,
       properties: {
-        region: { type: "string", description: "Region code: global, US, KR, BR, DE, or JP. Default to global if unspecified." },
+        region: { type: "string", description: "Region code: global, US, KR, BR, DE, or JP. Default to global if unspecified. If user says EU or Europe, use DE." },
         limit: { type: "number", description: "Number of top clubs to return (default 10, max 50)" }
       },
       required: ["region"]
@@ -177,7 +179,8 @@ async function executeTool(name: string, input: Record<string, string>): Promise
   }
 
   if (name === "get_leaderboard") {
-    const region = input.region?.toLowerCase() || "global"
+    const raw = (input.region || "global").trim()
+    const region = raw.toLowerCase() === "global" ? "global" : raw.toUpperCase()
     const limit = Math.min(Number(input.limit) || 10, 50)
     const { data, error } = await supabase
       .from("leaderboards")
@@ -199,7 +202,8 @@ async function executeTool(name: string, input: Record<string, string>): Promise
   }
 
   if (name === "get_club_leaderboard") {
-    const region = input.region?.toLowerCase() || "global"
+    const raw = (input.region || "global").trim()
+    const region = raw.toLowerCase() === "global" ? "global" : raw.toUpperCase()
     const limit = Math.min(Number(input.limit) || 10, 50)
     const { data, error } = await supabase
       .from("club_leaderboards")
@@ -251,7 +255,7 @@ async function runStream(
 
   const stream = client.messages.stream({
     model: "claude-sonnet-4-6",
-    max_tokens: 1024,
+    max_tokens: 4096,
     system: SYSTEM_PROMPT,
     tools,
     messages,
