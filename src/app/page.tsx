@@ -63,14 +63,8 @@ export default function Home() {
       <div className="home-hero-inner">
 
         <div className="home-center">
-          <div className="home-center-top">
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
-              <div className="home-mark">
-                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--accent)", flexShrink: 0, display: "block" }} />
-                <span className="home-mark-title">BrawlLens</span>
-              </div>
-              <p className="home-tagline">Real-time stats {"&"} AI analysis for Brawl Stars</p>
-            </div>
+          <div className="home-header">
+            <div className="home-header-brand">BrawlLens</div>
           </div>
 
           <div className="home-card-wrap">
@@ -125,7 +119,6 @@ export default function Home() {
               NEW
             </div>
           </div>
-          <div className="home-center-hint">Try asking: {"\u201c"}best brawlers on Hard Rock Mine{"\u201d"} or paste a #PlayerTag</div>
         </div>
 
       </div>

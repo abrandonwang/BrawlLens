@@ -495,47 +495,65 @@ body {
   z-index: 1;
 }
 
-.home-center-top {
+.home-header {
+  width: 100%;
+  margin-bottom: 16px;
+  padding: 20px 24px 18px;
+  border-radius: 16px;
+  border: 1px solid var(--line-2);
+  background:
+    radial-gradient(ellipse 70% 80% at 50% 0%,
+      color-mix(in srgb, var(--accent) 9%, transparent) 0%,
+      transparent 70%),
+    color-mix(in srgb, var(--panel) 88%, transparent);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
   display: flex;
-  justify-content: center;
-  margin-bottom: 22px;
-}
-
-.home-mark {
-  display: inline-flex;
+  flex-direction: column;
   align-items: center;
-  gap: 10px;
-  padding: 8px 14px;
-  border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
-  background: color-mix(in srgb, var(--panel) 42%, transparent);
-  backdrop-filter: blur(12px) saturate(150%);
-  -webkit-backdrop-filter: blur(12px) saturate(150%);
+  gap: 6px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
 }
 
-.home-mark-title {
-  font-size: 12px;
+.home-header::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 10%; right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--line-2) 30%, var(--line-2) 70%, transparent);
+}
+
+.home-header-meta {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.home-header-sep {
+  display: block;
+  width: 1px;
+  height: 10px;
+  background: var(--line);
+  flex-shrink: 0;
+}
+
+.home-header-brand {
+  font-family: "Nougat", sans-serif;
+  font-size: 54px;
+  line-height: 1;
+  color: var(--accent);
+  text-shadow:
+    0 0 20px color-mix(in srgb, var(--accent) 20%, transparent);
+  letter-spacing: 0.01em;
+}
+
+.home-header-sub {
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.02em;
-  color: var(--ink);
-}
-
-.home-tagline {
-  margin: 0;
-  font-size: 13px;
-  font-weight: 450;
-  color: var(--ink-3);
-  letter-spacing: -0.01em;
-  text-align: center;
-}
-
-.home-center-hint {
-  margin-top: 12px;
-  font-size: 11px;
-  font-weight: 500;
+  letter-spacing: 0.2em;
   color: var(--ink-4);
-  text-align: center;
-  padding: 0;
 }
 
 @media (max-width: 980px) {
@@ -544,9 +562,7 @@ body {
 }
 
 @media (max-width: 520px) {
-  .home-center-top {
-    margin-bottom: 16px;
-  }
+  .home-header-brand { font-size: 44px; }
 }
 
 /* Brand Kit backgrounds */
@@ -571,6 +587,10 @@ body {
     radial-gradient(circle 300px at 15% 90%, rgba(34, 211, 238, 0.18), transparent 70%),
     #0A0A0B;
   filter: saturate(1.1);
+}
+
+html:not(.dark) .home-header-brand {
+  text-shadow: none;
 }
 
 html:not(.dark) .hero-bg-b {
