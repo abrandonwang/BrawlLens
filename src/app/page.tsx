@@ -1,39 +1,41 @@
 "use client"
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
 
-const word = "BRAWL · STARS · "
-const reps = Array.from({ length: 16 })
+interface LandingData {
+  player: { name: string; tag: string; trophies: number } | null
+  map:    { name: string; mode: string } | null
+  brawler: { name: string; id: number; winRate: number } | null
+}
 
-const TICKER = [
-  "▲ Shelly win rate +2.4%",
-  "● Hard Rock Mine entered rotation",
-  "★ Ryukobu takes #1 with 94,218 trophies",
-  "▲ Leon +0.8% on Knockout",
-  "◆ New hypercharge: Bibi",
-  "● Season 42 kicks off",
-  "▼ Mortis −0.3% on Brawl Ball",
-  "★ THE RACER jumps to #2 in club standings",
-]
+function formatTrophies(n: number) {
+  if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, "") + "K"
+  return n.toString()
+}
 
-const STATS = [
-  { l: "BATTLES / 24H", v: "482K" },
-  { l: "BRAWLERS", v: "88" },
-  { l: "MAPS LIVE", v: "24" },
-  { l: "TOP TROPHIES", v: "94.2K", gold: true },
-]
-
-const JUMPS = [
-  { label: "PLAYER",      sub: "#GRG0L2G · Ryukobu · 94,218 🏆", gold: true,  href: "/leaderboards/players" },
-  { label: "BRAWLER",     sub: "Shelly meta breakdown",             gold: false, href: "/brawlers" },
-  { label: "MAP",         sub: "Hard Rock Mine · Gem Grab",         gold: false, href: "/meta" },
-  { label: "LEADERBOARD", sub: "Top 200 Japan",                     gold: false, href: "/leaderboards/players" },
-]
+function brawlerSlug(name: string) {
+  return name.toLowerCase().replace(/\s+/g, "-")
+}
 
 export default function Home() {
   const [userInput, setUserInput] = useState("")
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const router = useRouter()
+  const [data, setData] = useState<LandingData | null>(null)
+  const [phase, setPhase] = useState<"splash" | "exit" | "done">("splash")
+
+  useEffect(() => {
+    fetch("/api/landing")
+      .then(r => r.json())
+      .then(setData)
+      .catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    const t1 = setTimeout(() => setPhase("exit"), 1600)
+    const t2 = setTimeout(() => setPhase("done"), 2300)
+    return () => { clearTimeout(t1); clearTimeout(t2) }
+  }, [])
 
   function handleInput(e: React.ChangeEvent<HTMLTextAreaElement>) {
     setUserInput(e.target.value)
@@ -55,17 +57,60 @@ export default function Home() {
     router.push(`/chat?q=${encodeURIComponent(q)}`)
   }
 
+  const jumps = [
+    {
+      label: "TOP PLAYER",
+      sub: data?.player
+        ? `${data.player.name} · ${formatTrophies(data.player.trophies)} trophies`
+        : null,
+      href: data?.player ? `/player/${data.player.tag.replace(/^#/, "")}` : "/leaderboards/players",
+    },
+    {
+      label: "TOP BRAWLER",
+      sub: data?.brawler
+        ? `${data.brawler.name} · ${(data.brawler.winRate * 100).toFixed(1)}% win rate`
+        : null,
+      href: data?.brawler ? `/brawlers/${brawlerSlug(data.brawler.name)}` : "/brawlers",
+    },
+    {
+      label: "TOP MAP",
+      sub: data?.map ? `${data.map.name} · ${data.map.mode}` : null,
+      href: data?.map ? `/meta/${encodeURIComponent(data.map.name)}` : "/meta",
+    },
+    {
+      label: "LEADERBOARD",
+      sub: "Global top 200 players",
+      href: "/leaderboards/players",
+    },
+  ]
+
   return (
     <main className="home-hero">
 
       <div className="hero-bg hero-bg-b" />
 
-      <div className="home-hero-inner">
-
-        <div className="home-center">
-          <div className="home-header">
-            <div className="home-header-brand">BrawlLens</div>
+      {/* Splash screen */}
+      {phase !== "done" && (
+        <div className={`home-splash ${phase === "exit" ? "home-splash-exit" : "home-splash-enter"}`}>
+            <div className="home-splash-logo">
+            <div style={{
+              width: 48, height: 48, borderRadius: 12,
+              background: "conic-gradient(from 220deg, var(--accent), #FF7A3D, var(--hc-purple), var(--hc-blue), var(--accent))",
+              position: "relative",
+              boxShadow: "0 0 0 1px rgba(255,255,255,0.1) inset",
+              flexShrink: 0,
+            }}>
+              <div style={{ position: "absolute", inset: 9, background: "var(--bg)", borderRadius: 4 }} />
+            </div>
+            <span className="home-splash-brand">BrawlLens</span>
           </div>
+          <div className="home-splash-by">by Brandon Wang</div>
+        </div>
+      )}
+
+      {/* Card */}
+      <div className="home-hero-inner">
+        <div className={`home-center ${phase === "done" ? "home-card-enter" : "home-card-hidden"}`}>
 
           <div className="home-card-wrap">
             <div className="home-card-shell" style={{ background: "var(--panel)", border: "1px solid var(--line-2)", borderRadius: 20, padding: 6, boxShadow: "0 40px 80px -40px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.02) inset", position: "relative" }}>
@@ -90,7 +135,7 @@ export default function Home() {
               </div>
 
               <div style={{ padding: 4 }}>
-                {JUMPS.map((row, i) => (
+                {jumps.map((row, i) => (
                   <a
                     key={i}
                     href={row.href}
@@ -99,7 +144,11 @@ export default function Home() {
                   >
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div className="bl-caption" style={{ letterSpacing: "0.1em", marginBottom: 2 }}>{row.label}</div>
-                      <div style={{ fontSize: 13, color: "var(--ink)", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{row.sub}</div>
+                      {row.sub ? (
+                        <div style={{ fontSize: 13, color: "var(--ink)", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{row.sub}</div>
+                      ) : (
+                        <div style={{ height: 13, width: 120, borderRadius: 4, background: "var(--line-2)", marginTop: 2 }} />
+                      )}
                     </div>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-4)" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
                   </a>
@@ -109,7 +158,7 @@ export default function Home() {
               <div style={{ borderTop: "1px solid var(--line)", marginTop: 6, padding: "10px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}>
                   <span className="live-dot" style={{ width: 5, height: 5 }} />
-                  <span className="bl-mono bl-caption">Updated 2m ago</span>
+                  <span className="bl-mono bl-caption">Live data</span>
                 </div>
                 <span className="bl-caption bl-mono" style={{ whiteSpace: "nowrap" }}>⌘K to focus</span>
               </div>
@@ -120,7 +169,6 @@ export default function Home() {
             </div>
           </div>
         </div>
-
       </div>
 
     </main>

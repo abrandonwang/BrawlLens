@@ -34,17 +34,16 @@ export default function BrawlerPageClient({ brawlers, newest }: Props) {
     )
 
     return (
-        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "40px 40px 80px" }}>
+        <div className="roster-page">
 
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24, gap: 16 }}>
-                <h1 className="bl-h-display">The Roster</h1>
-                <div className="bl-input" style={{ width: 240, flexShrink: 0 }}>
-                    <Search size={13} style={{ color: "var(--ink-4)", flexShrink: 0 }} />
-                    <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search brawlers" />
-                </div>
+            <h1 className="bl-h-display roster-title">The Roster</h1>
+
+            <div className="bl-input roster-search">
+                <Search size={13} style={{ color: "var(--ink-4)", flexShrink: 0 }} />
+                <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search brawlers" />
             </div>
 
-            <div style={{ display: "flex", gap: 6, marginBottom: 36, flexWrap: "wrap" }}>
+            <div className="roster-filters">
                 <button
                     onClick={() => setActiveRarity(null)}
                     className="bl-btn bl-btn-sm"

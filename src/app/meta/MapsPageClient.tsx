@@ -53,12 +53,11 @@ export default function MapsPageClient() {
   return (
     <div style={{ maxWidth: 1200, margin: "0 auto", padding: "40px 40px 80px" }}>
 
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24, gap: 16 }}>
-        <h1 className="bl-h-display">Maps</h1>
-        <div className="bl-input" style={{ width: 240, flexShrink: 0 }}>
-          <Search size={13} style={{ color: "var(--ink-4)", flexShrink: 0 }} />
-          <input value={mapSearch} onChange={e => setMapSearch(e.target.value)} placeholder="Search maps" />
-        </div>
+      <h1 className="bl-h-display" style={{ marginBottom: 20 }}>Maps</h1>
+
+      <div className="bl-input" style={{ width: 280, marginBottom: 12 }}>
+        <Search size={13} style={{ color: "var(--ink-4)", flexShrink: 0 }} />
+        <input value={mapSearch} onChange={e => setMapSearch(e.target.value)} placeholder="Search maps" />
       </div>
 
       <div style={{ display: "flex", gap: 6, marginBottom: 36, flexWrap: "wrap" }}>

@@ -46,7 +46,7 @@ export default function BrawlerCatalog({ brawlers, activeRarity, search }: Props
                             <div style={{ flex: 1, height: 1, background: "var(--line)" }} />
                         </div>
 
-                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(90px, 1fr))", gap: 8 }}>
+                        <div className="brawler-grid">
                             {group.map(brawler => (
                                 <Link
                                     key={brawler.id}

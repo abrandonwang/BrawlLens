@@ -441,6 +441,77 @@ body {
   z-index: 0;
 }
 
+/* Splash screen */
+@keyframes splashBrandIn {
+  0%   { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes splashByIn {
+  0%   { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes splashOut {
+  0%   { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.06); }
+}
+@keyframes cardIn {
+  0%   { opacity: 0; transform: translateY(20px) scale(0.98); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.home-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  pointer-events: none;
+  background: var(--bg);
+}
+
+.home-splash-enter .home-splash-logo {
+  animation: splashBrandIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.home-splash-enter .home-splash-by {
+  animation: splashByIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.12s both;
+}
+.home-splash-exit {
+  animation: splashOut 0.55s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+.home-splash-logo {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.home-splash-brand {
+  font-size: 36px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+  line-height: 1;
+}
+
+.home-splash-by {
+  font-size: 13px;
+  font-weight: 450;
+  color: var(--ink-3);
+  letter-spacing: -0.01em;
+}
+
+.home-card-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.home-card-enter {
+  animation: cardIn 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
 /* Landing (home) layout */
 .home-hero {
   position: fixed;
@@ -563,6 +634,50 @@ body {
 
 @media (max-width: 520px) {
   .home-header-brand { font-size: 44px; }
+}
+
+/* Roster page */
+.roster-page {
+  padding: 40px clamp(32px, 12vw, 480px) 80px;
+}
+
+.roster-title {
+  margin-bottom: 20px;
+}
+
+.roster-search {
+  width: 280px;
+  margin-bottom: 12px;
+}
+
+.roster-filters {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 36px;
+}
+
+.brawler-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: 8px;
+}
+
+@media (max-width: 480px) {
+  .brawler-grid {
+    grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+    gap: 6px;
+  }
+}
+
+@media (max-width: 768px) {
+  .roster-page { padding: 24px 20px 60px; }
+  .roster-search { width: 100%; }
+}
+
+@media (max-width: 480px) {
+  .roster-page { padding: 20px 12px 48px; }
+  .roster-filters { gap: 4px; }
 }
 
 /* Brand Kit backgrounds */
