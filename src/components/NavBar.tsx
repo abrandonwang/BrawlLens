@@ -143,9 +143,7 @@ export default function NavBar() {
           <button
             onClick={() => setIsSearchOpen(true)}
             aria-label="Search"
-            style={{ width: 32, height: 32, display: "grid", placeItems: "center", borderRadius: 999, color: "var(--ink-3)", background: "transparent", border: "none", cursor: "pointer", transition: "all 0.18s ease" }}
-            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = "var(--ink)"; (e.currentTarget as HTMLButtonElement).style.background = "var(--line)"; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = "var(--ink-3)"; (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
+            style={{ width: 32, height: 32, display: "grid", placeItems: "center", borderRadius: 999, color: "var(--ink-3)", background: "transparent", border: "none", cursor: "pointer" }}
           >
             <Search size={14} />
           </button>
@@ -154,9 +152,7 @@ export default function NavBar() {
             <button
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
               aria-label="Toggle theme"
-              style={{ width: 32, height: 32, display: "grid", placeItems: "center", borderRadius: 999, color: "var(--ink-3)", background: "transparent", border: "none", cursor: "pointer", transition: "all 0.18s ease" }}
-              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = "var(--line)"; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
+              style={{ width: 32, height: 32, display: "grid", placeItems: "center", borderRadius: 999, color: "var(--ink-3)", background: "transparent", border: "none", cursor: "pointer" }}
             >
               <div style={{
                 width: 12,
@@ -168,14 +164,6 @@ export default function NavBar() {
               }} />
             </button>
           )}
-
-          <div
-            style={{ width: 32, height: 32, display: "grid", placeItems: "center", borderRadius: 999, color: "var(--ink-3)", cursor: "pointer", transition: "all 0.18s ease" }}
-            onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.color = "var(--ink)"; (e.currentTarget as HTMLDivElement).style.background = "var(--line)"; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.color = "var(--ink-3)"; (e.currentTarget as HTMLDivElement).style.background = "transparent"; }}
-          >
-            <User size={14} />
-          </div>
 
           <div className="lg:hidden">
             <button
