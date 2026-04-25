@@ -74,13 +74,7 @@ export default function MapDetailClient({ mapName, imageUrl, totalBattles, brawl
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 24, marginBottom: 28, flexWrap: "wrap" }}>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6, flexWrap: "wrap" }}>
-            <h1 className="bl-h-display">{mapName}</h1>
-            {isLive && (
-              <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "3px 9px 3px 7px", border: "1px solid rgba(73,212,126,0.3)", borderRadius: 999, background: "rgba(73,212,126,0.06)", flexShrink: 0 }}>
-                <span className="live-dot" style={{ width: 5, height: 5 }} />
-                <span style={{ fontSize: 10, fontWeight: 600, color: "#49D47E", letterSpacing: "0.06em", textTransform: "uppercase" }}>Live</span>
-              </span>
-            )}
+            <h1 className="bl-h-display" style={isLive ? { color: "#49D47E" } : {}}>{mapName}</h1>
           </div>
           <span className="bl-caption">{totalBattles.toLocaleString()} battles</span>
         </div>

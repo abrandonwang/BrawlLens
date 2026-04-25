@@ -51,7 +51,7 @@ export default function MapsPageClient() {
   }, [])
 
   return (
-    <div style={{ maxWidth: 1200, margin: "0 auto", padding: "40px 40px 80px" }}>
+    <div className="page-layout">
 
       <h1 className="bl-h-display" style={{ marginBottom: 20 }}>Maps</h1>
 

@@ -156,12 +156,6 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch 
                   </div>
                 )}
 
-                {isLive && (
-                  <div style={{ position: "absolute", top: 8, right: 8, display: "flex", alignItems: "center", gap: 5, padding: "3px 8px", background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)", borderRadius: 6, border: "1px solid rgba(73,212,126,0.3)" }}>
-                    <span className="live-dot" style={{ width: 5, height: 5 }} />
-                    <span style={{ fontSize: 9, fontWeight: 700, color: "#49D47E", letterSpacing: "0.1em", textTransform: "uppercase" }}>Live</span>
-                  </div>
-                )}
 
                 {modeColor && (
                   <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, ${modeColor}, transparent)`, opacity: 0.6 }} />
@@ -169,7 +163,7 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch 
               </div>
 
               <div style={{ padding: "10px 12px 12px", borderTop: "1px solid var(--line)" }}>
-                <div style={{ fontSize: 12.5, fontWeight: 600, color: "var(--ink)", letterSpacing: "-0.01em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 3 }}>
+                <div style={{ fontSize: 12.5, fontWeight: 600, color: isLive ? "#49D47E" : "var(--ink)", letterSpacing: "-0.01em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 3 }}>
                   {map.name}
                 </div>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
