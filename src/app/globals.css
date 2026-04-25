@@ -82,7 +82,7 @@
 }
 
 * { box-sizing: border-box; }
-html { overscroll-behavior: none; }
+html { overscroll-behavior: none; background: var(--bg); }
 
 body {
   margin: 0;
