@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import NavBar from "../components/NavBar";
-import Footer from "../components/Footer";
 import { MenuProvider } from "../context/MenuContext";
 import { ThemeProvider } from "../components/ThemeProvider";
 import TopLoader from "../components/TopLoader";
 import { Analytics } from "@vercel/analytics/next";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const geist = Geist({ subsets: ["latin"], variable: "--font-geist" });
+const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono" });
 
 export const metadata: Metadata = {
   title: "BrawlLens",
@@ -30,14 +30,13 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body
         suppressHydrationWarning
-        className={`${inter.variable} flex flex-col min-h-dvh overflow-y-auto bg-white dark:bg-[#111]`}
+        className={`${geist.variable} ${geistMono.variable} flex flex-col min-h-dvh overflow-y-auto`}
       >
         <ThemeProvider>
           <MenuProvider>
             <TopLoader />
             <NavBar />
             {children}
-            <Footer />
           </MenuProvider>
         </ThemeProvider>
         <Analytics />

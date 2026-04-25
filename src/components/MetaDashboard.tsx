@@ -22,30 +22,33 @@ interface Props {
 }
 
 const MODE_CONFIG: Record<string, { label: string; color: string }> = {
-  brawlBall: { label: "Brawl Ball", color: "#8CA0EB" },
-  gemGrab: { label: "Gem Grab", color: "#9B59B6" },
-  knockout: { label: "Knockout", color: "#F9C74F" },
-  bounty: { label: "Bounty", color: "#2ECC71" },
-  heist: { label: "Heist", color: "#E74C3C" },
-  hotZone: { label: "Hot Zone", color: "#E67E22" },
-  wipeout: { label: "Wipeout", color: "#1ABC9C" },
-  duels: { label: "Duels", color: "#E84393" },
-  siege: { label: "Siege", color: "#636E72" },
-  soloShowdown: { label: "Showdown", color: "#2ECC71" },
-  duoShowdown: { label: "Duo SD", color: "#00B894" },
-  trioShowdown: { label: "Trio SD", color: "#55E6C1" },
-  payload: { label: "Payload", color: "#6C5CE7" },
-  basketBrawl: { label: "Basket Brawl", color: "#E17055" },
-  volleyBrawl: { label: "Volley Brawl", color: "#FDCB6E" },
-  botDrop: { label: "Bot Drop", color: "#636E72" },
-  hunters: { label: "Hunters", color: "#D63031" },
+  brawlBall:    { label: "Brawl Ball",    color: "#8CA0EB" },
+  gemGrab:      { label: "Gem Grab",      color: "#9B59B6" },
+  knockout:     { label: "Knockout",      color: "#F9C74F" },
+  bounty:       { label: "Bounty",        color: "#2ECC71" },
+  heist:        { label: "Heist",         color: "#E74C3C" },
+  hotZone:      { label: "Hot Zone",      color: "#E67E22" },
+  wipeout:      { label: "Wipeout",       color: "#1ABC9C" },
+  duels:        { label: "Duels",         color: "#E84393" },
+  siege:        { label: "Siege",         color: "#636E72" },
+  soloShowdown: { label: "Showdown",      color: "#2ECC71" },
+  duoShowdown:  { label: "Duo SD",        color: "#00B894" },
+  trioShowdown: { label: "Trio SD",       color: "#55E6C1" },
+  payload:      { label: "Payload",       color: "#6C5CE7" },
+  basketBrawl:  { label: "Basket Brawl", color: "#E17055" },
+  volleyBrawl:  { label: "Volley Brawl", color: "#FDCB6E" },
+  botDrop:      { label: "Bot Drop",      color: "#636E72" },
+  hunters:      { label: "Hunters",       color: "#D63031" },
   trophyEscape: { label: "Trophy Escape", color: "#00CEC9" },
-  paintBrawl: { label: "Paint Brawl", color: "#A29BFE" },
-  wipeout5V5: { label: "5v5 Wipeout", color: "#1ABC9C" },
+  paintBrawl:   { label: "Paint Brawl",   color: "#A29BFE" },
+  wipeout5V5:   { label: "5v5 Wipeout",   color: "#1ABC9C" },
 };
 
-function getModeColor(mode: string): string {
-  return MODE_CONFIG[mode]?.color || "#ffffff";
+function getModeForMap(modes: ModeInfo[], mapName: string): string | null {
+  for (const m of modes) {
+    if (m.maps.some(map => map.name === mapName)) return m.mode;
+  }
+  return null;
 }
 
 export default function MetaDashboard({ modes, loading, selectedMode, mapSearch }: Props) {
@@ -55,8 +58,8 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch 
 
   useEffect(() => {
     Promise.all([
-      fetch("/api/rotation").then((r) => r.json()).catch(() => []),
-      fetch("https://api.brawlify.com/v1/maps").then((r) => r.json()).catch(() => ({ list: [] })),
+      fetch("/api/rotation").then(r => r.json()).catch(() => []),
+      fetch("https://api.brawlify.com/v1/maps").then(r => r.json()).catch(() => ({ list: [] })),
     ]).then(([rotationData, mapsData]) => {
       const activeNames = new Set<string>();
       for (const slot of rotationData || []) {
@@ -75,7 +78,7 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch 
   const allUniqueMaps = useMemo(() => {
     const seen = new Set<string>();
     const maps: MapInfo[] = [];
-    modes.forEach((m) => m.maps.forEach((map) => {
+    modes.forEach(m => m.maps.forEach(map => {
       if (!seen.has(map.name)) { seen.add(map.name); maps.push(map); }
     }));
     return maps;
@@ -84,7 +87,7 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch 
   const sortedMaps = useMemo(() => {
     const base = selectedMode === null
       ? allUniqueMaps
-      : (modes.find((m) => m.mode === selectedMode)?.maps ?? []);
+      : (modes.find(m => m.mode === selectedMode)?.maps ?? []);
 
     return [...base].sort((a, b) => {
       const aLive = rotationMapNames.has(a.name) ? 1 : 0;
@@ -96,67 +99,87 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch 
 
   const displayedMaps = useMemo(() => {
     if (!mapSearch) return sortedMaps;
-    return sortedMaps.filter((m) => m.name.toLowerCase().includes(mapSearch.toLowerCase()));
+    return sortedMaps.filter(m => m.name.toLowerCase().includes(mapSearch.toLowerCase()));
   }, [sortedMaps, mapSearch]);
 
   useEffect(() => { setMapPage(0); }, [displayedMaps]);
 
-  const MAP_PAGE_SIZE = 8;
+  const MAP_PAGE_SIZE = 12;
   const mapTotalPages = Math.ceil(displayedMaps.length / MAP_PAGE_SIZE);
   const paginatedMaps = displayedMaps.slice(mapPage * MAP_PAGE_SIZE, (mapPage + 1) * MAP_PAGE_SIZE);
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-32">
-        <div className="w-5 h-5 border-2 border-black/20 border-t-zinc-900 rounded-full animate-spin dark:border-white/20 dark:border-t-white" />
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "80px 0" }}>
+        <div style={{ width: 20, height: 20, border: "2px solid var(--line-2)", borderTopColor: "var(--accent)", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
   }
 
   if (modes.length === 0) {
     return (
-      <div className="text-center py-32">
-        <p className="text-zinc-500 text-lg font-medium dark:text-white/60">No battle data yet</p>
-        <p className="text-zinc-400 text-sm mt-2 dark:text-white/60">The collector is still running. Check back soon.</p>
+      <div style={{ textAlign: "center", padding: "80px 0" }}>
+        <p className="bl-h3" style={{ color: "var(--ink-2)", marginBottom: 8 }}>No battle data yet</p>
+        <p className="bl-body" style={{ color: "var(--ink-4)" }}>The collector is still running. Check back soon.</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-        {paginatedMaps.map((map) => {
+    <div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 12, marginBottom: 24 }}>
+        {paginatedMaps.map(map => {
           const imageUrl = mapImageLookup.get(map.name);
           const isLive = rotationMapNames.has(map.name);
+          const mode = getModeForMap(modes, map.name);
+          const modeColor = mode ? MODE_CONFIG[mode]?.color : undefined;
+
           return (
             <Link
               key={map.name}
               href={`/meta/${encodeURIComponent(map.name)}`}
-              className="group relative text-left transition-all duration-200 hover:opacity-90"
+              className="bl-card"
+              style={{ textDecoration: "none", padding: 0, display: "block" }}
             >
-              <div className="relative bg-black/[0.03] border border-black/[0.06] overflow-hidden dark:bg-white/[0.03] dark:border-white/[0.06]">
+              <div style={{ position: "relative", background: "var(--panel-2)", borderRadius: "var(--r-lg) var(--r-lg) 0 0", overflow: "hidden" }}>
                 {imageUrl ? (
                   <img
                     src={imageUrl}
                     alt={map.name}
-                    className="w-full h-auto object-contain group-hover:opacity-90 transition-opacity duration-200"
+                    style={{ width: "100%", height: "auto", display: "block" }}
                     loading="lazy"
                   />
                 ) : (
-                  <div className="aspect-[3/4] w-full flex items-center justify-center">
-                    <div className="w-12 h-12 opacity-20" style={{ backgroundColor: getModeColor(selectedMode || "") }} />
+                  <div style={{ aspectRatio: "3/4", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <div style={{ width: 40, height: 40, borderRadius: 8, background: modeColor || "var(--line)", opacity: 0.3 }} />
                   </div>
                 )}
+
                 {isLive && (
-                  <div className="absolute top-2 right-2 flex items-center gap-1 px-1.5 py-0.5 bg-black/60 border border-green-500/40">
-                    <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-                    <span className="text-green-400 text-[9px] font-bold uppercase tracking-wider">Live</span>
+                  <div style={{ position: "absolute", top: 8, right: 8, display: "flex", alignItems: "center", gap: 5, padding: "3px 8px", background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)", borderRadius: 6, border: "1px solid rgba(73,212,126,0.3)" }}>
+                    <span className="live-dot" style={{ width: 5, height: 5 }} />
+                    <span style={{ fontSize: 9, fontWeight: 700, color: "#49D47E", letterSpacing: "0.1em", textTransform: "uppercase" }}>Live</span>
                   </div>
+                )}
+
+                {modeColor && (
+                  <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, ${modeColor}, transparent)`, opacity: 0.6 }} />
                 )}
               </div>
-              <div className="px-2 py-2 border-t border-black/[0.06] dark:border-white/[0.06]">
-                <h3 className="text-zinc-900 dark:text-white font-bold text-xs truncate leading-tight">{map.name}</h3>
-                <p className="text-zinc-400 dark:text-white/60 text-[10px] mt-0.5">{map.battles.toLocaleString()} battles</p>
+
+              <div style={{ padding: "10px 12px 12px", borderTop: "1px solid var(--line)" }}>
+                <div style={{ fontSize: 12.5, fontWeight: 600, color: "var(--ink)", letterSpacing: "-0.01em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 3 }}>
+                  {map.name}
+                </div>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <span className="bl-caption">{map.battles.toLocaleString()} battles</span>
+                  {mode && modeColor && (
+                    <span style={{ fontSize: 9.5, fontWeight: 600, color: modeColor, opacity: 0.85, letterSpacing: "0.04em", textTransform: "uppercase" }}>
+                      {MODE_CONFIG[mode]?.label || mode}
+                    </span>
+                  )}
+                </div>
               </div>
             </Link>
           );
@@ -164,14 +187,15 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch 
       </div>
 
       {mapTotalPages > 1 && (
-        <div className="flex items-center justify-center gap-1 mt-4">
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 4, marginTop: 8 }}>
           <button
             onClick={() => setMapPage(p => p - 1)}
             disabled={mapPage === 0}
-            className="w-7 h-7 flex items-center justify-center text-zinc-400 hover:text-zinc-900 hover:bg-black/5 disabled:opacity-30 disabled:cursor-not-allowed transition-colors rounded dark:text-white/60 dark:hover:text-white dark:hover:bg-white/5"
+            style={{ width: 30, height: 30, display: "grid", placeItems: "center", borderRadius: 8, border: "1px solid var(--line)", background: "transparent", cursor: mapPage === 0 ? "default" : "pointer", opacity: mapPage === 0 ? 0.3 : 1, color: "var(--ink-3)", transition: "all 0.14s" }}
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
           </button>
+
           {(() => {
             const pages: (number | "...")[] = [];
             for (let i = 0; i < mapTotalPages; i++) {
@@ -183,28 +207,34 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch 
             }
             return pages.map((p, i) =>
               p === "..." ? (
-                <span key={`ellipsis-${i}`} className="w-7 h-7 flex items-center justify-center text-xs text-zinc-400 dark:text-white/30">…</span>
+                <span key={`e-${i}`} style={{ width: 30, height: 30, display: "grid", placeItems: "center", fontSize: 12, color: "var(--ink-4)" }}>…</span>
               ) : (
                 <button
                   key={p}
-                  onClick={() => setMapPage(p)}
-                  className={`w-7 h-7 text-xs font-semibold rounded transition-colors ${
-                    p === mapPage
-                      ? "bg-red-500 text-white dark:bg-[#FFD400] dark:text-black"
-                      : "text-zinc-400 hover:text-zinc-900 hover:bg-black/5 dark:text-white/60 dark:hover:text-white dark:hover:bg-white/5"
-                  }`}
+                  onClick={() => setMapPage(p as number)}
+                  style={{
+                    width: 30, height: 30, fontSize: 12, fontWeight: 600,
+                    borderRadius: 8,
+                    border: p === mapPage ? "none" : "1px solid var(--line)",
+                    background: p === mapPage ? "var(--accent)" : "transparent",
+                    color: p === mapPage ? "#0A0A0B" : "var(--ink-3)",
+                    cursor: "pointer",
+                    transition: "all 0.14s",
+                    fontFamily: "inherit",
+                  }}
                 >
-                  {p + 1}
+                  {(p as number) + 1}
                 </button>
               )
             );
           })()}
+
           <button
             onClick={() => setMapPage(p => p + 1)}
             disabled={mapPage === mapTotalPages - 1}
-            className="w-7 h-7 flex items-center justify-center text-zinc-400 hover:text-zinc-900 hover:bg-black/5 disabled:opacity-30 disabled:cursor-not-allowed transition-colors rounded dark:text-white/60 dark:hover:text-white dark:hover:bg-white/5"
+            style={{ width: 30, height: 30, display: "grid", placeItems: "center", borderRadius: 8, border: "1px solid var(--line)", background: "transparent", cursor: mapPage === mapTotalPages - 1 ? "default" : "pointer", opacity: mapPage === mapTotalPages - 1 ? 0.3 : 1, color: "var(--ink-3)", transition: "all 0.14s" }}
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
           </button>
         </div>
       )}

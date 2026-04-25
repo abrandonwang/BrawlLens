@@ -1,5 +1,4 @@
 import Link from "next/link"
-import { ArrowLeft } from "lucide-react"
 
 interface Brawler {
   id: number
@@ -13,6 +12,12 @@ const RARITY_ORDER = [
   "Epic", "Mythic", "Legendary", "Ultra Legendary",
 ]
 
+const CATEGORIES = [
+  { label: "Players",  href: "/leaderboards/players" },
+  { label: "Clubs",    href: "/leaderboards/clubs" },
+  { label: "Brawlers", href: "/leaderboards/brawlers" },
+]
+
 export default async function BrawlerLeaderboardsPage() {
   const res = await fetch("https://api.brawlify.com/v1/brawlers", { cache: "no-store" })
   const data = await res.json()
@@ -24,14 +29,28 @@ export default async function BrawlerLeaderboardsPage() {
   }, {} as Record<string, Brawler[]>)
 
   return (
-    <main className="flex-1 px-8 pt-6 pb-16 lg:px-12">
-      <Link href="/leaderboards" className="inline-flex items-center gap-1.5 text-xs text-zinc-400 dark:text-white/30 hover:text-zinc-700 dark:hover:text-white/60 transition-colors mb-6">
-        <ArrowLeft size={12} /> Leaderboards
-      </Link>
-      <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-zinc-900 dark:text-white mb-2">Brawler Rankings</h1>
-      <p className="text-sm text-zinc-500 dark:text-white/40 mb-10">Select a brawler to see the top 200 global players.</p>
+    <main style={{ maxWidth: 1080, margin: "0 auto", padding: "32px 32px 80px" }}>
 
-      <div className="space-y-10">
+      <div style={{ display: "flex", gap: 6, marginBottom: 28 }}>
+        {CATEGORIES.map(c => (
+          <Link
+            key={c.href}
+            href={c.href}
+            className="bl-btn bl-btn-sm"
+            style={c.href === "/leaderboards/brawlers" ? { background: "var(--elev)", borderColor: "var(--line-2)", color: "var(--ink)" } : {}}
+          >
+            {c.label}
+          </Link>
+        ))}
+      </div>
+
+      <div style={{ marginBottom: 20 }}>
+        <h1 className="bl-h-display">Brawlers</h1>
+      </div>
+
+      <div style={{ height: 1, background: "var(--line)", marginBottom: 32 }} />
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 40 }}>
         {RARITY_ORDER.map(rarity => {
           const group = grouped[rarity]
           if (!group?.length) return null
@@ -39,23 +58,23 @@ export default async function BrawlerLeaderboardsPage() {
 
           return (
             <section key={rarity}>
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ backgroundColor: color }} />
-                <h2 className="text-sm font-semibold text-zinc-700 dark:text-white/70">{rarity}</h2>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+                <span style={{ width: 8, height: 8, borderRadius: 2, background: color, display: "block", flexShrink: 0 }} />
+                <span className="bl-caption" style={{ letterSpacing: "0.1em", textTransform: "uppercase" }}>{rarity}</span>
               </div>
-              <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12 gap-2">
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(88px, 1fr))", gap: 8 }}>
                 {group.map(brawler => (
                   <Link
                     key={brawler.id}
                     href={`/leaderboards/brawlers/${brawler.id}`}
-                    className="group bg-zinc-100 border border-black/5 rounded-md overflow-hidden hover:border-black/20 transition-all duration-100 dark:bg-zinc-900 dark:border-white/5 dark:hover:border-white/20"
+                    className="bl-card"
+                    style={{ textDecoration: "none", padding: 0, overflow: "hidden", transition: "border-color 0.14s" }}
                   >
-                    <div className="aspect-square p-1.5">
-                      <img src={brawler.imageUrl2} alt={brawler.name} className="w-full h-full object-contain" />
+                    <div style={{ aspectRatio: "1", padding: 8, background: `radial-gradient(ellipse at 50% 30%, ${color}18, transparent 70%)` }}>
+                      <img src={brawler.imageUrl2} alt={brawler.name} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
                     </div>
-                    <div className="px-2 pb-2 flex items-center gap-1.5">
-                      <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
-                      <p className="text-[10px] font-medium text-zinc-600 truncate dark:text-white/70">{brawler.name}</p>
+                    <div style={{ padding: "4px 8px 8px", borderTop: "1px solid var(--line)" }}>
+                      <span style={{ fontSize: 10.5, fontWeight: 600, color: "var(--ink-2)", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{brawler.name}</span>
                     </div>
                   </Link>
                 ))}

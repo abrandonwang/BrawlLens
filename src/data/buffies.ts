@@ -1,7 +1,3 @@
-// Buffy data keyed by brawler ID.
-// For gadgets/starPowers: key is the exact ability name from Brawlify.
-// Value is the full description when the buffy is applied.
-// For hypercharge: the enhanced description when buffy is applied.
 
 export interface BrawlerBuffies {
   gadgets?: Record<string, string>

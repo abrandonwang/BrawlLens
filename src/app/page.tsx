@@ -1,21 +1,39 @@
 "use client"
-import { useState, useEffect, useRef } from "react"
-import { ArrowUp } from "lucide-react"
+import { useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 
-const suggestions = [
-  "Show me #GRG0L2G's stats",
-  "Best brawlers for Gem Grab",
-  "Top players leaderboard",
+const word = "BRAWL · STARS · "
+const reps = Array.from({ length: 16 })
+
+const TICKER = [
+  "▲ Shelly win rate +2.4%",
+  "● Hard Rock Mine entered rotation",
+  "★ Ryukobu takes #1 with 94,218 trophies",
+  "▲ Leon +0.8% on Knockout",
+  "◆ New hypercharge: Bibi",
+  "● Season 42 kicks off",
+  "▼ Mortis −0.3% on Brawl Ball",
+  "★ THE RACER jumps to #2 in club standings",
+]
+
+const STATS = [
+  { l: "BATTLES / 24H", v: "482K" },
+  { l: "BRAWLERS", v: "88" },
+  { l: "MAPS LIVE", v: "24" },
+  { l: "TOP TROPHIES", v: "94.2K", gold: true },
+]
+
+const JUMPS = [
+  { label: "PLAYER",      sub: "#GRG0L2G · Ryukobu · 94,218 🏆", gold: true,  href: "/leaderboards/players" },
+  { label: "BRAWLER",     sub: "Shelly meta breakdown",             gold: false, href: "/brawlers" },
+  { label: "MAP",         sub: "Hard Rock Mine · Gem Grab",         gold: false, href: "/meta" },
+  { label: "LEADERBOARD", sub: "Top 200 Japan",                     gold: false, href: "/leaderboards/players" },
 ]
 
 export default function Home() {
   const [userInput, setUserInput] = useState("")
-  const [mounted, setMounted] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const router = useRouter()
-
-  useEffect(() => { setMounted(true) }, [])
 
   function handleInput(e: React.ChangeEvent<HTMLTextAreaElement>) {
     setUserInput(e.target.value)
@@ -38,59 +56,80 @@ export default function Home() {
   }
 
   return (
-    <main className={`flex-1 flex flex-col transition-opacity duration-500 ${mounted ? "opacity-100" : "opacity-0"}`}>
-      <section className="flex-1 flex flex-col items-center justify-center px-4 py-10">
-        <div
-          className="w-full max-w-5xl rounded-3xl overflow-hidden flex flex-col items-center text-center px-6 sm:px-12 py-14 sm:py-20"
-          style={{ backgroundImage: "url('/fonts/brawl-bg.png')", backgroundSize: "cover", backgroundPosition: "center" }}
-        >
+    <main className="home-hero">
 
-          <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold tracking-tight text-white leading-[1.1] mb-6" style={{ textShadow: "0 2px 12px rgba(0,0,0,0.4), 0 1px 3px rgba(0,0,0,0.5)" }}>
-            Ask me anything{" "}
-            <span className="text-white/80">about</span>
-            <br />
-            <span style={{ fontFamily: "Nougat", color: "#e8a800", textShadow: "0 2px 12px rgba(0,0,0,0.5), 0 1px 3px rgba(0,0,0,0.6)" }}>BRAWL</span>{" "}
-            <span style={{ fontFamily: "Nougat", textShadow: "0 2px 12px rgba(0,0,0,0.5), 0 1px 3px rgba(0,0,0,0.6)" }} className="text-red-400">STARS</span>
-          </h1>
+      <div className="hero-bg hero-bg-b" />
 
-          <p className="text-lg text-white mb-10" style={{ textShadow: "0 1px 6px rgba(0,0,0,0.4)" }}>
-            Stats, brawlers, maps, and leaderboards all in one place.
-          </p>
+      <div className="home-hero-inner">
 
-          <div className="w-full max-w-2xl">
-            <div className="mb-4 flex flex-wrap gap-2 justify-center">
-              {suggestions.map((s) => (
-                <button
-                  key={s}
-                  onClick={() => setUserInput(s)}
-                  className="text-xs text-white/80 bg-white/20 backdrop-blur-md border border-white/30 px-4 py-2 hover:bg-white/30 hover:border-white/50 hover:text-white transition-colors"
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
-
-            <div className="relative">
-              <textarea
-                ref={textareaRef}
-                rows={1}
-                value={userInput}
-                onChange={handleInput}
-                onKeyDown={handleKeyDown}
-                placeholder="Ask anything..."
-                className="w-full bg-white/20 backdrop-blur-md border border-white/30 rounded-xl px-4 sm:px-6 py-3 sm:py-[18px] pr-12 sm:pr-14 text-sm sm:text-base md:text-lg text-white placeholder:text-white/55 outline-none resize-none leading-5 overflow-hidden focus:border-white/50 focus:bg-white/25 transition-all"
-              />
-              <button
-                onClick={handleSubmit}
-                disabled={!userInput.trim()}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center bg-white/90 text-blue-600 rounded-lg disabled:bg-white/20 disabled:text-white/30 disabled:cursor-not-allowed hover:bg-white hover:scale-105 active:scale-95 transition-all"
-              >
-                <ArrowUp size={16} />
-              </button>
+        <div className="home-center">
+          <div className="home-center-top">
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+              <div className="home-mark">
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--accent)", flexShrink: 0, display: "block" }} />
+                <span className="home-mark-title">BrawlLens</span>
+              </div>
+              <p className="home-tagline">Real-time stats {"&"} AI analysis for Brawl Stars</p>
             </div>
           </div>
+
+          <div className="home-card-wrap">
+            <div className="home-card-shell" style={{ background: "var(--panel)", border: "1px solid var(--line-2)", borderRadius: 20, padding: 6, boxShadow: "0 40px 80px -40px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.02) inset", position: "relative" }}>
+
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 14px 12px" }}>
+                <span style={{ width: 10, height: 10, borderRadius: 4, background: "color-mix(in srgb, var(--line) 55%, transparent)", border: "1px solid var(--line)", display: "block" }} />
+                <span className="bl-mono bl-caption">brawllens / ask</span>
+              </div>
+
+              <div style={{ background: "var(--bg)", border: "1px solid var(--line)", borderRadius: 14, padding: "14px 16px", display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 6 }}>
+                <svg style={{ width: 15, height: 15, color: "var(--ink-3)", flexShrink: 0, marginTop: 1 }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+                <textarea
+                  ref={textareaRef}
+                  rows={1}
+                  value={userInput}
+                  onChange={handleInput}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Ask anything, or paste a #PlayerTag"
+                  style={{ background: "transparent", border: "none", outline: "none", color: "var(--ink)", flex: 1, fontSize: 14, fontFamily: "inherit", resize: "none", overflow: "hidden", lineHeight: 1.5 }}
+                />
+                <span className="bl-mono" style={{ fontSize: 10.5, color: "var(--ink-4)", border: "1px solid var(--line)", padding: "2px 6px", borderRadius: 4, flexShrink: 0, cursor: "pointer" }} onClick={handleSubmit}>⏎</span>
+              </div>
+
+              <div style={{ padding: 4 }}>
+                {JUMPS.map((row, i) => (
+                  <a
+                    key={i}
+                    href={row.href}
+                    style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", borderRadius: 10, cursor: "pointer", textDecoration: "none", transition: "background 0.13s" }}
+                    className="row-hover"
+                  >
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div className="bl-caption" style={{ letterSpacing: "0.1em", marginBottom: 2 }}>{row.label}</div>
+                      <div style={{ fontSize: 13, color: "var(--ink)", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{row.sub}</div>
+                    </div>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-4)" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+                  </a>
+                ))}
+              </div>
+
+              <div style={{ borderTop: "1px solid var(--line)", marginTop: 6, padding: "10px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}>
+                  <span className="live-dot" style={{ width: 5, height: 5 }} />
+                  <span className="bl-mono bl-caption">Updated 2m ago</span>
+                </div>
+                <span className="bl-caption bl-mono" style={{ whiteSpace: "nowrap" }}>⌘K to focus</span>
+              </div>
+            </div>
+
+            <div style={{ position: "absolute", top: -10, right: -10, zIndex: 5, fontFamily: "Nougat, sans-serif", fontSize: 14, letterSpacing: "0.05em", color: "var(--accent)", background: "var(--bg)", padding: "4px 10px", borderRadius: 6, border: "1px solid var(--accent-line)", boxShadow: "0 8px 24px -8px color-mix(in srgb, var(--accent) 40%, transparent)" }}>
+              NEW
+            </div>
+          </div>
+          <div className="home-center-hint">Try asking: {"\u201c"}best brawlers on Hard Rock Mine{"\u201d"} or paste a #PlayerTag</div>
         </div>
-      </section>
+
+      </div>
+
     </main>
   )
 }

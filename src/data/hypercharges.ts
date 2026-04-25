@@ -6,7 +6,6 @@ export interface HyperchargeData {
   speedBoost: number
 }
 
-// Universal boosts apply to all hypercharges
 const BASE: Pick<HyperchargeData, "damageBoost" | "shieldBoost" | "speedBoost"> = {
   damageBoost: 5,
   shieldBoost: 5,

@@ -32,7 +32,6 @@ export default async function PlayerProfile({ params }: { params: Promise<{ tag:
             <main className="pt-32 pb-32">
                 <div className="max-w-[1200px] mx-auto px-10">
 
-                    {/* HERO */}
                     <section className="mb-20">
                         <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400 mb-4 dark:text-white/40">#{tag}</p>
                         <h1 className="text-6xl md:text-[100px] font-black tracking-[-0.06em] leading-[0.85] text-zinc-900 mb-6 dark:text-white">
@@ -43,7 +42,6 @@ export default async function PlayerProfile({ params }: { params: Promise<{ tag:
                         )}
                     </section>
 
-                    {/* STATS */}
                     <section className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-28">
                         <StatCard label="Trophies" value={(player.trophies ?? 0).toLocaleString()} sub={`Best: ${(player.highestTrophies ?? 0).toLocaleString()}`} />
                         <StatCard label="3v3 Wins" value={(player.threesvictories ?? 0).toLocaleString()} />
@@ -51,7 +49,6 @@ export default async function PlayerProfile({ params }: { params: Promise<{ tag:
                         <StatCard label="Duo Wins" value={(player.duoVictories ?? 0).toLocaleString()} />
                     </section>
 
-                    {/* BRAWLERS */}
                     <section>
                         <div className="flex items-end justify-between mb-10">
                             <h2 className="text-4xl font-black tracking-tight text-zinc-900 dark:text-white">{sorted.length} Brawlers</h2>

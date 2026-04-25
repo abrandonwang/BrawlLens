@@ -19,7 +19,7 @@ function getTierInfo(winRate: number) {
   if (winRate >= 54) return { label: "A", color: "#FB923C", bg: "rgba(251,146,60,0.08)", border: "rgba(251,146,60,0.2)" }
   if (winRate >= 50) return { label: "B", color: "#FACC15", bg: "rgba(250,204,21,0.08)", border: "rgba(250,204,21,0.2)" }
   if (winRate >= 46) return { label: "C", color: "#60A5FA", bg: "rgba(96,165,250,0.08)", border: "rgba(96,165,250,0.2)" }
-  return { label: "D", color: "#71717A", bg: "rgba(113,113,122,0.08)", border: "rgba(113,113,122,0.2)" }
+  return { label: "D", color: "var(--ink-4)", bg: "var(--panel-2)", border: "var(--line)" }
 }
 
 function getBarWidth(winRate: number): number {
@@ -31,7 +31,7 @@ function getBrawlerImage(brawlerId: number): string {
 }
 
 function formatBrawlerName(name: string): string {
-  return name.split(" ").map((w) => w.charAt(0) + w.slice(1).toLowerCase()).join(" ")
+  return name.split(" ").map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(" ")
 }
 
 interface Props {
@@ -49,7 +49,7 @@ export default function MapDetailClient({ mapName, imageUrl, totalBattles, brawl
 
   const filtered = useMemo(() => {
     return brawlers
-      .filter((b) => {
+      .filter(b => {
         if (b.picks < minPicks) return false
         if (searchQuery && !formatBrawlerName(b.name).toLowerCase().includes(searchQuery.toLowerCase())) return false
         return true
@@ -63,161 +63,122 @@ export default function MapDetailClient({ mapName, imageUrl, totalBattles, brawl
     { key: "wins", label: "Wins" },
   ]
 
-  // Shared grid configuration for header and rows
-  const gridLayout = "grid-cols-[40px_1fr_75px_55px_36px] sm:grid-cols-[44px_1fr_110px_70px_70px_36px]"
-
   return (
-    <main className="flex-1 px-4 sm:px-8 pt-6 pb-16 max-w-7xl mx-auto w-full">
-      <Link href="/meta" className="inline-flex items-center gap-1.5 text-xs text-zinc-400 dark:text-white/50 hover:text-zinc-700 dark:hover:text-white/60 transition-colors mb-6">
-        <ArrowLeft size={12} /> Maps
+    <main style={{ maxWidth: 1080, margin: "0 auto", padding: "32px 40px 80px" }}>
+
+      <Link href="/meta" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--ink-4)", textDecoration: "none", marginBottom: 28, transition: "color 0.14s" }}>
+        <ArrowLeft size={12} />
+        Maps
       </Link>
 
-      {/* Header: text left, image right */}
-      <div className="flex flex-row items-center justify-between gap-4 mb-8 sm:mb-10">
-        <div className="flex flex-col justify-center min-w-0">
-          {isLive && (
-            <div className="flex items-center gap-1.5 mb-2 sm:mb-3">
-              <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-              <span className="text-green-500 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider">Live in rotation</span>
-            </div>
-          )}
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-zinc-900 dark:text-white mb-1 sm:mb-2 truncate">
-            {mapName}
-          </h1>
-          <p className="text-xs sm:text-sm text-zinc-400 dark:text-white/50">{totalBattles.toLocaleString()} battles</p>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 24, marginBottom: 28, flexWrap: "wrap" }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6, flexWrap: "wrap" }}>
+            <h1 className="bl-h-display">{mapName}</h1>
+            {isLive && (
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "3px 9px 3px 7px", border: "1px solid rgba(73,212,126,0.3)", borderRadius: 999, background: "rgba(73,212,126,0.06)", flexShrink: 0 }}>
+                <span className="live-dot" style={{ width: 5, height: 5 }} />
+                <span style={{ fontSize: 10, fontWeight: 600, color: "#49D47E", letterSpacing: "0.06em", textTransform: "uppercase" }}>Live</span>
+              </span>
+            )}
+          </div>
+          <span className="bl-caption">{totalBattles.toLocaleString()} battles</span>
         </div>
 
         {imageUrl && (
-          <div className="shrink-0 w-24 sm:w-32 md:w-44 border-2 border-black/20 dark:border-white/20 overflow-hidden bg-black/[0.02] dark:bg-white/[0.02]">
-            <img src={imageUrl} alt={mapName} className="w-full h-auto object-contain" />
+          <div className="bl-card" style={{ flexShrink: 0, width: 120, padding: 0, overflow: "hidden" }}>
+            <img src={imageUrl} alt={mapName} style={{ width: "100%", height: "auto", display: "block" }} />
           </div>
         )}
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
-        <div className="relative w-full lg:max-w-xs">
-          <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-white/40" />
-          <input
-            type="text"
-            placeholder="Search brawler..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-black/[0.04] border border-black/[0.08] dark:bg-white/[0.04] dark:border-white/[0.08] pl-10 pr-4 py-2.5 text-sm text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-white/20 focus:outline-none focus:border-black/20 dark:focus:border-white/20 transition-colors"
-          />
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20, flexWrap: "wrap" }}>
+        <div className="bl-input" style={{ width: 220 }}>
+          <Search size={13} style={{ color: "var(--ink-4)", flexShrink: 0 }} />
+          <input placeholder="Search brawler…" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Sort toggle */}
-          <div className="flex flex-1 sm:flex-none items-center border border-black/10 dark:border-white/10 overflow-hidden">
-            {sortOptions.map((opt) => (
-              <button
-                key={opt.key}
-                onClick={() => setSortBy(opt.key)}
-                className={`flex-1 sm:flex-none px-3 py-2.5 text-[10px] sm:text-xs font-semibold transition-colors whitespace-nowrap ${
-                  sortBy === opt.key
-                    ? "bg-zinc-900 text-white dark:bg-white dark:text-black"
-                    : "text-zinc-500 hover:text-zinc-900 dark:text-white/40 dark:hover:text-white"
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-
-          <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-white/50 bg-black/[0.02] dark:bg-white/[0.02] px-2 border border-black/10 dark:border-white/10 sm:border-none sm:bg-transparent">
-            <span className="whitespace-nowrap font-medium">Min picks:</span>
-            <select
-              value={minPicks}
-              onChange={(e) => setMinPicks(Number(e.target.value))}
-              className="bg-transparent py-2.5 text-sm text-zinc-900 dark:text-white focus:outline-none font-bold"
-            >
-              <option value={5}>5+</option>
-              <option value={10}>10+</option>
-              <option value={25}>25+</option>
-              <option value={50}>50+</option>
-              <option value={100}>100+</option>
-            </select>
-          </div>
+        <div className="bl-seg">
+          {sortOptions.map(opt => (
+            <button key={opt.key} onClick={() => setSortBy(opt.key)} className={sortBy === opt.key ? "on" : ""}>{opt.label}</button>
+          ))}
         </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <span className="bl-caption">Min picks</span>
+          <select value={minPicks} onChange={e => setMinPicks(Number(e.target.value))} style={{ background: "var(--panel)", border: "1px solid var(--line)", borderRadius: 8, padding: "5px 8px", fontSize: 12, color: "var(--ink)", outline: "none", fontFamily: "inherit", cursor: "pointer" }}>
+            <option value={5}>5+</option>
+            <option value={10}>10+</option>
+            <option value={25}>25+</option>
+            <option value={50}>50+</option>
+            <option value={100}>100+</option>
+          </select>
+        </div>
+
+        <span className="bl-caption" style={{ marginLeft: "auto" }}>{filtered.length} brawlers</span>
       </div>
 
-      <p className="text-zinc-400 dark:text-white/50 text-[10px] uppercase tracking-widest mb-4">{filtered.length} brawlers</p>
-
       {filtered.length === 0 ? (
-        <div className="text-center py-20 border border-dashed border-black/10 dark:border-white/10">
-          <p className="text-zinc-400 dark:text-white/50 text-sm">No brawlers match your filters.</p>
+        <div style={{ textAlign: "center", padding: "60px 0", border: "1px dashed var(--line-2)", borderRadius: 14 }}>
+          <p className="bl-body" style={{ color: "var(--ink-4)" }}>No brawlers match your filters.</p>
         </div>
       ) : (
-        <div className="min-w-full">
-          {/* Table Header */}
-          <div className={`grid ${gridLayout} gap-2 sm:gap-4 px-3 py-2 text-[9px] sm:text-[10px] font-bold text-zinc-400 dark:text-white/50 uppercase tracking-widest border-b border-black/5 dark:border-white/5`}>
+        <div className="bl-card" style={{ padding: 0, overflow: "hidden" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "44px 1fr 120px 70px 70px 40px", gap: 16, padding: "10px 20px", borderBottom: "1px solid var(--line)", background: "var(--panel-2)" }}>
             <span />
-            <span>Brawler</span>
-            <span>Win Rate</span>
-            <span className="text-right hidden sm:block">Wins</span>
-            <span className="text-right">Picks</span>
-            <span className="text-center">Tier</span>
+            <span className="bl-caption" style={{ letterSpacing: "0.12em", textTransform: "uppercase" }}>Brawler</span>
+            <span className="bl-caption" style={{ letterSpacing: "0.12em", textTransform: "uppercase" }}>Win Rate</span>
+            <span className="bl-caption" style={{ letterSpacing: "0.12em", textTransform: "uppercase", textAlign: "right" }}>Wins</span>
+            <span className="bl-caption" style={{ letterSpacing: "0.12em", textTransform: "uppercase", textAlign: "right" }}>Picks</span>
+            <span className="bl-caption" style={{ letterSpacing: "0.12em", textTransform: "uppercase", textAlign: "center" }}>Tier</span>
           </div>
 
-          {/* Rows */}
-          <div className="divide-y divide-black/[0.03] dark:divide-white/[0.03]">
-            {filtered.map((brawler) => {
-              const tier = getTierInfo(brawler.winRate)
-              return (
-                <div
-                  key={brawler.brawlerId}
-                  className={`grid ${gridLayout} gap-2 sm:gap-4 items-center px-3 py-3 hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors`}
-                >
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-black/[0.04] dark:bg-white/[0.04] flex items-center justify-center rounded-sm">
-                    <img 
-                      src={getBrawlerImage(brawler.brawlerId)} 
-                      alt={brawler.name} 
-                      className="w-7 h-7 sm:w-8 sm:h-8 object-contain" 
-                      loading="lazy" 
-                    />
-                  </div>
-                  
-                  <span className="text-zinc-900 dark:text-white font-bold text-xs sm:text-sm truncate pr-2">
-                    {formatBrawlerName(brawler.name)}
+          {filtered.map((brawler, i) => {
+            const tier = getTierInfo(brawler.winRate)
+            return (
+              <div
+                key={brawler.brawlerId}
+                className="row-hover"
+                style={{ display: "grid", gridTemplateColumns: "44px 1fr 120px 70px 70px 40px", gap: 16, alignItems: "center", padding: "12px 20px", borderBottom: i < filtered.length - 1 ? "1px solid var(--line)" : "none" }}
+              >
+                <div style={{ width: 36, height: 36, borderRadius: 8, background: "var(--panel-2)", display: "grid", placeItems: "center", overflow: "hidden" }}>
+                  <img
+                    src={getBrawlerImage(brawler.brawlerId)}
+                    alt={brawler.name}
+                    style={{ width: 32, height: 32, objectFit: "contain" }}
+                    loading="lazy"
+                  />
+                </div>
+
+                <span style={{ fontSize: 13.5, fontWeight: 600, color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {formatBrawlerName(brawler.name)}
+                </span>
+
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span className="bl-num" style={{ fontSize: 13.5, fontWeight: 600, color: tier.color, flexShrink: 0 }}>
+                    {brawler.winRate.toFixed(1)}%
                   </span>
-
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs sm:text-sm font-bold tabular-nums shrink-0" style={{ color: tier.color }}>
-                      {brawler.winRate.toFixed(1)}%
-                    </span>
-                    <div className="flex-1 h-1 bg-black/[0.04] dark:bg-white/[0.04] overflow-hidden hidden md:block">
-                      <div 
-                        className="h-full transition-all duration-500" 
-                        style={{ width: `${getBarWidth(brawler.winRate)}%`, backgroundColor: tier.color, opacity: 0.6 }} 
-                      />
-                    </div>
-                  </div>
-
-                  <span className="text-right text-zinc-400 dark:text-white/40 text-xs sm:text-sm tabular-nums hidden sm:block">
-                    {brawler.wins >= 1000 ? `${(brawler.wins / 1000).toFixed(1)}k` : brawler.wins}
-                  </span>
-
-                  <span className="text-right text-zinc-400 dark:text-white/40 text-xs sm:text-sm tabular-nums">
-                    {brawler.picks >= 1000 ? `${(brawler.picks / 1000).toFixed(1)}k` : brawler.picks}
-                  </span>
-
-                  <div className="flex justify-center">
-                    <span 
-                      className="inline-flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 text-[9px] sm:text-[10px] font-black rounded-sm" 
-                      style={{ 
-                        color: tier.color, 
-                        backgroundColor: tier.bg, 
-                        border: `1px solid ${tier.border}` 
-                      }}
-                    >
-                      {tier.label}
-                    </span>
+                  <div style={{ flex: 1, height: 3, background: "var(--line-2)", borderRadius: 99, overflow: "hidden" }}>
+                    <div style={{ height: "100%", width: `${getBarWidth(brawler.winRate)}%`, background: tier.color, opacity: 0.7, borderRadius: 99, transition: "width 0.4s ease" }} />
                   </div>
                 </div>
-              )
-            })}
-          </div>
+
+                <span className="bl-num" style={{ fontSize: 13, color: "var(--ink-3)", textAlign: "right" }}>
+                  {brawler.wins >= 1000 ? `${(brawler.wins / 1000).toFixed(1)}k` : brawler.wins}
+                </span>
+
+                <span className="bl-num" style={{ fontSize: 13, color: "var(--ink-3)", textAlign: "right" }}>
+                  {brawler.picks >= 1000 ? `${(brawler.picks / 1000).toFixed(1)}k` : brawler.picks}
+                </span>
+
+                <div style={{ display: "flex", justifyContent: "center" }}>
+                  <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 26, height: 26, fontSize: 10, fontWeight: 800, borderRadius: 6, color: tier.color, background: tier.bg, border: `1px solid ${tier.border}` }}>
+                    {tier.label}
+                  </span>
+                </div>
+              </div>
+            )
+          })}
         </div>
       )}
     </main>

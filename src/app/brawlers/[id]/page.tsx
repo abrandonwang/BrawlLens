@@ -3,7 +3,6 @@ import BrawlerDetailClient from "./BrawlerDetailClient"
 export default async function BrawlerPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
 
-    // If numeric ID, fetch directly. If name slug, find from full list.
     const isNumeric = /^\d+$/.test(id)
 
     let brawler: unknown

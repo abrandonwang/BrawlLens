@@ -1,8 +1,9 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Search, Trophy, Users, ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react"
+import { Search, Trophy, Users, ChevronLeft, ChevronRight } from "lucide-react"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 
 interface Club {
   rank: number
@@ -21,12 +22,11 @@ interface RegionData {
 
 const PAGE_SIZE = 20
 
-function rankBg(rank: number) {
-  if (rank === 1) return "bg-[#FFD400]/10 dark:bg-[#FFD400]/[0.07] border-l-2 border-l-[#FFD400]/50 hover:bg-[#FFD400]/20 dark:hover:bg-[#FFD400]/[0.12]"
-  if (rank === 2) return "bg-zinc-100 dark:bg-white/[0.04] border-l-2 border-l-zinc-400/30 hover:bg-zinc-200 dark:hover:bg-white/[0.07]"
-  if (rank === 3) return "bg-orange-50 dark:bg-orange-900/10 border-l-2 border-l-orange-400/40 hover:bg-orange-100 dark:hover:bg-orange-900/20"
-  return "bg-black/[0.02] dark:bg-white/[0.02] border-l-2 border-l-transparent hover:bg-black/[0.05] dark:hover:bg-white/[0.05]"
-}
+const CATEGORIES = [
+  { label: "Players",  href: "/leaderboards/players" },
+  { label: "Clubs",    href: "/leaderboards/clubs" },
+  { label: "Brawlers", href: "/leaderboards/brawlers" },
+]
 
 function formatNum(n: number) {
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + "M"
@@ -34,164 +34,130 @@ function formatNum(n: number) {
   return n.toString()
 }
 
-function rankColor(rank: number) {
-  if (rank === 1) return "text-[#FFD400]"
-  if (rank === 2) return "text-zinc-400"
-  if (rank === 3) return "text-orange-400"
-  return "text-zinc-400 dark:text-white/45"
-}
-
 export default function ClubsClient({ allData }: { allData: RegionData[] }) {
+  const pathname = usePathname()
   const [activeRegion, setActiveRegion] = useState<string>("global")
   const [search, setSearch] = useState("")
   const [pageByRegion, setPageByRegion] = useState<Record<string, number>>({})
 
   useEffect(() => { setPageByRegion({}) }, [search, activeRegion])
 
-  const filtered = allData
-    .filter((r) => r.code === activeRegion)
-    .map((r) => ({
-      ...r,
-      clubs: r.clubs.filter((c) =>
-        c.club_name.toLowerCase().includes(search.toLowerCase()) ||
-        c.club_tag.toLowerCase().includes(search.toLowerCase())
-      ),
-    }))
+  const regionData = allData.find(r => r.code === activeRegion)
+  const clubs = (regionData?.clubs ?? []).filter(
+    c =>
+      c.club_name.toLowerCase().includes(search.toLowerCase()) ||
+      c.club_tag.toLowerCase().includes(search.toLowerCase())
+  )
 
-  function getPage(code: string) { return pageByRegion[code] ?? 0 }
-  function setPage(code: string, page: number) { setPageByRegion(prev => ({ ...prev, [code]: page })) }
+  const page = pageByRegion[activeRegion] ?? 0
+  const totalPages = Math.ceil(clubs.length / PAGE_SIZE)
+  const paginated = clubs.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
+
+  function setPage(p: number) {
+    setPageByRegion(prev => ({ ...prev, [activeRegion]: p }))
+  }
 
   return (
-    <div className="flex flex-col">
-      <main className="flex-1 min-w-0 pt-6 pb-16 px-8 overflow-y-auto">
-        <section className="mb-8">
-          <Link href="/leaderboards" className="inline-flex items-center gap-1.5 text-xs text-zinc-400 dark:text-white/50 hover:text-zinc-700 dark:hover:text-white/60 transition-colors mb-6">
-            <ArrowLeft size={12} /> Leaderboards
-          </Link>
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-zinc-900 mb-3 dark:text-white">Clubs</h1>
-          <p className="text-zinc-500 text-sm leading-relaxed dark:text-white/40 mb-8">Top 200 clubs by region, ranked by trophies.</p>
+    <div style={{ maxWidth: 1080, margin: "0 auto", padding: "32px 32px 80px" }}>
 
-          <div className="flex flex-col md:flex-row md:items-center gap-4 mb-10">
-            <div className="flex items-center gap-2.5 bg-black/10 border border-black/20 rounded px-4 py-2.5 dark:bg-white/10 dark:border-white/20 w-full md:w-64">
-              <Search size={13} className="text-zinc-500 shrink-0 dark:text-white/60" />
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search clubs"
-                className="bg-transparent text-xs text-zinc-900 outline-none placeholder:text-zinc-400 w-full dark:text-white dark:placeholder:text-white/40"
-              />
+      <div style={{ display: "flex", gap: 6, marginBottom: 28 }}>
+        {CATEGORIES.map(c => (
+          <Link
+            key={c.href}
+            href={c.href}
+            className="bl-btn bl-btn-sm"
+            style={pathname === c.href ? { background: "var(--elev)", borderColor: "var(--line-2)", color: "var(--ink)" } : {}}
+          >
+            {c.label}
+          </Link>
+        ))}
+      </div>
+
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, gap: 16, flexWrap: "wrap" }}>
+        <h1 className="bl-h-display">Clubs</h1>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+          <div className="bl-input" style={{ width: 220 }}>
+            <Search size={13} style={{ color: "var(--ink-4)", flexShrink: 0 }} />
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search clubs…" />
+          </div>
+          <div className="bl-seg">
+            {allData.map(r => (
+              <button key={r.code} onClick={() => setActiveRegion(r.code)} className={activeRegion === r.code ? "on" : ""}>
+                {r.code === "global" ? "Global" : r.code}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div style={{ height: 1, background: "var(--line)", marginBottom: 32 }} />
+
+      {clubs.length === 0 ? (
+        <p className="bl-caption" style={{ padding: "48px 0", textAlign: "center" }}>No data yet.</p>
+      ) : (
+        <>
+          <div className="bl-card" style={{ borderRadius: 14, overflow: "hidden", padding: 0 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "52px 1fr auto auto", gap: 16, padding: "11px 20px", borderBottom: "1px solid var(--line)", background: "var(--panel-2)" }}>
+              <span className="bl-caption" style={{ letterSpacing: "0.12em", textTransform: "uppercase" }}>#</span>
+              <span className="bl-caption" style={{ letterSpacing: "0.12em", textTransform: "uppercase" }}>Club</span>
+              <span className="bl-caption" style={{ letterSpacing: "0.12em", textTransform: "uppercase" }}>Members</span>
+              <span className="bl-caption" style={{ letterSpacing: "0.12em", textTransform: "uppercase", textAlign: "right" }}>Trophies</span>
             </div>
 
-            <select
-              value={activeRegion}
-              onChange={e => setActiveRegion(e.target.value)}
-              className="bg-black/10 border border-black/20 rounded px-3 py-2.5 text-xs text-zinc-900 outline-none dark:bg-white/10 dark:border-white/20 dark:text-white"
-            >
-              {allData.map((r) => (
-                <option key={r.code} value={r.code}>{r.label}</option>
-              ))}
-            </select>
+            {paginated.map((club, i) => (
+              <div
+                key={club.club_tag}
+                className="row-hover"
+                style={{ display: "grid", gridTemplateColumns: "52px 1fr auto auto", gap: 16, alignItems: "center", padding: "13px 20px", borderBottom: i < paginated.length - 1 ? "1px solid var(--line)" : "none" }}
+              >
+                <span className="bl-num" style={{ fontSize: 13.5, fontWeight: 500, color: "var(--ink-3)" }}>
+                  {String(club.rank).padStart(2, "0")}
+                </span>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 13.5, fontWeight: 500, color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{club.club_name}</div>
+                  <div className="bl-mono bl-caption" style={{ color: "var(--ink-4)" }}>{club.club_tag}</div>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                  <Users size={12} style={{ color: "var(--ink-4)" }} />
+                  <span className="bl-num" style={{ fontSize: 13, color: "var(--ink-3)" }}>{club.member_count ?? "—"}</span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 5, justifyContent: "flex-end" }}>
+                  <Trophy size={12} style={{ color: "var(--accent)", opacity: 0.7 }} />
+                  <span className="bl-num" style={{ fontSize: 13.5, fontWeight: 500, color: "var(--ink)" }}>{formatNum(club.trophies)}</span>
+                </div>
+              </div>
+            ))}
           </div>
-        </section>
 
-        <div className="space-y-12">
-          {filtered.map((region) => {
-            const page = getPage(region.code)
-            const totalPages = Math.ceil(region.clubs.length / PAGE_SIZE)
-            const paginated = region.clubs.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
-
-            return (
-              <section key={region.code}>
-                {region.clubs.length === 0 ? (
-                  <p className="text-zinc-400 text-sm py-8 dark:text-white/45">No data yet.</p>
-                ) : (
-                  <>
-                    <div className="space-y-1">
-                      <div className="grid grid-cols-[52px_1fr_auto_auto] gap-4 px-5 py-2 text-[10px] font-bold text-zinc-400 uppercase tracking-widest dark:text-white/50">
-                        <span>#</span>
-                        <span>Club</span>
-                        <span className="hidden sm:block">Members</span>
-                        <span>Trophies</span>
-                      </div>
-
-                      {paginated.map((club) => (
-                        <div
-                          key={club.club_tag}
-                          className={`grid grid-cols-[52px_1fr_auto_auto] gap-4 items-center px-5 py-4 transition-colors ${rankBg(club.rank)}`}
-                        >
-                          <span className={`text-base font-black tabular-nums ${rankColor(club.rank)}`}>
-                            {club.rank}
-                          </span>
-
-                          <div className="min-w-0">
-                            <p className="text-base font-semibold text-zinc-900 truncate dark:text-white">{club.club_name}</p>
-                            <p className="text-xs text-zinc-400 font-mono dark:text-white/45">{club.club_tag}</p>
-                          </div>
-
-                          <div className="hidden sm:flex items-center gap-1.5">
-                            <Users size={11} className="text-zinc-400 dark:text-white/50 shrink-0" />
-                            <span className="text-sm text-zinc-400 dark:text-white/50 tabular-nums">
-                              {club.member_count ?? "—"}
-                            </span>
-                          </div>
-
-                          <div className="flex items-center gap-1.5 justify-end">
-                            <Trophy size={12} className="text-red-500/50 dark:text-[#FFD400]/50 shrink-0" />
-                            <span className="text-base font-bold text-red-500/80 dark:text-[#FFD400]/80 tabular-nums">
-                              {formatNum(club.trophies)}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    {totalPages > 1 && (
-                      <div className="flex items-center justify-center gap-1 mt-4">
-                        <button
-                          onClick={() => setPage(region.code, page - 1)}
-                          disabled={page === 0}
-                          className="w-7 h-7 flex items-center justify-center text-zinc-400 hover:text-zinc-900 hover:bg-black/5 disabled:opacity-30 disabled:cursor-not-allowed transition-colors rounded dark:text-white/40 dark:hover:text-white dark:hover:bg-white/5"
-                        >
-                          <ChevronLeft size={14} />
-                        </button>
-
-                        {Array.from({ length: totalPages }, (_, idx) => (
-                          <button
-                            key={idx}
-                            onClick={() => setPage(region.code, idx)}
-                            className={`w-7 h-7 text-xs font-semibold rounded transition-colors ${
-                              idx === page
-                                ? "bg-red-500 text-white dark:bg-[#FFD400] dark:text-black"
-                                : "text-zinc-400 hover:text-zinc-900 hover:bg-black/5 dark:text-white/40 dark:hover:text-white dark:hover:bg-white/5"
-                            }`}
-                          >
-                            {idx + 1}
-                          </button>
-                        ))}
-
-                        <button
-                          onClick={() => setPage(region.code, page + 1)}
-                          disabled={page === totalPages - 1}
-                          className="w-7 h-7 flex items-center justify-center text-zinc-400 hover:text-zinc-900 hover:bg-black/5 disabled:opacity-30 disabled:cursor-not-allowed transition-colors rounded dark:text-white/40 dark:hover:text-white dark:hover:bg-white/5"
-                        >
-                          <ChevronRight size={14} />
-                        </button>
-                      </div>
-                    )}
-                  </>
-                )}
-              </section>
-            )
-          })}
-        </div>
-
-        <div className="mt-16 border border-black/[0.08] dark:border-white/[0.08] bg-black/[0.02] dark:bg-white/[0.02] p-8 max-w-2xl mx-auto text-center">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 dark:text-white/50 mb-4">About Club Rankings</p>
-          <p className="text-sm text-zinc-500 dark:text-white/40 leading-relaxed">
-            Club rankings reflect the top 200 clubs by combined trophies across six regions using real-time data refreshed every 30 minutes.
-          </p>
-        </div>
-      </main>
+          {totalPages > 1 && (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 4, marginTop: 20 }}>
+              <button
+                onClick={() => setPage(page - 1)}
+                disabled={page === 0}
+                style={{ width: 30, height: 30, display: "grid", placeItems: "center", borderRadius: 8, border: "1px solid var(--line)", background: "transparent", cursor: page === 0 ? "default" : "pointer", opacity: page === 0 ? 0.3 : 1, color: "var(--ink-3)" }}
+              >
+                <ChevronLeft size={13} />
+              </button>
+              {Array.from({ length: totalPages }, (_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setPage(idx)}
+                  style={{ width: 30, height: 30, fontSize: 12, fontWeight: 600, borderRadius: 8, border: idx === page ? "none" : "1px solid var(--line)", background: idx === page ? "var(--accent)" : "transparent", color: idx === page ? "#0A0A0B" : "var(--ink-3)", cursor: "pointer", fontFamily: "inherit" }}
+                >
+                  {idx + 1}
+                </button>
+              ))}
+              <button
+                onClick={() => setPage(page + 1)}
+                disabled={page === totalPages - 1}
+                style={{ width: 30, height: 30, display: "grid", placeItems: "center", borderRadius: 8, border: "1px solid var(--line)", background: "transparent", cursor: page === totalPages - 1 ? "default" : "pointer", opacity: page === totalPages - 1 ? 0.3 : 1, color: "var(--ink-3)" }}
+              >
+                <ChevronRight size={13} />
+              </button>
+            </div>
+          )}
+        </>
+      )}
     </div>
   )
 }

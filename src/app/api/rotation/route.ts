@@ -7,7 +7,6 @@ const supabase = createClient(
 );
 
 function parseBsTime(t: string): number {
-  // BS API format: "20240101T120000.000Z" → "2024-01-01T12:00:00.000Z"
   const s = t.replace(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})/, "$1-$2-$3T$4:$5:$6");
   return new Date(s).getTime();
 }

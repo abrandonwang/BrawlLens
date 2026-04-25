@@ -167,10 +167,10 @@ function ChatPage() {
   }
 
   const inputBar = (
-    <div className="relative">
+    <div style={{ position: "relative" }}>
       <Link
         href="/"
-        className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 transition-colors dark:text-zinc-600 dark:hover:text-zinc-400 z-10"
+        style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "var(--ink-4)", display: "flex", zIndex: 10, transition: "color 0.14s" }}
       >
         <RotateCcw size={13} />
       </Link>
@@ -181,68 +181,90 @@ function ChatPage() {
         onChange={handleInput}
         onKeyDown={handleKeyDown}
         placeholder="Ask anything..."
-        className="w-full bg-white border border-zinc-200 rounded-2xl pl-9 pr-12 py-3 text-sm text-zinc-900 placeholder:text-zinc-400 outline-none resize-none leading-6 overflow-hidden max-h-48 overflow-y-auto transition-colors focus:border-zinc-300 shadow-sm dark:bg-zinc-900 dark:border-zinc-700 dark:text-white dark:placeholder:text-zinc-500 dark:focus:border-zinc-600"
+        style={{
+          width: "100%",
+          background: "var(--panel)",
+          border: "1px solid var(--line-2)",
+          borderRadius: 16,
+          paddingLeft: 38,
+          paddingRight: 48,
+          paddingTop: 14,
+          paddingBottom: 14,
+          fontSize: 14,
+          color: "var(--ink)",
+          outline: "none",
+          resize: "none",
+          lineHeight: 1.5,
+          overflow: "hidden",
+          maxHeight: 192,
+          overflowY: "auto",
+          fontFamily: "inherit",
+          boxShadow: "0 8px 24px -8px rgba(0,0,0,0.2)",
+          transition: "border-color 0.16s",
+        }}
       />
       <button
         onClick={handleSubmit}
         disabled={!userInput.trim() || streaming}
-        className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-xl bg-zinc-900 text-white disabled:opacity-25 disabled:cursor-not-allowed hover:bg-zinc-700 transition-all active:scale-95 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+        style={{
+          position: "absolute",
+          right: 8,
+          top: "50%",
+          transform: "translateY(-50%)",
+          width: 34,
+          height: 34,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          borderRadius: 10,
+          border: "none",
+          background: !userInput.trim() || streaming ? "var(--line)" : "var(--accent)",
+          color: !userInput.trim() || streaming ? "var(--ink-4)" : "#0A0A0B",
+          cursor: !userInput.trim() || streaming ? "default" : "pointer",
+          transition: "all 0.15s",
+        }}
       >
         <ArrowUp size={14} />
       </button>
     </div>
   )
 
-  if (messages.length === 0) {
-    return (
-      <main className="fixed top-[52px] left-0 right-0 bottom-0 flex flex-col items-center justify-center bg-white dark:bg-[#111] px-4">
-        <div className="w-full max-w-2xl">
-          <div className="mb-8 text-center">
-            <div className="w-10 h-10 rounded-full bg-[#FFD400] mx-auto mb-4 flex items-center justify-center">
-              <div className="w-4 h-4 rounded-full bg-white/40" />
-            </div>
-            <h1 className="text-2xl font-semibold text-zinc-900 dark:text-white tracking-tight">
-              How can I help you?
-            </h1>
-            <p className="text-sm text-zinc-400 dark:text-zinc-600 mt-1.5">
-              Ask about brawlers, maps, leaderboards, or anything Brawl Stars.
-            </p>
-          </div>
-          {inputBar}
-          <div className="mt-3 flex flex-wrap gap-2 justify-center">
-            {SUGGESTIONS.map(s => (
-              <button
-                key={s}
-                onClick={() => sendMessage(s)}
-                className="text-xs px-3.5 py-2 rounded-xl border border-zinc-200 text-zinc-500 hover:border-zinc-300 hover:text-zinc-700 hover:bg-zinc-50 transition-all dark:border-zinc-800 dark:text-zinc-500 dark:hover:border-zinc-700 dark:hover:text-zinc-300 dark:hover:bg-zinc-900"
-              >
-                {s}
-              </button>
-            ))}
-          </div>
-        </div>
-      </main>
-    )
-  }
-
   return (
-    <main className="fixed top-[52px] left-0 right-0 bottom-0 flex flex-col bg-white dark:bg-[#111]">
+    <main className="fixed top-[80px] left-0 right-0 bottom-0 flex flex-col" style={{ background: "var(--bg)" }}>
 
-      {/* Messages */}
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
+          {messages.length === 0 && (
+            <div className="flex flex-col items-center justify-center" style={{ paddingTop: "15vh" }}>
+              <div style={{ width: 36, height: 36, borderRadius: 10, background: "conic-gradient(from 220deg, var(--accent), var(--r-ultra), var(--hc-purple), var(--hc-blue), var(--accent))", marginBottom: 16, padding: 2, display: "grid", placeItems: "center" }}>
+                <div style={{ width: "100%", height: "100%", borderRadius: 8, background: "var(--panel)", display: "grid", placeItems: "center" }}>
+                  <div style={{ width: 9, height: 9, borderRadius: "50%", background: "var(--accent)", opacity: 0.8 }} />
+                </div>
+              </div>
+              <p className="bl-body" style={{ color: "var(--ink-3)", marginBottom: 20 }}>Ask about brawlers, maps, leaderboards, or anything Brawl Stars.</p>
+              <div className="flex flex-wrap gap-2 justify-center">
+                {SUGGESTIONS.map(s => (
+                  <button key={s} onClick={() => sendMessage(s)} className="bl-btn bl-btn-ghost bl-btn-sm" style={{ borderRadius: 10 }}>
+                    {s}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           {messages.map((msg, i) => (
             <div key={i} className={`flex gap-3 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
               {msg.role === "assistant" && (
-                <div className="w-7 h-7 rounded-full bg-[#FFD400] shrink-0 mt-0.5 flex items-center justify-center">
-                  <div className="w-2.5 h-2.5 rounded-full bg-white/40" />
+                <div style={{ width: 28, height: 28, borderRadius: 8, background: "conic-gradient(from 220deg, var(--accent), var(--r-ultra), var(--hc-purple), var(--hc-blue), var(--accent))", flexShrink: 0, marginTop: 2, padding: 2, display: "grid", placeItems: "center" }}>
+                  <div style={{ width: "100%", height: "100%", borderRadius: 6, background: "var(--panel)", display: "grid", placeItems: "center" }}>
+                    <div style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--accent)", opacity: 0.9 }} />
+                  </div>
                 </div>
               )}
               <div className={`text-sm leading-7 ${
                 msg.role === "user"
-                  ? "bg-zinc-100 dark:bg-zinc-800/80 text-zinc-800 dark:text-zinc-100 px-4 py-2.5 rounded-2xl max-w-[80%]"
-                  : "text-zinc-700 dark:text-zinc-300 max-w-[85%] pt-0.5"
-              }`}>
+                  ? "max-w-[80%] px-4 py-2.5 rounded-2xl"
+                  : "max-w-[85%] pt-0.5"
+              }`} style={msg.role === "user" ? { background: "var(--panel-2)", border: "1px solid var(--line)", color: "var(--ink)", borderRadius: 18 } : { color: "var(--ink-2)" }}>
                 {msg.role === "assistant" ? (
                   <>
                     {streaming && i === messages.length - 1 && msg.content === "" ? (
@@ -264,8 +286,7 @@ function ChatPage() {
         </div>
       </div>
 
-      {/* Input */}
-      <div className="border-t border-zinc-100 dark:border-zinc-800/50 px-4 py-3">
+      <div style={{ borderTop: "1px solid var(--line)", background: "color-mix(in srgb, var(--panel) 90%, transparent)", backdropFilter: "blur(12px)", padding: "12px 16px" }}>
         <div className="max-w-2xl mx-auto">
           {inputBar}
         </div>

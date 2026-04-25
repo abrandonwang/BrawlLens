@@ -11,32 +11,31 @@ interface ModeInfo {
 }
 
 const MODE_CONFIG: Record<string, { label: string; color: string }> = {
-  brawlBall: { label: "Brawl Ball", color: "#8CA0EB" },
-  gemGrab: { label: "Gem Grab", color: "#9B59B6" },
-  knockout: { label: "Knockout", color: "#F9C74F" },
-  bounty: { label: "Bounty", color: "#2ECC71" },
-  heist: { label: "Heist", color: "#E74C3C" },
-  hotZone: { label: "Hot Zone", color: "#E67E22" },
-  wipeout: { label: "Wipeout", color: "#1ABC9C" },
-  duels: { label: "Duels", color: "#E84393" },
-  siege: { label: "Siege", color: "#636E72" },
-  soloShowdown: { label: "Showdown", color: "#2ECC71" },
-  duoShowdown: { label: "Duo SD", color: "#00B894" },
-  trioShowdown: { label: "Trio SD", color: "#55E6C1" },
-  payload: { label: "Payload", color: "#6C5CE7" },
-  basketBrawl: { label: "Basket Brawl", color: "#E17055" },
-  volleyBrawl: { label: "Volley Brawl", color: "#FDCB6E" },
-  botDrop: { label: "Bot Drop", color: "#636E72" },
-  hunters: { label: "Hunters", color: "#D63031" },
+  brawlBall:    { label: "Brawl Ball",    color: "#8CA0EB" },
+  gemGrab:      { label: "Gem Grab",      color: "#9B59B6" },
+  knockout:     { label: "Knockout",      color: "#F9C74F" },
+  bounty:       { label: "Bounty",        color: "#2ECC71" },
+  heist:        { label: "Heist",         color: "#E74C3C" },
+  hotZone:      { label: "Hot Zone",      color: "#E67E22" },
+  wipeout:      { label: "Wipeout",       color: "#1ABC9C" },
+  duels:        { label: "Duels",         color: "#E84393" },
+  siege:        { label: "Siege",         color: "#636E72" },
+  soloShowdown: { label: "Showdown",      color: "#2ECC71" },
+  duoShowdown:  { label: "Duo SD",        color: "#00B894" },
+  trioShowdown: { label: "Trio SD",       color: "#55E6C1" },
+  payload:      { label: "Payload",       color: "#6C5CE7" },
+  basketBrawl:  { label: "Basket Brawl", color: "#E17055" },
+  volleyBrawl:  { label: "Volley Brawl", color: "#FDCB6E" },
+  botDrop:      { label: "Bot Drop",      color: "#636E72" },
+  hunters:      { label: "Hunters",       color: "#D63031" },
   trophyEscape: { label: "Trophy Escape", color: "#00CEC9" },
-  paintBrawl: { label: "Paint Brawl", color: "#A29BFE" },
-  wipeout5V5: { label: "5v5 Wipeout", color: "#1ABC9C" },
+  paintBrawl:   { label: "Paint Brawl",   color: "#A29BFE" },
+  wipeout5V5:   { label: "5v5 Wipeout",   color: "#1ABC9C" },
 }
 
 function getModeName(mode: string): string {
   return MODE_CONFIG[mode]?.label || mode.charAt(0).toUpperCase() + mode.slice(1).replace(/([A-Z])/g, " $1")
 }
-
 
 export default function MapsPageClient() {
   const [modes, setModes] = useState<ModeInfo[]>([])
@@ -52,38 +51,41 @@ export default function MapsPageClient() {
   }, [])
 
   return (
-    <div className="flex-1 flex flex-col">
-      <main className="flex-1 min-w-0 pt-6 pb-10 px-8">
-        <section className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-black dark:text-white mb-3">Maps</h1>
-          <p className="text-zinc-500 dark:text-white/40 text-sm leading-relaxed mb-8">Win rates per brawler across every map, powered by battle data from top-ranked players across 6 regions.</p>
+    <div style={{ maxWidth: 1200, margin: "0 auto", padding: "40px 40px 80px" }}>
 
-          <div className="flex flex-col md:flex-row md:items-center gap-4 mb-10">
-            {/* Search */}
-            <div className="flex items-center gap-2.5 bg-black/10 border border-black/20 rounded px-4 py-2.5 dark:bg-white/10 dark:border-white/20 w-full md:w-64">
-              <Search size={13} className="text-zinc-500 shrink-0 dark:text-white/60" />
-              <input
-                value={mapSearch}
-                onChange={e => setMapSearch(e.target.value)}
-                placeholder="Search maps"
-                className="bg-transparent text-xs text-zinc-900 outline-none placeholder:text-zinc-400 w-full dark:text-white dark:placeholder:text-white/40"
-              />
-            </div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24, gap: 16 }}>
+        <h1 className="bl-h-display">Maps</h1>
+        <div className="bl-input" style={{ width: 240, flexShrink: 0 }}>
+          <Search size={13} style={{ color: "var(--ink-4)", flexShrink: 0 }} />
+          <input value={mapSearch} onChange={e => setMapSearch(e.target.value)} placeholder="Search maps" />
+        </div>
+      </div>
 
-            <select
-              value={selectedMode ?? ""}
-              onChange={e => setSelectedMode(e.target.value || null)}
-              className="bg-black/10 border border-black/20 rounded px-3 py-2.5 text-xs text-zinc-900 outline-none dark:bg-white/10 dark:border-white/20 dark:text-white"
+      <div style={{ display: "flex", gap: 6, marginBottom: 36, flexWrap: "wrap" }}>
+        <button
+          onClick={() => setSelectedMode(null)}
+          className="bl-btn bl-btn-sm"
+          style={!selectedMode ? { background: "var(--elev)", borderColor: "var(--line-2)" } : {}}
+        >
+          All Modes
+        </button>
+        {modes.map(m => {
+          const color = MODE_CONFIG[m.mode]?.color
+          return (
+            <button
+              key={m.mode}
+              onClick={() => setSelectedMode(selectedMode === m.mode ? null : m.mode)}
+              className="bl-btn bl-btn-sm"
+              style={selectedMode === m.mode ? { background: "var(--elev)", borderColor: "var(--line-2)" } : {}}
             >
-              <option value="">All Modes</option>
-              {modes.map((m) => (
-                <option key={m.mode} value={m.mode}>{getModeName(m.mode)}</option>
-              ))}
-            </select>
-          </div>
-        </section>
-        <MetaDashboard modes={modes} loading={loading} selectedMode={selectedMode} mapSearch={mapSearch} />
-      </main>
+              {color && <span style={{ width: 6, height: 6, borderRadius: "50%", background: color, flexShrink: 0, display: "inline-block" }} />}
+              {getModeName(m.mode)}
+            </button>
+          )
+        })}
+      </div>
+
+      <MetaDashboard modes={modes} loading={loading} selectedMode={selectedMode} mapSearch={mapSearch} />
     </div>
   )
 }
