@@ -36,9 +36,7 @@ export default function BrawlerPageClient({ brawlers, newest }: Props) {
     return (
         <div className="roster-page">
 
-            <h1 className="bl-h-display roster-title">The Roster</h1>
-
-            <div className="bl-input roster-search">
+<div className="bl-input roster-search">
                 <Search size={13} style={{ color: "var(--ink-4)", flexShrink: 0 }} />
                 <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search brawlers" />
             </div>

@@ -53,9 +53,7 @@ export default function MapsPageClient() {
   return (
     <div className="page-layout">
 
-      <h1 className="bl-h-display" style={{ marginBottom: 20 }}>Maps</h1>
-
-      <div className="bl-input" style={{ width: 280, marginBottom: 12 }}>
+<div className="bl-input" style={{ width: 280, marginBottom: 12 }}>
         <Search size={13} style={{ color: "var(--ink-4)", flexShrink: 0 }} />
         <input value={mapSearch} onChange={e => setMapSearch(e.target.value)} placeholder="Search maps" />
       </div>
