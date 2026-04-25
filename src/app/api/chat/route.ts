@@ -10,9 +10,7 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_KEY!
 )
 
-const SYSTEM_PROMPT = `You are BrawlLens AI, an assistant built into BrawlLens — a Brawl Stars analytics platform powered by real battle data from top-ranked players across 6 regions (NA, EU, ASIA, KR, BR, DE). The platform tracks competitive ladder statistics, win rates, pick rates, map meta, leaderboards, and brawler performance data. It does not have access to individual player histories or detailed personal stats at this time.
-
-IMPORTANT: The player lookup service is temporarily unavailable. Do not attempt to fetch individual player stats using the get_player_info tool. If a user asks about a specific player's tags, trophies, or battle history, respond with: "The player lookup service is temporarily unavailable. However, you can view top players by visiting [Leaderboards](/leaderboards), where you may find the player if they rank globally or regionally." Then suggest relevant alternatives based on their question.
+const SYSTEM_PROMPT = `You are BrawlLens AI, an assistant built into BrawlLens — a Brawl Stars analytics platform powered by real battle data from top-ranked players across 6 regions (NA, EU, ASIA, KR, BR, DE). The platform tracks competitive ladder statistics, win rates, pick rates, map meta, leaderboards, and brawler performance data.
 
 Your tools provide real data. Always use them when asked about:
 - Brawler performance, win rates, or pick rates across maps
@@ -29,6 +27,7 @@ Navigation guidance:
 - When they ask about top players, use get_leaderboard with the appropriate region, then suggest [Leaderboards](/leaderboards).
 - When they ask about top clubs, use get_club_leaderboard with the appropriate region, then suggest [Club Leaderboards](/leaderboards/clubs).
 - When they ask about the best players for a specific brawler, use get_brawler_leaderboard, then suggest [Brawler Leaderboards](/leaderboards/brawlers/[id]).
+- When a user mentions a player tag (format: #ALPHANUMERIC) or asks about a specific player's stats, use get_player_info and then suggest [Player Profile](/player/[tag]).
 - When they ask about brawler matchups or performance on specific maps, use get_map_brawler_stats or get_brawler_stats.
 
 Formatting rules — follow these exactly:
@@ -44,9 +43,7 @@ Formatting rules — follow these exactly:
 - When showing win rates, always include pick count.
 - State facts only. Never editorialize or comment on the data beyond what was asked.
 - Every sentence ends with a period. Never use exclamation marks, ellipses, or colons/dashes at the end of sentences.
-- Be concise and direct. Avoid hedging language like "probably," "likely," or "seems."
-
-When a user mentions a player tag (format: #ALPHANUMERIC like #GRG0L2G), inform them that individual player lookup is temporarily unavailable but they can check [Leaderboards](/leaderboards) if the player ranks globally or regionally.`
+- Be concise and direct. Avoid hedging language like "probably," "likely," or "seems."`
 
 
 const tools: Anthropic.Tool[] = [
@@ -199,6 +196,28 @@ async function executeTool(name: string, input: Record<string, string>): Promise
   }
 
   if (name === "get_player_info") {
+    const tag = input.player_tag.replace(/^#/, "")
+    const PLAYER_API_URL = process.env.PLAYER_API_URL || "http://165.227.206.51:3000"
+    try {
+      const res = await fetch(`${PLAYER_API_URL}/player/${tag}`)
+      if (res.status === 404) return `No player found with tag #${tag}.`
+      if (!res.ok) return `Error fetching player data (status ${res.status}).`
+      const p = await res.json()
+      const top = [...(p.brawlers ?? [])]
+        .sort((a: { trophies: number }, b: { trophies: number }) => b.trophies - a.trophies)
+        .slice(0, 5)
+        .map((b: { name: string; trophies: number; rank: number; power: number }) =>
+          `${b.name}: ${b.trophies} trophies (Rank ${b.rank}, Power ${b.power})`
+        ).join("\n")
+      return `Player: ${p.name} (#${tag})
+Trophies: ${p.trophies} (Best: ${p.highestTrophies})
+Club: ${(p.club as { name?: string })?.name ?? "None"}
+3v3 Wins: ${p.threesvictories ?? 0} | Solo Wins: ${p.soloVictories ?? 0} | Duo Wins: ${p.duoVictories ?? 0}
+Top brawlers:
+${top}`
+    } catch {
+      return "Failed to reach the player lookup service."
+    }
   }
 
   if (name === "get_club_leaderboard") {

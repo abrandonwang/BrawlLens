@@ -68,7 +68,7 @@ export default function Home() {
     {
       label: "TOP BRAWLER",
       sub: data?.brawler
-        ? `${data.brawler.name} · ${(data.brawler.winRate * 100).toFixed(1)}% win rate`
+        ? `${data.brawler.name} · ${data.brawler.winRate.toFixed(1)}% win rate`
         : null,
       href: data?.brawler ? `/brawlers/${brawlerSlug(data.brawler.name)}` : "/brawlers",
     },

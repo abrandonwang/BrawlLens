@@ -1000,3 +1000,56 @@ html:not(.dark) .hero-grid {
     linear-gradient(to bottom, var(--line) 1px, transparent 1px);
   background-size: 80px 80px;
 }
+
+/* Player profile */
+.player-page {
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 40px 24px 80px;
+}
+
+.player-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--ink-4);
+  text-decoration: none;
+  margin-bottom: 24px;
+  text-transform: uppercase;
+}
+
+.player-back:hover {
+  color: var(--ink);
+}
+
+.player-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+
+.player-stats > div {
+  padding: 12px 14px;
+  border-right: 1px solid var(--line);
+}
+
+.player-stats > div:last-child {
+  border-right: none;
+}
+
+@media (max-width: 480px) {
+  .player-page { padding: 24px 16px 60px; }
+  .player-stats { grid-template-columns: repeat(2, 1fr); }
+  .player-stats > div:nth-child(2) { border-right: none; }
+  .player-stats > div:nth-child(3) { border-right: 1px solid var(--line); }
+  .player-stats > div:nth-child(3),
+  .player-stats > div:nth-child(4) { border-top: 1px solid var(--line); }
+}
