@@ -333,10 +333,6 @@ export default function NavBar() {
         </div>
       )}
 
-      <span className="frame-tick tl" />
-      <span className="frame-tick tr" />
-      <span className="frame-tick bl" />
-      <span className="frame-tick br" />
     </>
   );
 }

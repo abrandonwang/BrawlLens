@@ -376,6 +376,8 @@ body {
   width: 100%;
   font: inherit;
   font-size: 13px;
+  -webkit-appearance: none;
+  appearance: none;
 }
 @media (hover: none) and (pointer: coarse) {
   .bl-input input,
@@ -678,7 +680,10 @@ body {
 
 /* Shared page layout */
 .page-layout {
-  padding: 40px clamp(16px, 12vw, 480px) 80px;
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 40px clamp(16px, 3vw, 40px) 80px;
 }
 
 @media (max-width: 768px) {
@@ -838,6 +843,9 @@ body {
   padding: 12px 18px;
   transition: background 0.13s;
 }
+
+.lb-flex-cell { display: flex; }
+.lb-col-trophies { text-align: right; }
 
 @media (max-width: 768px) {
   .lb-controls { flex-direction: column; align-items: flex-start; }

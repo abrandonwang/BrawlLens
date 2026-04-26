@@ -60,7 +60,8 @@ export default function ClubsClient({ allData }: { allData: RegionData[] }) {
   return (
     <div className="lb-page">
 
-      <div className="lb-controls">
+      {/* Category tabs */}
+      <div style={{ marginBottom: 12 }}>
         <div className="bl-seg lb-cat-seg">
           {CATEGORIES.map(c => (
             <Link
@@ -77,18 +78,23 @@ export default function ClubsClient({ allData }: { allData: RegionData[] }) {
             </Link>
           ))}
         </div>
+      </div>
 
-        <div className="lb-right-controls">
-          <div className="bl-input lb-search">
-            <Search size={13} style={{ color: "var(--ink-4)", flexShrink: 0 }} />
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search clubs…" />
-          </div>
-          <div className="bl-seg">
-            {allData.map(r => (
-              <button key={r.code} onClick={() => setActiveRegion(r.code)} className={activeRegion === r.code ? "on" : ""}>
-                {r.code === "global" ? "Global" : r.code}
-              </button>
-            ))}
+      {/* Search + region */}
+      <div className="roster-controls" style={{ marginBottom: 20 }}>
+        <div className="bl-input roster-search">
+          <Search size={13} style={{ color: "var(--ink-4)", flexShrink: 0 }} />
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search clubs…" />
+        </div>
+        <div className="roster-filters-wrap">
+          <div className="roster-filters">
+            <div className="bl-seg" style={{ flexShrink: 0 }}>
+              {allData.map(r => (
+                <button key={r.code} onClick={() => setActiveRegion(r.code)} className={activeRegion === r.code ? "on" : ""}>
+                  {r.code === "global" ? "Global" : r.code}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -120,11 +126,11 @@ export default function ClubsClient({ allData }: { allData: RegionData[] }) {
                   <div style={{ fontSize: 13, fontWeight: 500, color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{club.club_name}</div>
                   <div className="bl-mono bl-caption" style={{ color: "var(--ink-4)" }}>{club.club_tag}</div>
                 </div>
-                <div className="lb-col-club" style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                <div className="lb-col-club lb-flex-cell" style={{ alignItems: "center", gap: 5 }}>
                   <Users size={11} style={{ color: "var(--ink-4)" }} />
                   <span className="bl-num" style={{ fontSize: 13, color: "var(--ink-3)" }}>{club.member_count ?? "—"}</span>
                 </div>
-                <div className="lb-col-trophies" style={{ display: "flex", alignItems: "center", gap: 5, justifyContent: "flex-end" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 5, justifyContent: "flex-end" }}>
                   <Trophy size={11} style={{ color: "var(--accent)", opacity: 0.7 }} />
                   <span className="bl-num" style={{ fontSize: 13, fontWeight: 500, color: "var(--ink)" }}>{formatNum(club.trophies)}</span>
                 </div>

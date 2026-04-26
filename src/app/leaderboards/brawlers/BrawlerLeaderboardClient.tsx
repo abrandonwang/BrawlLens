@@ -82,7 +82,8 @@ export default function BrawlerLeaderboardClient({
   return (
     <div className="lb-page">
 
-      <div className="lb-controls">
+      {/* Category tabs */}
+      <div style={{ marginBottom: 12 }}>
         <div className="bl-seg lb-cat-seg">
           {CATEGORIES.map(c => (
             <Link
@@ -100,10 +101,12 @@ export default function BrawlerLeaderboardClient({
             </Link>
           ))}
         </div>
+      </div>
 
-        {/* Brawler search with autocomplete */}
-        <div style={{ position: "relative" }}>
-          <div className="bl-input lb-search" style={{ width: 200 }}>
+      {/* Brawler search with autocomplete */}
+      <div className="roster-controls" style={{ marginBottom: 20 }}>
+        <div style={{ position: "relative", width: 200, flexShrink: 0 }} className="roster-search">
+          <div className="bl-input" style={{ width: "100%" }}>
             <Search size={13} style={{ color: "var(--ink-4)", flexShrink: 0 }} />
             <input
               ref={inputRef}

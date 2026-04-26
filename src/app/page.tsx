@@ -93,8 +93,8 @@ export default function Home() {
                 <span className="bl-mono bl-caption">brawllens / ask</span>
               </div>
 
-              <div style={{ background: "var(--bg)", border: "1px solid var(--line)", borderRadius: 14, padding: "14px 16px", display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 6 }}>
-                <svg style={{ width: 15, height: 15, color: "var(--ink-3)", flexShrink: 0, marginTop: 1 }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+              <div style={{ background: "var(--bg)", border: "1px solid var(--line)", borderRadius: 14, padding: "14px 16px", display: "flex", alignItems: "center", gap: 12, marginBottom: 6 }}>
+                <svg style={{ width: 15, height: 15, color: "var(--ink-3)", flexShrink: 0 }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
                 <textarea
                   ref={textareaRef}
                   rows={1}
@@ -102,7 +102,7 @@ export default function Home() {
                   onChange={handleInput}
                   onKeyDown={handleKeyDown}
                   placeholder="Ask anything, or paste a #PlayerTag"
-                  style={{ background: "transparent", border: "none", outline: "none", color: "var(--ink)", flex: 1, fontSize: 14, fontFamily: "inherit", resize: "none", overflow: "hidden", lineHeight: 1.5 }}
+                  style={{ background: "transparent", border: "none", outline: "none", color: "var(--ink)", flex: 1, fontSize: 16, fontFamily: "inherit", resize: "none", overflow: "hidden", lineHeight: 1.5 }}
                 />
                 <span className="bl-mono" style={{ fontSize: 10.5, color: "var(--ink-4)", border: "1px solid var(--line)", padding: "2px 6px", borderRadius: 4, flexShrink: 0, cursor: "pointer" }} onClick={handleSubmit}>⏎</span>
               </div>
