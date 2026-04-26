@@ -286,7 +286,7 @@ export default function NavBar() {
                 onChange={e => setQuery(e.target.value)}
                 onKeyDown={e => e.key === "Enter" && isTag && handlePlayerSearch()}
                 placeholder="Search or paste a #PlayerTag…"
-                style={{ flex: 1, background: "transparent", border: "none", outline: "none", padding: "18px 0", fontSize: 15, color: "var(--ink)", fontFamily: "inherit" }}
+                style={{ flex: 1, background: "transparent", border: "none", outline: "none", padding: "18px 0", fontSize: 16, color: "var(--ink)", fontFamily: "inherit" }}
               />
               <button onClick={() => setIsSearchOpen(false)}
                 style={{ fontSize: 10, fontWeight: 700, color: "var(--ink-4)", border: "1px solid var(--line)", borderRadius: 5, padding: "2px 6px", background: "transparent", cursor: "pointer", fontFamily: "var(--font-geist-mono, monospace)" }}
