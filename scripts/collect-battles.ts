@@ -1,6 +1,7 @@
 import { config } from "dotenv";
 import { createClient } from "@supabase/supabase-js";
 import { createHash } from "crypto";
+import { Pool } from "pg";
 
 config({ path: ".env.local" });
 
@@ -8,6 +9,12 @@ const BRAWL_API_KEY = process.env.BRAWL_API_KEY!;
 const SUPABASE_URL = process.env.SUPABASE_URL!;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY!;
 
+// Local Postgres — raw battle data (unlimited storage)
+const localPg = new Pool({
+  connectionString: process.env.LOCAL_PG_URL || "postgresql://brawlens:brawlens2026@localhost:5432/brawlens",
+});
+
+// Supabase — summary tables only (leaderboards, map stats, rotation)
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 const BASE_URL = "https://api.brawlstars.com/v1";
 
@@ -186,47 +193,48 @@ async function processTag(tag: string): Promise<{ battles: any[]; players: any[]
   return { battles, players };
 }
 
-// ─── Batch DB Write ─────────────────────────────────────────────
+// ─── Batch DB Write (local Postgres) ────────────────────────────
 async function flushToDB(battles: any[], players: any[], processedTags: string[]) {
-  // Deduplicate battles by id
   const uniqueBattles = new Map<string, any>();
   for (const b of battles) uniqueBattles.set(b.id, b);
   const dedupedBattles = Array.from(uniqueBattles.values());
 
-  // Deduplicate players by battle_id + player_tag
   const uniquePlayers = new Map<string, any>();
-  for (const p of players) {
-    uniquePlayers.set(`${p.battle_id}:${p.player_tag}`, p);
-  }
+  for (const p of players) uniquePlayers.set(`${p.battle_id}:${p.player_tag}`, p);
   const dedupedPlayers = Array.from(uniquePlayers.values());
 
-  // Write battles in chunks of 500
+  // Insert battles in chunks
   for (let i = 0; i < dedupedBattles.length; i += 500) {
     const chunk = dedupedBattles.slice(i, i + 500);
-    const { error } = await supabase
-      .from("battles")
-      .upsert(chunk, { onConflict: "id", ignoreDuplicates: true });
-    if (error && !error.message.includes("duplicate")) {
-      console.error(`  DB error (battles): ${error.message}`);
-    }
+    const values = chunk.map((_, j) =>
+      `($${j * 7 + 1}, $${j * 7 + 2}, $${j * 7 + 3}, $${j * 7 + 4}, $${j * 7 + 5}, $${j * 7 + 6}, $${j * 7 + 7})`
+    ).join(",");
+    const params = chunk.flatMap(b => [b.id, b.battle_time, b.event_id, b.mode, b.map, b.match_type, b.duration]);
+    await localPg.query(
+      `INSERT INTO battles (id, battle_time, event_id, mode, map, match_type, duration) VALUES ${values} ON CONFLICT DO NOTHING`,
+      params
+    ).catch(e => console.error(`  DB error (battles): ${e.message}`));
   }
 
+  // Insert battle_players in chunks
   for (let i = 0; i < dedupedPlayers.length; i += 500) {
     const chunk = dedupedPlayers.slice(i, i + 500);
-    const { error } = await supabase
-      .from("battle_players")
-      .upsert(chunk, { onConflict: "battle_id,player_tag", ignoreDuplicates: true });
-    if (error && !error.message.includes("duplicate") && !error.message.includes("unique")) {
-      console.error(`  DB error (players): ${error.message}`);
-    }
+    const values = chunk.map((_, j) =>
+      `($${j * 6 + 1}, $${j * 6 + 2}, $${j * 6 + 3}, $${j * 6 + 4}, $${j * 6 + 5}, $${j * 6 + 6})`
+    ).join(",");
+    const params = chunk.flatMap(p => [p.battle_id, p.player_tag, p.brawler_id, p.brawler_name, p.team_num, p.won]);
+    await localPg.query(
+      `INSERT INTO battle_players (battle_id, player_tag, brawler_id, brawler_name, team_num, won) VALUES ${values} ON CONFLICT DO NOTHING`,
+      params
+    ).catch(e => console.error(`  DB error (battle_players): ${e.message}`));
   }
 
-  for (let i = 0; i < processedTags.length; i += 500) {
-    const chunk = processedTags.slice(i, i + 500);
-    await supabase
-      .from("harvested_tags")
-      .update({ processed_at: new Date().toISOString() })
-      .in("player_tag", chunk);
+  // Mark tags as processed
+  if (processedTags.length > 0) {
+    await localPg.query(
+      `UPDATE harvested_tags SET processed_at = $1 WHERE player_tag = ANY($2)`,
+      [new Date().toISOString(), processedTags]
+    ).catch(e => console.error(`  DB error (harvested_tags): ${e.message}`));
   }
 
   totalBattlesSaved += dedupedBattles.length;
@@ -234,17 +242,11 @@ async function flushToDB(battles: any[], players: any[], processedTags: string[]
 }
 
 async function getUnprocessedTags(limit: number): Promise<string[]> {
-  const { data, error } = await supabase
-    .from("harvested_tags")
-    .select("player_tag")
-    .is("processed_at", null)
-    .limit(limit);
-
-  if (error) {
-    console.error(`Error fetching tags: ${error.message}`);
-    return [];
-  }
-  return (data || []).map((r: any) => r.player_tag);
+  const { rows } = await localPg.query(
+    `SELECT player_tag FROM harvested_tags WHERE processed_at IS NULL LIMIT $1`,
+    [limit]
+  );
+  return rows.map((r: any) => r.player_tag);
 }
 
 function printStats(processed: number, total: number) {
@@ -283,22 +285,13 @@ async function fetchAndSaveLeaderboards() {
   console.log("  Updating player leaderboards...");
   for (const region of LEADERBOARD_REGIONS) {
     const data = await apiFetch(`/rankings/${region}/players`);
-    if (!data?.items?.length) {
-      console.log(`    [${region}] no data`);
-      continue;
-    }
+    if (!data?.items?.length) { console.log(`    [${region}] no data`); continue; }
     const rows = data.items.map((p: any, i: number) => ({
-      region,
-      rank: i + 1,
-      player_tag: p.tag,
-      player_name: p.name,
-      trophies: p.trophies,
-      club_name: p.club?.name ?? null,
+      region, rank: i + 1, player_tag: p.tag, player_name: p.name,
+      trophies: p.trophies, club_name: p.club?.name ?? null,
       updated_at: new Date().toISOString(),
     }));
-    const { error } = await supabase
-      .from("leaderboards")
-      .upsert(rows, { onConflict: "region,rank" });
+    const { error } = await supabase.from("leaderboards").upsert(rows, { onConflict: "region,rank" });
     if (error) console.error(`    [${region}] DB error: ${error.message}`);
     else console.log(`    [${region}] saved ${rows.length} players`);
   }
@@ -308,22 +301,13 @@ async function fetchAndSaveClubLeaderboards() {
   console.log("  Updating club leaderboards...");
   for (const region of LEADERBOARD_REGIONS) {
     const data = await apiFetch(`/rankings/${region}/clubs`);
-    if (!data?.items?.length) {
-      console.log(`    [clubs/${region}] no data`);
-      continue;
-    }
+    if (!data?.items?.length) { console.log(`    [clubs/${region}] no data`); continue; }
     const rows = data.items.map((c: any, i: number) => ({
-      region,
-      rank: i + 1,
-      club_tag: c.tag,
-      club_name: c.name,
-      trophies: c.trophies,
-      member_count: c.memberCount ?? null,
+      region, rank: i + 1, club_tag: c.tag, club_name: c.name,
+      trophies: c.trophies, member_count: c.memberCount ?? null,
       updated_at: new Date().toISOString(),
     }));
-    const { error } = await supabase
-      .from("club_leaderboards")
-      .upsert(rows, { onConflict: "region,rank" });
+    const { error } = await supabase.from("club_leaderboards").upsert(rows, { onConflict: "region,rank" });
     if (error) console.error(`    [clubs/${region}] DB error: ${error.message}`);
     else console.log(`    [clubs/${region}] saved ${rows.length} clubs`);
   }
@@ -332,75 +316,94 @@ async function fetchAndSaveClubLeaderboards() {
 async function fetchAndSaveBrawlerLeaderboards() {
   console.log("  Updating brawler leaderboards (global)...");
   const brawlerData = await apiFetch("/brawlers");
-  if (!brawlerData?.items?.length) {
-    console.log("    [brawlers] could not fetch brawler list");
-    return;
-  }
+  if (!brawlerData?.items?.length) { console.log("    [brawlers] could not fetch brawler list"); return; }
   for (const brawler of brawlerData.items) {
     const data = await apiFetch(`/rankings/global/brawlers/${brawler.id}`);
     if (!data?.items?.length) continue;
     const rows = data.items.map((p: any, i: number) => ({
-      brawler_id: brawler.id,
-      brawler_name: brawler.name,
-      rank: i + 1,
-      player_tag: p.tag,
-      player_name: p.name,
-      trophies: p.trophies,
-      club_name: p.club?.name ?? null,
-      updated_at: new Date().toISOString(),
+      brawler_id: brawler.id, brawler_name: brawler.name, rank: i + 1,
+      player_tag: p.tag, player_name: p.name, trophies: p.trophies,
+      club_name: p.club?.name ?? null, updated_at: new Date().toISOString(),
     }));
-    const { error } = await supabase
-      .from("brawler_leaderboards")
-      .upsert(rows, { onConflict: "brawler_id,rank" });
+    const { error } = await supabase.from("brawler_leaderboards").upsert(rows, { onConflict: "brawler_id,rank" });
     if (error) console.error(`    [brawler/${brawler.name}] DB error: ${error.message}`);
   }
   console.log(`    [brawlers] done (${brawlerData.items.length} brawlers)`);
 }
 
-// ─── Aggregate win rates into summary table ──────────────────────
+// ─── Aggregate local Postgres → push to Supabase ────────────────
 async function aggregateStats() {
-  console.log("\n  Aggregating map brawler stats...");
-  const { error } = await supabase.rpc("refresh_map_brawler_stats");
-  if (error) {
-    console.error(`  Aggregation error: ${error.message}`);
-    return;
-  }
-  console.log("  Stats aggregated.");
+  console.log("\n  Aggregating map stats from local DB...");
 
-  // Truncate raw battle data — the summary tables are all the app needs.
-  // TRUNCATE is far cheaper on disk I/O than a full-table DELETE.
-  console.log("  Pruning raw battle data...");
-  const { error: e1 } = await supabase.from("battle_players").delete().neq("battle_id", "");
-  if (e1) console.error(`  ⚠️  CRITICAL: Failed to prune battle data! Tables may continue growing. Error: ${e1.message}`);
-  const { error: e2 } = await supabase.from("battles").delete().neq("id", "");
-  if (e2) console.error(`  ⚠️  CRITICAL: Failed to prune battle data! Tables may continue growing. Error: ${e2.message}`);
-  else console.log("  Raw battle data pruned.");
+  // Map-level stats
+  const mapRes = await localPg.query(`
+    SELECT map, mode, COUNT(DISTINCT id) AS battle_count
+    FROM battles
+    GROUP BY map, mode
+  `);
+
+  if (mapRes.rows.length > 0) {
+    const mapRows = mapRes.rows.map(r => ({ map: r.map, mode: r.mode, battle_count: Number(r.battle_count) }));
+    for (let i = 0; i < mapRows.length; i += 500) {
+      const { error } = await supabase.from("map_stats").upsert(mapRows.slice(i, i + 500), { onConflict: "map,mode" });
+      if (error) console.error(`  map_stats upsert error: ${error.message}`);
+    }
+    console.log(`  Pushed ${mapRows.length} map stat rows to Supabase.`);
+  }
+
+  // Brawler win rates per map
+  const brawlerRes = await localPg.query(`
+    SELECT
+      b.map, b.mode,
+      bp.brawler_id, bp.brawler_name,
+      COUNT(*) AS picks,
+      SUM(CASE WHEN bp.won THEN 1 ELSE 0 END) AS wins,
+      ROUND(100.0 * SUM(CASE WHEN bp.won THEN 1 ELSE 0 END) / COUNT(*), 2) AS win_rate
+    FROM battles b
+    JOIN battle_players bp ON bp.battle_id = b.id
+    WHERE b.mode NOT IN ('soloShowdown', 'duoShowdown')
+    GROUP BY b.map, b.mode, bp.brawler_id, bp.brawler_name
+    HAVING COUNT(*) >= 20
+    ORDER BY picks DESC
+  `);
+
+  if (brawlerRes.rows.length > 0) {
+    const brawlerRows = brawlerRes.rows.map(r => ({
+      map: r.map, mode: r.mode,
+      brawler_id: Number(r.brawler_id), brawler_name: r.brawler_name,
+      picks: Number(r.picks), wins: Number(r.wins), win_rate: Number(r.win_rate),
+    }));
+    for (let i = 0; i < brawlerRows.length; i += 500) {
+      const { error } = await supabase.from("map_brawler_stats").upsert(brawlerRows.slice(i, i + 500), { onConflict: "map,brawler_id" });
+      if (error) console.error(`  map_brawler_stats upsert error: ${error.message}`);
+    }
+    console.log(`  Pushed ${brawlerRows.length} brawler stat rows to Supabase.`);
+  }
+
+  // Truncate local raw tables — no dead-tuple bloat since TRUNCATE is instant
+  await localPg.query("TRUNCATE battles, battle_players");
+  console.log("  Local raw tables truncated.");
 }
 
 // ─── Reset all tags for next cycle ──────────────────────────────
 async function resetAllTags() {
   console.log("\n  Resetting all tags for next cycle...");
-  const { error } = await supabase.rpc("reset_harvested_tags");
-  if (error) console.error(`  Reset error: ${error.message}`);
-  else console.log("  Tags reset. Starting new cycle.\n");
+  await localPg.query("UPDATE harvested_tags SET processed_at = NULL");
+  console.log("  Tags reset. Starting new cycle.\n");
 }
 
 // ─── Run one full pass ───────────────────────────────────────────
 async function runCycle(cycle: number) {
-  // Safety valve: if battle_players ballooned (e.g. cleanup failed last cycle), aggregate now.
-  const { count: bpCount } = await supabase
-    .from("battle_players")
-    .select("*", { count: "exact", head: true });
-  if ((bpCount ?? 0) > 1_000_000) {
+  // Safety valve: if local battle_players is huge, aggregate first
+  const { rows: countRows } = await localPg.query("SELECT COUNT(*) FROM battle_players");
+  const bpCount = Number(countRows[0].count);
+  if (bpCount > 1_000_000) {
     console.log(`  [safety] battle_players has ${bpCount} rows — running aggregateStats() before collecting.`);
     await aggregateStats();
   }
 
-  const { count: totalCount } = await supabase
-    .from("harvested_tags")
-    .select("*", { count: "exact", head: true });
-
-  const total = totalCount || 0;
+  const { rows: totalRows } = await localPg.query("SELECT COUNT(*) FROM harvested_tags");
+  const total = Number(totalRows[0].count);
   let processed = 0;
 
   console.log(`\n=== Cycle ${cycle} | ${total} tags | ${new Date().toISOString()} ===\n`);
@@ -450,9 +453,7 @@ async function runCycle(cycle: number) {
 
         if (processed - lastCleanup >= MID_CYCLE_CLEANUP_INTERVAL) {
           console.log(`\n  Mid-cycle cleanup at ${processed} tags...`);
-          try {
-            await aggregateStats();
-          } catch (err) {
+          try { await aggregateStats(); } catch (err) {
             console.error("  Mid-cycle cleanup failed (continuing):", err);
           }
           lastCleanup = processed;
@@ -486,6 +487,13 @@ async function leaderboardLoop() {
 async function main() {
   console.log("=== BrawlLens Battle Collector — Continuous Mode ===");
   console.log(`Concurrency: ${CONCURRENCY} | Flush every: ${DB_BATCH_SIZE} tags\n`);
+
+  // Verify local PG connection
+  await localPg.query("SELECT 1").catch(e => {
+    console.error("FATAL: Cannot connect to local Postgres:", e.message);
+    process.exit(1);
+  });
+  console.log("Local Postgres connected.\n");
 
   leaderboardLoop();
 

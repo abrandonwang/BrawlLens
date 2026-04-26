@@ -82,7 +82,11 @@
 }
 
 * { box-sizing: border-box; }
-html { overscroll-behavior: none; background: var(--bg); }
+html { overscroll-behavior: none; background: var(--bg); transition: background 0.25s ease; }
+
+*, *::before, *::after {
+  transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease, box-shadow 0.25s ease;
+}
 
 body {
   margin: 0;
@@ -437,6 +441,38 @@ body {
   transform: translate(-50%, -50%);
   pointer-events: none;
   z-index: 0;
+}
+
+/* Mobile menu animations */
+@keyframes menuOverlayIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes menuOverlayOut {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+@keyframes menuItemIn {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes menuItemOut {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(8px); }
+}
+
+/* Desktop-only left border on nav right controls */
+.nav-right-controls {
+  border-left: none;
+  margin-left: 0;
+  padding-left: 0;
+}
+@media (min-width: 1024px) {
+  .nav-right-controls {
+    border-left: 1px solid var(--line);
+    margin-left: 4px;
+    padding-left: 4px;
+  }
 }
 
 /* Splash screen */

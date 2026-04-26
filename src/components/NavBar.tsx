@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { Search, X, User, Menu, LayoutGrid, Map, Trophy, MessageSquare, ArrowRight } from "lucide-react";
+import { Search, X, User, LayoutGrid, Map, Trophy, MessageSquare, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
@@ -27,11 +27,23 @@ export default function NavBar() {
   const [mounted, setMounted] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [menuClosing, setMenuClosing] = useState(false);
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { setMounted(true); }, []);
-  useEffect(() => { setIsMenuOpen(false); }, [pathname]);
+
+  useEffect(() => {
+    if (isMenuOpen || menuClosing) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [isMenuOpen, menuClosing]);
+
+  useEffect(() => { closeMenu(); }, [pathname]);
+
   useEffect(() => {
     if (isSearchOpen) {
       setQuery("");
@@ -41,7 +53,7 @@ export default function NavBar() {
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setIsSearchOpen(false);
+      if (e.key === "Escape") { setIsSearchOpen(false); closeMenu(); }
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
         setIsSearchOpen(true);
@@ -50,6 +62,20 @@ export default function NavBar() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
+
+  function closeMenu() {
+    if (!isMenuOpen) return;
+    setMenuClosing(true);
+    setTimeout(() => {
+      setIsMenuOpen(false);
+      setMenuClosing(false);
+    }, 380);
+  }
+
+  function toggleMenu() {
+    if (isMenuOpen) closeMenu();
+    else setIsMenuOpen(true);
+  }
 
   const isTag = query.trim().startsWith("#") || /^[A-Z0-9]{3,}$/i.test(query.trim());
   const filtered = searchItems.filter(i => i.label.toLowerCase().includes(query.toLowerCase()));
@@ -63,6 +89,8 @@ export default function NavBar() {
     if (href === "/") return pathname === "/";
     return pathname.startsWith(href);
   }
+
+  const menuVisible = isMenuOpen || menuClosing;
 
   return (
     <>
@@ -85,6 +113,7 @@ export default function NavBar() {
         whiteSpace: "nowrap",
       }}>
 
+        {/* Logo */}
         <Link href="/" style={{
           display: "flex", alignItems: "center", gap: 8,
           padding: "6px 14px 6px 10px",
@@ -93,11 +122,9 @@ export default function NavBar() {
           textDecoration: "none",
         }}>
           <div style={{
-            width: 20, height: 20,
-            borderRadius: 5,
+            width: 20, height: 20, borderRadius: 5,
             background: "conic-gradient(from 220deg, var(--accent), #FF7A3D, var(--hc-purple), var(--hc-blue), var(--accent))",
-            position: "relative",
-            flexShrink: 0,
+            position: "relative", flexShrink: 0,
             boxShadow: "0 0 0 1px rgba(255,255,255,0.1) inset",
           }}>
             <div style={{ position: "absolute", inset: 4, background: "var(--panel)", borderRadius: 2 }} />
@@ -107,56 +134,36 @@ export default function NavBar() {
           </span>
         </Link>
 
+        {/* Desktop nav links */}
         <div className="hidden lg:flex" style={{ alignItems: "center", gap: 0 }}>
           {navItems.map(item => (
-            <Link
-              key={item.label}
-              href={item.href}
-              style={{
-                padding: "8px 14px",
-                fontSize: 12.5,
-                fontWeight: 500,
-                color: isActive(item.href) ? "var(--ink)" : "var(--ink-2)",
-                borderRadius: 999,
-                cursor: "pointer",
-                transition: "all 0.18s ease",
-                whiteSpace: "nowrap",
-                textDecoration: "none",
-                background: isActive(item.href) ? "var(--elev)" : "transparent",
-                boxShadow: isActive(item.href)
-                  ? "0 0 0 1px var(--line-2), 0 6px 16px -8px rgba(0,0,0,0.5)"
-                  : "none",
-              }}
-            >
+            <Link key={item.label} href={item.href} style={{
+              padding: "8px 14px", fontSize: 12.5, fontWeight: 500,
+              color: isActive(item.href) ? "var(--ink)" : "var(--ink-2)",
+              borderRadius: 999, cursor: "pointer", whiteSpace: "nowrap",
+              textDecoration: "none",
+              background: isActive(item.href) ? "var(--elev)" : "transparent",
+              boxShadow: isActive(item.href) ? "0 0 0 1px var(--line-2), 0 6px 16px -8px rgba(0,0,0,0.5)" : "none",
+            }}>
               {item.label}
             </Link>
           ))}
         </div>
 
-        <div style={{
-          display: "flex",
-          gap: 4,
-          paddingLeft: 4,
-          borderLeft: "1px solid var(--line)",
-          marginLeft: 4,
-        }}>
-          <button
-            onClick={() => setIsSearchOpen(true)}
-            aria-label="Search"
+        {/* Right controls — no left border on mobile (logo border-right is enough) */}
+        <div style={{ display: "flex", gap: 4 }} className="nav-right-controls">
+          <button onClick={() => setIsSearchOpen(true)} aria-label="Search"
             style={{ width: 32, height: 32, display: "grid", placeItems: "center", borderRadius: 999, color: "var(--ink-3)", background: "transparent", border: "none", cursor: "pointer" }}
           >
             <Search size={14} />
           </button>
 
           {mounted && (
-            <button
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              aria-label="Toggle theme"
+            <button onClick={() => setTheme(theme === "dark" ? "light" : "dark")} aria-label="Toggle theme"
               style={{ width: 32, height: 32, display: "grid", placeItems: "center", borderRadius: 999, color: "var(--ink-3)", background: "transparent", border: "none", cursor: "pointer" }}
             >
               <div style={{
-                width: 12,
-                height: 12,
+                width: 12, height: 12,
                 border: "1.75px solid var(--ink-3)",
                 borderRadius: theme === "dark" ? 2 : 999,
                 background: "transparent",
@@ -165,12 +172,19 @@ export default function NavBar() {
             </button>
           )}
 
+          {/* Two-line hamburger / X */}
           <div className="lg:hidden">
-            <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
+            <button onClick={toggleMenu} aria-label="Menu"
               style={{ width: 32, height: 32, display: "grid", placeItems: "center", borderRadius: 999, color: "var(--ink-3)", background: "transparent", border: "none", cursor: "pointer" }}
             >
-              {isMenuOpen ? <X size={15} /> : <Menu size={15} />}
+              {isMenuOpen ? (
+                <X size={15} />
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 4.5, width: 15 }}>
+                  <span style={{ display: "block", height: 1.5, borderRadius: 1, background: "var(--ink-3)" }} />
+                  <span style={{ display: "block", height: 1.5, borderRadius: 1, background: "var(--ink-3)", width: "70%" }} />
+                </div>
+              )}
             </button>
           </div>
         </div>
@@ -178,45 +192,77 @@ export default function NavBar() {
 
       <div style={{ height: 80 }} />
 
-      {isMenuOpen && (
-        <div className="fixed inset-0 z-[150] md:hidden" onClick={() => setIsMenuOpen(false)}>
-          <div
-            style={{
-              position: "absolute",
-              top: 76,
-              left: "50%",
-              transform: "translateX(-50%)",
-              width: 200,
-              background: "var(--panel)",
-              border: "1px solid var(--line-2)",
-              borderRadius: 18,
-              padding: 6,
-              boxShadow: "0 20px 40px -10px rgba(0,0,0,0.4)",
-            }}
-            onClick={e => e.stopPropagation()}
-          >
-            {navItems.map(item => (
+      {/* Full-screen mobile menu */}
+      {menuVisible && (
+        <div
+          className="lg:hidden"
+          style={{
+            position: "fixed", inset: 0, zIndex: 90,
+            background: "var(--bg)",
+            display: "flex", flexDirection: "column",
+            animation: menuClosing
+              ? "menuOverlayOut 0.38s cubic-bezier(0.4,0,1,1) forwards"
+              : "menuOverlayIn 0.32s cubic-bezier(0,0,0.2,1) forwards",
+          }}
+        >
+          {/* Spacer for navbar */}
+          <div style={{ height: 80, flexShrink: 0 }} />
+
+          {/* Links */}
+          <div style={{
+            flex: 1, display: "flex", flexDirection: "column",
+            justifyContent: "center", padding: "0 36px 80px",
+            gap: 4,
+          }}>
+            {navItems.map((item, i) => (
               <Link
-                key={item.label}
+                key={item.href}
                 href={item.href}
+                onClick={closeMenu}
                 style={{
-                  display: "flex",
-                  padding: "8px 14px",
-                  borderRadius: 12,
-                  fontSize: 12.5,
-                  fontWeight: 500,
-                  color: isActive(item.href) ? "var(--ink)" : "var(--ink-2)",
-                  background: isActive(item.href) ? "var(--elev)" : "transparent",
+                  display: "block",
+                  fontSize: 32,
+                  fontWeight: 650,
+                  letterSpacing: "-0.03em",
+                  color: isActive(item.href) ? "var(--ink)" : "var(--ink-3)",
                   textDecoration: "none",
+                  padding: "10px 0",
+                  borderBottom: "1px solid var(--line)",
+                  animation: menuClosing
+                    ? `menuItemOut 0.28s cubic-bezier(0.4,0,1,1) forwards`
+                    : `menuItemIn 0.4s cubic-bezier(0,0,0.2,1) ${i * 55}ms both`,
                 }}
               >
                 {item.label}
               </Link>
             ))}
           </div>
+
+          {/* Bottom hint */}
+          <div style={{
+            padding: "24px 36px",
+            animation: menuClosing
+              ? "menuItemOut 0.24s cubic-bezier(0.4,0,1,1) forwards"
+              : `menuItemIn 0.4s cubic-bezier(0,0,0.2,1) ${navItems.length * 55 + 40}ms both`,
+          }}>
+            <button
+              onClick={() => { closeMenu(); setTimeout(() => setIsSearchOpen(true), 200); }}
+              style={{
+                display: "flex", alignItems: "center", gap: 10,
+                background: "var(--panel)", border: "1px solid var(--line)",
+                borderRadius: 14, padding: "12px 16px", width: "100%",
+                cursor: "pointer", color: "var(--ink-3)", fontSize: 13,
+                fontFamily: "inherit", fontWeight: 500,
+              }}
+            >
+              <Search size={14} />
+              Search or look up a player…
+            </button>
+          </div>
         </div>
       )}
 
+      {/* Search modal */}
       {isSearchOpen && (
         <div
           className="fixed inset-0 z-[200] flex items-start justify-center px-4"
@@ -225,12 +271,9 @@ export default function NavBar() {
         >
           <div
             style={{
-              width: "100%",
-              maxWidth: 540,
-              background: "var(--panel)",
-              border: "1px solid var(--line-2)",
-              borderRadius: 20,
-              overflow: "hidden",
+              width: "100%", maxWidth: 540,
+              background: "var(--panel)", border: "1px solid var(--line-2)",
+              borderRadius: 20, overflow: "hidden",
               boxShadow: "0 40px 80px -20px rgba(0,0,0,0.5)",
             }}
             onClick={e => e.stopPropagation()}
@@ -245,8 +288,7 @@ export default function NavBar() {
                 placeholder="Search or paste a #PlayerTag…"
                 style={{ flex: 1, background: "transparent", border: "none", outline: "none", padding: "18px 0", fontSize: 15, color: "var(--ink)", fontFamily: "inherit" }}
               />
-              <button
-                onClick={() => setIsSearchOpen(false)}
+              <button onClick={() => setIsSearchOpen(false)}
                 style={{ fontSize: 10, fontWeight: 700, color: "var(--ink-4)", border: "1px solid var(--line)", borderRadius: 5, padding: "2px 6px", background: "transparent", cursor: "pointer", fontFamily: "var(--font-geist-mono, monospace)" }}
               >
                 Esc
@@ -255,8 +297,7 @@ export default function NavBar() {
 
             <div style={{ padding: 6 }}>
               {query && isTag && (
-                <button
-                  onClick={handlePlayerSearch}
+                <button onClick={handlePlayerSearch}
                   style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", borderRadius: 12, background: "transparent", border: "none", cursor: "pointer", color: "var(--ink-2)", fontSize: 13, fontFamily: "inherit", textAlign: "left" }}
                   className="row-hover"
                 >
@@ -271,10 +312,7 @@ export default function NavBar() {
               )}
 
               {filtered.map(({ label, href, icon: Icon }) => (
-                <Link
-                  key={href}
-                  href={href}
-                  onClick={() => setIsSearchOpen(false)}
+                <Link key={href} href={href} onClick={() => setIsSearchOpen(false)}
                   style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", borderRadius: 12, color: "var(--ink-2)", fontSize: 13, textDecoration: "none" }}
                   className="row-hover"
                 >

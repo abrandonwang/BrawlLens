@@ -1,14 +1,14 @@
 import { config } from "dotenv";
-import { createClient } from "@supabase/supabase-js";
+import { Pool } from "pg";
 
 // Load .env.local
 config({ path: ".env.local" });
 
 const BRAWL_API_KEY = process.env.BRAWL_API_KEY!;
-const SUPABASE_URL = process.env.SUPABASE_URL!;
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY!;
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+const localPg = new Pool({
+  connectionString: process.env.LOCAL_PG_URL || "postgresql://brawlens:brawlens2026@localhost:5432/brawlens",
+});
 
 const BASE_URL = "https://api.brawlstars.com/v1";
 
@@ -137,33 +137,23 @@ async function harvestClubMembers(
   return tags;
 }
 
-// ─── Save to Supabase ───────────────────────────────────────────
+// ─── Save to local Postgres ─────────────────────────────────────
 async function saveTags(tags: Map<string, string>) {
-  console.log(`\nSaving ${tags.size} tags to database...`);
+  console.log(`\nSaving ${tags.size} tags to local database...`);
 
-  // Convert map to array of rows
-  const rows = Array.from(tags.entries()).map(([player_tag, source]) => ({
-    player_tag,
-    source,
-  }));
-
-  // Upsert in batches of 500
+  const playerTags = Array.from(tags.keys());
   const BATCH_SIZE = 500;
   let saved = 0;
 
-  for (let i = 0; i < rows.length; i += BATCH_SIZE) {
-    const batch = rows.slice(i, i + BATCH_SIZE);
-
-    const { error } = await supabase
-      .from("harvested_tags")
-      .upsert(batch, { onConflict: "player_tag" });
-
-    if (error) {
-      console.error(`  Error saving batch at ${i}: ${error.message}`);
-    } else {
-      saved += batch.length;
-      console.log(`  Saved ${saved}/${rows.length}`);
-    }
+  for (let i = 0; i < playerTags.length; i += BATCH_SIZE) {
+    const batch = playerTags.slice(i, i + BATCH_SIZE);
+    const values = batch.map((_, j) => `($${j + 1})`).join(",");
+    await localPg.query(
+      `INSERT INTO harvested_tags (player_tag) VALUES ${values} ON CONFLICT DO NOTHING`,
+      batch
+    ).catch(e => console.error(`  Error saving batch at ${i}: ${e.message}`));
+    saved += batch.length;
+    console.log(`  Saved ${saved}/${playerTags.length}`);
   }
 
   console.log(`Done! ${saved} tags in database.`);

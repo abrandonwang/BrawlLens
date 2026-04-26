@@ -22,19 +22,11 @@ export default function Home() {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const router = useRouter()
   const [data, setData] = useState<LandingData | null>(null)
-  const [phase, setPhase] = useState<"splash" | "exit" | "done">("splash")
-
   useEffect(() => {
     fetch("/api/landing")
       .then(r => r.json())
       .then(setData)
       .catch(() => {})
-  }, [])
-
-  useEffect(() => {
-    const t1 = setTimeout(() => setPhase("exit"), 1600)
-    const t2 = setTimeout(() => setPhase("done"), 2300)
-    return () => { clearTimeout(t1); clearTimeout(t2) }
   }, [])
 
   function handleInput(e: React.ChangeEvent<HTMLTextAreaElement>) {
@@ -89,28 +81,9 @@ export default function Home() {
 
       <div className="hero-bg hero-bg-b" />
 
-      {/* Splash screen */}
-      {phase !== "done" && (
-        <div className={`home-splash ${phase === "exit" ? "home-splash-exit" : "home-splash-enter"}`}>
-            <div className="home-splash-logo">
-            <div style={{
-              width: 48, height: 48, borderRadius: 12,
-              background: "conic-gradient(from 220deg, var(--accent), #FF7A3D, var(--hc-purple), var(--hc-blue), var(--accent))",
-              position: "relative",
-              boxShadow: "0 0 0 1px rgba(255,255,255,0.1) inset",
-              flexShrink: 0,
-            }}>
-              <div style={{ position: "absolute", inset: 9, background: "var(--bg)", borderRadius: 4 }} />
-            </div>
-            <span className="home-splash-brand">BrawlLens</span>
-          </div>
-          <div className="home-splash-by">by Brandon Wang</div>
-        </div>
-      )}
-
       {/* Card */}
       <div className="home-hero-inner">
-        <div className={`home-center ${phase === "done" ? "home-card-enter" : "home-card-hidden"}`}>
+        <div className="home-center home-card-enter">
 
           <div className="home-card-wrap">
             <div className="home-card-shell" style={{ background: "var(--panel)", border: "1px solid var(--line-2)", borderRadius: 20, padding: 6, boxShadow: "0 40px 80px -40px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.02) inset", position: "relative" }}>
@@ -162,10 +135,6 @@ export default function Home() {
                 </div>
                 <span className="bl-caption bl-mono" style={{ whiteSpace: "nowrap" }}>⌘K to focus</span>
               </div>
-            </div>
-
-            <div style={{ position: "absolute", top: -10, right: -10, zIndex: 5, fontFamily: "Nougat, sans-serif", fontSize: 14, letterSpacing: "0.05em", color: "var(--accent)", background: "var(--bg)", padding: "4px 10px", borderRadius: 6, border: "1px solid var(--accent-line)", boxShadow: "0 8px 24px -8px color-mix(in srgb, var(--accent) 40%, transparent)" }}>
-              NEW
             </div>
           </div>
         </div>
