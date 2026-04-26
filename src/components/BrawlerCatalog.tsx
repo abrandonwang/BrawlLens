@@ -1,5 +1,10 @@
 import type { Brawler } from "@/app/brawlers/page"
 
+function sanitizeColor(color: string): string {
+  const match = color.match(/#[0-9a-fA-F]{3,6}/)
+  return match ? match[0] : "#888"
+}
+
 const RARITY_ORDER = [
   "Starting Brawler", "Common", "Rare", "Super Rare",
   "Epic", "Mythic", "Legendary", "Ultra Legendary",
@@ -29,7 +34,7 @@ export default function BrawlerCatalog({ brawlers, activeRarity, search, onSelec
       {RARITY_ORDER.map(rarity => {
         const group = grouped[rarity]
         if (!group.length) return null
-        const color = group[0]?.rarity.color ?? "#fff"
+        const color = sanitizeColor(group[0]?.rarity.color ?? "#888")
 
         return (
           <section key={rarity}>

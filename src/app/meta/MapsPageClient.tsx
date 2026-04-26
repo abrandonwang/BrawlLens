@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Search } from "lucide-react"
+import { useState, useEffect, useRef, useCallback } from "react"
+import { Search, ChevronLeft, ChevronRight } from "lucide-react"
 import MetaDashboard from "@/components/MetaDashboard"
 
 interface ModeInfo {
@@ -42,6 +42,32 @@ export default function MapsPageClient() {
   const [loading, setLoading] = useState(true)
   const [selectedMode, setSelectedMode] = useState<string | null>(null)
   const [mapSearch, setMapSearch] = useState("")
+  const [canScrollLeft, setCanScrollLeft] = useState(false)
+  const [canScrollRight, setCanScrollRight] = useState(false)
+  const filtersRef = useRef<HTMLDivElement>(null)
+
+  const updateScrollState = useCallback(() => {
+    const el = filtersRef.current
+    if (!el) return
+    setCanScrollLeft(el.scrollLeft > 0)
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 1)
+  }, [])
+
+  useEffect(() => {
+    updateScrollState()
+    const el = filtersRef.current
+    if (!el) return
+    el.addEventListener("scroll", updateScrollState)
+    window.addEventListener("resize", updateScrollState)
+    return () => {
+      el.removeEventListener("scroll", updateScrollState)
+      window.removeEventListener("resize", updateScrollState)
+    }
+  }, [modes, updateScrollState])
+
+  function scrollFilters(dir: "left" | "right") {
+    filtersRef.current?.scrollBy({ left: dir === "left" ? -160 : 160, behavior: "smooth" })
+  }
 
   useEffect(() => {
     fetch("/api/meta")
@@ -53,33 +79,45 @@ export default function MapsPageClient() {
   return (
     <div className="page-layout">
 
-<div className="bl-input" style={{ width: 280, marginBottom: 12 }}>
-        <Search size={13} style={{ color: "var(--ink-4)", flexShrink: 0 }} />
-        <input value={mapSearch} onChange={e => setMapSearch(e.target.value)} placeholder="Search maps" />
-      </div>
+      <div className="roster-controls">
+        <div className="bl-input roster-search">
+          <Search size={13} style={{ color: "var(--ink-4)", flexShrink: 0 }} />
+          <input value={mapSearch} onChange={e => setMapSearch(e.target.value)} placeholder="Search maps" />
+        </div>
 
-      <div style={{ display: "flex", gap: 6, marginBottom: 36, flexWrap: "wrap" }}>
-        <button
-          onClick={() => setSelectedMode(null)}
-          className="bl-btn bl-btn-sm"
-          style={!selectedMode ? { background: "var(--elev)", borderColor: "var(--line-2)" } : {}}
-        >
-          All Modes
-        </button>
-        {modes.map(m => {
-          const color = MODE_CONFIG[m.mode]?.color
-          return (
-            <button
-              key={m.mode}
-              onClick={() => setSelectedMode(selectedMode === m.mode ? null : m.mode)}
-              className="bl-btn bl-btn-sm"
-              style={selectedMode === m.mode ? { background: "var(--elev)", borderColor: "var(--line-2)" } : {}}
-            >
-              {color && <span style={{ width: 6, height: 6, borderRadius: "50%", background: color, flexShrink: 0, display: "inline-block" }} />}
-              {getModeName(m.mode)}
+        <div className="roster-filters-wrap">
+          {canScrollLeft && (
+            <button onClick={() => scrollFilters("left")} style={{ position: "absolute", left: 0, top: 0, bottom: 0, zIndex: 1, display: "flex", alignItems: "center", background: "linear-gradient(to right, var(--bg) 50%, transparent)", border: "none", cursor: "pointer", color: "var(--ink-3)", padding: "0 14px 0 2px" }}>
+              <ChevronLeft size={14} />
             </button>
-          )
-        })}
+          )}
+          <div className="roster-filters" ref={filtersRef}>
+            <div className="bl-seg" style={{ flexShrink: 0 }}>
+              <button onClick={() => setSelectedMode(null)} className={!selectedMode ? "on" : ""}>
+                All Modes
+              </button>
+              {modes.map(m => {
+                const color = MODE_CONFIG[m.mode]?.color
+                return (
+                  <button
+                    key={m.mode}
+                    onClick={() => setSelectedMode(selectedMode === m.mode ? null : m.mode)}
+                    className={selectedMode === m.mode ? "on" : ""}
+                    style={{ display: "flex", alignItems: "center", gap: 5 }}
+                  >
+                    {color && <span style={{ width: 6, height: 6, borderRadius: "50%", background: color, flexShrink: 0, display: "inline-block" }} />}
+                    {getModeName(m.mode)}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+          {canScrollRight && (
+            <button onClick={() => scrollFilters("right")} style={{ position: "absolute", right: 0, top: 0, bottom: 0, zIndex: 1, display: "flex", alignItems: "center", background: "linear-gradient(to left, var(--bg) 50%, transparent)", border: "none", cursor: "pointer", color: "var(--ink-3)", padding: "0 2px 0 14px" }}>
+              <ChevronRight size={14} />
+            </button>
+          )}
+        </div>
       </div>
 
       <MetaDashboard modes={modes} loading={loading} selectedMode={selectedMode} mapSearch={mapSearch} />

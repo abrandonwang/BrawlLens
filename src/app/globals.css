@@ -445,12 +445,12 @@ body {
 
 /* Mobile menu animations */
 @keyframes menuOverlayIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from { opacity: 0; transform: translateY(-16px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 @keyframes menuOverlayOut {
-  from { opacity: 1; }
-  to   { opacity: 0; }
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-16px); }
 }
 @keyframes menuItemIn {
   from { opacity: 0; transform: translateY(18px); }
@@ -688,43 +688,62 @@ body {
   padding: 40px clamp(16px, 12vw, 480px) 80px;
 }
 
-.roster-title {
-  margin-bottom: 20px;
+.roster-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 36px;
 }
 
 .roster-search {
-  width: 280px;
-  margin-bottom: 12px;
+  width: 200px;
+  flex-shrink: 0;
+}
+
+.roster-filters-wrap {
+  position: relative;
+  min-width: 0;
+  flex: 1;
 }
 
 .roster-filters {
   display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-  margin-bottom: 36px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
 }
+.roster-filters::-webkit-scrollbar { display: none; }
 
 .brawler-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  grid-template-columns: repeat(8, 1fr);
   gap: 8px;
 }
 
-@media (max-width: 480px) {
-  .brawler-grid {
-    grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
-    gap: 6px;
-  }
+@media (max-width: 1100px) {
+  .brawler-grid { grid-template-columns: repeat(7, 1fr); }
+}
+
+@media (max-width: 900px) {
+  .brawler-grid { grid-template-columns: repeat(6, 1fr); }
 }
 
 @media (max-width: 768px) {
   .roster-page { padding: 24px 16px 60px; }
+  .roster-controls { flex-direction: column; align-items: stretch; gap: 8px; }
   .roster-search { width: 100%; }
+  .roster-filters-wrap { width: 100%; }
+  .brawler-grid { grid-template-columns: repeat(5, 1fr); }
 }
 
-@media (max-width: 480px) {
-  .roster-page { padding: 20px 16px 48px; }
-  .roster-filters { gap: 4px; }
+@media (max-width: 500px) {
+  .brawler-grid { grid-template-columns: repeat(4, 1fr); gap: 6px; }
+}
+
+@media (max-width: 360px) {
+  .roster-page { padding: 20px 12px 48px; }
+  .brawler-grid { grid-template-columns: repeat(3, 1fr); }
 }
 
 /* Leaderboards */

@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
-import { Search, X } from "lucide-react"
+import { useState, useEffect, useCallback, useRef } from "react"
+import { Search, X, ChevronLeft, ChevronRight } from "lucide-react"
 import BrawlerCatalog from "@/components/BrawlerCatalog"
 import { HYPERCHARGES } from "@/data/hypercharges"
 import type { Brawler } from "./page"
@@ -15,12 +15,44 @@ function cleanDesc(text: string) {
   return text.replace(/<![\w.]+>/g, "X")
 }
 
+// Brawlify API has a typo in Legendary's color (#fff11ev). Strip non-hex chars.
+function sanitizeColor(color: string): string {
+  const match = color.match(/#[0-9a-fA-F]{3,6}/)
+  return match ? match[0] : "#888"
+}
+
 export default function BrawlerPageClient({ brawlers, newest }: { brawlers: Brawler[]; newest?: string }) {
   const [activeRarity, setActiveRarity] = useState<string | null>(null)
   const [search, setSearch] = useState("")
   const [selected, setSelected] = useState<Brawler | null>(null)
+  const [canScrollLeft, setCanScrollLeft] = useState(false)
+  const [canScrollRight, setCanScrollRight] = useState(false)
+  const filtersRef = useRef<HTMLDivElement>(null)
 
   const close = useCallback(() => setSelected(null), [])
+
+  const updateScrollState = useCallback(() => {
+    const el = filtersRef.current
+    if (!el) return
+    setCanScrollLeft(el.scrollLeft > 0)
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 1)
+  }, [])
+
+  useEffect(() => {
+    updateScrollState()
+    const el = filtersRef.current
+    if (!el) return
+    el.addEventListener("scroll", updateScrollState)
+    window.addEventListener("resize", updateScrollState)
+    return () => {
+      el.removeEventListener("scroll", updateScrollState)
+      window.removeEventListener("resize", updateScrollState)
+    }
+  }, [brawlers, updateScrollState])
+
+  function scrollFilters(dir: "left" | "right") {
+    filtersRef.current?.scrollBy({ left: dir === "left" ? -160 : 160, behavior: "smooth" })
+  }
 
   useEffect(() => {
     if (!selected) return
@@ -30,30 +62,49 @@ export default function BrawlerPageClient({ brawlers, newest }: { brawlers: Braw
   }, [selected, close])
 
   const rarities = RARITY_ORDER
-    .map(name => ({ name, color: brawlers.find(b => b.rarity.name === name)?.rarity.color ?? "#fff" }))
+    .map(name => ({ name, color: sanitizeColor(brawlers.find(b => b.rarity.name === name)?.rarity.color ?? "#888") }))
     .filter(r => brawlers.some(b => b.rarity.name === r.name))
 
   return (
     <>
       <div className="roster-page">
-        <div className="bl-input roster-search">
-          <Search size={13} style={{ color: "var(--ink-4)", flexShrink: 0 }} />
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search brawlers" />
-        </div>
 
-        <div className="roster-filters">
-          <button onClick={() => setActiveRarity(null)} className="bl-btn bl-btn-sm"
-            style={!activeRarity ? { background: "var(--elev)", borderColor: "var(--line-2)" } : {}}>
-            All
-          </button>
-          {rarities.map(r => (
-            <button key={r.name} onClick={() => setActiveRarity(activeRarity === r.name ? null : r.name)}
-              className="bl-btn bl-btn-sm"
-              style={activeRarity === r.name ? { background: "var(--elev)", borderColor: "var(--line-2)" } : {}}>
-              <span style={{ width: 6, height: 6, borderRadius: 2, background: r.color, flexShrink: 0, display: "inline-block" }} />
-              {r.name}
-            </button>
-          ))}
+        <div className="roster-controls">
+          <div className="bl-input roster-search">
+            <Search size={13} style={{ color: "var(--ink-4)", flexShrink: 0 }} />
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search brawlers" />
+          </div>
+
+          <div className="roster-filters-wrap">
+            {canScrollLeft && (
+              <button onClick={() => scrollFilters("left")} style={{ position: "absolute", left: 0, top: 0, bottom: 0, zIndex: 1, display: "flex", alignItems: "center", background: "linear-gradient(to right, var(--bg) 50%, transparent)", border: "none", cursor: "pointer", color: "var(--ink-3)", padding: "0 14px 0 2px" }}>
+                <ChevronLeft size={14} />
+              </button>
+            )}
+            <div className="roster-filters" ref={filtersRef}>
+              <div className="bl-seg" style={{ flexShrink: 0 }}>
+                <button onClick={() => setActiveRarity(null)} className={!activeRarity ? "on" : ""}>
+                  All
+                </button>
+                {rarities.map(r => (
+                  <button
+                    key={r.name}
+                    onClick={() => setActiveRarity(activeRarity === r.name ? null : r.name)}
+                    className={activeRarity === r.name ? "on" : ""}
+                    style={{ display: "flex", alignItems: "center", gap: 5 }}
+                  >
+                    <span style={{ width: 6, height: 6, borderRadius: 2, background: r.color, flexShrink: 0, display: "inline-block" }} />
+                    {r.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {canScrollRight && (
+              <button onClick={() => scrollFilters("right")} style={{ position: "absolute", right: 0, top: 0, bottom: 0, zIndex: 1, display: "flex", alignItems: "center", background: "linear-gradient(to left, var(--bg) 50%, transparent)", border: "none", cursor: "pointer", color: "var(--ink-3)", padding: "0 2px 0 14px" }}>
+                <ChevronRight size={14} />
+              </button>
+            )}
+          </div>
         </div>
 
         <BrawlerCatalog brawlers={brawlers} activeRarity={activeRarity} search={search} onSelect={setSelected} />
