@@ -49,7 +49,7 @@ export default async function MapDetailPage({ params }: { params: Promise<{ map:
     getRotationMapNames(),
   ])
 
-  if (error || !data?.length) notFound()
+  if (error) notFound()
 
   const rows = data
   const totalBattles = Math.round(rows.reduce((sum, r) => sum + Number(r.picks), 0) / 6)
