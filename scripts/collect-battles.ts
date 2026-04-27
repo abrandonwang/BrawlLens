@@ -363,7 +363,7 @@ async function aggregateStats() {
     JOIN battle_players bp ON bp.battle_id = b.id
     WHERE b.mode NOT IN ('soloShowdown', 'duoShowdown')
     GROUP BY b.map, b.mode, bp.brawler_id, bp.brawler_name
-    HAVING COUNT(*) >= 20
+    HAVING COUNT(*) >= 5
     ORDER BY picks DESC
   `);
 
@@ -373,11 +373,14 @@ async function aggregateStats() {
       brawler_id: Number(r.brawler_id), brawler_name: r.brawler_name,
       picks: Number(r.picks), wins: Number(r.wins), win_rate: Number(r.win_rate),
     }));
+    let upsertFailed = false;
     for (let i = 0; i < brawlerRows.length; i += 500) {
-      const { error } = await supabase.from("map_brawler_stats").upsert(brawlerRows.slice(i, i + 500), { onConflict: "map,brawler_id" });
-      if (error) console.error(`  map_brawler_stats upsert error: ${error.message}`);
+      const { error } = await supabase.from("map_brawler_stats").upsert(brawlerRows.slice(i, i + 500), { onConflict: "map,mode,brawler_id" });
+      if (error) { console.error(`  map_brawler_stats upsert error: ${error.message}`); upsertFailed = true; }
     }
-    console.log(`  Pushed ${brawlerRows.length} brawler stat rows to Supabase.`);
+    if (!upsertFailed) console.log(`  Pushed ${brawlerRows.length} brawler stat rows to Supabase.`);
+    else console.error(`  Skipping TRUNCATE — brawler upsert had errors, raw data preserved.`);
+    if (upsertFailed) return;
   }
 
   // Truncate local raw tables — no dead-tuple bloat since TRUNCATE is instant
