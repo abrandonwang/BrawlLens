@@ -801,6 +801,35 @@ body {
   flex-shrink: 0;
 }
 
+.lb-top-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.lb-top-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+@media (max-width: 768px) {
+  .lb-top-controls {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .lb-top-right {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .lb-top-right .roster-search {
+    width: 100%;
+  }
+}
+
 .lb-right-controls {
   display: flex;
   align-items: center;

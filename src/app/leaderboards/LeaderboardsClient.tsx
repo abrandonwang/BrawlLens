@@ -60,9 +60,10 @@ export default function LeaderboardsClient({ allData }: { allData: RegionData[];
   return (
     <div className="lb-page">
 
-      {/* Category tabs */}
-      <div style={{ marginBottom: 12 }}>
-        <div className="bl-seg lb-cat-seg">
+      {/* Top controls row: cats left, search+region right */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 20 }}>
+        {/* Category tabs */}
+        <div className="bl-seg lb-cat-seg" style={{ flexShrink: 0 }}>
           {CATEGORIES.map(c => (
             <Link
               key={c.href}
@@ -78,23 +79,19 @@ export default function LeaderboardsClient({ allData }: { allData: RegionData[];
             </Link>
           ))}
         </div>
-      </div>
 
-      {/* Search + region */}
-      <div className="roster-controls" style={{ marginBottom: 20 }}>
-        <div className="bl-input roster-search">
-          <Search size={13} style={{ color: "var(--ink-4)", flexShrink: 0 }} />
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search players…" />
-        </div>
-        <div className="roster-filters-wrap">
-          <div className="roster-filters">
-            <div className="bl-seg" style={{ flexShrink: 0 }}>
-              {allData.map((r) => (
-                <button key={r.code} onClick={() => setActiveRegion(r.code)} className={activeRegion === r.code ? "on" : ""}>
-                  {r.code === "global" ? "Global" : r.code}
-                </button>
-              ))}
-            </div>
+        {/* Search + region */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div className="bl-input" style={{ width: 200, flexShrink: 0 }}>
+            <Search size={13} style={{ color: "var(--ink-4)", flexShrink: 0 }} />
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search players…" />
+          </div>
+          <div className="bl-seg" style={{ flexShrink: 0 }}>
+            {allData.map((r) => (
+              <button key={r.code} onClick={() => setActiveRegion(r.code)} className={activeRegion === r.code ? "on" : ""}>
+                {r.code === "global" ? "Global" : r.code}
+              </button>
+            ))}
           </div>
         </div>
       </div>

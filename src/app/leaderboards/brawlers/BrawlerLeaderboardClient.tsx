@@ -82,9 +82,10 @@ export default function BrawlerLeaderboardClient({
   return (
     <div className="lb-page">
 
-      {/* Category tabs */}
-      <div style={{ marginBottom: 12 }}>
-        <div className="bl-seg lb-cat-seg">
+      {/* Top controls row: cats left, brawler search right */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 20 }}>
+        {/* Category tabs */}
+        <div className="bl-seg lb-cat-seg" style={{ flexShrink: 0 }}>
           {CATEGORIES.map(c => (
             <Link
               key={c.href}
@@ -101,11 +102,9 @@ export default function BrawlerLeaderboardClient({
             </Link>
           ))}
         </div>
-      </div>
 
-      {/* Brawler search with autocomplete */}
-      <div className="roster-controls" style={{ marginBottom: 20 }}>
-        <div style={{ position: "relative", width: 200, flexShrink: 0 }} className="roster-search">
+        {/* Brawler search with autocomplete */}
+        <div style={{ position: "relative", width: 200, flexShrink: 0 }}>
           <div className="bl-input" style={{ width: "100%" }}>
             <Search size={13} style={{ color: "var(--ink-4)", flexShrink: 0 }} />
             <input
