@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import Link from "next/link";
 
 interface MapInfo {
   name: string;
@@ -14,11 +13,19 @@ interface ModeInfo {
   maps: MapInfo[];
 }
 
+interface SelectedMapInfo {
+  name: string;
+  imageUrl?: string;
+  mode: string | null;
+  isLive: boolean;
+}
+
 interface Props {
   modes: ModeInfo[];
   loading: boolean;
   selectedMode: string | null;
   mapSearch: string;
+  onSelect: (map: SelectedMapInfo) => void;
 }
 
 const MODE_CONFIG: Record<string, { label: string; color: string }> = {
@@ -51,7 +58,7 @@ function getModeForMap(modes: ModeInfo[], mapName: string): string | null {
   return null;
 }
 
-export default function MetaDashboard({ modes, loading, selectedMode, mapSearch }: Props) {
+export default function MetaDashboard({ modes, loading, selectedMode, mapSearch, onSelect }: Props) {
   const [mapImageLookup, setMapImageLookup] = useState<Map<string, string>>(new Map());
   const [rotationMapNames, setRotationMapNames] = useState<Set<string>>(new Set());
   const [mapPage, setMapPage] = useState(0);
@@ -136,11 +143,11 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch 
           const modeColor = mode ? MODE_CONFIG[mode]?.color : undefined;
 
           return (
-            <Link
+            <button
               key={map.name}
-              href={`/meta/${encodeURIComponent(map.name)}`}
+              onClick={() => onSelect({ name: map.name, imageUrl, mode, isLive })}
               className="bl-card"
-              style={{ textDecoration: "none", padding: 0, display: "block" }}
+              style={{ padding: 0, display: "block", width: "100%", cursor: "pointer", background: "none", textAlign: "left" }}
             >
               <div style={{ position: "relative", background: "var(--panel-2)", borderRadius: "var(--r-lg) var(--r-lg) 0 0", overflow: "hidden" }}>
                 {imageUrl ? (
@@ -155,7 +162,6 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch 
                     <div style={{ width: 40, height: 40, borderRadius: 8, background: modeColor || "var(--line)", opacity: 0.3 }} />
                   </div>
                 )}
-
 
                 {modeColor && (
                   <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, ${modeColor}, transparent)`, opacity: 0.6 }} />
@@ -175,7 +181,7 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch 
                   )}
                 </div>
               </div>
-            </Link>
+            </button>
           );
         })}
       </div>

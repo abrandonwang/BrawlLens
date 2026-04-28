@@ -1,3 +1,4 @@
+import { Suspense } from "react"
 import BrawlerPageClient from "./BrawlerPageClient"
 
 export interface Brawler {
@@ -18,7 +19,9 @@ export default async function Brawlers() {
   const newest = [...brawlers].sort((a, b) => b.id - a.id)[0]
   return (
     <div className="flex flex-col">
-      <BrawlerPageClient brawlers={brawlers} newest={newest?.name ?? ""} />
+      <Suspense>
+        <BrawlerPageClient brawlers={brawlers} newest={newest?.name ?? ""} />
+      </Suspense>
     </div>
   )
 }

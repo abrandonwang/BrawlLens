@@ -13,9 +13,15 @@ function formatTrophies(n: number) {
   return n.toString()
 }
 
-function brawlerSlug(name: string) {
-  return name.toLowerCase().replace(/\s+/g, "-")
+const MODE_LABELS: Record<string, string> = {
+  brawlBall: "Brawl Ball", gemGrab: "Gem Grab", knockout: "Knockout",
+  bounty: "Bounty", heist: "Heist", hotZone: "Hot Zone", wipeout: "Wipeout",
+  duels: "Duels", siege: "Siege", soloShowdown: "Showdown", duoShowdown: "Duo SD",
+  trioShowdown: "Trio SD", payload: "Payload", basketBrawl: "Basket Brawl",
+  volleyBrawl: "Volley Brawl", botDrop: "Bot Drop", hunters: "Hunters",
+  trophyEscape: "Trophy Escape", paintBrawl: "Paint Brawl", wipeout5V5: "5v5 Wipeout",
 }
+
 
 export default function Home() {
   const [userInput, setUserInput] = useState("")
@@ -62,12 +68,12 @@ export default function Home() {
       sub: data?.brawler
         ? `${data.brawler.name} · ${data.brawler.winRate.toFixed(1)}% win rate`
         : null,
-      href: data?.brawler ? `/brawlers/${brawlerSlug(data.brawler.name)}` : "/brawlers",
+      href: data?.brawler ? `/brawlers?open=${data.brawler.id}` : "/brawlers",
     },
     {
       label: "TOP MAP",
-      sub: data?.map ? `${data.map.name} · ${data.map.mode}` : null,
-      href: data?.map ? `/meta/${encodeURIComponent(data.map.name)}` : "/meta",
+      sub: data?.map ? `${data.map.name} · ${MODE_LABELS[data.map.mode] ?? data.map.mode}` : null,
+      href: data?.map ? `/meta?open=${encodeURIComponent(data.map.name)}` : "/meta",
     },
     {
       label: "LEADERBOARD",

@@ -71,17 +71,25 @@ export default function MapDetailClient({ mapName, imageUrl, totalBattles, brawl
         Maps
       </Link>
 
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 24, marginBottom: 28, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24, marginBottom: 28 }}>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6, flexWrap: "wrap" }}>
-            <h1 className="bl-h-display" style={isLive ? { color: "#49D47E" } : {}}>{mapName}</h1>
-          </div>
-          <span className="bl-caption">{totalBattles.toLocaleString()} battles</span>
+          {isLive && (
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "rgba(73,212,126,0.12)", border: "1px solid rgba(73,212,126,0.3)", borderRadius: 99, padding: "3px 10px", marginBottom: 10 }}>
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#49D47E", flexShrink: 0, boxShadow: "0 0 6px #49D47E" }} />
+              <span style={{ fontSize: 10.5, fontWeight: 700, color: "#49D47E", letterSpacing: "0.1em" }}>LIVE</span>
+            </div>
+          )}
+          <h1 className="bl-h-display">{mapName}</h1>
+          <span className="bl-caption" style={{ marginTop: 4, display: "block" }}>{totalBattles.toLocaleString()} battles</span>
         </div>
 
         {imageUrl && (
-          <div className="bl-card" style={{ flexShrink: 0, width: 120, padding: 0, overflow: "hidden" }}>
-            <img src={imageUrl} alt={mapName} style={{ width: "100%", height: "auto", display: "block" }} />
+          <div style={{ flexShrink: 0, height: 160, display: "flex", alignItems: "center" }}>
+            <img
+              src={imageUrl}
+              alt={mapName}
+              style={{ height: "100%", width: "auto", maxWidth: 260, borderRadius: 12, display: "block", objectFit: "contain" }}
+            />
           </div>
         )}
       </div>
@@ -118,13 +126,13 @@ export default function MapDetailClient({ mapName, imageUrl, totalBattles, brawl
         </div>
       ) : (
         <div className="bl-card" style={{ padding: 0, overflow: "hidden" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "44px 1fr 120px 70px 70px 40px", gap: 16, padding: "10px 20px", borderBottom: "1px solid var(--line)", background: "var(--panel-2)" }}>
+          <div className="map-brawler-row" style={{ display: "grid", gridTemplateColumns: "36px 1fr 120px 60px 60px 36px", gap: 12, padding: "10px 20px", borderBottom: "1px solid var(--line)", background: "var(--panel-2)" }}>
             <span />
             <span className="bl-caption" style={{ letterSpacing: "0.12em", textTransform: "uppercase" }}>Brawler</span>
             <span className="bl-caption" style={{ letterSpacing: "0.12em", textTransform: "uppercase" }}>Win Rate</span>
-            <span className="bl-caption" style={{ letterSpacing: "0.12em", textTransform: "uppercase", textAlign: "right" }}>Wins</span>
+            <span className="bl-caption map-brawler-hide" style={{ letterSpacing: "0.12em", textTransform: "uppercase", textAlign: "right" }}>Wins</span>
             <span className="bl-caption" style={{ letterSpacing: "0.12em", textTransform: "uppercase", textAlign: "right" }}>Picks</span>
-            <span className="bl-caption" style={{ letterSpacing: "0.12em", textTransform: "uppercase", textAlign: "center" }}>Tier</span>
+            <span className="bl-caption map-brawler-hide" style={{ letterSpacing: "0.12em", textTransform: "uppercase", textAlign: "center" }}>Tier</span>
           </div>
 
           {filtered.map((brawler, i) => {
@@ -132,8 +140,8 @@ export default function MapDetailClient({ mapName, imageUrl, totalBattles, brawl
             return (
               <div
                 key={brawler.brawlerId}
-                className="row-hover"
-                style={{ display: "grid", gridTemplateColumns: "44px 1fr 120px 70px 70px 40px", gap: 16, alignItems: "center", padding: "12px 20px", borderBottom: i < filtered.length - 1 ? "1px solid var(--line)" : "none" }}
+                className="map-brawler-row row-hover"
+                style={{ display: "grid", gridTemplateColumns: "36px 1fr 120px 60px 60px 36px", gap: 12, padding: "12px 20px", borderBottom: i < filtered.length - 1 ? "1px solid var(--line)" : "none" }}
               >
                 <div style={{ width: 36, height: 36, borderRadius: 8, background: "var(--panel-2)", display: "grid", placeItems: "center", overflow: "hidden" }}>
                   <img
@@ -157,7 +165,7 @@ export default function MapDetailClient({ mapName, imageUrl, totalBattles, brawl
                   </div>
                 </div>
 
-                <span className="bl-num" style={{ fontSize: 13, color: "var(--ink-3)", textAlign: "right" }}>
+                <span className="bl-num map-brawler-hide" style={{ fontSize: 13, color: "var(--ink-3)", textAlign: "right" }}>
                   {brawler.wins >= 1000 ? `${(brawler.wins / 1000).toFixed(1)}k` : brawler.wins}
                 </span>
 
@@ -165,7 +173,7 @@ export default function MapDetailClient({ mapName, imageUrl, totalBattles, brawl
                   {brawler.picks >= 1000 ? `${(brawler.picks / 1000).toFixed(1)}k` : brawler.picks}
                 </span>
 
-                <div style={{ display: "flex", justifyContent: "center" }}>
+                <div className="map-brawler-hide" style={{ display: "flex", justifyContent: "center" }}>
                   <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 26, height: 26, fontSize: 10, fontWeight: 800, borderRadius: 6, color: tier.color, background: tier.bg, border: `1px solid ${tier.border}` }}>
                     {tier.label}
                   </span>
