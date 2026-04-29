@@ -126,6 +126,7 @@ function ChatPage() {
   }, [searchParams, sendMessage])
 
   useEffect(() => {
+    if (messages.length === 0) return
     bottomRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
 
@@ -152,10 +153,10 @@ function ChatPage() {
   }
 
   return (
-    <main className="flex h-dvh flex-col pt-[80px]" style={{ background: "var(--bg)" }}>
+    <main className="flex flex-1 min-h-0 flex-col" style={{ background: "var(--bg)" }}>
 
       <div className="flex-1 min-h-0 overflow-y-auto">
-        <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
+        <div className="max-w-2xl mx-auto px-4 pt-8 pb-8 space-y-6">
           <div style={{ fontSize: 14, lineHeight: 1.75, color: "var(--ink-2)" }}>
             What can I help you with today?
           </div>

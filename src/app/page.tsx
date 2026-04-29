@@ -50,6 +50,11 @@ export default function Home() {
     loadLandingData()
   }, [])
 
+  useEffect(() => {
+    document.documentElement.classList.add("landing-bg")
+    return () => document.documentElement.classList.remove("landing-bg")
+  }, [])
+
   function handleInput(e: React.ChangeEvent<HTMLTextAreaElement>) {
     setUserInput(e.target.value)
     const el = e.target

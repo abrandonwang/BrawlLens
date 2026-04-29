@@ -318,7 +318,7 @@ export default function MapsPageClient() {
 
   return (
     <>
-      <div className="mx-auto w-full max-w-[1440px] px-[clamp(16px,3vw,40px)] pt-10 pb-20 max-md:px-4 max-md:pt-6 max-md:pb-[60px] max-[480px]:pt-5 max-[480px]:pb-12">
+      <div className="mx-auto w-full max-w-[1080px] px-6 pt-10 pb-20 max-md:px-4 max-md:pt-6 max-md:pb-[60px] max-[480px]:pt-5 max-[480px]:pb-12">
         <div className="mb-[18px] flex items-end justify-between gap-[18px] max-md:flex-col max-md:items-start">
           <div className="min-w-0">
             <h1 className="m-0 text-[clamp(28px,4vw,40px)] leading-none font-extrabold tracking-normal text-[var(--ink)]">Maps</h1>

@@ -1386,7 +1386,8 @@ body {
   }
 }
 
-.hero-bg-b {
+.hero-bg-b,
+html.landing-bg {
   background:
     radial-gradient(ellipse 800px 500px at 50% 50%,
       rgba(255, 212, 0, 0.12) 0%, transparent 60%),
@@ -1398,6 +1399,10 @@ body {
       rgba(168, 85, 247, 0.20) 360deg),
     #0A0A0B;
 }
+
+html.landing-bg body { background: transparent; }
+html.landing-bg { background-color: #120A1F; }
+html:not(.dark).landing-bg { background-color: #F4ECFF; }
 
 .hero-bg-d {
   background:
@@ -1413,7 +1418,8 @@ html:not(.dark) .home-header-brand {
   text-shadow: none;
 }
 
-html:not(.dark) .hero-bg-b {
+html:not(.dark) .hero-bg-b,
+html:not(.dark).landing-bg {
   background:
     radial-gradient(ellipse 800px 500px at 50% 50%,
       rgba(255, 212, 0, 0.20) 0%, transparent 60%),

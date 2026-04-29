@@ -188,7 +188,7 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
 
   return (
     <>
-      <div className="mx-auto w-full max-w-[1180px] px-[clamp(16px,3vw,32px)] pt-9 pb-20 max-md:px-4 max-md:pt-6 max-md:pb-[60px] max-[360px]:px-3 max-[360px]:pt-5 max-[360px]:pb-12">
+      <div className="mx-auto w-full max-w-[1080px] px-6 pt-9 pb-20 max-md:px-4 max-md:pt-6 max-md:pb-[60px] max-[360px]:px-3 max-[360px]:pt-5 max-[360px]:pb-12">
         <div className="mb-[18px] flex items-end justify-between gap-[18px] max-md:flex-col max-md:items-start">
           <div className="min-w-0">
             <h1 className="m-0 text-[clamp(28px,4vw,40px)] leading-none font-extrabold tracking-normal text-[var(--ink)]">Brawlers</h1>
