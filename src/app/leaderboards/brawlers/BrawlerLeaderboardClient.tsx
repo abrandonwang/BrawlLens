@@ -103,12 +103,12 @@ export default function BrawlerLeaderboardClient({
       </div>
 
       <div className="mb-7 flex items-center justify-between gap-3 rounded-[14px] border border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_78%,transparent)] p-2.5 shadow-[0_18px_36px_-34px_rgba(0,0,0,0.7)] backdrop-blur-2xl max-md:flex-col max-md:items-stretch">
-        <div className="inline-flex gap-0.5 overflow-x-auto rounded-full border border-[var(--line)] bg-[var(--panel)] p-[3px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="inline-flex gap-0.5 overflow-x-auto rounded-full border border-[var(--line)] bg-[var(--panel)] p-[3px] [scrollbar-width:none] max-md:w-full [&::-webkit-scrollbar]:hidden">
           {CATEGORIES.map(c => (
             <Link
               key={c.href}
               href={c.href}
-              className={`shrink-0 rounded-full px-3.5 py-[5px] text-[11.5px] font-medium no-underline transition-all ${c.href === "/leaderboards/brawlers" ? "bg-[var(--panel-2)] text-[var(--ink)]" : "text-[var(--ink-3)] hover:bg-[color-mix(in_srgb,var(--panel-2)_70%,transparent)] hover:text-[var(--ink)]"}`}
+              className={`shrink-0 rounded-full px-3.5 py-[5px] text-[11.5px] font-medium no-underline transition-all max-md:flex-1 max-md:text-center ${c.href === "/leaderboards/brawlers" ? "bl-rainbow-border bg-[var(--panel-2)] text-[var(--ink)]" : "text-[var(--ink-3)] hover:bg-[color-mix(in_srgb,var(--panel-2)_70%,transparent)] hover:text-[var(--ink)]"}`}
             >
               {c.label}
             </Link>
@@ -167,7 +167,7 @@ export default function BrawlerLeaderboardClient({
         <p className="py-12 text-center text-[10.5px] tracking-[0.01em] text-[var(--ink-3)]">No data available.</p>
       ) : (
         <>
-          <div className="relative mb-3.5 flex items-stretch justify-between gap-3.5 overflow-hidden rounded-xl border border-[var(--line)] bg-[radial-gradient(circle_at_16%_24%,rgba(236,72,153,0.82)_0_10%,transparent_30%),radial-gradient(circle_at_66%_18%,rgba(99,102,241,0.66)_0_10%,transparent_32%),radial-gradient(circle_at_90%_64%,rgba(34,211,238,0.70)_0_10%,transparent_30%),#141418] p-[18px] shadow-[inset_0_1px_0_color-mix(in_srgb,var(--ink)_7%,transparent),0_20px_42px_-34px_rgba(0,0,0,0.55)] max-md:flex-col">
+          <div className="lb-board-intro mb-3.5 flex items-stretch justify-between gap-3.5 p-[18px] max-md:flex-col">
             <div className="relative z-10 flex min-w-0 items-center gap-3">
               {activeBrawler && (
                 <img

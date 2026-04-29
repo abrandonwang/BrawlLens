@@ -209,6 +209,13 @@ export default function MapsPageClient() {
       .sort((a, b) => b[sortBy] - a[sortBy])
   }, [mapBrawlers, brawlerSearch, minPicks, sortBy])
 
+  const modeOptions = useMemo(() => [null, ...modes.map(m => m.mode)] as (string | null)[], [modes])
+  function goMode(dir: 1 | -1) {
+    const idx = modeOptions.indexOf(selectedMode)
+    const next = (idx + dir + modeOptions.length) % modeOptions.length
+    setSelectedMode(modeOptions[next])
+  }
+
   const modeColor = selectedMap?.mode ? MODE_CONFIG[selectedMap.mode]?.color : undefined
   const totalMaps = useMemo(() => {
     const names = new Set<string>()
@@ -230,7 +237,7 @@ export default function MapsPageClient() {
           </div>
         </div>
 
-        <div className="mb-8 flex w-full items-center justify-start gap-2.5 max-md:flex-col max-md:items-stretch max-md:gap-2">
+        <div className="mb-8 flex w-full items-center gap-2.5 rounded-[14px] border border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_78%,transparent)] p-2.5 shadow-[0_18px_36px_-34px_rgba(0,0,0,0.7)] backdrop-blur-2xl max-md:flex-col max-md:items-stretch max-md:gap-2">
           <div className="flex h-10 w-[200px] shrink-0 items-center gap-2.5 rounded-[10px] border border-[var(--line)] bg-[var(--panel)] px-3.5 text-[var(--ink)] transition-colors focus-within:border-[var(--line-2)] max-md:w-full">
             <Search size={13} className="shrink-0 text-[var(--ink-4)]" />
             <input
@@ -241,13 +248,13 @@ export default function MapsPageClient() {
             />
           </div>
 
-          <div className="relative ml-auto flex min-w-0 flex-1 justify-end max-w-[calc(100%-220px)] max-md:ml-0 max-md:w-full max-md:max-w-none max-md:justify-start max-md:self-stretch">
+          <div className="relative ml-auto flex min-w-0 flex-1 justify-end max-w-[calc(100%-220px)] max-md:hidden">
             {canScrollLeft && (
-              <button onClick={() => scrollFilters("left")} className="absolute top-0 bottom-0 left-0 z-10 flex cursor-pointer items-center border-0 bg-[linear-gradient(to_right,var(--bg)_50%,transparent)] py-0 pr-3.5 pl-0.5 text-[var(--ink-3)]">
+              <button onClick={() => scrollFilters("left")} className="absolute top-0 bottom-0 left-0 z-10 flex cursor-pointer items-center border-0 bg-[linear-gradient(to_right,var(--panel)_50%,transparent)] py-0 pr-3.5 pl-0.5 text-[var(--ink-3)]">
                 <ChevronLeft size={14} />
               </button>
             )}
-            <div className="flex w-full max-w-full flex-nowrap justify-start overflow-x-auto md:w-auto md:justify-end [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" ref={filtersRef}>
+            <div className="flex w-auto max-w-full flex-nowrap justify-end overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" ref={filtersRef}>
               <div className="inline-flex shrink-0 gap-0.5 rounded-full border border-[var(--line)] bg-[var(--panel)] p-[3px]">
                 <button
                   onClick={() => setSelectedMode(null)}
@@ -269,10 +276,35 @@ export default function MapsPageClient() {
               </div>
             </div>
             {canScrollRight && (
-              <button onClick={() => scrollFilters("right")} className="absolute top-0 right-0 bottom-0 z-10 flex cursor-pointer items-center border-0 bg-[linear-gradient(to_left,var(--bg)_50%,transparent)] py-0 pr-0.5 pl-3.5 text-[var(--ink-3)]">
+              <button onClick={() => scrollFilters("right")} className="absolute top-0 right-0 bottom-0 z-10 flex cursor-pointer items-center border-0 bg-[linear-gradient(to_left,var(--panel)_50%,transparent)] py-0 pr-0.5 pl-3.5 text-[var(--ink-3)]">
                 <ChevronRight size={14} />
               </button>
             )}
+          </div>
+
+          <div className="hidden w-full items-center gap-1 rounded-full border border-[var(--line)] bg-[var(--panel)] p-1 max-md:flex">
+            <button
+              onClick={() => goMode(-1)}
+              disabled={modeOptions.length <= 1}
+              className="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-full border-0 bg-transparent text-[var(--ink-3)] transition-colors hover:bg-[color-mix(in_srgb,var(--panel-2)_70%,transparent)] hover:text-[var(--ink)] disabled:cursor-default disabled:opacity-25"
+              aria-label="Previous mode"
+            >
+              <ChevronLeft size={15} />
+            </button>
+            <span className="flex-1 truncate px-2 text-center text-[12.5px] font-semibold text-[var(--ink)]">
+              {selectedMode ? getModeName(selectedMode) : "All Modes"}
+            </span>
+            <span className="shrink-0 pr-1 font-mono text-[10px] text-[var(--ink-4)]">
+              {modeOptions.indexOf(selectedMode) + 1}/{modeOptions.length}
+            </span>
+            <button
+              onClick={() => goMode(1)}
+              disabled={modeOptions.length <= 1}
+              className="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-full border-0 bg-transparent text-[var(--ink-3)] transition-colors hover:bg-[color-mix(in_srgb,var(--panel-2)_70%,transparent)] hover:text-[var(--ink)] disabled:cursor-default disabled:opacity-25"
+              aria-label="Next mode"
+            >
+              <ChevronRight size={15} />
+            </button>
           </div>
         </div>
 

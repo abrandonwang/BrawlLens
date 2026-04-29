@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useState, useEffect, useCallback, useRef, useMemo } from "react"
 import { useSearchParams } from "next/navigation"
 import { Search, X, ChevronLeft, ChevronRight } from "lucide-react"
 import BrawlerCatalog from "@/components/BrawlerCatalog"
@@ -151,6 +151,13 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
     .filter(r => brawlers.some(b => b.rarity.name === r.name))
   const activeRarityCount = activeRarity ? brawlers.filter(b => b.rarity.name === activeRarity).length : brawlers.length
 
+  const rarityOptions = useMemo(() => [null, ...rarities.map(r => r.name)] as (string | null)[], [rarities])
+  function goRarity(dir: 1 | -1) {
+    const idx = rarityOptions.indexOf(activeRarity)
+    const next = (idx + dir + rarityOptions.length) % rarityOptions.length
+    setActiveRarity(rarityOptions[next])
+  }
+
   return (
     <>
       <div className="mx-auto w-full max-w-[1180px] px-[clamp(16px,3vw,32px)] pt-9 pb-20 max-md:px-4 max-md:pt-6 max-md:pb-[60px] max-[360px]:px-3 max-[360px]:pt-5 max-[360px]:pb-12">
@@ -165,7 +172,7 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
           </div>
         </div>
 
-        <div className="mb-8 flex w-full items-center justify-start gap-2.5 max-md:flex-col max-md:items-stretch max-md:gap-2">
+        <div className="mb-8 flex w-full items-center gap-2.5 rounded-[14px] border border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_78%,transparent)] p-2.5 shadow-[0_18px_36px_-34px_rgba(0,0,0,0.7)] backdrop-blur-2xl max-md:flex-col max-md:items-stretch max-md:gap-2">
           <div className="relative w-[200px] shrink-0 max-md:w-full">
             <div className="flex h-10 items-center gap-2 rounded-[10px] border border-[var(--line)] bg-[var(--panel)] px-3.5 text-[var(--ink)] transition-colors focus-within:border-[var(--line-2)]">
               <Search size={13} className="shrink-0 text-[var(--ink-4)]" />
@@ -205,13 +212,13 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
             )}
           </div>
 
-          <div className="relative ml-auto flex min-w-0 flex-1 justify-end max-w-[calc(100%-220px)] max-md:ml-0 max-md:w-full max-md:max-w-none max-md:justify-start max-md:self-stretch">
+          <div className="relative ml-auto flex min-w-0 flex-1 justify-end max-w-[calc(100%-220px)] max-md:hidden">
             {canScrollLeft && (
-              <button onClick={() => scrollFilters("left")} className="absolute top-0 bottom-0 left-0 z-10 flex cursor-pointer items-center border-0 bg-[linear-gradient(to_right,var(--bg)_50%,transparent)] py-0 pr-3.5 pl-0.5 text-[var(--ink-3)]">
+              <button onClick={() => scrollFilters("left")} className="absolute top-0 bottom-0 left-0 z-10 flex cursor-pointer items-center border-0 bg-[linear-gradient(to_right,var(--panel)_50%,transparent)] py-0 pr-3.5 pl-0.5 text-[var(--ink-3)]">
                 <ChevronLeft size={14} />
               </button>
             )}
-            <div className="flex w-full max-w-full flex-nowrap justify-start overflow-x-auto md:w-auto md:justify-end [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" ref={filtersRef}>
+            <div className="flex w-auto max-w-full flex-nowrap justify-end overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" ref={filtersRef}>
               <div className="inline-flex shrink-0 gap-0.5 rounded-full border border-[var(--line)] bg-[var(--panel)] p-[3px]">
                 <button
                   onClick={() => setActiveRarity(null)}
@@ -231,10 +238,35 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
               </div>
             </div>
             {canScrollRight && (
-              <button onClick={() => scrollFilters("right")} className="absolute top-0 right-0 bottom-0 z-10 flex cursor-pointer items-center border-0 bg-[linear-gradient(to_left,var(--bg)_50%,transparent)] py-0 pr-0.5 pl-3.5 text-[var(--ink-3)]">
+              <button onClick={() => scrollFilters("right")} className="absolute top-0 right-0 bottom-0 z-10 flex cursor-pointer items-center border-0 bg-[linear-gradient(to_left,var(--panel)_50%,transparent)] py-0 pr-0.5 pl-3.5 text-[var(--ink-3)]">
                 <ChevronRight size={14} />
               </button>
             )}
+          </div>
+
+          <div className="hidden w-full items-center gap-1 rounded-full border border-[var(--line)] bg-[var(--panel)] p-1 max-md:flex">
+            <button
+              onClick={() => goRarity(-1)}
+              disabled={rarityOptions.length <= 1}
+              className="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-full border-0 bg-transparent text-[var(--ink-3)] transition-colors hover:bg-[color-mix(in_srgb,var(--panel-2)_70%,transparent)] hover:text-[var(--ink)] disabled:cursor-default disabled:opacity-25"
+              aria-label="Previous rarity"
+            >
+              <ChevronLeft size={15} />
+            </button>
+            <span className="flex-1 truncate px-2 text-center text-[12.5px] font-semibold text-[var(--ink)]">
+              {activeRarity ?? "All Rarities"}
+            </span>
+            <span className="shrink-0 pr-1 font-mono text-[10px] text-[var(--ink-4)]">
+              {rarityOptions.indexOf(activeRarity) + 1}/{rarityOptions.length}
+            </span>
+            <button
+              onClick={() => goRarity(1)}
+              disabled={rarityOptions.length <= 1}
+              className="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-full border-0 bg-transparent text-[var(--ink-3)] transition-colors hover:bg-[color-mix(in_srgb,var(--panel-2)_70%,transparent)] hover:text-[var(--ink)] disabled:cursor-default disabled:opacity-25"
+              aria-label="Next rarity"
+            >
+              <ChevronRight size={15} />
+            </button>
           </div>
         </div>
 
