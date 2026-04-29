@@ -68,13 +68,10 @@ export default function BrawlerCatalog({ brawlers, activeRarity, search, onSelec
                       style={{ width: "85%", height: "85%", objectFit: "contain", filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.4))" }}
                     />
                   </div>
-                  <div style={{ padding: "7px 8px 8px", borderTop: "1px solid var(--line)" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                      <span style={{ width: 4, height: 4, borderRadius: "50%", background: color, flexShrink: 0, display: "block" }} />
-                      <span style={{ fontSize: 10.5, fontWeight: 600, color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", letterSpacing: "-0.01em" }}>
-                        {brawler.name}
-                      </span>
-                    </div>
+                  <div style={{ padding: "7px 8px 8px", borderTop: "1px solid var(--line)", textAlign: "center" }}>
+                    <span style={{ fontSize: 10.5, fontWeight: 600, color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", letterSpacing: "-0.01em", display: "block" }}>
+                      {brawler.name}
+                    </span>
                   </div>
                 </button>
               ))}

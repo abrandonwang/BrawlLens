@@ -68,11 +68,10 @@ export default function LeaderboardsClient({ allData }: { allData: RegionData[];
             <Link
               key={c.href}
               href={c.href}
-              data-active={pathname === c.href}
+              className={pathname === c.href ? "bl-rainbow-border" : ""}
               style={{ padding: "5px 14px", fontSize: 11.5, fontWeight: 500, borderRadius: 999, textDecoration: "none", transition: "all 0.15s ease",
                 color: pathname === c.href ? "var(--ink)" : "var(--ink-3)",
                 background: pathname === c.href ? "var(--elev)" : "transparent",
-                boxShadow: pathname === c.href ? "0 0 0 1px var(--line-2)" : "none",
               }}
             >
               {c.label}
@@ -118,7 +117,7 @@ export default function LeaderboardsClient({ allData }: { allData: RegionData[];
                 className="lb-table-row row-hover"
                 style={{ borderBottom: i < paginated.length - 1 ? "1px solid var(--line)" : "none", textDecoration: "none" }}
               >
-                <span className={p.rank <= 3 ? "bl-num lb-col-rank bl-rainbow-text" : "bl-num lb-col-rank"} style={{ fontSize: 13, fontWeight: 700, color: p.rank <= 3 ? undefined : "var(--ink-3)" }}>
+                <span className="bl-num lb-col-rank" style={{ fontSize: 13, fontWeight: 500, color: "var(--ink-3)" }}>
                   {String(p.rank).padStart(2, "0")}
                 </span>
 

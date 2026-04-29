@@ -132,17 +132,17 @@ export default function NavBar() {
         {/* Desktop nav links */}
         <div className="hidden lg:flex" style={{ alignItems: "center", gap: 0 }}>
           {navItems.map(item => (
-            <Link key={item.label} href={item.href} style={{
-              padding: "8px 14px", fontSize: 12.5, fontWeight: 500,
-              color: isActive(item.href) ? "var(--ink)" : "var(--ink-2)",
-              borderRadius: 999, cursor: "pointer", whiteSpace: "nowrap",
-              textDecoration: "none",
-              background: isActive(item.href) ? "var(--elev)" : "transparent",
-              boxShadow: isActive(item.href) ? "0 0 0 1px var(--line-2), 0 6px 16px -8px rgba(0,0,0,0.5)" : "none",
-            }}>
-              {isActive(item.href)
-                ? <span className="bl-rainbow-text" style={{ fontWeight: 600 }}>{item.label}</span>
-                : item.label}
+            <Link key={item.label} href={item.href}
+              className={isActive(item.href) ? "bl-rainbow-border" : ""}
+              style={{
+                padding: "8px 14px", fontSize: 12.5, fontWeight: isActive(item.href) ? 600 : 500,
+                color: isActive(item.href) ? "var(--ink)" : "var(--ink-2)",
+                borderRadius: 999, cursor: "pointer", whiteSpace: "nowrap",
+                textDecoration: "none",
+                background: isActive(item.href) ? "var(--elev)" : "transparent",
+              }}
+            >
+              {item.label}
             </Link>
           ))}
         </div>
@@ -230,9 +230,7 @@ export default function NavBar() {
                     : `menuItemIn 0.4s cubic-bezier(0,0,0.2,1) ${i * 55}ms both`,
                 }}
               >
-                {isActive(item.href)
-                  ? <span className="bl-rainbow-text">{item.label}</span>
-                  : item.label}
+                {item.label}
               </Link>
             ))}
           </div>

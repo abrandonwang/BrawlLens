@@ -68,11 +68,11 @@ export default function ClubsClient({ allData }: { allData: RegionData[] }) {
             <Link
               key={c.href}
               href={c.href}
+              className={pathname === c.href ? "bl-rainbow-border" : ""}
               style={{
                 padding: "5px 14px", fontSize: 11.5, fontWeight: 500, borderRadius: 999, textDecoration: "none", transition: "all 0.15s ease",
                 color: pathname === c.href ? "var(--ink)" : "var(--ink-3)",
                 background: pathname === c.href ? "var(--elev)" : "transparent",
-                boxShadow: pathname === c.href ? "0 0 0 1px var(--line-2)" : "none",
               }}
             >
               {c.label}
@@ -116,7 +116,7 @@ export default function ClubsClient({ allData }: { allData: RegionData[] }) {
                 className="lb-clubs-row row-hover"
                 style={{ borderBottom: i < paginated.length - 1 ? "1px solid var(--line)" : "none" }}
               >
-                <span className={club.rank <= 3 ? "bl-num bl-rainbow-text" : "bl-num"} style={{ fontSize: 13, fontWeight: 700, color: club.rank <= 3 ? undefined : "var(--ink-3)" }}>
+                <span className="bl-num" style={{ fontSize: 13, fontWeight: 500, color: "var(--ink-3)" }}>
                   {String(club.rank).padStart(2, "0")}
                 </span>
                 <div style={{ minWidth: 0 }}>

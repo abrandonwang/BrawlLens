@@ -90,12 +90,12 @@ export default function BrawlerLeaderboardClient({
             <Link
               key={c.href}
               href={c.href}
+              className={c.href === "/leaderboards/brawlers" ? "bl-rainbow-border" : ""}
               style={{
                 padding: "5px 14px", fontSize: 11.5, fontWeight: 500, borderRadius: 999,
                 textDecoration: "none", transition: "all 0.15s ease",
                 color: c.href === "/leaderboards/brawlers" ? "var(--ink)" : "var(--ink-3)",
                 background: c.href === "/leaderboards/brawlers" ? "var(--elev)" : "transparent",
-                boxShadow: c.href === "/leaderboards/brawlers" ? "0 0 0 1px var(--line-2)" : "none",
               }}
             >
               {c.label}
@@ -213,7 +213,7 @@ export default function BrawlerLeaderboardClient({
                 className="lb-table-row row-hover"
                 style={{ borderBottom: i < paginated.length - 1 ? "1px solid var(--line)" : "none", textDecoration: "none" }}
               >
-                <span className={p.rank <= 3 ? "bl-num lb-col-rank bl-rainbow-text" : "bl-num lb-col-rank"} style={{ fontSize: 13, fontWeight: 700, color: p.rank <= 3 ? undefined : "var(--ink-3)" }}>
+                <span className="bl-num lb-col-rank" style={{ fontSize: 13, fontWeight: 500, color: "var(--ink-3)" }}>
                   {String(p.rank).padStart(2, "0")}
                 </span>
 

@@ -229,7 +229,6 @@ body {
   overflow: hidden;
 }
 .bl-card:hover {
-  background: var(--hover-bg);
   border-color: var(--line-2);
 }
 .bl-card-glass {
@@ -259,14 +258,31 @@ body {
   border-color: transparent;
 }
 
-/* Utility: animated rainbow gradient text */
-.bl-rainbow-text {
-  background: linear-gradient(90deg, var(--accent), var(--r-ultra), var(--hc-purple), var(--hc-blue), var(--accent));
-  background-size: 200% auto;
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: rainbow-text-shift 5s linear infinite;
+/* Utility: rotating conic-gradient border */
+@property --rb-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+@keyframes rainbow-rotate {
+  to { --rb-angle: 360deg; }
+}
+.bl-rainbow-border {
+  position: relative;
+}
+.bl-rainbow-border::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  padding: 2px;
+  background: conic-gradient(from var(--rb-angle), var(--accent), var(--r-ultra), var(--hc-purple), var(--hc-blue), var(--hc-cyan), var(--accent));
+  animation: rainbow-rotate 4s linear infinite;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
 }
 
 .bl-btn {
@@ -348,12 +364,7 @@ body {
   font-weight: 600;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  background: linear-gradient(90deg, var(--accent), var(--r-ultra), var(--hc-purple), var(--hc-blue), var(--accent));
-  background-size: 200% auto;
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: rainbow-text-shift 6s linear infinite;
+  color: var(--ink-3);
 }
 
 .bl-h-display { font-size: 56px; line-height: 0.97; letter-spacing: -0.032em; font-weight: 600; }
@@ -428,12 +439,27 @@ body {
   border-radius: 999px;
   cursor: pointer;
   transition: all 0.15s ease;
+  position: relative;
 }
 .bl-seg > button.on,
 .bl-seg > button[data-active="true"] {
   color: var(--ink);
   background: var(--elev);
-  box-shadow: 0 0 0 1px var(--line-2);
+}
+.bl-seg > button.on::before,
+.bl-seg > button[data-active="true"]::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  padding: 2px;
+  background: conic-gradient(from var(--rb-angle), var(--accent), var(--r-ultra), var(--hc-purple), var(--hc-blue), var(--hc-cyan), var(--accent));
+  animation: rainbow-rotate 4s linear infinite;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
 }
 .lb-region-seg > button {
   flex: 1;

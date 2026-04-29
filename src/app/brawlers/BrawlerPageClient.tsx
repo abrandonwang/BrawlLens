@@ -114,9 +114,9 @@ export default function BrawlerPageClient({ brawlers, newest }: { brawlers: Braw
       <div className="roster-page">
 
         <div className="roster-controls">
-          <div className="bl-input roster-search">
+          <div className="roster-search" style={{ display: "flex", alignItems: "center", gap: 8, height: 40, padding: "0 14px", background: "var(--panel)", borderRadius: 10 }}>
             <Search size={13} style={{ color: "var(--ink-4)", flexShrink: 0 }} />
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search brawlers" />
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search brawlers" style={{ background: "transparent", border: "none", outline: "none", color: "var(--ink)", fontSize: 13, fontFamily: "inherit", width: "100%" }} />
           </div>
 
           <div className="roster-filters-wrap">
@@ -133,9 +133,7 @@ export default function BrawlerPageClient({ brawlers, newest }: { brawlers: Braw
                     key={r.name}
                     onClick={() => setActiveRarity(activeRarity === r.name ? null : r.name)}
                     className={activeRarity === r.name ? "on" : ""}
-                    style={{ display: "flex", alignItems: "center", gap: 5 }}
                   >
-                    <span style={{ width: 6, height: 6, borderRadius: 2, background: r.color, flexShrink: 0, display: "inline-block" }} />
                     {r.name}
                   </button>
                 ))}
