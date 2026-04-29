@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Suspense } from "react";
 import "./globals.css";
 import NavBar from "../components/NavBar";
 import Footer from "../components/Footer";
@@ -38,7 +39,9 @@ export default function RootLayout({
       >
         <ThemeProvider>
           <MenuProvider>
-            <TopLoader />
+            <Suspense fallback={null}>
+              <TopLoader />
+            </Suspense>
             <NavBar />
             {children}
             <Footer />
