@@ -118,7 +118,7 @@ export default function LeaderboardsClient({ allData }: { allData: RegionData[];
         />
       ) : (
         <>
-          <div className="relative mb-3.5 flex items-stretch justify-between gap-3.5 overflow-hidden rounded-xl border border-[var(--line)] p-[18px] shadow-[inset_0_1px_0_color-mix(in_srgb,var(--ink)_7%,transparent),0_20px_42px_-34px_rgba(0,0,0,0.55)] max-md:flex-col" style={{ background: "linear-gradient(135deg, #EC4899 0%, #14B8A6 100%)" }}>
+          <div className="leaderboard-summary relative mb-3.5 flex items-stretch justify-between gap-3.5 overflow-hidden border border-[var(--line)] p-[18px] shadow-[inset_0_1px_0_color-mix(in_srgb,var(--ink)_7%,transparent),0_20px_42px_-34px_rgba(0,0,0,0.55)] max-md:flex-col" style={{ background: "linear-gradient(135deg, #EC4899 0%, #14B8A6 100%)" }}>
             <div className="relative z-10 min-w-0">
               <p className="mb-1 text-[10.5px] leading-snug tracking-[0.12em] text-white/70 uppercase">
                 {regionData?.label ?? activeRegion} Players

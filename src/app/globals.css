@@ -282,18 +282,31 @@ body {
   border-radius: var(--r-md);
 }
 
+.leaderboard-summary {
+  border-radius: var(--r-md);
+  border-color: var(--line-2) !important;
+  background: var(--panel) !important;
+}
+
+.leaderboard-summary::before {
+  content: "";
+  position: absolute;
+  inset: 2px;
+  z-index: 0;
+  border-radius: calc(var(--r-md) - 2px);
+  background: linear-gradient(135deg, #EC4899 0%, #14B8A6 100%);
+  pointer-events: none;
+}
+
 .top-rank-card {
   border-radius: var(--r-md);
 }
 
 .top-rank-card-first {
   border-color: color-mix(in srgb, var(--accent) 44%, var(--line));
-  background:
-    linear-gradient(135deg, color-mix(in srgb, var(--accent) 11%, transparent), transparent 58%),
-    var(--panel);
+  background: var(--panel);
   box-shadow:
     0 0 0 1px color-mix(in srgb, var(--accent) 12%, transparent) inset,
-    0 22px 44px -32px color-mix(in srgb, var(--accent) 45%, transparent),
     var(--shadow-lift);
   transform: translateY(-2px);
 }
