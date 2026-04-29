@@ -1,6 +1,8 @@
 "use client"
 import { useState, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
+import { ArrowRight, Search } from "lucide-react"
 
 interface LandingData {
   player: { name: string; tag: string; trophies: number } | null
@@ -83,21 +85,13 @@ export default function Home() {
 
   return (
     <main className="home-hero">
-
       <div className="hero-bg hero-bg-b" />
       <div className="home-hero-inner">
         <div className="home-center home-card-enter">
-
           <div className="home-card-wrap">
-            <div className="home-card-shell" style={{ background: "var(--panel)", border: "1px solid var(--line-2)", borderRadius: 20, padding: 6, boxShadow: "0 40px 80px -40px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.02) inset", position: "relative" }}>
-
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 14px 12px" }}>
-                <span style={{ width: 10, height: 10, borderRadius: 4, background: "color-mix(in srgb, var(--line) 55%, transparent)", border: "1px solid var(--line)", display: "block" }} />
-                <span className="bl-mono bl-caption">brawllens / ask</span>
-              </div>
-
-              <div style={{ background: "var(--bg)", border: "1px solid var(--line)", borderRadius: 14, padding: "14px 16px", display: "flex", alignItems: "center", gap: 12, marginBottom: 6 }}>
-                <svg style={{ width: 15, height: 15, color: "var(--ink-3)", flexShrink: 0 }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+            <div className="home-card-shell">
+              <div className="home-ask-box">
+                <Search size={16} style={{ color: "var(--ink-3)", flexShrink: 0 }} />
                 <textarea
                   ref={textareaRef}
                   rows={1}
@@ -105,19 +99,27 @@ export default function Home() {
                   onChange={handleInput}
                   onKeyDown={handleKeyDown}
                   placeholder="Ask anything, or paste a #PlayerTag"
-                  style={{ background: "transparent", border: "none", outline: "none", color: "var(--ink)", flex: 1, fontSize: 16, fontFamily: "inherit", resize: "none", overflow: "hidden", lineHeight: 1.5 }}
+                  className="home-ask-input"
                 />
-                <span className="bl-mono" style={{ fontSize: 10.5, color: "var(--ink-4)", border: "1px solid var(--line)", padding: "2px 6px", borderRadius: 4, flexShrink: 0, cursor: "pointer" }} onClick={handleSubmit}>⏎</span>
+                <button className="home-send-btn" onClick={handleSubmit} aria-label="Ask">
+                  <span>↵</span>
+                </button>
               </div>
 
-              <div style={{ padding: 4 }}>
-                {jumps.map((row, i) => (
-                  <a
-                    key={i}
+              <div className="home-shortcuts">
+                <Link href="/brawlers">Brawlers</Link>
+                <Link href="/meta">Maps</Link>
+                <Link href="/leaderboards">Leaderboards</Link>
+              </div>
+
+              <div className="home-jump-grid">
+                {jumps.map((row, index) => (
+                  <Link
+                    key={row.label}
                     href={row.href}
-                    style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", borderRadius: 10, cursor: "pointer", textDecoration: "none", transition: "background 0.13s" }}
-                    className="row-hover"
+                    className="home-jump-card"
                   >
+                    <span className="home-jump-mark">{String(index + 1).padStart(2, "0")}</span>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div className="bl-caption" style={{ letterSpacing: "0.1em", marginBottom: 2 }}>{row.label}</div>
                       {row.sub ? (
@@ -126,18 +128,11 @@ export default function Home() {
                         <div style={{ height: 13, width: 120, borderRadius: 4, background: "var(--line-2)", marginTop: 2 }} />
                       )}
                     </div>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-4)" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
-                  </a>
+                    <ArrowRight size={14} style={{ color: "var(--ink-4)", flexShrink: 0 }} />
+                  </Link>
                 ))}
               </div>
 
-              <div style={{ borderTop: "1px solid var(--line)", marginTop: 6, padding: "10px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}>
-                  <span className="live-dot" style={{ width: 5, height: 5 }} />
-                  <span className="bl-mono bl-caption">Live data</span>
-                </div>
-                <span className="bl-caption bl-mono" style={{ whiteSpace: "nowrap" }}>⌘K to focus</span>
-              </div>
             </div>
           </div>
         </div>

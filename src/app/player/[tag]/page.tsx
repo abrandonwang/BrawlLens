@@ -20,6 +20,10 @@ function fmt(n: number) {
   return n.toLocaleString()
 }
 
+function get3v3Wins(player: Player) {
+  return player["3vs3Victories"] ?? player.threesVictories ?? player.threesvictories ?? 0
+}
+
 export default async function PlayerProfile({ params }: { params: Promise<{ tag: string }> }) {
   const { tag } = await params
 
@@ -44,7 +48,7 @@ export default async function PlayerProfile({ params }: { params: Promise<{ tag:
 
   const stats = [
     { label: "Trophies",  value: fmt(player.trophies ?? 0),          sub: `Best ${fmt(player.highestTrophies ?? 0)}` },
-    { label: "3v3 Wins",  value: (player.threesvictories ?? 0).toLocaleString() },
+    { label: "3v3 Wins",  value: get3v3Wins(player).toLocaleString() },
     { label: "Solo Wins", value: (player.soloVictories ?? 0).toLocaleString() },
     { label: "Duo Wins",  value: (player.duoVictories ?? 0).toLocaleString() },
   ]

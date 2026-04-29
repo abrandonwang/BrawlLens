@@ -28,6 +28,18 @@ const CATEGORIES = [
   { label: "Brawlers", href: "/leaderboards/brawlers" },
 ]
 
+function getPageItems(current: number, total: number): (number | "...")[] {
+  const pages: (number | "...")[] = []
+  for (let i = 0; i < total; i++) {
+    if (i === 0 || i === total - 1 || Math.abs(i - current) <= 1) {
+      pages.push(i)
+    } else if (pages[pages.length - 1] !== "...") {
+      pages.push("...")
+    }
+  }
+  return pages
+}
+
 function formatNum(n: number) {
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + "M"
   if (n >= 1_000) return (n / 1_000).toFixed(1) + "K"
@@ -59,7 +71,18 @@ export default function ClubsClient({ allData }: { allData: RegionData[] }) {
 
   return (
     <div className="lb-page">
-      <div className="lb-top-controls">
+      <div className="page-head">
+        <div className="page-head-main">
+          <h1 className="page-title">Leaderboards</h1>
+          <p className="page-subtitle">Compare top clubs by region with member counts and trophy totals in one compact view.</p>
+        </div>
+        <div className="page-head-stats">
+          <span className="page-head-chip">{regionData?.label ?? activeRegion}</span>
+          <span className="page-head-chip">{clubs.length.toLocaleString()} clubs</span>
+        </div>
+      </div>
+
+      <div className="app-toolbar lb-top-controls">
         <div className="bl-seg lb-cat-seg">
           {CATEGORIES.map(c => (
             <Link
@@ -91,13 +114,50 @@ export default function ClubsClient({ allData }: { allData: RegionData[] }) {
         </div>
       </div>
 
-      <div style={{ height: 1, background: "var(--line)", marginBottom: 28 }} />
-
       {clubs.length === 0 ? (
         <p className="bl-caption" style={{ padding: "48px 0", textAlign: "center" }}>No data yet.</p>
       ) : (
         <>
-          <div className="bl-card" style={{ borderRadius: 14, overflow: "hidden", padding: 0 }}>
+          <div className="lb-board-intro">
+            <div>
+              <p className="bl-caption" style={{ letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 4 }}>
+                {regionData?.label ?? activeRegion} Clubs
+              </p>
+              <h2>{clubs.length.toLocaleString()} ranked clubs</h2>
+            </div>
+            <div className="lb-metrics">
+              <div>
+                <span className="bl-caption">Leader</span>
+                <strong>{clubs[0]?.club_name ?? "—"}</strong>
+              </div>
+              <div>
+                <span className="bl-caption">Top trophies</span>
+                <strong>{clubs[0] ? formatNum(clubs[0].trophies) : "—"}</strong>
+              </div>
+              <div>
+                <span className="bl-caption">Page</span>
+                <strong>{page + 1}/{Math.max(totalPages, 1)}</strong>
+              </div>
+            </div>
+          </div>
+
+          <div className="lb-spotlight">
+            {clubs.slice(0, 3).map(club => (
+              <div key={club.club_tag} className="lb-spot-card">
+                <span className="lb-rank-badge">#{club.rank}</span>
+                <div style={{ minWidth: 0 }}>
+                  <div className="lb-spot-name">{club.club_name}</div>
+                  <div className="bl-mono bl-caption">{club.club_tag}</div>
+                </div>
+                <div className="lb-spot-score">
+                  <Trophy size={12} />
+                  {formatNum(club.trophies)}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="bl-card lb-table-card">
             <div className="lb-clubs-header">
               <span className="bl-caption">#</span>
               <span className="bl-caption">Club</span>
@@ -108,7 +168,7 @@ export default function ClubsClient({ allData }: { allData: RegionData[] }) {
             {paginated.map((club, i) => (
               <div
                 key={club.club_tag}
-                className="lb-clubs-row row-hover"
+                className="lb-clubs-row lb-rank-row"
                 style={{ borderBottom: i < paginated.length - 1 ? "1px solid var(--line)" : "none" }}
               >
                 <span className="bl-num" style={{ fontSize: 13, fontWeight: 500, color: "var(--ink-3)" }}>
@@ -136,7 +196,9 @@ export default function ClubsClient({ allData }: { allData: RegionData[] }) {
                 style={{ width: 30, height: 30, display: "grid", placeItems: "center", borderRadius: 8, border: "1px solid var(--line)", background: "transparent", cursor: page === 0 ? "default" : "pointer", opacity: page === 0 ? 0.3 : 1, color: "var(--ink-3)" }}>
                 <ChevronLeft size={13} />
               </button>
-              {Array.from({ length: totalPages }, (_, idx) => (
+              {getPageItems(page, totalPages).map((idx, i) => idx === "..." ? (
+                <span key={`ellipsis-${i}`} style={{ width: 30, height: 30, display: "grid", placeItems: "center", fontSize: 12, color: "var(--ink-4)" }}>…</span>
+              ) : (
                 <button key={idx} onClick={() => setPage(idx)}
                   style={{ width: 30, height: 30, fontSize: 12, fontWeight: 600, borderRadius: 8, border: idx === page ? "none" : "1px solid var(--line)", background: idx === page ? "var(--accent)" : "transparent", color: idx === page ? "#0A0A0B" : "var(--ink-3)", cursor: "pointer", fontFamily: "inherit" }}>
                   {idx + 1}

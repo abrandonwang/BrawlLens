@@ -73,6 +73,15 @@ function formatBrawlerName(name: string) {
   return name.split(" ").map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(" ")
 }
 
+function normalizeMapName(name: string) {
+  return name
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, "")
+}
+
 type SortKey = "winRate" | "wins" | "picks"
 
 export default function MapsPageClient() {
@@ -92,22 +101,38 @@ export default function MapsPageClient() {
   const [minPicks, setMinPicks] = useState(10)
   const [sortBy, setSortBy] = useState<SortKey>("picks")
 
-  const updateScrollState = useCallback(() => {
+  const updateScrollState = useCallback((resetStart = false) => {
     const el = filtersRef.current
     if (!el) return
+    if (resetStart) {
+      el.scrollLeft = 0
+    }
     setCanScrollLeft(el.scrollLeft > 0)
     setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 1)
   }, [])
 
   useEffect(() => {
-    updateScrollState()
     const el = filtersRef.current
     if (!el) return
-    el.addEventListener("scroll", updateScrollState)
-    window.addEventListener("resize", updateScrollState)
+    let frame = 0
+    const refresh = (resetStart = false) => {
+      cancelAnimationFrame(frame)
+      frame = requestAnimationFrame(() => updateScrollState(resetStart))
+    }
+    const refreshFromStart = () => refresh(true)
+    const onScroll = () => updateScrollState()
+    const observer = new ResizeObserver(refreshFromStart)
+
+    refreshFromStart()
+    observer.observe(el)
+    if (el.firstElementChild) observer.observe(el.firstElementChild)
+    el.addEventListener("scroll", onScroll)
+    window.addEventListener("resize", refreshFromStart)
     return () => {
-      el.removeEventListener("scroll", updateScrollState)
-      window.removeEventListener("resize", updateScrollState)
+      cancelAnimationFrame(frame)
+      observer.disconnect()
+      el.removeEventListener("scroll", onScroll)
+      window.removeEventListener("resize", refreshFromStart)
     }
   }, [modes, updateScrollState])
 
@@ -150,7 +175,10 @@ export default function MapsPageClient() {
     fetch("https://api.brawlify.com/v1/maps")
       .then(r => r.json())
       .then(d => {
-        const found = (d.list || []).find((m: { name: string; imageUrl: string }) => m.name === openName)
+        const normalizedOpenName = normalizeMapName(openName)
+        const found = (d.list || []).find((m: { name: string; imageUrl: string }) => (
+          m.name === openName || normalizeMapName(m.name) === normalizedOpenName
+        ))
         handleSelectMap({ name: openName, imageUrl: found?.imageUrl, mode, isLive: false })
       })
       .catch(() => handleSelectMap({ name: openName, mode, isLive: false }))
@@ -182,38 +210,58 @@ export default function MapsPageClient() {
   }, [mapBrawlers, brawlerSearch, minPicks, sortBy])
 
   const modeColor = selectedMap?.mode ? MODE_CONFIG[selectedMap.mode]?.color : undefined
+  const totalMaps = useMemo(() => {
+    const names = new Set<string>()
+    modes.forEach(mode => mode.maps.forEach(map => names.add(map.name)))
+    return names.size
+  }, [modes])
 
   return (
     <>
-      <div className="page-layout">
+      <div className="mx-auto w-full max-w-[1440px] px-[clamp(16px,3vw,40px)] pt-10 pb-20 max-md:px-4 max-md:pt-6 max-md:pb-[60px] max-[480px]:pt-5 max-[480px]:pb-12">
+        <div className="mb-[18px] flex items-end justify-between gap-[18px] max-md:flex-col max-md:items-start">
+          <div className="min-w-0">
+            <h1 className="m-0 text-[clamp(28px,4vw,40px)] leading-none font-extrabold tracking-normal text-[var(--ink)]">Maps</h1>
+            <p className="mt-2 mb-0 max-w-[560px] text-[13px] leading-normal text-[var(--ink-3)]">Scan live maps and open matchup data for the brawlers performing best on each layout.</p>
+          </div>
+          <div className="flex flex-wrap justify-end gap-2 max-md:justify-start">
+            <span className="inline-flex min-h-[30px] items-center whitespace-nowrap rounded-full border border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_84%,transparent)] px-3 text-[11.5px] font-semibold text-[var(--ink-2)]">{loading ? "Loading maps" : `${totalMaps} maps`}</span>
+            <span className="inline-flex min-h-[30px] items-center whitespace-nowrap rounded-full border border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_84%,transparent)] px-3 text-[11.5px] font-semibold text-[var(--ink-2)]">{selectedMode ? getModeName(selectedMode) : "All modes"}</span>
+          </div>
+        </div>
 
-        <div className="roster-controls">
-          <div className="bl-input roster-search">
-            <Search size={13} style={{ color: "var(--ink-4)", flexShrink: 0 }} />
-            <input value={mapSearch} onChange={e => setMapSearch(e.target.value)} placeholder="Search maps" />
+        <div className="mb-8 flex w-full items-center justify-start gap-2.5 max-md:flex-col max-md:items-stretch max-md:gap-2">
+          <div className="flex h-10 w-[200px] shrink-0 items-center gap-2.5 rounded-[10px] border border-[var(--line)] bg-[var(--panel)] px-3.5 text-[var(--ink)] transition-colors focus-within:border-[var(--line-2)] max-md:w-full">
+            <Search size={13} className="shrink-0 text-[var(--ink-4)]" />
+            <input
+              value={mapSearch}
+              onChange={e => setMapSearch(e.target.value)}
+              placeholder="Search maps"
+              className="w-full border-0 bg-transparent font-inherit text-[13px] text-[var(--ink)] outline-none placeholder:text-[var(--ink-4)]"
+            />
           </div>
 
-          <div className="roster-filters-wrap">
+          <div className="relative ml-auto flex min-w-0 flex-1 justify-end max-w-[calc(100%-220px)] max-md:ml-0 max-md:w-full max-md:max-w-none max-md:justify-start max-md:self-stretch">
             {canScrollLeft && (
-              <button onClick={() => scrollFilters("left")} style={{ position: "absolute", left: 0, top: 0, bottom: 0, zIndex: 1, display: "flex", alignItems: "center", background: "linear-gradient(to right, var(--bg) 50%, transparent)", border: "none", cursor: "pointer", color: "var(--ink-3)", padding: "0 14px 0 2px" }}>
+              <button onClick={() => scrollFilters("left")} className="absolute top-0 bottom-0 left-0 z-10 flex cursor-pointer items-center border-0 bg-[linear-gradient(to_right,var(--bg)_50%,transparent)] py-0 pr-3.5 pl-0.5 text-[var(--ink-3)]">
                 <ChevronLeft size={14} />
               </button>
             )}
-            <div className="roster-filters" ref={filtersRef}>
-              <div className="bl-seg" style={{ flexShrink: 0 }}>
-                <button onClick={() => setSelectedMode(null)} className={!selectedMode ? "on" : ""}>
+            <div className="flex w-full max-w-full flex-nowrap justify-start overflow-x-auto md:w-auto md:justify-end [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" ref={filtersRef}>
+              <div className="inline-flex shrink-0 gap-0.5 rounded-full border border-[var(--line)] bg-[var(--panel)] p-[3px]">
+                <button
+                  onClick={() => setSelectedMode(null)}
+                  className={`relative shrink-0 cursor-pointer whitespace-nowrap rounded-full border-0 px-[13px] py-[5px] text-[11.5px] font-medium transition-all ${!selectedMode ? "bg-[var(--panel-2)] text-[var(--ink)]" : "bg-transparent text-[var(--ink-3)] hover:bg-[color-mix(in_srgb,var(--panel-2)_70%,transparent)] hover:text-[var(--ink)]"}`}
+                >
                   All Modes
                 </button>
                 {modes.map(m => {
-                  const color = MODE_CONFIG[m.mode]?.color
                   return (
                     <button
                       key={m.mode}
                       onClick={() => setSelectedMode(selectedMode === m.mode ? null : m.mode)}
-                      className={selectedMode === m.mode ? "on" : ""}
-                      style={{ display: "flex", alignItems: "center", gap: 5 }}
+                      className={`relative shrink-0 cursor-pointer whitespace-nowrap rounded-full border-0 px-[13px] py-[5px] text-[11.5px] font-medium transition-all ${selectedMode === m.mode ? "bg-[var(--panel-2)] text-[var(--ink)]" : "bg-transparent text-[var(--ink-3)] hover:bg-[color-mix(in_srgb,var(--panel-2)_70%,transparent)] hover:text-[var(--ink)]"}`}
                     >
-                      {color && <span style={{ width: 6, height: 6, borderRadius: "50%", background: color, flexShrink: 0, display: "inline-block" }} />}
                       {getModeName(m.mode)}
                     </button>
                   )
@@ -221,7 +269,7 @@ export default function MapsPageClient() {
               </div>
             </div>
             {canScrollRight && (
-              <button onClick={() => scrollFilters("right")} style={{ position: "absolute", right: 0, top: 0, bottom: 0, zIndex: 1, display: "flex", alignItems: "center", background: "linear-gradient(to left, var(--bg) 50%, transparent)", border: "none", cursor: "pointer", color: "var(--ink-3)", padding: "0 2px 0 14px" }}>
+              <button onClick={() => scrollFilters("right")} className="absolute top-0 right-0 bottom-0 z-10 flex cursor-pointer items-center border-0 bg-[linear-gradient(to_left,var(--bg)_50%,transparent)] py-0 pr-0.5 pl-3.5 text-[var(--ink-3)]">
                 <ChevronRight size={14} />
               </button>
             )}
@@ -307,7 +355,7 @@ export default function MapsPageClient() {
                 </div>
               ) : (
                 <>
-                  <div className="map-brawler-row" style={{ display: "grid", gridTemplateColumns: "36px 1fr 120px 60px 60px 36px", gap: 12, padding: "10px 20px", background: "var(--panel-2)", borderBottom: "1px solid var(--line)" }}>
+                  <div className="map-brawler-row map-brawler-header" style={{ display: "grid", gridTemplateColumns: "36px 1fr 120px 60px 60px 36px", gap: 12, padding: "10px 20px", background: "var(--panel-2)", borderBottom: "1px solid var(--line)" }}>
                     <span />
                     <span className="bl-caption" style={{ letterSpacing: "0.12em", textTransform: "uppercase" }}>Brawler</span>
                     <span className="bl-caption" style={{ letterSpacing: "0.12em", textTransform: "uppercase" }}>Win Rate</span>

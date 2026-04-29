@@ -30,6 +30,7 @@ export default function NavBar() {
   const [menuClosing, setMenuClosing] = useState(false);
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
+  const previousPathnameRef = useRef(pathname);
 
   const closeMenu = useCallback(() => {
     if (!isMenuOpen) return;
@@ -51,7 +52,12 @@ export default function NavBar() {
     return () => { document.body.style.overflow = ""; };
   }, [isMenuOpen, menuClosing]);
 
-  useEffect(() => { closeMenu(); }, [pathname, closeMenu]);
+  useEffect(() => {
+    if (previousPathnameRef.current !== pathname) {
+      previousPathnameRef.current = pathname;
+      closeMenu();
+    }
+  }, [pathname, closeMenu]);
 
   useEffect(() => {
     if (isSearchOpen) {

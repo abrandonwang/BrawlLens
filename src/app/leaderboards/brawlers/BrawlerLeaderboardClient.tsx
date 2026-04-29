@@ -29,6 +29,18 @@ const CATEGORIES = [
   { label: "Brawlers", href: "/leaderboards/brawlers" },
 ]
 
+function getPageItems(current: number, total: number): (number | "...")[] {
+  const pages: (number | "...")[] = []
+  for (let i = 0; i < total; i++) {
+    if (i === 0 || i === total - 1 || Math.abs(i - current) <= 1) {
+      pages.push(i)
+    } else if (pages[pages.length - 1] !== "...") {
+      pages.push("...")
+    }
+  }
+  return pages
+}
+
 function formatNum(n: number) {
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + "M"
   if (n >= 1_000) return (n / 1_000).toFixed(1) + "K"
@@ -79,7 +91,18 @@ export default function BrawlerLeaderboardClient({
 
   return (
     <div className="lb-page">
-      <div className="lb-top-controls">
+      <div className="page-head">
+        <div className="page-head-main">
+          <h1 className="page-title">Brawler Leaderboards</h1>
+          <p className="page-subtitle">Pick a brawler to see the highest-ranked players using that brawler worldwide.</p>
+        </div>
+        <div className="page-head-stats">
+          <span className="page-head-chip">{activeBrawler?.name ?? "Select brawler"}</span>
+          <span className="page-head-chip">{data.length.toLocaleString()} players</span>
+        </div>
+      </div>
+
+      <div className="app-toolbar lb-top-controls">
         <div className="bl-seg lb-cat-seg">
           {CATEGORIES.map(c => (
             <Link
@@ -98,99 +121,133 @@ export default function BrawlerLeaderboardClient({
           ))}
         </div>
         <div className="lb-top-right">
-        <div style={{ position: "relative", width: 200, flexShrink: 0 }}>
-          <div className="bl-input" style={{ width: "100%" }}>
-            <Search size={13} style={{ color: "var(--ink-4)", flexShrink: 0 }} />
-            <input
-              ref={inputRef}
-              value={search}
-              onChange={e => { setSearch(e.target.value); setOpen(true) }}
-              onFocus={() => setOpen(true)}
-              placeholder="Search brawler…"
-            />
-            {activeBrawler && (
-              <img
-                src={`https://cdn.brawlify.com/brawlers/borderless/${activeBrawler.id}.png`}
-                alt=""
-                style={{ width: 20, height: 20, objectFit: "contain", flexShrink: 0 }}
+          <div className="lb-brawler-picker">
+            <div className="bl-input" style={{ width: "100%" }}>
+              <Search size={13} style={{ color: "var(--ink-4)", flexShrink: 0 }} />
+              <input
+                ref={inputRef}
+                value={search}
+                onChange={e => { setSearch(e.target.value); setOpen(true) }}
+                onFocus={() => setOpen(true)}
+                placeholder="Search brawler…"
               />
+              {activeBrawler && (
+                <img
+                  src={`https://cdn.brawlify.com/brawlers/borderless/${activeBrawler.id}.png`}
+                  alt=""
+                  style={{ width: 20, height: 20, objectFit: "contain", flexShrink: 0 }}
+                />
+              )}
+            </div>
+
+            {open && filtered.length > 0 && (
+              <div
+                ref={dropdownRef}
+                style={{
+                  position: "absolute",
+                  top: "calc(100% + 6px)",
+                  left: 0,
+                  right: 0,
+                  background: "var(--panel)",
+                  border: "1px solid var(--line-2)",
+                  borderRadius: 12,
+                  overflow: "hidden",
+                  zIndex: 50,
+                  maxHeight: 280,
+                  overflowY: "auto",
+                  boxShadow: "0 18px 40px -20px rgba(0,0,0,0.45)",
+                }}
+              >
+                {filtered.map(b => (
+                  <button
+                    key={b.id}
+                    onMouseDown={() => select(b)}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                      width: "100%",
+                      padding: "9px 12px",
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      textAlign: "left",
+                      borderBottom: "1px solid var(--line)",
+                    }}
+                    className="row-hover"
+                  >
+                    <img
+                      src={`https://cdn.brawlify.com/brawlers/borderless/${b.id}.png`}
+                      alt={b.name}
+                      style={{ width: 26, height: 26, objectFit: "contain", flexShrink: 0 }}
+                    />
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: 12.5, fontWeight: 600, color: "var(--ink)", letterSpacing: "-0.01em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{b.name}</div>
+                      <div className="bl-caption" style={{ color: b.rarity.color }}>{b.rarity.name}</div>
+                    </div>
+                  </button>
+                ))}
+              </div>
             )}
           </div>
-
-          {open && filtered.length > 0 && (
-            <div
-              ref={dropdownRef}
-              style={{
-                position: "absolute",
-                top: "calc(100% + 6px)",
-                left: 0,
-                right: 0,
-                background: "var(--panel)",
-                border: "1px solid var(--line-2)",
-                borderRadius: 12,
-                overflow: "hidden",
-                zIndex: 50,
-                maxHeight: 240,
-                overflowY: "auto",
-                boxShadow: "0 8px 24px -8px rgba(0,0,0,0.3)",
-              }}
-            >
-              {filtered.map(b => (
-                <button
-                  key={b.id}
-                  onMouseDown={() => select(b)}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 10,
-                    width: "100%",
-                    padding: "8px 12px",
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    textAlign: "left",
-                    borderBottom: "1px solid var(--line)",
-                  }}
-                  className="row-hover"
-                >
-                  <img
-                    src={`https://cdn.brawlify.com/brawlers/borderless/${b.id}.png`}
-                    alt={b.name}
-                    style={{ width: 24, height: 24, objectFit: "contain", flexShrink: 0 }}
-                  />
-                  <div>
-                    <div style={{ fontSize: 12.5, fontWeight: 600, color: "var(--ink)", letterSpacing: "-0.01em" }}>{b.name}</div>
-                    <div className="bl-caption" style={{ color: b.rarity.color }}>{b.rarity.name}</div>
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
         </div>
       </div>
-
-      <div style={{ height: 1, background: "var(--line)", marginBottom: 28 }} />
 
       {data.length === 0 ? (
         <p className="bl-caption" style={{ padding: "48px 0", textAlign: "center" }}>No data available.</p>
       ) : (
         <>
-          {activeBrawler && (
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
-              <img
-                src={`https://cdn.brawlify.com/brawlers/borderless/${activeBrawler.id}.png`}
-                alt={activeBrawler.name}
-                style={{ width: 32, height: 32, objectFit: "contain" }}
-              />
-              <div>
-                <div style={{ fontSize: 14, fontWeight: 650, color: "var(--ink)", letterSpacing: "-0.02em" }}>{activeBrawler.name}</div>
-                <div className="bl-caption" style={{ color: "var(--ink-4)" }}>Top {data.length} global players</div>
+          <div className="lb-board-intro">
+            <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
+              {activeBrawler && (
+                <img
+                  src={`https://cdn.brawlify.com/brawlers/borderless/${activeBrawler.id}.png`}
+                  alt=""
+                  style={{ width: 42, height: 42, objectFit: "contain", flexShrink: 0 }}
+                />
+              )}
+              <div style={{ minWidth: 0 }}>
+                <p className="bl-caption" style={{ letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 4 }}>
+                  Brawler Rankings
+                </p>
+                <h2>{activeBrawler?.name ?? "Select a brawler"}</h2>
               </div>
+            </div>
+            <div className="lb-metrics">
+              <div>
+                <span className="bl-caption">Players</span>
+                <strong>{data.length.toLocaleString()}</strong>
+              </div>
+              <div>
+                <span className="bl-caption">Leader</span>
+                <strong>{data[0]?.player_name ?? "—"}</strong>
+              </div>
+              <div>
+                <span className="bl-caption">Page</span>
+                <strong>{page + 1}/{Math.max(totalPages, 1)}</strong>
+              </div>
+            </div>
+          </div>
+
+          {activeBrawler && (
+            <div className="lb-spotlight">
+              {data.slice(0, 3).map(player => (
+                <Link key={player.player_tag} href={`/player/${player.player_tag.replace("#", "")}`} className="lb-spot-card">
+                  <span className="lb-rank-badge">#{player.rank}</span>
+                  <div style={{ minWidth: 0 }}>
+                    <div className="lb-spot-name">{player.player_name}</div>
+                    <div className="bl-mono bl-caption">{player.player_tag}</div>
+                  </div>
+                  <div className="lb-spot-score">
+                    <Trophy size={12} />
+                    {formatNum(player.trophies)}
+                  </div>
+                </Link>
+              ))}
             </div>
           )}
 
-          <div className="bl-card" style={{ borderRadius: 14, overflow: "hidden", padding: 0 }}>
+          <div className="bl-card lb-table-card">
             <div className="lb-table-header">
               <span className="bl-caption lb-col-rank">#</span>
               <span className="bl-caption">Player</span>
@@ -203,7 +260,7 @@ export default function BrawlerLeaderboardClient({
               <Link
                 key={p.player_tag}
                 href={`/player/${p.player_tag.replace("#", "")}`}
-                className="lb-table-row row-hover"
+                className="lb-table-row lb-rank-row"
                 style={{ borderBottom: i < paginated.length - 1 ? "1px solid var(--line)" : "none", textDecoration: "none" }}
               >
                 <span className="bl-num lb-col-rank" style={{ fontSize: 13, fontWeight: 500, color: "var(--ink-3)" }}>
@@ -241,7 +298,9 @@ export default function BrawlerLeaderboardClient({
                 <ChevronLeft size={13} />
               </button>
 
-              {Array.from({ length: totalPages }, (_, idx) => (
+              {getPageItems(page, totalPages).map((idx, i) => idx === "..." ? (
+                <span key={`ellipsis-${i}`} style={{ width: 30, height: 30, display: "grid", placeItems: "center", fontSize: 12, color: "var(--ink-4)" }}>…</span>
+              ) : (
                 <button
                   key={idx}
                   onClick={() => setPage(idx)}

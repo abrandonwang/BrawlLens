@@ -34,6 +34,18 @@ const CATEGORIES = [
   { label: "Brawlers",   href: "/leaderboards/brawlers" },
 ]
 
+function getPageItems(current: number, total: number): (number | "...")[] {
+  const pages: (number | "...")[] = []
+  for (let i = 0; i < total; i++) {
+    if (i === 0 || i === total - 1 || Math.abs(i - current) <= 1) {
+      pages.push(i)
+    } else if (pages[pages.length - 1] !== "...") {
+      pages.push("...")
+    }
+  }
+  return pages
+}
+
 export default function LeaderboardsClient({ allData }: { allData: RegionData[]; updatedAt?: string | null }) {
   const pathname = usePathname()
   const [activeRegion, setActiveRegion] = useState<string>("global")
@@ -59,7 +71,18 @@ export default function LeaderboardsClient({ allData }: { allData: RegionData[];
 
   return (
     <div className="lb-page">
-      <div className="lb-top-controls">
+      <div className="page-head">
+        <div className="page-head-main">
+          <h1 className="page-title">Leaderboards</h1>
+          <p className="page-subtitle">Compare top players by region and jump into profile details from the table.</p>
+        </div>
+        <div className="page-head-stats">
+          <span className="page-head-chip">{regionData?.label ?? activeRegion}</span>
+          <span className="page-head-chip">{players.length.toLocaleString()} players</span>
+        </div>
+      </div>
+
+      <div className="app-toolbar lb-top-controls">
         <div className="bl-seg lb-cat-seg">
           {CATEGORIES.map(c => (
             <Link
@@ -90,13 +113,50 @@ export default function LeaderboardsClient({ allData }: { allData: RegionData[];
         </div>
       </div>
 
-      <div style={{ height: 1, background: "var(--line)", marginBottom: 28 }} />
-
       {players.length === 0 ? (
         <p className="bl-caption" style={{ padding: "48px 0", textAlign: "center" }}>No data yet.</p>
       ) : (
         <>
-          <div className="bl-card" style={{ borderRadius: 14, overflow: "hidden", padding: 0 }}>
+          <div className="lb-board-intro">
+            <div>
+              <p className="bl-caption" style={{ letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 4 }}>
+                {regionData?.label ?? activeRegion} Players
+              </p>
+              <h2>{players.length.toLocaleString()} ranked players</h2>
+            </div>
+            <div className="lb-metrics">
+              <div>
+                <span className="bl-caption">Leader</span>
+                <strong>{players[0]?.player_name ?? "—"}</strong>
+              </div>
+              <div>
+                <span className="bl-caption">Top trophies</span>
+                <strong>{players[0] ? formatNum(players[0].trophies) : "—"}</strong>
+              </div>
+              <div>
+                <span className="bl-caption">Page</span>
+                <strong>{page + 1}/{Math.max(totalPages, 1)}</strong>
+              </div>
+            </div>
+          </div>
+
+          <div className="lb-spotlight">
+            {players.slice(0, 3).map(player => (
+              <Link key={player.player_tag} href={`/player/${player.player_tag.replace("#", "")}`} className="lb-spot-card">
+                <span className="lb-rank-badge">#{player.rank}</span>
+                <div style={{ minWidth: 0 }}>
+                  <div className="lb-spot-name">{player.player_name}</div>
+                  <div className="bl-mono bl-caption">{player.player_tag}</div>
+                </div>
+                <div className="lb-spot-score">
+                  <Trophy size={12} />
+                  {formatNum(player.trophies)}
+                </div>
+              </Link>
+            ))}
+          </div>
+
+          <div className="bl-card lb-table-card">
             <div className="lb-table-header">
               <span className="bl-caption lb-col-rank">#</span>
               <span className="bl-caption">Player</span>
@@ -109,7 +169,7 @@ export default function LeaderboardsClient({ allData }: { allData: RegionData[];
               <Link
                 key={p.player_tag}
                 href={`/player/${p.player_tag.replace("#", "")}`}
-                className="lb-table-row row-hover"
+                className="lb-table-row lb-rank-row"
                 style={{ borderBottom: i < paginated.length - 1 ? "1px solid var(--line)" : "none", textDecoration: "none" }}
               >
                 <span className="bl-num lb-col-rank" style={{ fontSize: 13, fontWeight: 500, color: "var(--ink-3)" }}>
@@ -147,7 +207,9 @@ export default function LeaderboardsClient({ allData }: { allData: RegionData[];
                 <ChevronLeft size={13} />
               </button>
 
-              {Array.from({ length: totalPages }, (_, idx) => (
+              {getPageItems(page, totalPages).map((idx, i) => idx === "..." ? (
+                <span key={`ellipsis-${i}`} style={{ width: 30, height: 30, display: "grid", placeItems: "center", fontSize: 12, color: "var(--ink-4)" }}>…</span>
+              ) : (
                 <button
                   key={idx}
                   onClick={() => setPage(idx)}
@@ -173,12 +235,6 @@ export default function LeaderboardsClient({ allData }: { allData: RegionData[];
             </div>
           )}
 
-          <div style={{ marginTop: 48, border: "1px solid var(--line)", borderRadius: 14, background: "var(--panel-2)", padding: "24px 28px", maxWidth: 560, margin: "48px auto 0", textAlign: "center" }}>
-            <p className="bl-eyebrow" style={{ marginBottom: 10 }}>About Player Rankings</p>
-            <p className="bl-body" style={{ color: "var(--ink-3)", lineHeight: 1.65 }}>
-              Player rankings reflect the top 200 trophy earners across six regions: Global, United States, Korea, Brazil, Germany, and Japan. Rankings update every 30 minutes using real-time data.
-            </p>
-          </div>
         </>
       )}
     </div>

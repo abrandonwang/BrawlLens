@@ -203,6 +203,7 @@ async function executeTool(name: string, input: Record<string, string>): Promise
       if (res.status === 404) return `No player found with tag #${tag}.`
       if (!res.ok) return `Error fetching player data (status ${res.status}).`
       const p = await res.json()
+      const threeVThreeWins = p["3vs3Victories"] ?? p.threesVictories ?? p.threesvictories ?? 0
       const top = [...(p.brawlers ?? [])]
         .sort((a: { trophies: number }, b: { trophies: number }) => b.trophies - a.trophies)
         .slice(0, 5)
@@ -212,7 +213,7 @@ async function executeTool(name: string, input: Record<string, string>): Promise
       return `Player: ${p.name} (#${tag})
 Trophies: ${p.trophies} (Best: ${p.highestTrophies})
 Club: ${(p.club as { name?: string })?.name ?? "None"}
-3v3 Wins: ${p.threesvictories ?? 0} | Solo Wins: ${p.soloVictories ?? 0} | Duo Wins: ${p.duoVictories ?? 0}
+3v3 Wins: ${threeVThreeWins} | Solo Wins: ${p.soloVictories ?? 0} | Duo Wins: ${p.duoVictories ?? 0}
 Top brawlers:
 ${top}`
     } catch {

@@ -44,7 +44,9 @@ export interface Player {
     trophies: number;
     highestTrophies: number;
     expLevel: number;
-    threesvictories: number;
+    "3vs3Victories"?: number;
+    threesvictories?: number;
+    threesVictories?: number;
     soloVictories: number;
     duoVictories: number;
     brawlers: PlayerBrawler[];

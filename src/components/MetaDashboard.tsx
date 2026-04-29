@@ -28,6 +28,8 @@ interface Props {
   onSelect: (map: SelectedMapInfo) => void;
 }
 
+type MapOrientation = "portrait" | "landscape";
+
 const MODE_CONFIG: Record<string, { label: string; color: string }> = {
   brawlBall:    { label: "Brawl Ball",    color: "#8CA0EB" },
   gemGrab:      { label: "Gem Grab",      color: "#9B59B6" },
@@ -58,6 +60,78 @@ function getModeForMap(modes: ModeInfo[], mapName: string): string | null {
   return null;
 }
 
+function normalizeMapName(name: string) {
+  return name
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, "");
+}
+
+const WIDE_MODE_HINTS = new Set(["knockout", "bounty", "siege"]);
+const WIDE_MAP_NAME_HINTS = [
+  "arena",
+  "beach",
+  "belle",
+  "canyon",
+  "crescendo",
+  "dream",
+  "excel",
+  "flow",
+  "hideout",
+  "lane",
+  "mirage",
+  "out",
+  "pass",
+  "prairie",
+  "shooting",
+  "slayers",
+  "snake",
+  "split",
+  "star",
+  "temple",
+  "yard",
+];
+
+function isWideMap(name: string, mode: string | null) {
+  const normalized = normalizeMapName(name);
+  return Boolean(
+    mode && WIDE_MODE_HINTS.has(mode) ||
+    WIDE_MAP_NAME_HINTS.some(hint => normalized.includes(hint))
+  );
+}
+
+function MapPreview({ imageUrl, name, mode, modeColor }: { imageUrl?: string; name: string; mode: string | null; modeColor?: string }) {
+  const [orientation, setOrientation] = useState<MapOrientation>(isWideMap(name, mode) ? "landscape" : "portrait");
+  const [failed, setFailed] = useState(false);
+
+  if (!imageUrl || failed) {
+    return (
+      <div className="grid aspect-[4/3] w-full place-items-center gap-2.5 bg-[radial-gradient(circle_at_50%_50%,color-mix(in_srgb,var(--line-2)_55%,transparent),transparent_68%),var(--panel-2)] p-[18px] text-center text-[var(--ink-4)]">
+        <div className="size-10 rounded-lg opacity-30" style={{ background: modeColor || "var(--line)" }} />
+        <span className="max-w-full truncate text-[11px] font-semibold">{name}</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`grid w-full place-items-center bg-[radial-gradient(circle_at_50%_50%,color-mix(in_srgb,var(--line-2)_55%,transparent),transparent_68%),var(--panel-2)] ${orientation === "landscape" ? "aspect-[2.25/1]" : "aspect-[3/4]"}`}>
+      <img
+        src={imageUrl}
+        alt={name}
+        className={`block size-full transition-[transform,filter] duration-200 ${orientation === "landscape" ? "object-cover" : "object-contain"}`}
+        loading="lazy"
+        onLoad={(event) => {
+          const img = event.currentTarget;
+          if (img.naturalWidth > img.naturalHeight) setOrientation("landscape");
+        }}
+        onError={() => setFailed(true)}
+      />
+    </div>
+  );
+}
+
 export default function MetaDashboard({ modes, loading, selectedMode, mapSearch, onSelect }: Props) {
   const [mapImageLookup, setMapImageLookup] = useState<Map<string, string>>(new Map());
   const [rotationMapNames, setRotationMapNames] = useState<Set<string>>(new Set());
@@ -77,6 +151,7 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch,
       const lookup = new Map<string, string>();
       for (const map of mapsData.list || []) {
         lookup.set(map.name, map.imageUrl);
+        lookup.set(normalizeMapName(map.name), map.imageUrl);
       }
       setMapImageLookup(lookup);
     });
@@ -114,30 +189,52 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch,
   const MAP_PAGE_SIZE = 12;
   const mapTotalPages = Math.ceil(displayedMaps.length / MAP_PAGE_SIZE);
   const paginatedMaps = displayedMaps.slice(mapPage * MAP_PAGE_SIZE, (mapPage + 1) * MAP_PAGE_SIZE);
+  const liveCount = displayedMaps.filter(map => rotationMapNames.has(map.name)).length;
 
   if (loading) {
     return (
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "80px 0" }}>
-        <div style={{ width: 20, height: 20, border: "2px solid var(--line-2)", borderTopColor: "var(--accent)", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <div className="flex items-center justify-center py-20">
+        <div className="size-5 animate-spin rounded-full border-2 border-[var(--line-2)] border-t-[var(--accent)]" />
       </div>
     );
   }
 
   if (modes.length === 0) {
     return (
-      <div style={{ textAlign: "center", padding: "80px 0" }}>
-        <p className="bl-h3" style={{ color: "var(--ink-2)", marginBottom: 8 }}>No battle data yet</p>
-        <p className="bl-body" style={{ color: "var(--ink-4)" }}>The collector is still running. Check back soon.</p>
+      <div className="py-20 text-center">
+        <p className="mb-2 text-[15px] font-semibold leading-snug text-[var(--ink-2)]">No battle data yet</p>
+        <p className="text-[13.5px] leading-relaxed text-[var(--ink-4)]">The collector is still running. Check back soon.</p>
+      </div>
+    );
+  }
+
+  if (displayedMaps.length === 0) {
+    return (
+      <div className="rounded-lg border border-[var(--line)] bg-[var(--panel)] px-5 py-[42px] text-center shadow-[var(--shadow-lift)]">
+        <p className="mb-1.5 text-[15px] font-semibold leading-snug text-[var(--ink)]">No maps found</p>
+        <p className="m-0 text-[13.5px] leading-relaxed text-[var(--ink-3)]">Try a different search or switch back to all modes.</p>
       </div>
     );
   }
 
   return (
-    <div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 12, marginBottom: 24 }}>
+    <div className="relative pt-1">
+      <div className="mb-3.5 flex items-end justify-between gap-4 rounded-lg bg-[color-mix(in_srgb,var(--panel)_72%,transparent)] px-3.5 py-3 max-[520px]:flex-col max-[520px]:items-start">
+        <div>
+          <div className="mb-1 text-[10px] font-bold tracking-[0.08em] text-[var(--ink-4)] uppercase">{selectedMode === null ? "All Maps" : MODE_CONFIG[selectedMode]?.label ?? selectedMode}</div>
+          <div className="text-[17px] leading-tight font-bold text-[var(--ink)]">
+            {displayedMaps.length.toLocaleString()} {displayedMaps.length === 1 ? "map" : "maps"}
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center justify-end gap-2 max-[520px]:justify-start">
+          <span className="inline-flex min-h-[26px] items-center whitespace-nowrap rounded-full border border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_80%,transparent)] px-2.5 text-[10.5px] font-semibold text-[var(--ink-3)]">{liveCount.toLocaleString()} live</span>
+          <span className="inline-flex min-h-[26px] items-center whitespace-nowrap rounded-full border border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_80%,transparent)] px-2.5 text-[10.5px] font-semibold text-[var(--ink-3)]">Page {mapPage + 1} of {mapTotalPages}</span>
+        </div>
+      </div>
+
+      <div className="mb-6 grid grid-cols-[repeat(auto-fill,minmax(190px,1fr))] items-center gap-3.5 max-[520px]:grid-cols-2 max-[520px]:gap-2.5">
         {paginatedMaps.map(map => {
-          const imageUrl = mapImageLookup.get(map.name);
+          const imageUrl = mapImageLookup.get(map.name) ?? mapImageLookup.get(normalizeMapName(map.name));
           const isLive = rotationMapNames.has(map.name);
           const mode = getModeForMap(modes, map.name);
           const modeColor = mode ? MODE_CONFIG[mode]?.color : undefined;
@@ -146,36 +243,23 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch,
             <button
               key={map.name}
               onClick={() => onSelect({ name: map.name, imageUrl, mode, isLive })}
-              className="bl-card"
-              style={{ padding: 0, display: "block", width: "100%", cursor: "pointer", textAlign: "left" }}
+              className="group relative block w-full cursor-pointer overflow-hidden rounded-lg border border-[var(--line)] bg-[var(--panel)] p-0 text-left shadow-[var(--shadow-lift)] transition-[transform,border-color,box-shadow,background] duration-200 hover:-translate-y-0.5 hover:border-[var(--line-2)] hover:bg-[color-mix(in_srgb,var(--panel)_70%,var(--hover-bg))] hover:shadow-[0_22px_42px_-30px_rgba(0,0,0,0.75)] active:-translate-y-px"
             >
-              <div style={{ position: "relative", background: "var(--panel-2)", borderRadius: "var(--r-lg) var(--r-lg) 0 0", overflow: "hidden" }}>
-                {imageUrl ? (
-                  <img
-                    src={imageUrl}
-                    alt={map.name}
-                    style={{ width: "100%", height: "auto", display: "block" }}
-                    loading="lazy"
-                  />
-                ) : (
-                  <div style={{ aspectRatio: "3/4", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <div style={{ width: 40, height: 40, borderRadius: 8, background: modeColor || "var(--line)", opacity: 0.3 }} />
-                  </div>
-                )}
-
+              <div className="relative overflow-hidden rounded-t-lg bg-[radial-gradient(circle_at_50%_46%,color-mix(in_srgb,var(--line-2)_42%,transparent),transparent_70%),var(--panel-2)]">
+                <MapPreview imageUrl={imageUrl} name={map.name} mode={mode} modeColor={modeColor} />
                 {modeColor && (
                   <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, ${modeColor}, transparent)`, opacity: 0.6 }} />
                 )}
               </div>
 
-              <div style={{ padding: "10px 12px 12px", borderTop: "1px solid var(--line)" }}>
-                <div style={{ fontSize: 12.5, fontWeight: 600, color: isLive ? "#49D47E" : "var(--ink)", letterSpacing: "-0.01em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 3 }}>
+              <div className="border-t border-[var(--line)] px-3 pt-2.5 pb-3">
+                <div className={`mb-1 truncate text-[12.5px] font-semibold ${isLive ? "text-[#49D47E]" : "text-[var(--ink)]"}`}>
                   {map.name}
                 </div>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <span className="bl-caption">{map.battles.toLocaleString()} battles</span>
+                <div className="flex items-center justify-between">
+                  <span className="text-[10.5px] leading-snug tracking-[0.01em] text-[var(--ink-3)]">{map.battles.toLocaleString()} battles</span>
                   {mode && modeColor && (
-                    <span style={{ fontSize: 9.5, fontWeight: 600, color: modeColor, opacity: 0.85, letterSpacing: "0.04em", textTransform: "uppercase" }}>
+                    <span className="text-[9.5px] font-semibold tracking-[0.04em] uppercase opacity-85" style={{ color: modeColor }}>
                       {MODE_CONFIG[mode]?.label || mode}
                     </span>
                   )}
@@ -187,11 +271,11 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch,
       </div>
 
       {mapTotalPages > 1 && (
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 4, marginTop: 8 }}>
+        <div className="mt-0.5 flex items-center justify-center gap-1">
           <button
             onClick={() => setMapPage(p => p - 1)}
             disabled={mapPage === 0}
-            style={{ width: 30, height: 30, display: "grid", placeItems: "center", borderRadius: 8, border: "1px solid var(--line)", background: "transparent", cursor: mapPage === 0 ? "default" : "pointer", opacity: mapPage === 0 ? 0.3 : 1, color: "var(--ink-3)", transition: "all 0.14s" }}
+            className="grid size-[30px] cursor-pointer place-items-center rounded-lg border border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_72%,transparent)] text-[12px] font-semibold text-[var(--ink-3)] transition hover:-translate-y-px hover:border-[var(--line-2)] hover:bg-[var(--hover-bg)] hover:text-[var(--ink)] disabled:cursor-default disabled:opacity-30 disabled:hover:translate-y-0"
           >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
           </button>
@@ -207,21 +291,12 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch,
             }
             return pages.map((p, i) =>
               p === "..." ? (
-                <span key={`e-${i}`} style={{ width: 30, height: 30, display: "grid", placeItems: "center", fontSize: 12, color: "var(--ink-4)" }}>…</span>
+                <span key={`e-${i}`} className="grid size-[30px] place-items-center rounded-lg text-[12px] font-semibold text-[var(--ink-4)]">…</span>
               ) : (
                 <button
                   key={p}
                   onClick={() => setMapPage(p as number)}
-                  style={{
-                    width: 30, height: 30, fontSize: 12, fontWeight: 600,
-                    borderRadius: 8,
-                    border: p === mapPage ? "none" : "1px solid var(--line)",
-                    background: p === mapPage ? "var(--accent)" : "transparent",
-                    color: p === mapPage ? "#0A0A0B" : "var(--ink-3)",
-                    cursor: "pointer",
-                    transition: "all 0.14s",
-                    fontFamily: "inherit",
-                  }}
+                  className={`grid size-[30px] cursor-pointer place-items-center rounded-lg text-[12px] font-semibold transition ${p === mapPage ? "border border-transparent bg-[var(--accent)] text-[#0A0A0B]" : "border border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_72%,transparent)] text-[var(--ink-3)] hover:-translate-y-px hover:border-[var(--line-2)] hover:bg-[var(--hover-bg)] hover:text-[var(--ink)]"}`}
                 >
                   {(p as number) + 1}
                 </button>
@@ -232,7 +307,7 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch,
           <button
             onClick={() => setMapPage(p => p + 1)}
             disabled={mapPage === mapTotalPages - 1}
-            style={{ width: 30, height: 30, display: "grid", placeItems: "center", borderRadius: 8, border: "1px solid var(--line)", background: "transparent", cursor: mapPage === mapTotalPages - 1 ? "default" : "pointer", opacity: mapPage === mapTotalPages - 1 ? 0.3 : 1, color: "var(--ink-3)", transition: "all 0.14s" }}
+            className="grid size-[30px] cursor-pointer place-items-center rounded-lg border border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_72%,transparent)] text-[12px] font-semibold text-[var(--ink-3)] transition hover:-translate-y-px hover:border-[var(--line-2)] hover:bg-[var(--hover-bg)] hover:text-[var(--ink)] disabled:cursor-default disabled:opacity-30 disabled:hover:translate-y-0"
           >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
           </button>
