@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { HYPERCHARGES } from "@/data/hypercharges"
 import { BUFFIES } from "@/data/buffies"
+import { BrawlImage } from "@/components/BrawlImage"
 
 function cleanDesc(text: string) {
   return text.replace(/<![\w.]+>/g, "X")
@@ -79,7 +80,7 @@ function ItemGrid({
                 return (
                     <GlowCard key={item.id} variant={cardVariant}>
                         <div className="flex items-start gap-4 p-4">
-                            <img src={item.imageUrl} alt={item.name} className="w-12 h-12 object-contain shrink-0" />
+                            <BrawlImage src={item.imageUrl} alt={item.name} width={48} height={48} className="w-12 h-12 object-contain shrink-0" sizes="48px" />
                             <div className="min-w-0">
                                 <div className="flex items-center gap-2 mb-1">
                                     <h3 className="text-sm font-semibold text-zinc-900 dark:text-white">{item.name}</h3>
@@ -118,7 +119,7 @@ export default function BrawlerDetail({ brawler }: { brawler: Brawler }) {
                     className="w-48 h-48 rounded-lg border-2 p-4 shrink-0 flex items-center justify-center"
                     style={{ borderColor: rarityColor, backgroundColor: `${rarityColor}10` }}
                 >
-                    <img src={brawler.imageUrl2} alt={brawler.name} className="w-full h-full object-contain" />
+                    <BrawlImage src={brawler.imageUrl2} alt={brawler.name} width={160} height={160} className="w-full h-full object-contain" sizes="160px" />
                 </div>
 
                 <div className="flex-1">

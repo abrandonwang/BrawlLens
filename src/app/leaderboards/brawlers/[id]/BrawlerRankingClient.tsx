@@ -42,8 +42,8 @@ export default function BrawlerRankingClient({ data, brawlerName }: { data: Play
       <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-zinc-900 dark:text-white mb-2">{brawlerName}</h1>
       <p className="text-sm text-zinc-500 dark:text-white/40 mb-10">Top 200 global players ranked by {brawlerName} trophies.</p>
 
-      <div className="space-y-1">
-        <div className="grid grid-cols-[52px_1fr_auto_auto_24px] gap-4 px-5 py-2 text-[10px] font-bold text-zinc-400 uppercase tracking-widest dark:text-white/50">
+      <div className="leaderboard-table space-y-1">
+        <div className="leaderboard-header grid grid-cols-[52px_1fr_auto_auto_24px] gap-4 px-5 py-2 text-[10px] font-bold text-zinc-400 uppercase tracking-widest dark:text-white/50">
           <span>#</span>
           <span>Player</span>
           <span className="hidden sm:block">Club</span>
@@ -55,29 +55,29 @@ export default function BrawlerRankingClient({ data, brawlerName }: { data: Play
           <Link
             key={player.player_tag}
             href={`/player/${player.player_tag.replace("#", "")}`}
-            className={`grid grid-cols-[52px_1fr_auto_auto_24px] gap-4 items-center px-5 py-4 transition-colors ${rankBg(player.rank)}`}
+            className={`leaderboard-row grid grid-cols-[52px_1fr_auto_auto_24px] gap-4 items-center px-5 py-4 transition-colors ${rankBg(player.rank)}`}
           >
-            <span className={`text-base font-black tabular-nums ${rankColor(player.rank)}`}>
+            <span className={`leaderboard-rank text-base font-black tabular-nums ${rankColor(player.rank)}`}>
               {player.rank}
             </span>
 
-            <div className="min-w-0">
+            <div className="leaderboard-main min-w-0">
               <p className="text-base font-semibold text-zinc-900 truncate dark:text-white">{player.player_name}</p>
               <p className="text-xs text-zinc-400 font-mono dark:text-white/45">{player.player_tag}</p>
             </div>
 
-            <span className="hidden sm:block text-sm text-zinc-400 truncate max-w-[160px] dark:text-white/50">
+            <span className="leaderboard-secondary hidden sm:block text-sm text-zinc-400 truncate max-w-[160px] dark:text-white/50">
               {player.club_name ?? "—"}
             </span>
 
-            <div className="flex items-center gap-1.5 justify-end">
+            <div className="leaderboard-metric flex items-center gap-1.5 justify-end">
               <Trophy size={12} className="text-red-500/50 dark:text-[#FFD400]/50 shrink-0" />
               <span className="text-base font-bold text-red-500/80 dark:text-[#FFD400]/80 tabular-nums">
                 {player.trophies.toLocaleString()}
               </span>
             </div>
 
-            <ArrowRight size={14} className="text-zinc-400 dark:text-white/50" />
+            <ArrowRight size={14} className="leaderboard-arrow text-zinc-400 dark:text-white/50" />
           </Link>
         ))}
       </div>

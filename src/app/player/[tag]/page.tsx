@@ -2,6 +2,7 @@ import { notFound } from "next/navigation"
 import { Player, PlayerBrawler } from "@/types/brawler"
 import Link from "next/link"
 import { ArrowLeft, Trophy } from "lucide-react"
+import { BrawlImage, brawlerIconUrl } from "@/components/BrawlImage"
 
 const PLAYER_API_URL = process.env.PLAYER_API_URL || "http://165.227.206.51:3000"
 
@@ -98,10 +99,13 @@ export default async function PlayerProfile({ params }: { params: Promise<{ tag:
               borderBottom: i < top.length - 1 ? "1px solid var(--line)" : "none",
             }}
           >
-            <img
-              src={`https://cdn.brawlify.com/brawlers/borderless/${b.id}.png`}
+            <BrawlImage
+              src={brawlerIconUrl(b.id)}
               alt={b.name}
+              width={28}
+              height={28}
               style={{ width: 28, height: 28, objectFit: "contain" }}
+              sizes="28px"
             />
 
             <div style={{ minWidth: 0 }}>

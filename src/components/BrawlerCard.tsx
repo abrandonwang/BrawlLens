@@ -1,4 +1,5 @@
 import { PlayerBrawler } from "@/types/brawler"
+import { BrawlImage, brawlerIconUrl } from "@/components/BrawlImage"
 
 function rankColor(rank: number): string {
   if (rank >= 30) return "#FFD400"
@@ -27,10 +28,13 @@ export default function BrawlerCard({ id, name, power, rank, trophies, highestTr
         justifyContent: "center",
         overflow: "hidden",
       }}>
-        <img
-          src={`https://cdn.brawlify.com/brawlers/borderless/${id}.png`}
+        <BrawlImage
+          src={brawlerIconUrl(id)}
           alt={name}
+          width={120}
+          height={120}
           style={{ height: 120, width: 120, objectFit: "contain", filter: "drop-shadow(0 8px 24px rgba(0,0,0,0.45))", position: "relative", zIndex: 1 }}
+          sizes="120px"
         />
 
         <div style={{

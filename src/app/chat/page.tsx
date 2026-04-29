@@ -152,7 +152,7 @@ function ChatPage() {
   }
 
   return (
-    <main className="fixed top-[80px] left-0 right-0 bottom-0 flex flex-col" style={{ background: "var(--bg)" }}>
+    <main className="flex min-h-dvh flex-col pt-[80px]" style={{ background: "var(--bg)" }}>
 
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
@@ -197,7 +197,7 @@ function ChatPage() {
         </div>
       </div>
 
-      <div style={{ borderTop: "1px solid var(--line)", background: "color-mix(in srgb, var(--panel) 90%, transparent)", backdropFilter: "blur(12px)", padding: "12px 16px" }}>
+      <div style={{ position: "sticky", bottom: 0, borderTop: "1px solid var(--line)", background: "color-mix(in srgb, var(--panel) 90%, transparent)", backdropFilter: "blur(12px)", padding: "12px 16px" }}>
         <div className="max-w-2xl mx-auto">
           <div style={{ display: "flex", alignItems: "flex-end", gap: 8, background: "var(--panel)", border: "1px solid var(--line-2)", borderRadius: 16, padding: "10px 10px 10px 16px", boxShadow: "0 8px 24px -8px rgba(0,0,0,0.2)", transition: "border-color 0.16s" }}>
             <textarea

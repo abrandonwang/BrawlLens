@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { ArrowRight, Search } from "lucide-react"
+import { SkeletonBlock, StateButton } from "@/components/PolishStates"
 
 interface LandingData {
   player: { name: string; tag: string; trophies: number } | null
@@ -29,11 +30,24 @@ export default function Home() {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const router = useRouter()
   const [data, setData] = useState<LandingData | null>(null)
-  useEffect(() => {
+  const [dataLoading, setDataLoading] = useState(true)
+  const [dataError, setDataError] = useState(false)
+
+  function loadLandingData() {
+    setDataLoading(true)
+    setDataError(false)
     fetch("/api/landing")
-      .then(r => r.json())
+      .then(r => {
+        if (!r.ok) throw new Error("landing fetch failed")
+        return r.json()
+      })
       .then(setData)
-      .catch(() => {})
+      .catch(() => setDataError(true))
+      .finally(() => setDataLoading(false))
+  }
+
+  useEffect(() => {
+    loadLandingData()
   }, [])
 
   function handleInput(e: React.ChangeEvent<HTMLTextAreaElement>) {
@@ -112,6 +126,13 @@ export default function Home() {
                 <Link href="/leaderboards">Leaderboards</Link>
               </div>
 
+              {dataError && (
+                <div className="mb-2 flex items-center justify-between gap-3 rounded-[10px] border border-[var(--line)] bg-[var(--panel-2)] px-3 py-2">
+                  <span className="text-[12px] font-medium text-[var(--ink-3)]">Live landing stats could not load.</span>
+                  <StateButton onClick={loadLandingData}>Retry</StateButton>
+                </div>
+              )}
+
               <div className="home-jump-grid">
                 {jumps.map((row, index) => (
                   <Link
@@ -122,10 +143,14 @@ export default function Home() {
                     <span className="home-jump-mark">{String(index + 1).padStart(2, "0")}</span>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div className="bl-caption" style={{ letterSpacing: "0.1em", marginBottom: 2 }}>{row.label}</div>
-                      {row.sub ? (
+                      {dataLoading ? (
+                        <SkeletonBlock className="mt-1 h-[13px] w-[min(150px,75%)]" />
+                      ) : dataError && index < 3 ? (
+                        <div className="truncate text-[12px] font-medium text-[var(--ink-4)]">Open section</div>
+                      ) : row.sub ? (
                         <div style={{ fontSize: 13, color: "var(--ink)", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{row.sub}</div>
                       ) : (
-                        <div style={{ height: 13, width: 120, borderRadius: 4, background: "var(--line-2)", marginTop: 2 }} />
+                        <div className="text-[12px] font-medium text-[var(--ink-4)]">Open section</div>
                       )}
                     </div>
                     <ArrowRight size={14} style={{ color: "var(--ink-4)", flexShrink: 0 }} />

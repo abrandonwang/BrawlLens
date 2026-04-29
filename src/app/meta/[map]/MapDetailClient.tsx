@@ -3,6 +3,8 @@
 import { useState, useMemo } from "react"
 import { ArrowLeft, Search } from "lucide-react"
 import Link from "next/link"
+import { BrawlImage, brawlerIconUrl } from "@/components/BrawlImage"
+import { EmptyState, StateButton, StateLink } from "@/components/PolishStates"
 
 interface BrawlerStat {
   brawlerId: number
@@ -24,10 +26,6 @@ function getTierInfo(winRate: number) {
 
 function getBarWidth(winRate: number): number {
   return Math.max(0, Math.min(100, ((winRate - 30) / 40) * 100))
-}
-
-function getBrawlerImage(brawlerId: number): string {
-  return `https://cdn.brawlify.com/brawlers/borderless/${brawlerId}.png`
 }
 
 function formatBrawlerName(name: string): string {
@@ -85,10 +83,13 @@ export default function MapDetailClient({ mapName, imageUrl, totalBattles, brawl
 
         {imageUrl && (
           <div style={{ flexShrink: 0, height: 160, display: "flex", alignItems: "center" }}>
-            <img
+            <BrawlImage
               src={imageUrl}
               alt={mapName}
+              width={260}
+              height={160}
               style={{ height: "100%", width: "auto", maxWidth: 260, borderRadius: 12, display: "block", objectFit: "contain" }}
+              sizes="260px"
             />
           </div>
         )}
@@ -121,12 +122,15 @@ export default function MapDetailClient({ mapName, imageUrl, totalBattles, brawl
       </div>
 
       {filtered.length === 0 ? (
-        <div style={{ textAlign: "center", padding: "60px 0", border: "1px dashed var(--line-2)", borderRadius: 14 }}>
-          <p className="bl-body" style={{ color: "var(--ink-4)" }}>No brawlers match your filters.</p>
-        </div>
+        <EmptyState
+          title="No brawlers match"
+          description="Your search or minimum pick filter removed every brawler from this map."
+          action={<StateButton onClick={() => { setSearchQuery(""); setMinPicks(5) }}>Clear filters</StateButton>}
+          secondary={<StateLink href="/meta">All maps</StateLink>}
+        />
       ) : (
         <div className="bl-card" style={{ padding: 0, overflow: "hidden" }}>
-          <div className="map-brawler-row" style={{ display: "grid", gridTemplateColumns: "36px 1fr 120px 60px 60px 36px", gap: 12, padding: "10px 20px", borderBottom: "1px solid var(--line)", background: "var(--panel-2)" }}>
+          <div className="map-brawler-row map-brawler-header" style={{ display: "grid", gridTemplateColumns: "36px 1fr 120px 60px 60px 36px", gap: 12, padding: "10px 20px", borderBottom: "1px solid var(--line)", background: "var(--panel-2)" }}>
             <span />
             <span className="bl-caption" style={{ letterSpacing: "0.12em", textTransform: "uppercase" }}>Brawler</span>
             <span className="bl-caption" style={{ letterSpacing: "0.12em", textTransform: "uppercase" }}>Win Rate</span>
@@ -143,20 +147,23 @@ export default function MapDetailClient({ mapName, imageUrl, totalBattles, brawl
                 className="map-brawler-row row-hover"
                 style={{ display: "grid", gridTemplateColumns: "36px 1fr 120px 60px 60px 36px", gap: 12, padding: "12px 20px", borderBottom: i < filtered.length - 1 ? "1px solid var(--line)" : "none" }}
               >
-                <div style={{ width: 36, height: 36, borderRadius: 8, background: "var(--panel-2)", display: "grid", placeItems: "center", overflow: "hidden" }}>
-                  <img
-                    src={getBrawlerImage(brawler.brawlerId)}
+                <div className="map-brawler-avatar" style={{ width: 36, height: 36, borderRadius: 8, background: "var(--panel-2)", display: "grid", placeItems: "center", overflow: "hidden" }}>
+                  <BrawlImage
+                    src={brawlerIconUrl(brawler.brawlerId)}
                     alt={brawler.name}
+                    width={32}
+                    height={32}
                     style={{ width: 32, height: 32, objectFit: "contain" }}
                     loading="lazy"
+                    sizes="32px"
                   />
                 </div>
 
-                <span style={{ fontSize: 13.5, fontWeight: 600, color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                <span className="map-brawler-name" style={{ fontSize: 13.5, fontWeight: 600, color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {formatBrawlerName(brawler.name)}
                 </span>
 
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <div className="map-brawler-winrate" style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <span className="bl-num" style={{ fontSize: 13.5, fontWeight: 600, color: tier.color, flexShrink: 0 }}>
                     {brawler.winRate.toFixed(1)}%
                   </span>
@@ -169,7 +176,7 @@ export default function MapDetailClient({ mapName, imageUrl, totalBattles, brawl
                   {brawler.wins >= 1000 ? `${(brawler.wins / 1000).toFixed(1)}k` : brawler.wins}
                 </span>
 
-                <span className="bl-num" style={{ fontSize: 13, color: "var(--ink-3)", textAlign: "right" }}>
+                <span className="bl-num map-brawler-picks" style={{ fontSize: 13, color: "var(--ink-3)", textAlign: "right" }}>
                   {brawler.picks >= 1000 ? `${(brawler.picks / 1000).toFixed(1)}k` : brawler.picks}
                 </span>
 

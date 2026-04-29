@@ -1,9 +1,12 @@
 "use client"
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react"
+import { createPortal } from "react-dom"
 import { useSearchParams } from "next/navigation"
 import { Search, ChevronLeft, ChevronRight, X } from "lucide-react"
 import MetaDashboard from "@/components/MetaDashboard"
+import { BrawlImage, brawlerIconUrl } from "@/components/BrawlImage"
+import { EmptyState, SkeletonBlock, StateButton } from "@/components/PolishStates"
 
 interface ModeInfo {
   mode: string
@@ -63,10 +66,6 @@ function getTierInfo(winRate: number) {
 
 function getBarWidth(winRate: number): number {
   return Math.max(0, Math.min(100, ((winRate - 30) / 40) * 100))
-}
-
-function getBrawlerImage(id: number) {
-  return `https://cdn.brawlify.com/brawlers/borderless/${id}.png`
 }
 
 function formatBrawlerName(name: string) {
@@ -245,7 +244,7 @@ export default function MapsPageClient() {
           </div>
         </div>
 
-        <div className="mb-8 flex w-full items-center gap-2.5 rounded-[14px] border border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_78%,transparent)] p-2.5 shadow-[0_18px_36px_-34px_rgba(0,0,0,0.7)] backdrop-blur-2xl max-md:flex-col max-md:items-stretch max-md:gap-2">
+        <div className="mb-8 flex w-full items-center gap-2.5 rounded-[12px] border border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_78%,transparent)] p-2.5 shadow-[0_18px_36px_-34px_rgba(0,0,0,0.7)] backdrop-blur-2xl max-md:flex-col max-md:items-stretch max-md:gap-2">
           <div className="flex h-10 w-[200px] shrink-0 items-center gap-2.5 rounded-[10px] border border-[var(--line)] bg-[var(--panel)] px-3.5 text-[var(--ink)] transition-colors focus-within:border-[var(--line-2)] max-md:w-full">
             <Search size={13} className="shrink-0 text-[var(--ink-4)]" />
             <input
@@ -316,26 +315,59 @@ export default function MapsPageClient() {
           </div>
         </div>
 
-        <MetaDashboard modes={modes} loading={loading} selectedMode={selectedMode} mapSearch={mapSearch} onSelect={handleSelectMap} />
+        <MetaDashboard
+          modes={modes}
+          loading={loading}
+          selectedMode={selectedMode}
+          mapSearch={mapSearch}
+          onSelect={handleSelectMap}
+          onClearFilters={() => { setMapSearch(""); setSelectedMode(null) }}
+        />
       </div>
-      {selectedMap && (
+      {selectedMap && typeof document !== "undefined" && createPortal((
         <div
-          style={{ position: "fixed", inset: 0, zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px", background: "rgba(0,0,0,0.55)", backdropFilter: "blur(6px)" }}
+          className="bl-modal-overlay"
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 300,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 20,
+            background: "rgba(0,0,0,0.58)",
+            backdropFilter: "blur(10px) saturate(120%)",
+            WebkitBackdropFilter: "blur(10px) saturate(120%)",
+            animation: "modalOverlayIn 0.18s ease both",
+          }}
           onClick={closeModal}
         >
           <div
+            className="bl-modal-sheet bl-modal-sheet-map"
+            style={{
+              width: "100%",
+              maxWidth: 560,
+              maxHeight: "90vh",
+              display: "flex",
+              flexDirection: "column",
+              overflow: "hidden",
+              background: "var(--panel)",
+              border: "1px solid var(--line-2)",
+              borderRadius: 16,
+              boxShadow: "0 36px 90px -28px rgba(0,0,0,0.72)",
+              animation: "modalSheetIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) both",
+            }}
             onClick={e => e.stopPropagation()}
-            style={{ width: "100%", maxWidth: 560, maxHeight: "90vh", display: "flex", flexDirection: "column", background: "var(--panel)", border: "1px solid var(--line-2)", borderRadius: 20, boxShadow: "0 32px 80px -20px rgba(0,0,0,0.5)" }}
           >
-            <div style={{ padding: "20px 20px 0", flexShrink: 0, position: "relative" }}>
-              <button onClick={closeModal} style={{ position: "absolute", top: 20, right: 20, width: 28, height: 28, display: "grid", placeItems: "center", border: "1px solid var(--line)", borderRadius: 8, background: "none", cursor: "pointer", color: "var(--ink-4)" }}>
+            <div className="bl-modal-header">
+              <button onClick={closeModal} className="bl-modal-close" aria-label="Close map details">
                 <X size={12} />
               </button>
 
               <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16, paddingRight: 40 }}>
                 {selectedMap.imageUrl && (
                   <div style={{ width: 56, height: 56, borderRadius: 12, background: "var(--panel-2)", border: "1px solid var(--line)", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <img src={selectedMap.imageUrl} alt={selectedMap.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    <BrawlImage src={selectedMap.imageUrl} alt={selectedMap.name} width={56} height={56} style={{ width: "100%", height: "100%", objectFit: "cover" }} sizes="56px" />
                   </div>
                 )}
 
@@ -383,15 +415,27 @@ export default function MapsPageClient() {
 
               <div style={{ borderBottom: "1px solid var(--line)" }} />
             </div>
-            <div style={{ overflowY: "auto", flex: 1 }}>
+            <div className="bl-modal-body">
               {mapDataLoading ? (
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "60px 0" }}>
-                  <div style={{ width: 18, height: 18, border: "2px solid var(--line-2)", borderTopColor: "var(--accent)", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
-                  <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+                <div className="space-y-2 p-4">
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <div key={i} className="grid grid-cols-[36px_1fr_90px] items-center gap-3 rounded-lg border border-[var(--line)] bg-[var(--panel)] p-3">
+                      <SkeletonBlock className="size-8" />
+                      <div className="space-y-2">
+                        <SkeletonBlock className="h-3.5 w-28" />
+                        <SkeletonBlock className="h-2.5 w-16" />
+                      </div>
+                      <SkeletonBlock className="ml-auto h-3.5 w-14" />
+                    </div>
+                  ))}
                 </div>
               ) : filteredBrawlers.length === 0 ? (
-                <div style={{ padding: "60px 20px", textAlign: "center" }}>
-                  <span style={{ fontSize: 12, color: "var(--ink-4)" }}>No brawlers match your filters.</span>
+                <div className="p-4">
+                  <EmptyState
+                    title="No brawlers match"
+                    description="The search text or minimum pick filter removed every brawler for this map."
+                    action={<StateButton onClick={() => { setBrawlerSearch(""); setMinPicks(5) }}>Clear filters</StateButton>}
+                  />
                 </div>
               ) : (
                 <>
@@ -412,15 +456,15 @@ export default function MapsPageClient() {
                         className="map-brawler-row row-hover"
                         style={{ display: "grid", gridTemplateColumns: "36px 1fr 120px 60px 60px 36px", gap: 12, padding: "10px 20px", borderBottom: i < filteredBrawlers.length - 1 ? "1px solid var(--line)" : "none" }}
                       >
-                        <div style={{ width: 30, height: 30, borderRadius: 7, background: "var(--panel-2)", display: "grid", placeItems: "center", overflow: "hidden" }}>
-                          <img src={getBrawlerImage(b.brawlerId)} alt={b.name} style={{ width: 26, height: 26, objectFit: "contain" }} loading="lazy" />
+                        <div className="map-brawler-avatar" style={{ width: 30, height: 30, borderRadius: 7, background: "var(--panel-2)", display: "grid", placeItems: "center", overflow: "hidden" }}>
+                          <BrawlImage src={brawlerIconUrl(b.brawlerId)} alt={b.name} width={26} height={26} style={{ width: 26, height: 26, objectFit: "contain" }} loading="lazy" sizes="26px" />
                         </div>
 
-                        <span style={{ fontSize: 13, fontWeight: 600, color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        <span className="map-brawler-name" style={{ fontSize: 13, fontWeight: 600, color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                           {formatBrawlerName(b.name)}
                         </span>
 
-                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <div className="map-brawler-winrate" style={{ display: "flex", alignItems: "center", gap: 8 }}>
                           <span className="bl-num" style={{ fontSize: 13, fontWeight: 600, color: tier.color, flexShrink: 0 }}>{b.winRate.toFixed(1)}%</span>
                           <div style={{ flex: 1, height: 3, background: "var(--line-2)", borderRadius: 99, overflow: "hidden" }}>
                             <div style={{ height: "100%", width: `${getBarWidth(b.winRate)}%`, background: tier.color, opacity: 0.7, borderRadius: 99 }} />
@@ -430,7 +474,7 @@ export default function MapsPageClient() {
                         <span className="bl-num map-brawler-hide" style={{ fontSize: 12, color: "var(--ink-3)", textAlign: "right" }}>
                           {b.wins >= 1000 ? `${(b.wins / 1000).toFixed(1)}k` : b.wins}
                         </span>
-                        <span className="bl-num" style={{ fontSize: 12, color: "var(--ink-3)", textAlign: "right" }}>
+                        <span className="bl-num map-brawler-picks" style={{ fontSize: 12, color: "var(--ink-3)", textAlign: "right" }}>
                           {b.picks >= 1000 ? `${(b.picks / 1000).toFixed(1)}k` : b.picks}
                         </span>
 
@@ -447,7 +491,7 @@ export default function MapsPageClient() {
             </div>
           </div>
         </div>
-      )}
+      ), document.body)}
     </>
   )
 }

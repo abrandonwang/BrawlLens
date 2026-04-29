@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { BrawlImage } from "@/components/BrawlImage";
+import { EmptyState, MapGridSkeleton, StateButton } from "@/components/PolishStates";
 
 interface MapInfo {
   name: string;
@@ -26,9 +28,8 @@ interface Props {
   selectedMode: string | null;
   mapSearch: string;
   onSelect: (map: SelectedMapInfo) => void;
+  onClearFilters?: () => void;
 }
-
-type MapOrientation = "portrait" | "landscape";
 
 const MODE_CONFIG: Record<string, { label: string; color: string }> = {
   brawlBall:    { label: "Brawl Ball",    color: "#8CA0EB" },
@@ -69,46 +70,13 @@ function normalizeMapName(name: string) {
     .replace(/[^a-z0-9]+/g, "");
 }
 
-const WIDE_MODE_HINTS = new Set(["knockout", "bounty", "siege"]);
-const WIDE_MAP_NAME_HINTS = [
-  "arena",
-  "beach",
-  "belle",
-  "canyon",
-  "crescendo",
-  "dream",
-  "excel",
-  "flow",
-  "hideout",
-  "lane",
-  "mirage",
-  "out",
-  "pass",
-  "prairie",
-  "shooting",
-  "slayers",
-  "snake",
-  "split",
-  "star",
-  "temple",
-  "yard",
-];
-
-function isWideMap(name: string, mode: string | null) {
-  const normalized = normalizeMapName(name);
-  return Boolean(
-    mode && WIDE_MODE_HINTS.has(mode) ||
-    WIDE_MAP_NAME_HINTS.some(hint => normalized.includes(hint))
-  );
-}
-
-function MapPreview({ imageUrl, name, mode, modeColor }: { imageUrl?: string; name: string; mode: string | null; modeColor?: string }) {
-  const [orientation, setOrientation] = useState<MapOrientation>(isWideMap(name, mode) ? "landscape" : "portrait");
+function MapPreview({ imageUrl, name, modeColor }: { imageUrl?: string; name: string; mode: string | null; modeColor?: string }) {
   const [failed, setFailed] = useState(false);
+  const [aspectRatio, setAspectRatio] = useState<string>("1 / 1");
 
   if (!imageUrl || failed) {
     return (
-      <div className="grid aspect-[4/3] w-full place-items-center gap-2.5 bg-[radial-gradient(circle_at_50%_50%,color-mix(in_srgb,var(--line-2)_55%,transparent),transparent_68%),var(--panel-2)] p-[18px] text-center text-[var(--ink-4)]">
+      <div className="map-preview-frame relative grid aspect-square w-full place-items-center gap-2.5 p-[18px] text-center text-[var(--ink-4)]">
         <div className="size-10 rounded-lg opacity-30" style={{ background: modeColor || "var(--line)" }} />
         <span className="max-w-full truncate text-[11px] font-semibold">{name}</span>
       </div>
@@ -116,15 +84,22 @@ function MapPreview({ imageUrl, name, mode, modeColor }: { imageUrl?: string; na
   }
 
   return (
-    <div className={`grid w-full place-items-center bg-[radial-gradient(circle_at_50%_50%,color-mix(in_srgb,var(--line-2)_55%,transparent),transparent_68%),var(--panel-2)] ${orientation === "landscape" ? "aspect-[2.25/1]" : "aspect-[3/4]"}`}>
-      <img
+    <div
+      className="map-preview-frame relative grid w-full place-items-center"
+      style={{ aspectRatio }}
+    >
+      <BrawlImage
         src={imageUrl}
         alt={name}
-        className={`block size-full transition-[transform,filter] duration-200 ${orientation === "landscape" ? "object-cover" : "object-contain"}`}
+        fill
+        sizes="(max-width: 520px) 50vw, 220px"
+        className="block object-contain transition-[transform,filter] duration-200"
         loading="lazy"
         onLoad={(event) => {
           const img = event.currentTarget;
-          if (img.naturalWidth > img.naturalHeight) setOrientation("landscape");
+          if (img.naturalWidth && img.naturalHeight) {
+            setAspectRatio(`${img.naturalWidth} / ${img.naturalHeight}`);
+          }
         }}
         onError={() => setFailed(true)}
       />
@@ -132,7 +107,7 @@ function MapPreview({ imageUrl, name, mode, modeColor }: { imageUrl?: string; na
   );
 }
 
-export default function MetaDashboard({ modes, loading, selectedMode, mapSearch, onSelect }: Props) {
+export default function MetaDashboard({ modes, loading, selectedMode, mapSearch, onSelect, onClearFilters }: Props) {
   const [mapImageLookup, setMapImageLookup] = useState<Map<string, string>>(new Map());
   const [rotationMapNames, setRotationMapNames] = useState<Set<string>>(new Set());
   const [mapPage, setMapPage] = useState(0);
@@ -192,28 +167,26 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch,
   const liveCount = displayedMaps.filter(map => rotationMapNames.has(map.name)).length;
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="size-5 animate-spin rounded-full border-2 border-[var(--line-2)] border-t-[var(--accent)]" />
-      </div>
-    );
+    return <MapGridSkeleton />;
   }
 
   if (modes.length === 0) {
     return (
-      <div className="py-20 text-center">
-        <p className="mb-2 text-[15px] font-semibold leading-snug text-[var(--ink-2)]">No battle data yet</p>
-        <p className="text-[13.5px] leading-relaxed text-[var(--ink-4)]">The collector is still running. Check back soon.</p>
-      </div>
+      <EmptyState
+        title="No battle data yet"
+        description="The collector has not returned map stats for this view. Try refreshing in a moment."
+        action={<StateButton onClick={() => window.location.reload()}>Retry</StateButton>}
+      />
     );
   }
 
   if (displayedMaps.length === 0) {
     return (
-      <div className="rounded-lg border border-[var(--line)] bg-[var(--panel)] px-5 py-[42px] text-center shadow-[var(--shadow-lift)]">
-        <p className="mb-1.5 text-[15px] font-semibold leading-snug text-[var(--ink)]">No maps found</p>
-        <p className="m-0 text-[13.5px] leading-relaxed text-[var(--ink-3)]">Try a different search or switch back to all modes.</p>
-      </div>
+      <EmptyState
+        title="No maps found"
+        description="Your search or selected mode filtered everything out."
+        action={onClearFilters ? <StateButton onClick={onClearFilters}>Show all maps</StateButton> : undefined}
+      />
     );
   }
 
@@ -232,7 +205,7 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch,
         </div>
       </div>
 
-      <div className="mb-6 grid grid-cols-[repeat(auto-fill,minmax(190px,1fr))] items-center gap-3.5 max-[520px]:grid-cols-2 max-[520px]:gap-2.5">
+      <div className="mb-6 grid grid-cols-[repeat(auto-fill,minmax(190px,1fr))] gap-3.5 max-[520px]:grid-cols-2 max-[520px]:gap-2.5">
         {paginatedMaps.map(map => {
           const imageUrl = mapImageLookup.get(map.name) ?? mapImageLookup.get(normalizeMapName(map.name));
           const isLive = rotationMapNames.has(map.name);
@@ -243,16 +216,16 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch,
             <button
               key={map.name}
               onClick={() => onSelect({ name: map.name, imageUrl, mode, isLive })}
-              className="group relative block w-full cursor-pointer overflow-hidden rounded-lg border border-[var(--line)] bg-[var(--panel)] p-0 text-left shadow-[var(--shadow-lift)] transition-[transform,border-color,box-shadow,background] duration-200 hover:-translate-y-0.5 hover:border-[var(--line-2)] hover:bg-[color-mix(in_srgb,var(--panel)_70%,var(--hover-bg))] hover:shadow-[0_22px_42px_-30px_rgba(0,0,0,0.75)] active:-translate-y-px"
+              className="map-card group relative block w-full cursor-pointer overflow-hidden border border-[var(--line)] bg-[var(--panel)] p-0 text-left shadow-[var(--shadow-lift)] transition-[transform,border-color,box-shadow,background] duration-200 hover:-translate-y-0.5 hover:border-[var(--line-2)] hover:bg-[color-mix(in_srgb,var(--panel)_70%,var(--hover-bg))] hover:shadow-[0_22px_42px_-30px_rgba(0,0,0,0.75)] active:-translate-y-px"
             >
-              <div className="relative overflow-hidden rounded-t-lg bg-[radial-gradient(circle_at_50%_46%,color-mix(in_srgb,var(--line-2)_42%,transparent),transparent_70%),var(--panel-2)]">
+              <div className="relative z-[1] overflow-hidden rounded-t-lg bg-[radial-gradient(circle_at_50%_46%,color-mix(in_srgb,var(--line-2)_42%,transparent),transparent_70%),var(--panel-2)]">
                 <MapPreview imageUrl={imageUrl} name={map.name} mode={mode} modeColor={modeColor} />
                 {modeColor && (
                   <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, ${modeColor}, transparent)`, opacity: 0.6 }} />
                 )}
               </div>
 
-              <div className="border-t border-[var(--line)] px-3 pt-2.5 pb-3">
+              <div className="map-card-meta relative z-[1] border-t border-[var(--line)] px-3 pt-2.5 pb-3">
                 <div className={`mb-1 truncate text-[12.5px] font-semibold ${isLive ? "text-[#49D47E]" : "text-[var(--ink)]"}`}>
                   {map.name}
                 </div>

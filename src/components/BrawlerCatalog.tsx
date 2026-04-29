@@ -1,5 +1,7 @@
 import type { Brawler } from "@/app/brawlers/page"
 import type { CSSProperties } from "react"
+import { BrawlImage } from "@/components/BrawlImage"
+import { EmptyState } from "@/components/PolishStates"
 
 function sanitizeColor(color: string): string {
   const match = color.match(/#[0-9a-fA-F]{3,6}/)
@@ -32,10 +34,10 @@ export default function BrawlerCatalog({ brawlers, activeRarity, search, onSelec
 
   if (filtered.length === 0) {
     return (
-      <div className="rounded-lg border border-[var(--line)] bg-[var(--panel)] px-5 py-[42px] text-center shadow-[var(--shadow-lift)]">
-        <p className="mb-1.5 text-[15px] font-semibold leading-snug text-[var(--ink)]">No brawlers found</p>
-        <p className="m-0 text-[13.5px] leading-relaxed text-[var(--ink-3)]">Try a different search or clear the rarity filter.</p>
-      </div>
+      <EmptyState
+        title="No brawlers found"
+        description="Try a different search or clear the rarity filter."
+      />
     )
   }
 
@@ -74,10 +76,13 @@ export default function BrawlerCatalog({ brawlers, activeRarity, search, onSelec
                       background: `radial-gradient(circle at 50% 62%, color-mix(in srgb, ${color} 30%, transparent), transparent 68%), linear-gradient(180deg, color-mix(in srgb, var(--panel-2) 86%, ${color}), var(--panel))`,
                     }}
                   >
-                    <img
+                    <BrawlImage
                       className="relative z-10 h-[88%] w-[88%] object-contain drop-shadow-[0_4px_12px_rgba(0,0,0,0.4)] transition-[transform,filter] duration-200 group-hover:scale-[1.06] group-hover:drop-shadow-[0_8px_18px_rgba(0,0,0,0.48)]"
                       src={brawler.imageUrl2}
                       alt={brawler.name}
+                      width={96}
+                      height={96}
+                      sizes="100px"
                     />
                   </div>
                   <div className="border-t border-[var(--line)] px-2 pt-2 pb-[9px] text-center">

@@ -1,9 +1,12 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef, useMemo } from "react"
+import { createPortal } from "react-dom"
 import { useSearchParams } from "next/navigation"
 import { Search, X, ChevronLeft, ChevronRight } from "lucide-react"
 import BrawlerCatalog from "@/components/BrawlerCatalog"
+import { BrawlImage } from "@/components/BrawlImage"
+import { EmptyState, SkeletonBlock, StateButton } from "@/components/PolishStates"
 import { HYPERCHARGES } from "@/data/hypercharges"
 import type { Brawler } from "./page"
 
@@ -44,6 +47,7 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
   const [tab, setTab] = useState<Tab>("overview")
   const [stats, setStats] = useState<BrawlerStats | null>(null)
   const [statsLoading, setStatsLoading] = useState(false)
+  const [statsError, setStatsError] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const searchParams = useSearchParams()
   const searchInputRef = useRef<HTMLInputElement>(null)
@@ -139,11 +143,15 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
   useEffect(() => {
     if (!selected) return
     setStats(null)
+    setStatsError(false)
     setStatsLoading(true)
     fetch(`/api/brawler-stats?id=${selected.id}`)
-      .then(r => r.json())
+      .then(r => {
+        if (!r.ok) throw new Error("stats fetch failed")
+        return r.json()
+      })
       .then(d => { setStats(d); setStatsLoading(false) })
-      .catch(() => setStatsLoading(false))
+      .catch(() => { setStatsError(true); setStatsLoading(false) })
   }, [selected])
 
   const rarities = RARITY_ORDER
@@ -172,7 +180,7 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
           </div>
         </div>
 
-        <div className="mb-8 flex w-full items-center gap-2.5 rounded-[14px] border border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_78%,transparent)] p-2.5 shadow-[0_18px_36px_-34px_rgba(0,0,0,0.7)] backdrop-blur-2xl max-md:flex-col max-md:items-stretch max-md:gap-2">
+        <div className="mb-8 flex w-full items-center gap-2.5 rounded-[12px] border border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_78%,transparent)] p-2.5 shadow-[0_18px_36px_-34px_rgba(0,0,0,0.7)] backdrop-blur-2xl max-md:flex-col max-md:items-stretch max-md:gap-2">
           <div className="relative w-[200px] shrink-0 max-md:w-full">
             <div className="flex h-10 items-center gap-2 rounded-[10px] border border-[var(--line)] bg-[var(--panel)] px-3.5 text-[var(--ink)] transition-colors focus-within:border-[var(--line-2)]">
               <Search size={13} className="shrink-0 text-[var(--ink-4)]" />
@@ -197,10 +205,13 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
                     onMouseDown={() => selectFromSearch(b)}
                     className="row-hover flex w-full cursor-pointer items-center gap-2.5 rounded-[9px] border-0 bg-transparent px-2.5 py-2 text-left font-inherit"
                   >
-                    <img
+                    <BrawlImage
                       src={b.imageUrl2}
                       alt={b.name}
+                      width={26}
+                      height={26}
                       className="size-[26px] shrink-0 object-contain"
+                      sizes="26px"
                     />
                     <div className="min-w-0">
                       <div className="truncate text-[12.5px] font-semibold text-[var(--ink)]">{b.name}</div>
@@ -278,27 +289,53 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
           onSelect={b => { setSelected(b); setTab("overview") }}
         />
       </div>
-      {selected && (() => {
+      {selected && typeof document !== "undefined" && (() => {
         const color = sanitizeColor(selected.rarity.color)
         const hc = HYPERCHARGES[selected.id]
 
-        return (
+        return createPortal((
           <div
-            style={{ position: "fixed", inset: 0, zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px", background: "rgba(0,0,0,0.55)", backdropFilter: "blur(6px)" }}
+            className="bl-modal-overlay"
+            style={{
+              position: "fixed",
+              inset: 0,
+              zIndex: 300,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: 20,
+              background: "rgba(0,0,0,0.58)",
+              backdropFilter: "blur(10px) saturate(120%)",
+              WebkitBackdropFilter: "blur(10px) saturate(120%)",
+              animation: "modalOverlayIn 0.18s ease both",
+            }}
             onClick={close}
           >
             <div
+              className="bl-modal-sheet bl-modal-sheet-brawler"
+              style={{
+                width: "100%",
+                maxWidth: 540,
+                maxHeight: "90vh",
+                display: "flex",
+                flexDirection: "column",
+                overflow: "hidden",
+                background: "var(--panel)",
+                border: "1px solid var(--line-2)",
+                borderRadius: 16,
+                boxShadow: "0 36px 90px -28px rgba(0,0,0,0.72)",
+                animation: "modalSheetIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) both",
+              }}
               onClick={e => e.stopPropagation()}
-              style={{ width: "100%", maxWidth: 520, maxHeight: "90vh", display: "flex", flexDirection: "column", background: "var(--panel)", border: "1px solid var(--line-2)", borderRadius: 20, boxShadow: "0 32px 80px -20px rgba(0,0,0,0.5)" }}
             >
-              <div style={{ padding: "20px 20px 0", flexShrink: 0, position: "relative" }}>
-                <button onClick={close} style={{ position: "absolute", top: 20, right: 20, width: 28, height: 28, display: "grid", placeItems: "center", border: "1px solid var(--line)", borderRadius: 8, background: "none", cursor: "pointer", color: "var(--ink-4)", flexShrink: 0 }}>
+              <div className="bl-modal-header bl-modal-header-brawler">
+                <button onClick={close} className="bl-modal-close" aria-label="Close brawler details">
                   <X size={12} />
                 </button>
 
                 <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16, paddingRight: 40 }}>
                   <div style={{ width: 56, height: 56, borderRadius: 14, background: "var(--panel-2)", border: "1px solid var(--line)", display: "grid", placeItems: "center", flexShrink: 0, overflow: "hidden" }}>
-                    <img src={selected.imageUrl2} alt={selected.name} style={{ width: 50, height: 50, objectFit: "contain" }} />
+                    <BrawlImage src={selected.imageUrl2} alt={selected.name} width={50} height={50} style={{ width: 50, height: 50, objectFit: "contain" }} sizes="50px" />
                   </div>
 
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -323,9 +360,17 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
                   ))}
                 </div>
               </div>
-              <div style={{ overflowY: "auto", flex: 1, padding: "20px" }}>
+              <div className="bl-modal-body" style={{ padding: "20px" }}>
                 {tab === "overview" && (
                   <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                    {statsError ? (
+                      <EmptyState
+                        title="Stats did not load"
+                        description="The brawler detail data request failed. Try fetching it again."
+                        action={<StateButton onClick={() => selected && fetch(`/api/brawler-stats?id=${selected.id}`).then(r => r.json()).then(d => { setStats(d); setStatsError(false) })}>Retry</StateButton>}
+                      />
+                    ) : (
+                    <>
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
                       {[
                         {
@@ -374,30 +419,55 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
                     )}
 
                     {statsLoading && (
-                      <div style={{ padding: "20px 0", textAlign: "center" }}>
-                        <span style={{ fontSize: 12, color: "var(--ink-4)" }}>Loading stats…</span>
+                      <div className="space-y-2">
+                        {Array.from({ length: 4 }).map((_, i) => (
+                          <div key={i} className="flex items-center justify-between rounded-[10px] border border-[var(--line)] bg-[var(--panel-2)] px-3 py-2.5">
+                            <SkeletonBlock className="h-3.5 w-24" />
+                            <SkeletonBlock className="h-3.5 w-20" />
+                          </div>
+                        ))}
                       </div>
                     )}
 
                     {!statsLoading && stats && stats.totalPicks === 0 && (
-                      <div style={{ padding: "16px", background: "var(--panel-2)", borderRadius: 10, border: "1px solid var(--line)", textAlign: "center" }}>
-                        <span style={{ fontSize: 12, color: "var(--ink-4)" }}>No match data collected yet for this brawler.</span>
-                      </div>
+                      <EmptyState
+                        title="No match data yet"
+                        description="This brawler has not appeared enough in the tracked battles to calculate stable stats."
+                        action={<StateButton onClick={() => setTab("abilities")}>View abilities</StateButton>}
+                      />
+                    )}
+                    </>
                     )}
                   </div>
                 )}
                 {tab === "maps" && (
                   <div>
+                    {statsError && (
+                      <EmptyState
+                        title="Map stats did not load"
+                        description="The brawler map data request failed."
+                        action={<StateButton onClick={() => setTab("overview")}>Back to overview</StateButton>}
+                      />
+                    )}
+
                     {statsLoading && (
-                      <div style={{ padding: "40px 0", textAlign: "center" }}>
-                        <span style={{ fontSize: 12, color: "var(--ink-4)" }}>Loading…</span>
+                      <div className="space-y-2">
+                        {Array.from({ length: 7 }).map((_, i) => (
+                          <div key={i} className="grid grid-cols-[1fr_72px_56px] items-center gap-3 border-b border-[var(--line)] px-2 py-2.5">
+                            <SkeletonBlock className="h-3.5 w-32" />
+                            <SkeletonBlock className="h-3 w-16" />
+                            <SkeletonBlock className="h-3.5 w-12" />
+                          </div>
+                        ))}
                       </div>
                     )}
 
                     {!statsLoading && stats && stats.maps.length === 0 && (
-                      <div style={{ padding: "40px 0", textAlign: "center" }}>
-                        <span style={{ fontSize: 12, color: "var(--ink-4)" }}>Not enough data yet (min 20 picks per map).</span>
-                      </div>
+                      <EmptyState
+                        title="No map stats yet"
+                        description="This brawler does not have enough tracked picks on any individual map."
+                        action={<StateButton onClick={() => setTab("overview")}>Back to overview</StateButton>}
+                      />
                     )}
 
                     {!statsLoading && stats && stats.maps.length > 0 && (
@@ -435,7 +505,7 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
                           {selected.gadgets.map(g => (
                             <div key={g.id} style={{ display: "flex", gap: 12, padding: "11px 12px", background: "var(--panel-2)", borderRadius: 10, border: "1px solid var(--line)" }}>
                               <div style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(59,130,246,0.06)", border: "1px solid rgba(59,130,246,0.12)", display: "grid", placeItems: "center", flexShrink: 0 }}>
-                                <img src={g.imageUrl} alt={g.name} style={{ width: 24, height: 24, objectFit: "contain" }} />
+                                <BrawlImage src={g.imageUrl} alt={g.name} width={24} height={24} style={{ width: 24, height: 24, objectFit: "contain" }} sizes="24px" />
                               </div>
                               <div style={{ minWidth: 0 }}>
                                 <div style={{ fontSize: 12.5, fontWeight: 600, color: "var(--ink)", marginBottom: 2 }}>{g.name}</div>
@@ -454,7 +524,7 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
                           {selected.starPowers.map(sp => (
                             <div key={sp.id} style={{ display: "flex", gap: 12, padding: "11px 12px", background: "var(--panel-2)", borderRadius: 10, border: "1px solid var(--line)" }}>
                               <div style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.12)", display: "grid", placeItems: "center", flexShrink: 0 }}>
-                                <img src={sp.imageUrl} alt={sp.name} style={{ width: 24, height: 24, objectFit: "contain" }} />
+                                <BrawlImage src={sp.imageUrl} alt={sp.name} width={24} height={24} style={{ width: 24, height: 24, objectFit: "contain" }} sizes="24px" />
                               </div>
                               <div style={{ minWidth: 0 }}>
                                 <div style={{ fontSize: 12.5, fontWeight: 600, color: "var(--ink)", marginBottom: 2 }}>{sp.name}</div>
@@ -492,7 +562,7 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
               </div>
             </div>
           </div>
-        )
+        ), document.body)
       })()}
     </>
   )
