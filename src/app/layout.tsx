@@ -43,7 +43,9 @@ export default function RootLayout({
               <TopLoader />
             </Suspense>
             <NavBar />
-            {children}
+            <div className="flex-1 flex flex-col">
+              {children}
+            </div>
             <Footer />
           </MenuProvider>
         </ThemeProvider>
