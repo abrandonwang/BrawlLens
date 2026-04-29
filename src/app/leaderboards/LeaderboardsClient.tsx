@@ -61,9 +61,9 @@ export default function LeaderboardsClient({ allData }: { allData: RegionData[];
     <div className="lb-page">
 
       {/* Top controls row: cats left, search+region right */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 20 }}>
+      <div className="lb-top-controls">
         {/* Category tabs */}
-        <div className="bl-seg lb-cat-seg" style={{ flexShrink: 0 }}>
+        <div className="bl-seg lb-cat-seg">
           {CATEGORIES.map(c => (
             <Link
               key={c.href}
@@ -81,12 +81,12 @@ export default function LeaderboardsClient({ allData }: { allData: RegionData[];
         </div>
 
         {/* Search + region */}
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div className="bl-input" style={{ width: 200, flexShrink: 0 }}>
+        <div className="lb-top-right">
+          <div className="bl-input lb-search-input">
             <Search size={13} style={{ color: "var(--ink-4)", flexShrink: 0 }} />
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search players…" />
           </div>
-          <div className="bl-seg" style={{ flexShrink: 0 }}>
+          <div className="bl-seg lb-region-seg" style={{ flexShrink: 0 }}>
             {allData.map((r) => (
               <button key={r.code} onClick={() => setActiveRegion(r.code)} className={activeRegion === r.code ? "on" : ""}>
                 {r.code === "global" ? "Global" : r.code}
@@ -118,7 +118,7 @@ export default function LeaderboardsClient({ allData }: { allData: RegionData[];
                 className="lb-table-row row-hover"
                 style={{ borderBottom: i < paginated.length - 1 ? "1px solid var(--line)" : "none", textDecoration: "none" }}
               >
-                <span className="bl-num lb-col-rank" style={{ fontSize: 13, fontWeight: 500, color: "var(--ink-3)" }}>
+                <span className={p.rank <= 3 ? "bl-num lb-col-rank bl-rainbow-text" : "bl-num lb-col-rank"} style={{ fontSize: 13, fontWeight: 700, color: p.rank <= 3 ? undefined : "var(--ink-3)" }}>
                   {String(p.rank).padStart(2, "0")}
                 </span>
 

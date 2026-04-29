@@ -51,7 +51,7 @@ export default function BrawlerCatalog({ brawlers, activeRarity, search, onSelec
                   key={brawler.id}
                   onClick={() => onSelect(brawler)}
                   className="bl-card"
-                  style={{ textDecoration: "none", padding: 0, cursor: "pointer", background: "none", border: "1px solid var(--line)", width: "100%", textAlign: "left" }}
+                  style={{ textDecoration: "none", padding: 0, cursor: "pointer", width: "100%", textAlign: "left" }}
                 >
                   <div style={{
                     aspectRatio: "1",

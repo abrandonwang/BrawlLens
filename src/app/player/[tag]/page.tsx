@@ -60,7 +60,7 @@ export default async function PlayerProfile({ params }: { params: Promise<{ tag:
       {/* Header */}
       <div style={{ marginBottom: 28 }}>
         <div className="bl-mono bl-caption" style={{ marginBottom: 6, color: "var(--ink-4)" }}>#{tag}</div>
-        <div style={{ fontSize: 28, fontWeight: 650, letterSpacing: "-0.03em", color: "var(--ink)", lineHeight: 1.1, marginBottom: 6 }}>
+        <div className="bl-rainbow-text" style={{ fontSize: 28, fontWeight: 650, letterSpacing: "-0.03em", lineHeight: 1.1, marginBottom: 6 }}>
           {player.name}
         </div>
         {club?.name && (

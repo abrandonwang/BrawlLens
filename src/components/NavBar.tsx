@@ -121,12 +121,7 @@ export default function NavBar() {
           marginRight: 4,
           textDecoration: "none",
         }}>
-          <div style={{
-            width: 20, height: 20, borderRadius: 5,
-            background: "conic-gradient(from 220deg, var(--accent), #FF7A3D, var(--hc-purple), var(--hc-blue), var(--accent))",
-            position: "relative", flexShrink: 0,
-            boxShadow: "0 0 0 1px rgba(255,255,255,0.1) inset",
-          }}>
+          <div className="bl-nav-logo">
             <div style={{ position: "absolute", inset: 4, background: "var(--panel)", borderRadius: 2 }} />
           </div>
           <span style={{ fontWeight: 600, fontSize: 13, letterSpacing: "-0.02em", color: "var(--ink)" }}>
@@ -145,7 +140,9 @@ export default function NavBar() {
               background: isActive(item.href) ? "var(--elev)" : "transparent",
               boxShadow: isActive(item.href) ? "0 0 0 1px var(--line-2), 0 6px 16px -8px rgba(0,0,0,0.5)" : "none",
             }}>
-              {item.label}
+              {isActive(item.href)
+                ? <span className="bl-rainbow-text" style={{ fontWeight: 600 }}>{item.label}</span>
+                : item.label}
             </Link>
           ))}
         </div>
@@ -233,7 +230,9 @@ export default function NavBar() {
                     : `menuItemIn 0.4s cubic-bezier(0,0,0.2,1) ${i * 55}ms both`,
                 }}
               >
-                {item.label}
+                {isActive(item.href)
+                  ? <span className="bl-rainbow-text">{item.label}</span>
+                  : item.label}
               </Link>
             ))}
           </div>

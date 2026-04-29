@@ -147,7 +147,7 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch,
               key={map.name}
               onClick={() => onSelect({ name: map.name, imageUrl, mode, isLive })}
               className="bl-card"
-              style={{ padding: 0, display: "block", width: "100%", cursor: "pointer", background: "none", textAlign: "left" }}
+              style={{ padding: 0, display: "block", width: "100%", cursor: "pointer", textAlign: "left" }}
             >
               <div style={{ position: "relative", background: "var(--panel-2)", borderRadius: "var(--r-lg) var(--r-lg) 0 0", overflow: "hidden" }}>
                 {imageUrl ? (

@@ -83,9 +83,9 @@ export default function BrawlerLeaderboardClient({
     <div className="lb-page">
 
       {/* Top controls row: cats left, brawler search right */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 20 }}>
+      <div className="lb-top-controls">
         {/* Category tabs */}
-        <div className="bl-seg lb-cat-seg" style={{ flexShrink: 0 }}>
+        <div className="bl-seg lb-cat-seg">
           {CATEGORIES.map(c => (
             <Link
               key={c.href}
@@ -104,6 +104,7 @@ export default function BrawlerLeaderboardClient({
         </div>
 
         {/* Brawler search with autocomplete */}
+        <div className="lb-top-right">
         <div style={{ position: "relative", width: 200, flexShrink: 0 }}>
           <div className="bl-input" style={{ width: "100%" }}>
             <Search size={13} style={{ color: "var(--ink-4)", flexShrink: 0 }} />
@@ -173,6 +174,7 @@ export default function BrawlerLeaderboardClient({
             </div>
           )}
         </div>
+        </div>
       </div>
 
       <div style={{ height: 1, background: "var(--line)", marginBottom: 28 }} />
@@ -211,7 +213,7 @@ export default function BrawlerLeaderboardClient({
                 className="lb-table-row row-hover"
                 style={{ borderBottom: i < paginated.length - 1 ? "1px solid var(--line)" : "none", textDecoration: "none" }}
               >
-                <span className="bl-num lb-col-rank" style={{ fontSize: 13, fontWeight: 500, color: "var(--ink-3)" }}>
+                <span className={p.rank <= 3 ? "bl-num lb-col-rank bl-rainbow-text" : "bl-num lb-col-rank"} style={{ fontSize: 13, fontWeight: 700, color: p.rank <= 3 ? undefined : "var(--ink-3)" }}>
                   {String(p.rank).padStart(2, "0")}
                 </span>
 

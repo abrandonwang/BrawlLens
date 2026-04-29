@@ -10,11 +10,12 @@
 @variant dark (&:where(.dark, .dark *));
 
 :root {
-  
+
   --bg:       #FAFAF8;
   --panel:    #FFFFFF;
   --panel-2:  #F4F4F2;
   --elev:     #FFFFFF;
+  --hover-bg: #E8E8E6;
 
   
   --line:     rgba(0, 0, 0, 0.07);
@@ -68,6 +69,7 @@
   --panel:    #101012;
   --panel-2:  #16161A;
   --elev:     #1C1C21;
+  --hover-bg: #222228;
   --line:     rgba(255, 255, 255, 0.07);
   --line-2:   rgba(255, 255, 255, 0.12);
   --ink:      #FAFAFA;
@@ -118,6 +120,7 @@ body {
   border-radius: 999px;
   box-shadow: var(--shadow-lift);
   white-space: nowrap;
+  animation: nav-glow-cycle 8s ease-in-out infinite;
 }
 
 .bl-nav-brand {
@@ -133,7 +136,8 @@ body {
   width: 20px;
   height: 20px;
   border-radius: 5px;
-  background: conic-gradient(from 220deg, var(--accent), var(--r-ultra), var(--hc-purple), var(--hc-blue), var(--accent));
+  background: conic-gradient(from var(--logo-angle), var(--accent), var(--r-ultra), var(--hc-purple), var(--hc-blue), var(--accent));
+  animation: logo-spin 6s linear infinite;
   position: relative;
   flex-shrink: 0;
   box-shadow: 0 0 0 1px rgba(255,255,255,0.1) inset;
@@ -150,7 +154,12 @@ body {
   font-size: 13px;
   font-weight: 600;
   letter-spacing: -0.02em;
-  color: var(--ink);
+  background: linear-gradient(90deg, var(--accent), var(--r-ultra), var(--hc-purple), var(--hc-blue), var(--accent));
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: rainbow-text-shift 5s linear infinite;
 }
 
 .bl-nav-item {
@@ -215,13 +224,13 @@ body {
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: var(--r-lg);
-  transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease;
+  transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease, background 0.15s ease;
   position: relative;
   overflow: hidden;
 }
 .bl-card:hover {
+  background: var(--hover-bg);
   border-color: var(--line-2);
-  box-shadow: var(--shadow-lift);
 }
 .bl-card-glass {
   background: color-mix(in srgb, var(--panel) 65%, transparent);
@@ -235,7 +244,7 @@ body {
   inset: -1px;
   border-radius: inherit;
   padding: 1px;
-  background: linear-gradient(135deg, var(--hc-purple), var(--hc-blue), transparent 60%);
+  background: linear-gradient(135deg, var(--accent), var(--r-ultra), var(--hc-purple), var(--hc-blue), var(--hc-cyan));
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
@@ -246,8 +255,18 @@ body {
 }
 .bl-hc-hover:hover::after { opacity: 1; }
 .bl-hc-hover:hover {
-  box-shadow: var(--shadow-hc);
+  background: var(--hover-bg);
   border-color: transparent;
+}
+
+/* Utility: animated rainbow gradient text */
+.bl-rainbow-text {
+  background: linear-gradient(90deg, var(--accent), var(--r-ultra), var(--hc-purple), var(--hc-blue), var(--accent));
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: rainbow-text-shift 5s linear infinite;
 }
 
 .bl-btn {
@@ -270,17 +289,15 @@ body {
 .bl-btn:hover { background: var(--elev); border-color: var(--ink-5); }
 
 .bl-btn-accent {
-  background: var(--accent);
+  background: linear-gradient(90deg, var(--accent), var(--r-ultra), var(--accent));
+  background-size: 200% auto;
   color: #0A0A0B;
   border-color: transparent;
   font-weight: 700;
-  box-shadow: 0 8px 24px -8px color-mix(in srgb, var(--accent) 55%, transparent),
-              inset 0 1px 0 rgba(255,255,255,0.45);
+  animation: rainbow-text-shift 4s linear infinite;
 }
 .bl-btn-accent:hover {
   filter: brightness(1.07);
-  box-shadow: 0 12px 32px -8px color-mix(in srgb, var(--accent) 60%, transparent),
-              inset 0 1px 0 rgba(255,255,255,0.45);
 }
 
 .bl-btn-ghost {
@@ -331,7 +348,12 @@ body {
   font-weight: 600;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--ink-3);
+  background: linear-gradient(90deg, var(--accent), var(--r-ultra), var(--hc-purple), var(--hc-blue), var(--accent));
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: rainbow-text-shift 6s linear infinite;
 }
 
 .bl-h-display { font-size: 56px; line-height: 0.97; letter-spacing: -0.032em; font-weight: 600; }
@@ -413,6 +435,10 @@ body {
   background: var(--elev);
   box-shadow: 0 0 0 1px var(--line-2);
 }
+.lb-region-seg > button {
+  flex: 1;
+  text-align: center;
+}
 
 .bg-dots {
   position: absolute;
@@ -449,6 +475,31 @@ body {
   transform: translate(-50%, -50%);
   pointer-events: none;
   z-index: 0;
+}
+
+/* ── RGB / Rainbow effects ─────────────────────────── */
+
+@property --logo-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 220deg;
+}
+
+@keyframes logo-spin {
+  from { --logo-angle: 220deg; }
+  to   { --logo-angle: 580deg; }
+}
+
+@keyframes nav-glow-cycle {
+  0%,100% { box-shadow: var(--shadow-lift), 0 8px 28px -12px rgba(255,212,0,0.35); }
+  25%     { box-shadow: var(--shadow-lift), 0 8px 28px -12px rgba(255,122,61,0.40); }
+  50%     { box-shadow: var(--shadow-lift), 0 8px 28px -12px rgba(168,85,247,0.40); }
+  75%     { box-shadow: var(--shadow-lift), 0 8px 28px -12px rgba(34,211,238,0.35); }
+}
+
+@keyframes rainbow-text-shift {
+  0%   { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
 }
 
 /* Mobile menu animations */
@@ -800,6 +851,10 @@ body {
 .lb-cat-seg {
   flex-shrink: 0;
 }
+.lb-cat-seg > a {
+  flex: 1;
+  text-align: center;
+}
 
 .lb-top-controls {
   display: flex;
@@ -815,6 +870,11 @@ body {
   gap: 10px;
 }
 
+.lb-search-input {
+  width: 200px;
+  flex-shrink: 0;
+}
+
 @media (max-width: 768px) {
   .lb-top-controls {
     flex-direction: column;
@@ -825,8 +885,13 @@ body {
     flex-direction: column;
     align-items: stretch;
   }
-  .lb-top-right .roster-search {
+  .lb-search-input {
     width: 100%;
+  }
+  .lb-cat-seg,
+  .lb-region-seg {
+    width: 100%;
+    display: flex;
   }
 }
 
@@ -1017,7 +1082,7 @@ html:not(.dark) .hero-bg-d {
 }
 
 .row-hover { transition: background 0.13s ease; }
-.row-hover:hover { background: var(--panel-2); }
+.row-hover:hover { background: var(--hover-bg); }
 
 @keyframes color-shift {
   0%   { background-position: 0% 50%; }
