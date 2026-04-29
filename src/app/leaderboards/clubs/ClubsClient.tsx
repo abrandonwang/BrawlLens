@@ -59,10 +59,7 @@ export default function ClubsClient({ allData }: { allData: RegionData[] }) {
 
   return (
     <div className="lb-page">
-
-      {/* Top controls row: cats left, search+region right */}
       <div className="lb-top-controls">
-        {/* Category tabs */}
         <div className="bl-seg lb-cat-seg">
           {CATEGORIES.map(c => (
             <Link
@@ -79,8 +76,6 @@ export default function ClubsClient({ allData }: { allData: RegionData[] }) {
             </Link>
           ))}
         </div>
-
-        {/* Search + region */}
         <div className="lb-top-right">
           <div className="bl-input lb-search-input">
             <Search size={13} style={{ color: "var(--ink-4)", flexShrink: 0 }} />

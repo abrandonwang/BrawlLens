@@ -22,7 +22,6 @@ const MODE_LABELS: Record<string, string> = {
   trophyEscape: "Trophy Escape", paintBrawl: "Paint Brawl", wipeout5V5: "5v5 Wipeout",
 }
 
-
 export default function Home() {
   const [userInput, setUserInput] = useState("")
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -86,8 +85,6 @@ export default function Home() {
     <main className="home-hero">
 
       <div className="hero-bg hero-bg-b" />
-
-      {/* Card */}
       <div className="home-hero-inner">
         <div className="home-center home-card-enter">
 

@@ -11,6 +11,11 @@ function parseBsTime(t: string): number {
   return new Date(s).getTime();
 }
 
+interface RotationEvent {
+  startTime?: string;
+  endTime?: string;
+}
+
 export async function GET() {
   const { data, error } = await supabase
     .from("rotation")
@@ -22,7 +27,7 @@ export async function GET() {
     return NextResponse.json([]);
   }
 
-  const events: any[] = data.data ?? [];
+  const events: RotationEvent[] = data.data ?? [];
   const now = Date.now();
 
   const active = events.filter((e) => {

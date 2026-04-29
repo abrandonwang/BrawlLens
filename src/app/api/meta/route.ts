@@ -6,6 +6,14 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_KEY!
 );
 
+interface MapBrawlerStatRow {
+  brawler_id: number;
+  brawler_name: string;
+  picks: number | string;
+  wins: number | string;
+  win_rate: number | string;
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const map = searchParams.get("map");
@@ -25,7 +33,7 @@ export async function GET(request: Request) {
     const rows = data || [];
     const totalBattles = rows.reduce((sum, r) => sum + Number(r.picks), 0) / 6;
 
-    const brawlers = rows.map((row: any) => ({
+    const brawlers = (rows as MapBrawlerStatRow[]).map((row) => ({
       brawlerId: row.brawler_id,
       name: row.brawler_name,
       picks: Number(row.picks),

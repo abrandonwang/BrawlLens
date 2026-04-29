@@ -84,8 +84,6 @@ export default function MapsPageClient() {
   const [canScrollRight, setCanScrollRight] = useState(false)
   const filtersRef = useRef<HTMLDivElement>(null)
   const searchParams = useSearchParams()
-
-  // Modal state
   const [selectedMap, setSelectedMap] = useState<SelectedMapInfo | null>(null)
   const [mapBrawlers, setMapBrawlers] = useState<BrawlerStat[]>([])
   const [mapTotalBattles, setMapTotalBattles] = useState(0)
@@ -124,18 +122,31 @@ export default function MapsPageClient() {
       .catch(() => setLoading(false))
   }, [])
 
-  // Auto-open map from ?open= param once modes + images are ready
+  const handleSelectMap = useCallback((map: SelectedMapInfo) => {
+    setSelectedMap(map)
+    setMapDataLoading(true)
+    setBrawlerSearch("")
+    setMinPicks(10)
+    setSortBy("picks")
+    fetch(`/api/meta?map=${encodeURIComponent(map.name)}`)
+      .then(r => r.json())
+      .then(d => {
+        setMapBrawlers(d.brawlers || [])
+        setMapTotalBattles(d.totalBattles || 0)
+        setMapDataLoading(false)
+      })
+      .catch(() => setMapDataLoading(false))
+  }, [])
+
   const [autoOpenHandled, setAutoOpenHandled] = useState(false)
   useEffect(() => {
     const openName = searchParams.get("open")
     if (!openName || loading || autoOpenHandled) return
     setAutoOpenHandled(true)
-    // Find mode for this map
     let mode: string | null = null
     for (const m of modes) {
       if (m.maps.some(mp => mp.name === openName)) { mode = m.mode; break }
     }
-    // Fetch image from Brawlify then open
     fetch("https://api.brawlify.com/v1/maps")
       .then(r => r.json())
       .then(d => {
@@ -143,7 +154,7 @@ export default function MapsPageClient() {
         handleSelectMap({ name: openName, imageUrl: found?.imageUrl, mode, isLive: false })
       })
       .catch(() => handleSelectMap({ name: openName, mode, isLive: false }))
-  }, [loading, modes, searchParams, autoOpenHandled])
+  }, [loading, modes, searchParams, autoOpenHandled, handleSelectMap])
 
   const closeModal = useCallback(() => {
     setSelectedMap(null)
@@ -159,22 +170,6 @@ export default function MapsPageClient() {
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
   }, [selectedMap, closeModal])
-
-  function handleSelectMap(map: SelectedMapInfo) {
-    setSelectedMap(map)
-    setMapDataLoading(true)
-    setBrawlerSearch("")
-    setMinPicks(10)
-    setSortBy("picks")
-    fetch(`/api/meta?map=${encodeURIComponent(map.name)}`)
-      .then(r => r.json())
-      .then(d => {
-        setMapBrawlers(d.brawlers || [])
-        setMapTotalBattles(d.totalBattles || 0)
-        setMapDataLoading(false)
-      })
-      .catch(() => setMapDataLoading(false))
-  }
 
   const filteredBrawlers = useMemo(() => {
     return mapBrawlers
@@ -235,8 +230,6 @@ export default function MapsPageClient() {
 
         <MetaDashboard modes={modes} loading={loading} selectedMode={selectedMode} mapSearch={mapSearch} onSelect={handleSelectMap} />
       </div>
-
-      {/* Map Modal */}
       {selectedMap && (
         <div
           style={{ position: "fixed", inset: 0, zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px", background: "rgba(0,0,0,0.55)", backdropFilter: "blur(6px)" }}
@@ -246,7 +239,6 @@ export default function MapsPageClient() {
             onClick={e => e.stopPropagation()}
             style={{ width: "100%", maxWidth: 560, maxHeight: "90vh", display: "flex", flexDirection: "column", background: "var(--panel)", border: "1px solid var(--line-2)", borderRadius: 20, boxShadow: "0 32px 80px -20px rgba(0,0,0,0.5)" }}
           >
-            {/* Header */}
             <div style={{ padding: "20px 20px 0", flexShrink: 0, position: "relative" }}>
               <button onClick={closeModal} style={{ position: "absolute", top: 20, right: 20, width: 28, height: 28, display: "grid", placeItems: "center", border: "1px solid var(--line)", borderRadius: 8, background: "none", cursor: "pointer", color: "var(--ink-4)" }}>
                 <X size={12} />
@@ -280,8 +272,6 @@ export default function MapsPageClient() {
                   </div>
                 </div>
               </div>
-
-              {/* Controls */}
               <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 14 }}>
                 <div className="bl-input">
                   <Search size={12} style={{ color: "var(--ink-4)", flexShrink: 0 }} />
@@ -305,8 +295,6 @@ export default function MapsPageClient() {
 
               <div style={{ borderBottom: "1px solid var(--line)" }} />
             </div>
-
-            {/* Brawler table */}
             <div style={{ overflowY: "auto", flex: 1 }}>
               {mapDataLoading ? (
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "60px 0" }}>
@@ -319,7 +307,6 @@ export default function MapsPageClient() {
                 </div>
               ) : (
                 <>
-                  {/* Table header */}
                   <div className="map-brawler-row" style={{ display: "grid", gridTemplateColumns: "36px 1fr 120px 60px 60px 36px", gap: 12, padding: "10px 20px", background: "var(--panel-2)", borderBottom: "1px solid var(--line)" }}>
                     <span />
                     <span className="bl-caption" style={{ letterSpacing: "0.12em", textTransform: "uppercase" }}>Brawler</span>

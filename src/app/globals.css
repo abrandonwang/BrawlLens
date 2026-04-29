@@ -258,7 +258,6 @@ body {
   border-color: transparent;
 }
 
-/* Utility: rotating conic-gradient border */
 @property --rb-angle {
   syntax: '<angle>';
   inherits: false;
@@ -503,8 +502,6 @@ body {
   z-index: 0;
 }
 
-/* ── RGB / Rainbow effects ─────────────────────────── */
-
 @property --logo-angle {
   syntax: '<angle>';
   inherits: false;
@@ -528,7 +525,6 @@ body {
   100% { background-position: 200% 50%; }
 }
 
-/* Mobile menu animations */
 @keyframes menuOverlayIn {
   from { opacity: 0; transform: translateY(-16px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -546,7 +542,6 @@ body {
   to   { opacity: 0; transform: translateY(8px); }
 }
 
-/* Desktop-only left border on nav right controls */
 .nav-right-controls {
   border-left: none;
   margin-left: 0;
@@ -560,7 +555,6 @@ body {
   }
 }
 
-/* Splash screen */
 @keyframes splashBrandIn {
   0%   { opacity: 0; transform: translateY(10px); }
   100% { opacity: 1; transform: translateY(0); }
@@ -631,7 +625,6 @@ body {
   animation: cardIn 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Landing (home) layout */
 .home-hero {
   position: fixed;
   inset: 0;
@@ -658,7 +651,6 @@ body {
   margin-bottom: 18px;
 }
 
-/* subtle framing so the hero doesn't feel "unstyled" */
 .home-card-wrap::before {
   content: "";
   position: absolute;
@@ -755,7 +747,6 @@ body {
   .home-header-brand { font-size: 44px; }
 }
 
-/* Shared page layout */
 .page-layout {
   width: 100%;
   max-width: 1440px;
@@ -771,7 +762,6 @@ body {
   .page-layout { padding: 20px 16px 48px; }
 }
 
-/* Roster page */
 .roster-page {
   padding: 40px clamp(16px, 12vw, 480px) 80px;
 }
@@ -834,7 +824,6 @@ body {
   .brawler-grid { grid-template-columns: repeat(3, 1fr); }
 }
 
-/* Map brawler table */
 .map-brawler-row {
   align-items: center;
 }
@@ -849,7 +838,6 @@ body {
   }
 }
 
-/* Leaderboards */
 .lb-page {
   width: 100%;
   max-width: 1080px;
@@ -1002,7 +990,6 @@ body {
   .lb-clubs-row { grid-template-columns: 36px 1fr 70px; gap: 10px; padding: 10px 14px; }
 }
 
-/* Brand Kit backgrounds */
 .hero-bg-b {
   background:
     radial-gradient(ellipse 800px 500px at 50% 50%,
@@ -1205,7 +1192,6 @@ html:not(.dark) .hero-grid {
   background-size: 80px 80px;
 }
 
-/* Player profile */
 .player-page {
   width: 100%;
   max-width: 480px;

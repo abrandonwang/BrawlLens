@@ -12,7 +12,6 @@ function rankColor(rank: number): string {
 
 export default function BrawlerCard({ id, name, power, rank, trophies, highestTrophies, gadgets, starPowers, hyperCharges, gears, prestigeLevel }: PlayerBrawler) {
   const hasHC = hyperCharges.length > 0
-  const accent = hasHC ? "var(--hc-purple)" : "var(--ink-5)"
 
   return (
     <div

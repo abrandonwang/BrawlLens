@@ -31,8 +31,6 @@ export async function GET(request: Request) {
   const totalPicks = data.reduce((s, r) => s + Number(r.picks), 0)
   const totalWins = data.reduce((s, r) => s + Number(r.wins), 0)
   const avgWinRate = totalPicks > 0 ? (totalWins / totalPicks) * 100 : null
-
-  // Best maps by win rate (min 20 picks)
   const maps = data
     .filter(r => Number(r.picks) >= 20)
     .sort((a, b) => Number(b.win_rate) - Number(a.win_rate))
@@ -44,8 +42,6 @@ export async function GET(request: Request) {
       wins: Number(r.wins),
       winRate: Number(r.win_rate),
     }))
-
-  // Best modes aggregated
   const modeMap = new Map<string, { picks: number; wins: number }>()
   for (const r of data) {
     const key = r.mode

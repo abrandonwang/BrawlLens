@@ -30,8 +30,6 @@ async function main() {
   }
 
   console.log("\nAggregating map stats...");
-
-  // Map-level stats
   const mapRes = await localPg.query(`
     SELECT map, mode, COUNT(DISTINCT id) AS battle_count
     FROM battles
@@ -46,8 +44,6 @@ async function main() {
     }
     console.log(`  Pushed ${mapRows.length} map stat rows to Supabase.`);
   }
-
-  // Brawler win rates per map
   const brawlerRes = await localPg.query(`
     SELECT
       b.map, b.mode,

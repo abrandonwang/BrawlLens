@@ -37,7 +37,7 @@ interface BrawlerStats {
 
 type Tab = "overview" | "maps" | "abilities"
 
-export default function BrawlerPageClient({ brawlers, newest }: { brawlers: Brawler[]; newest?: string }) {
+export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] }) {
   const [activeRarity, setActiveRarity] = useState<string | null>(null)
   const [search, setSearch] = useState("")
   const [selected, setSelected] = useState<Brawler | null>(null)
@@ -93,8 +93,6 @@ export default function BrawlerPageClient({ brawlers, newest }: { brawlers: Braw
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
   }, [selected, close])
-
-  // Fetch stats when brawler selected
   useEffect(() => {
     if (!selected) return
     setStats(null)
@@ -149,8 +147,6 @@ export default function BrawlerPageClient({ brawlers, newest }: { brawlers: Braw
 
         <BrawlerCatalog brawlers={brawlers} activeRarity={activeRarity} search={search} onSelect={b => { setSelected(b); setTab("overview") }} />
       </div>
-
-      {/* Modal */}
       {selected && (() => {
         const color = sanitizeColor(selected.rarity.color)
         const hc = HYPERCHARGES[selected.id]
@@ -164,14 +160,12 @@ export default function BrawlerPageClient({ brawlers, newest }: { brawlers: Braw
               onClick={e => e.stopPropagation()}
               style={{ width: "100%", maxWidth: 520, maxHeight: "90vh", display: "flex", flexDirection: "column", background: "var(--panel)", border: "1px solid var(--line-2)", borderRadius: 20, boxShadow: "0 32px 80px -20px rgba(0,0,0,0.5)" }}
             >
-              {/* Header */}
               <div style={{ padding: "20px 20px 0", flexShrink: 0, position: "relative" }}>
                 <button onClick={close} style={{ position: "absolute", top: 20, right: 20, width: 28, height: 28, display: "grid", placeItems: "center", border: "1px solid var(--line)", borderRadius: 8, background: "none", cursor: "pointer", color: "var(--ink-4)", flexShrink: 0 }}>
                   <X size={12} />
                 </button>
 
                 <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16, paddingRight: 40 }}>
-                  {/* Avatar */}
                   <div style={{ width: 56, height: 56, borderRadius: 14, background: "var(--panel-2)", border: "1px solid var(--line)", display: "grid", placeItems: "center", flexShrink: 0, overflow: "hidden" }}>
                     <img src={selected.imageUrl2} alt={selected.name} style={{ width: 50, height: 50, objectFit: "contain" }} />
                   </div>
@@ -186,8 +180,6 @@ export default function BrawlerPageClient({ brawlers, newest }: { brawlers: Braw
                     </div>
                   </div>
                 </div>
-
-                {/* Tabs */}
                 <div style={{ display: "flex", borderBottom: "1px solid var(--line)", gap: 0 }}>
                   {(["overview", "maps", "abilities"] as Tab[]).map(t => (
                     <button
@@ -200,14 +192,9 @@ export default function BrawlerPageClient({ brawlers, newest }: { brawlers: Braw
                   ))}
                 </div>
               </div>
-
-              {/* Tab content */}
               <div style={{ overflowY: "auto", flex: 1, padding: "20px" }}>
-
-                {/* OVERVIEW */}
                 {tab === "overview" && (
                   <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                    {/* Stats row */}
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
                       {[
                         {
@@ -232,8 +219,6 @@ export default function BrawlerPageClient({ brawlers, newest }: { brawlers: Braw
                         </div>
                       ))}
                     </div>
-
-                    {/* Best modes */}
                     {!statsLoading && stats && stats.modes.length > 0 && (
                       <div>
                         <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", color: "var(--ink-4)", textTransform: "uppercase", marginBottom: 8 }}>By Mode</div>
@@ -250,8 +235,6 @@ export default function BrawlerPageClient({ brawlers, newest }: { brawlers: Braw
                         </div>
                       </div>
                     )}
-
-                    {/* Description */}
                     {selected.description && (
                       <div>
                         <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", color: "var(--ink-4)", textTransform: "uppercase", marginBottom: 8 }}>Description</div>
@@ -272,8 +255,6 @@ export default function BrawlerPageClient({ brawlers, newest }: { brawlers: Braw
                     )}
                   </div>
                 )}
-
-                {/* MAPS */}
                 {tab === "maps" && (
                   <div>
                     {statsLoading && (
@@ -290,7 +271,6 @@ export default function BrawlerPageClient({ brawlers, newest }: { brawlers: Braw
 
                     {!statsLoading && stats && stats.maps.length > 0 && (
                       <>
-                        {/* Column headers */}
                         <div style={{ display: "grid", gridTemplateColumns: "1fr 90px 64px 64px", gap: 8, padding: "0 10px 8px", borderBottom: "1px solid var(--line)" }}>
                           {["Map", "Mode", "Picks", "Win %"].map(h => (
                             <span key={h} style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: "0.1em", color: "var(--ink-4)", textTransform: "uppercase", textAlign: h === "Win %" || h === "Picks" ? "right" : "left" }}>{h}</span>
@@ -314,8 +294,6 @@ export default function BrawlerPageClient({ brawlers, newest }: { brawlers: Braw
                     )}
                   </div>
                 )}
-
-                {/* ABILITIES */}
                 {tab === "abilities" && (
                   <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
 

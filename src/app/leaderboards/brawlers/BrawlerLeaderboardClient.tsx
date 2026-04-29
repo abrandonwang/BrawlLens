@@ -64,8 +64,6 @@ export default function BrawlerLeaderboardClient({
     setPage(0)
     router.push(`/leaderboards/brawlers?b=${b.id}`)
   }
-
-  // Close on outside click
   useEffect(() => {
     function onDown(e: MouseEvent) {
       if (
@@ -81,10 +79,7 @@ export default function BrawlerLeaderboardClient({
 
   return (
     <div className="lb-page">
-
-      {/* Top controls row: cats left, brawler search right */}
       <div className="lb-top-controls">
-        {/* Category tabs */}
         <div className="bl-seg lb-cat-seg">
           {CATEGORIES.map(c => (
             <Link
@@ -102,8 +97,6 @@ export default function BrawlerLeaderboardClient({
             </Link>
           ))}
         </div>
-
-        {/* Brawler search with autocomplete */}
         <div className="lb-top-right">
         <div style={{ position: "relative", width: 200, flexShrink: 0 }}>
           <div className="bl-input" style={{ width: "100%" }}>

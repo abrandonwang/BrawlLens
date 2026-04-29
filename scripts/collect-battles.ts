@@ -8,23 +8,15 @@ config({ path: ".env.local" });
 const BRAWL_API_KEY = process.env.BRAWL_API_KEY!;
 const SUPABASE_URL = process.env.SUPABASE_URL!;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY!;
-
-// Local Postgres — raw battle data (unlimited storage)
 const localPg = new Pool({
   connectionString: process.env.LOCAL_PG_URL || "postgresql://brawlens:brawlens2026@localhost:5432/brawlens",
 });
-
-// Supabase — summary tables only (leaderboards, map stats, rotation)
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 const BASE_URL = "https://api.brawlstars.com/v1";
-
-// ─── Tuning ─────────────────────────────────────────────────────
 const CONCURRENCY = 4;
 const DB_BATCH_SIZE = 200;
 const MAX_RETRIES = 3;
 const BACKOFF_BASE_MS = 2000;
-
-// ─── Stats ──────────────────────────────────────────────────────
 let totalRequests = 0;
 let total429s = 0;
 let totalBattlesSaved = 0;
@@ -32,11 +24,79 @@ let totalPlayersSaved = 0;
 let totalSkipped = 0;
 let startTime = Date.now();
 
+interface ApiList<T> {
+  items?: T[];
+}
+
+interface PlayerSummary {
+  tag: string;
+  name: string;
+  trophies: number;
+  club?: { name?: string };
+}
+
+interface ClubSummary {
+  tag: string;
+  name: string;
+  trophies: number;
+  memberCount?: number;
+}
+
+interface BrawlerSummary {
+  id: number;
+  name: string;
+}
+
+interface BattleLogResponse {
+  items?: BattleLogEntry[];
+}
+
+interface BattleLogEntry {
+  battleTime: string;
+  event?: { id?: number; mode?: string; map?: string };
+  battle?: {
+    teams?: BattlePlayer[][];
+    result?: string;
+    mode?: string;
+    type?: string;
+    duration?: number;
+  };
+}
+
+interface BattlePlayer {
+  tag: string;
+  brawler: {
+    id: number;
+    name: string;
+  };
+}
+
+interface BattleRow {
+  id: string;
+  battle_time: string;
+  event_id: number | null;
+  mode: string;
+  map: string;
+  match_type: string | null;
+  duration: number | null;
+}
+
+interface BattlePlayerRow {
+  battle_id: string;
+  player_tag: string;
+  brawler_id: number;
+  brawler_name: string;
+  team_num: number;
+  won: boolean;
+}
+
+interface RotationResponse {
+  items?: unknown[];
+}
+
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
-
-// ─── Rate Limiter (token bucket) ────────────────────────────────
 class RateLimiter {
   private tokens: number;
   private maxTokens: number;
@@ -69,9 +129,7 @@ class RateLimiter {
 }
 
 const rateLimiter = new RateLimiter(10);
-
-// ─── API Fetch with Retry ───────────────────────────────────────
-async function apiFetch(endpoint: string): Promise<any> {
+async function apiFetch<T>(endpoint: string): Promise<T | null> {
   const url = `${BASE_URL}${endpoint}`;
 
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
@@ -105,14 +163,12 @@ async function apiFetch(endpoint: string): Promise<any> {
   }
   return null;
 }
-
-// ─── Battle Parsing ─────────────────────────────────────────────
 function generateBattleId(battleTime: string, players: string[]): string {
   const sorted = [...players].sort().join(",");
   return createHash("sha256").update(`${battleTime}:${sorted}`).digest("hex").slice(0, 32);
 }
 
-function parseBattle(entry: any, fetchedTag: string): { battle: any; players: any[] } | null {
+function parseBattle(entry: BattleLogEntry, fetchedTag: string): { battle: BattleRow; players: BattlePlayerRow[] } | null {
   const { battleTime, event, battle } = entry;
   if (!battle?.teams || battle.teams.length !== 2) return null;
   if (!battle.result) return null;
@@ -126,7 +182,7 @@ function parseBattle(entry: any, fetchedTag: string): { battle: any; players: an
 
   let fetchedTeam = -1;
   for (let t = 0; t < 2; t++) {
-    if (battle.teams[t].some((p: any) => p.tag === fetchedTag)) {
+    if (battle.teams[t].some((p) => p.tag === fetchedTag)) {
       fetchedTeam = t;
       break;
     }
@@ -151,7 +207,7 @@ function parseBattle(entry: any, fetchedTag: string): { battle: any; players: an
     duration: battle.duration || null,
   };
 
-  const playerRows: any[] = [];
+  const playerRows: BattlePlayerRow[] = [];
 
   for (let t = 0; t < 2; t++) {
     const won = isDraw ? false : t === fetchedTeam ? fetchedWon : !fetchedWon;
@@ -169,19 +225,17 @@ function parseBattle(entry: any, fetchedTag: string): { battle: any; players: an
 
   return { battle: battleRow, players: playerRows };
 }
-
-// ─── Fetch + Parse One Tag ──────────────────────────────────────
-async function processTag(tag: string): Promise<{ battles: any[]; players: any[] }> {
+async function processTag(tag: string): Promise<{ battles: BattleRow[]; players: BattlePlayerRow[] }> {
   const encoded = encodeURIComponent(tag);
-  const data = await apiFetch(`/players/${encoded}/battlelog`);
+  const data = await apiFetch<BattleLogResponse>(`/players/${encoded}/battlelog`);
 
   if (!data?.items) {
     totalSkipped++;
     return { battles: [], players: [] };
   }
 
-  const battles: any[] = [];
-  const players: any[] = [];
+  const battles: BattleRow[] = [];
+  const players: BattlePlayerRow[] = [];
 
   for (const entry of data.items) {
     const parsed = parseBattle(entry, tag);
@@ -192,18 +246,14 @@ async function processTag(tag: string): Promise<{ battles: any[]; players: any[]
 
   return { battles, players };
 }
-
-// ─── Batch DB Write (local Postgres) ────────────────────────────
-async function flushToDB(battles: any[], players: any[], processedTags: string[]) {
-  const uniqueBattles = new Map<string, any>();
+async function flushToDB(battles: BattleRow[], players: BattlePlayerRow[], processedTags: string[]) {
+  const uniqueBattles = new Map<string, BattleRow>();
   for (const b of battles) uniqueBattles.set(b.id, b);
   const dedupedBattles = Array.from(uniqueBattles.values());
 
-  const uniquePlayers = new Map<string, any>();
+  const uniquePlayers = new Map<string, BattlePlayerRow>();
   for (const p of players) uniquePlayers.set(`${p.battle_id}:${p.player_tag}`, p);
   const dedupedPlayers = Array.from(uniquePlayers.values());
-
-  // Insert battles in chunks
   for (let i = 0; i < dedupedBattles.length; i += 500) {
     const chunk = dedupedBattles.slice(i, i + 500);
     const values = chunk.map((_, j) =>
@@ -215,8 +265,6 @@ async function flushToDB(battles: any[], players: any[], processedTags: string[]
       params
     ).catch(e => console.error(`  DB error (battles): ${e.message}`));
   }
-
-  // Insert battle_players in chunks
   for (let i = 0; i < dedupedPlayers.length; i += 500) {
     const chunk = dedupedPlayers.slice(i, i + 500);
     const values = chunk.map((_, j) =>
@@ -228,8 +276,6 @@ async function flushToDB(battles: any[], players: any[], processedTags: string[]
       params
     ).catch(e => console.error(`  DB error (battle_players): ${e.message}`));
   }
-
-  // Mark tags as processed
   if (processedTags.length > 0) {
     await localPg.query(
       `UPDATE harvested_tags SET processed_at = $1 WHERE player_tag = ANY($2)`,
@@ -246,7 +292,7 @@ async function getUnprocessedTags(limit: number): Promise<string[]> {
     `SELECT player_tag FROM harvested_tags WHERE processed_at IS NULL LIMIT $1`,
     [limit]
   );
-  return rows.map((r: any) => r.player_tag);
+  return rows.map((r: { player_tag: string }) => r.player_tag);
 }
 
 function printStats(processed: number, total: number) {
@@ -266,8 +312,8 @@ function printStats(processed: number, total: number) {
 }
 
 async function fetchAndSaveRotation() {
-  const raw = await apiFetch("/events/rotation");
-  const data = raw?.items ?? raw;
+  const raw = await apiFetch<RotationResponse | unknown[]>("/events/rotation");
+  const data = Array.isArray(raw) ? raw : raw?.items;
   if (!data?.length) {
     console.log("  [rotation] no data");
     return;
@@ -284,9 +330,9 @@ const LEADERBOARD_REGIONS = ["global", "US", "KR", "BR", "DE", "JP"];
 async function fetchAndSaveLeaderboards() {
   console.log("  Updating player leaderboards...");
   for (const region of LEADERBOARD_REGIONS) {
-    const data = await apiFetch(`/rankings/${region}/players`);
+    const data = await apiFetch<ApiList<PlayerSummary>>(`/rankings/${region}/players`);
     if (!data?.items?.length) { console.log(`    [${region}] no data`); continue; }
-    const rows = data.items.map((p: any, i: number) => ({
+    const rows = data.items.map((p, i) => ({
       region, rank: i + 1, player_tag: p.tag, player_name: p.name,
       trophies: p.trophies, club_name: p.club?.name ?? null,
       updated_at: new Date().toISOString(),
@@ -300,9 +346,9 @@ async function fetchAndSaveLeaderboards() {
 async function fetchAndSaveClubLeaderboards() {
   console.log("  Updating club leaderboards...");
   for (const region of LEADERBOARD_REGIONS) {
-    const data = await apiFetch(`/rankings/${region}/clubs`);
+    const data = await apiFetch<ApiList<ClubSummary>>(`/rankings/${region}/clubs`);
     if (!data?.items?.length) { console.log(`    [clubs/${region}] no data`); continue; }
-    const rows = data.items.map((c: any, i: number) => ({
+    const rows = data.items.map((c, i) => ({
       region, rank: i + 1, club_tag: c.tag, club_name: c.name,
       trophies: c.trophies, member_count: c.memberCount ?? null,
       updated_at: new Date().toISOString(),
@@ -315,12 +361,12 @@ async function fetchAndSaveClubLeaderboards() {
 
 async function fetchAndSaveBrawlerLeaderboards() {
   console.log("  Updating brawler leaderboards (global)...");
-  const brawlerData = await apiFetch("/brawlers");
+  const brawlerData = await apiFetch<ApiList<BrawlerSummary>>("/brawlers");
   if (!brawlerData?.items?.length) { console.log("    [brawlers] could not fetch brawler list"); return; }
   for (const brawler of brawlerData.items) {
-    const data = await apiFetch(`/rankings/global/brawlers/${brawler.id}`);
+    const data = await apiFetch<ApiList<PlayerSummary>>(`/rankings/global/brawlers/${brawler.id}`);
     if (!data?.items?.length) continue;
-    const rows = data.items.map((p: any, i: number) => ({
+    const rows = data.items.map((p, i) => ({
       brawler_id: brawler.id, brawler_name: brawler.name, rank: i + 1,
       player_tag: p.tag, player_name: p.name, trophies: p.trophies,
       club_name: p.club?.name ?? null, updated_at: new Date().toISOString(),
@@ -330,12 +376,8 @@ async function fetchAndSaveBrawlerLeaderboards() {
   }
   console.log(`    [brawlers] done (${brawlerData.items.length} brawlers)`);
 }
-
-// ─── Aggregate local Postgres → push to Supabase ────────────────
 async function aggregateStats() {
   console.log("\n  Aggregating map stats from local DB...");
-
-  // Map-level stats
   const mapRes = await localPg.query(`
     SELECT map, mode, COUNT(DISTINCT id) AS battle_count
     FROM battles
@@ -350,8 +392,6 @@ async function aggregateStats() {
     }
     console.log(`  Pushed ${mapRows.length} map stat rows to Supabase.`);
   }
-
-  // Brawler win rates per map
   const brawlerRes = await localPg.query(`
     SELECT
       b.map, b.mode,
@@ -382,22 +422,15 @@ async function aggregateStats() {
     else console.error(`  Skipping TRUNCATE — brawler upsert had errors, raw data preserved.`);
     if (upsertFailed) return;
   }
-
-  // Truncate local raw tables — no dead-tuple bloat since TRUNCATE is instant
   await localPg.query("TRUNCATE battles, battle_players");
   console.log("  Local raw tables truncated.");
 }
-
-// ─── Reset all tags for next cycle ──────────────────────────────
 async function resetAllTags() {
   console.log("\n  Resetting all tags for next cycle...");
   await localPg.query("UPDATE harvested_tags SET processed_at = NULL");
   console.log("  Tags reset. Starting new cycle.\n");
 }
-
-// ─── Run one full pass ───────────────────────────────────────────
 async function runCycle(cycle: number) {
-  // Safety valve: if local battle_players is huge, aggregate first
   const { rows: countRows } = await localPg.query("SELECT COUNT(*) FROM battle_players");
   const bpCount = Number(countRows[0].count);
   if (bpCount > 1_000_000) {
@@ -425,8 +458,8 @@ async function runCycle(cycle: number) {
     const tags = await getUnprocessedTags(1000);
     if (tags.length === 0) break;
 
-    let accBattles: any[] = [];
-    let accPlayers: any[] = [];
+    let accBattles: BattleRow[] = [];
+    let accPlayers: BattlePlayerRow[] = [];
     let accTags: string[] = [];
 
     for (let i = 0; i < tags.length; i += CONCURRENCY) {
@@ -475,8 +508,6 @@ async function runCycle(cycle: number) {
   console.log(`\n=== Cycle ${cycle} complete | ${Math.floor(elapsed / 3600)}h ${Math.floor((elapsed % 3600) / 60)}m ===`);
   console.log(`Battles: ${totalBattlesSaved} | Players: ${totalPlayersSaved} | 429s: ${total429s} | Skipped: ${totalSkipped}`);
 }
-
-// ─── Main (runs forever) ─────────────────────────────────────────
 async function leaderboardLoop() {
   while (true) {
     await fetchAndSaveLeaderboards();
@@ -490,8 +521,6 @@ async function leaderboardLoop() {
 async function main() {
   console.log("=== BrawlLens Battle Collector — Continuous Mode ===");
   console.log(`Concurrency: ${CONCURRENCY} | Flush every: ${DB_BATCH_SIZE} tags\n`);
-
-  // Verify local PG connection
   await localPg.query("SELECT 1").catch(e => {
     console.error("FATAL: Cannot connect to local Postgres:", e.message);
     process.exit(1);

@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect, useRef, Suspense } from "react"
+import { useState, useEffect, useRef, Suspense, useCallback } from "react"
 import { ArrowUp } from "lucide-react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
@@ -68,7 +68,6 @@ interface Message {
   content: string
 }
 
-
 function ChatPage() {
   const searchParams = useSearchParams()
   const [messages, setMessages] = useState<Message[]>([])
@@ -78,41 +77,7 @@ function ChatPage() {
   const bottomRef = useRef<HTMLDivElement>(null)
   const firedRef = useRef(false)
 
-  useEffect(() => {
-    const q = searchParams.get("q")
-    if (q && !firedRef.current) {
-      firedRef.current = true
-      sendMessage(q)
-    }
-  }, [])
-
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" })
-  }, [messages])
-
-  function handleInput(e: React.ChangeEvent<HTMLTextAreaElement>) {
-    setUserInput(e.target.value)
-    const el = e.target
-    el.style.height = "auto"
-    el.style.height = `${el.scrollHeight}px`
-  }
-
-  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault()
-      handleSubmit()
-    }
-  }
-
-  function handleSubmit() {
-    const q = userInput.trim()
-    if (!q || streaming) return
-    setUserInput("")
-    if (textareaRef.current) textareaRef.current.style.height = "auto"
-    sendMessage(q)
-  }
-
-  async function sendMessage(content: string) {
+  const sendMessage = useCallback(async (content: string) => {
     const userMessage: Message = { role: "user", content }
     const history = [...messages, userMessage]
     setMessages(history)
@@ -150,6 +115,40 @@ function ChatPage() {
     }
 
     setStreaming(false)
+  }, [messages])
+
+  useEffect(() => {
+    const q = searchParams.get("q")
+    if (q && !firedRef.current) {
+      firedRef.current = true
+      sendMessage(q)
+    }
+  }, [searchParams, sendMessage])
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" })
+  }, [messages])
+
+  function handleInput(e: React.ChangeEvent<HTMLTextAreaElement>) {
+    setUserInput(e.target.value)
+    const el = e.target
+    el.style.height = "auto"
+    el.style.height = `${el.scrollHeight}px`
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault()
+      handleSubmit()
+    }
+  }
+
+  function handleSubmit() {
+    const q = userInput.trim()
+    if (!q || streaming) return
+    setUserInput("")
+    if (textareaRef.current) textareaRef.current.style.height = "auto"
+    sendMessage(q)
   }
 
   return (
@@ -157,8 +156,6 @@ function ChatPage() {
 
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
-
-          {/* Greeting — always shown */}
           <div style={{ fontSize: 14, lineHeight: 1.75, color: "var(--ink-2)" }}>
             What can I help you with today?
           </div>

@@ -56,8 +56,6 @@ export default async function PlayerProfile({ params }: { params: Promise<{ tag:
         <ArrowLeft size={11} />
         Leaderboard
       </Link>
-
-      {/* Header */}
       <div style={{ marginBottom: 28 }}>
         <div className="bl-mono bl-caption" style={{ marginBottom: 6, color: "var(--ink-4)" }}>#{tag}</div>
         <div style={{ fontSize: 28, fontWeight: 650, letterSpacing: "-0.03em", color: "var(--ink)", lineHeight: 1.1, marginBottom: 6 }}>
@@ -67,8 +65,6 @@ export default async function PlayerProfile({ params }: { params: Promise<{ tag:
           <div style={{ fontSize: 12, color: "var(--ink-4)", fontWeight: 500 }}>{club.name}</div>
         )}
       </div>
-
-      {/* Stats */}
       <div className="player-stats">
         {stats.map(s => (
           <div key={s.label} style={{ display: "flex", flexDirection: "column", gap: 2 }}>
@@ -80,8 +76,6 @@ export default async function PlayerProfile({ params }: { params: Promise<{ tag:
       </div>
 
       <div style={{ height: 1, background: "var(--line)", margin: "24px 0" }} />
-
-      {/* Top brawlers */}
       <div style={{ marginBottom: 10, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <span className="bl-caption" style={{ letterSpacing: "0.08em" }}>TOP BRAWLERS</span>
         <span className="bl-caption" style={{ color: "var(--ink-4)" }}>{totalBrawlers} total</span>

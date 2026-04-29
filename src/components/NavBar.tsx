@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Search, X, User, LayoutGrid, Map, Trophy, MessageSquare, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -31,6 +31,15 @@ export default function NavBar() {
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const closeMenu = useCallback(() => {
+    if (!isMenuOpen) return;
+    setMenuClosing(true);
+    setTimeout(() => {
+      setIsMenuOpen(false);
+      setMenuClosing(false);
+    }, 380);
+  }, [isMenuOpen]);
+
   useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
@@ -42,7 +51,7 @@ export default function NavBar() {
     return () => { document.body.style.overflow = ""; };
   }, [isMenuOpen, menuClosing]);
 
-  useEffect(() => { closeMenu(); }, [pathname]);
+  useEffect(() => { closeMenu(); }, [pathname, closeMenu]);
 
   useEffect(() => {
     if (isSearchOpen) {
@@ -61,16 +70,7 @@ export default function NavBar() {
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
-
-  function closeMenu() {
-    if (!isMenuOpen) return;
-    setMenuClosing(true);
-    setTimeout(() => {
-      setIsMenuOpen(false);
-      setMenuClosing(false);
-    }, 380);
-  }
+  }, [closeMenu]);
 
   function toggleMenu() {
     if (isMenuOpen) closeMenu();
@@ -112,8 +112,6 @@ export default function NavBar() {
         boxShadow: "var(--shadow-lift)",
         whiteSpace: "nowrap",
       }}>
-
-        {/* Logo */}
         <Link href="/" style={{
           display: "flex", alignItems: "center", gap: 8,
           padding: "6px 14px 6px 10px",
@@ -128,8 +126,6 @@ export default function NavBar() {
             BrawlLens
           </span>
         </Link>
-
-        {/* Desktop nav links */}
         <div className="hidden lg:flex" style={{ alignItems: "center", gap: 0 }}>
           {navItems.map(item => (
             <Link key={item.label} href={item.href}
@@ -146,8 +142,6 @@ export default function NavBar() {
             </Link>
           ))}
         </div>
-
-        {/* Right controls — no left border on mobile (logo border-right is enough) */}
         <div style={{ display: "flex", gap: 4 }} className="nav-right-controls">
           <button onClick={() => setIsSearchOpen(true)} aria-label="Search"
             style={{ width: 32, height: 32, display: "grid", placeItems: "center", borderRadius: 999, color: "var(--ink-3)", background: "transparent", border: "none", cursor: "pointer" }}
@@ -168,8 +162,6 @@ export default function NavBar() {
               }} />
             </button>
           )}
-
-          {/* Two-line hamburger / X */}
           <div className="lg:hidden">
             <button onClick={toggleMenu} aria-label="Menu"
               style={{ width: 32, height: 32, display: "grid", placeItems: "center", borderRadius: 999, color: "var(--ink-3)", background: "transparent", border: "none", cursor: "pointer" }}
@@ -188,8 +180,6 @@ export default function NavBar() {
       </nav>
 
       <div style={{ height: 80 }} />
-
-      {/* Full-screen mobile menu */}
       {menuVisible && (
         <div
           className="lg:hidden"
@@ -202,10 +192,7 @@ export default function NavBar() {
               : "menuOverlayIn 0.32s cubic-bezier(0,0,0.2,1) forwards",
           }}
         >
-          {/* Spacer for navbar */}
           <div style={{ height: 80, flexShrink: 0 }} />
-
-          {/* Links */}
           <div style={{
             flex: 1, display: "flex", flexDirection: "column",
             justifyContent: "center", padding: "0 36px 80px",
@@ -234,8 +221,6 @@ export default function NavBar() {
               </Link>
             ))}
           </div>
-
-          {/* Bottom hint */}
           <div style={{
             padding: "24px 36px",
             animation: menuClosing
@@ -258,8 +243,6 @@ export default function NavBar() {
           </div>
         </div>
       )}
-
-      {/* Search modal */}
       {isSearchOpen && (
         <div
           className="fixed inset-0 z-[200] flex items-start justify-center px-4"
