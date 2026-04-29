@@ -205,7 +205,7 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
             )}
           </div>
 
-          <div className="relative ml-auto flex min-w-0 flex-1 justify-end max-w-[calc(100%-220px)] max-md:ml-0 max-md:w-full max-md:max-w-none max-md:justify-start">
+          <div className="relative ml-auto flex min-w-0 flex-1 justify-end max-w-[calc(100%-220px)] max-md:ml-0 max-md:w-full max-md:max-w-none max-md:justify-start max-md:self-stretch">
             {canScrollLeft && (
               <button onClick={() => scrollFilters("left")} className="absolute top-0 bottom-0 left-0 z-10 flex cursor-pointer items-center border-0 bg-[linear-gradient(to_right,var(--bg)_50%,transparent)] py-0 pr-3.5 pl-0.5 text-[var(--ink-3)]">
                 <ChevronLeft size={14} />

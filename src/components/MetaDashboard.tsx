@@ -219,16 +219,16 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch,
 
   return (
     <div className="relative pt-1">
-      <div className="mb-3.5 flex items-end justify-between gap-4 rounded-lg bg-[color-mix(in_srgb,var(--panel)_72%,transparent)] px-3.5 py-3 max-[520px]:flex-col max-[520px]:items-start">
-        <div>
+      <div className="mb-3.5 flex items-end justify-between gap-2.5 rounded-lg bg-[color-mix(in_srgb,var(--panel)_72%,transparent)] px-3.5 py-3">
+        <div className="min-w-0">
           <div className="mb-1 text-[10px] font-bold tracking-[0.08em] text-[var(--ink-4)] uppercase">{selectedMode === null ? "All Maps" : MODE_CONFIG[selectedMode]?.label ?? selectedMode}</div>
-          <div className="text-[17px] leading-tight font-bold text-[var(--ink)]">
+          <div className="truncate text-[17px] leading-tight font-bold text-[var(--ink)]">
             {displayedMaps.length.toLocaleString()} {displayedMaps.length === 1 ? "map" : "maps"}
           </div>
         </div>
-        <div className="flex flex-wrap items-center justify-end gap-2 max-[520px]:justify-start">
-          <span className="inline-flex min-h-[26px] items-center whitespace-nowrap rounded-full border border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_80%,transparent)] px-2.5 text-[10.5px] font-semibold text-[var(--ink-3)]">{liveCount.toLocaleString()} live</span>
-          <span className="inline-flex min-h-[26px] items-center whitespace-nowrap rounded-full border border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_80%,transparent)] px-2.5 text-[10.5px] font-semibold text-[var(--ink-3)]">Page {mapPage + 1} of {mapTotalPages}</span>
+        <div className="flex shrink-0 flex-nowrap items-center justify-end gap-1.5">
+          <span className="inline-flex min-h-[26px] items-center whitespace-nowrap rounded-full border border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_80%,transparent)] px-2.5 text-[10.5px] font-semibold text-[var(--ink-3)] max-[420px]:px-2 max-[420px]:text-[10px]">{liveCount.toLocaleString()} live</span>
+          <span className="inline-flex min-h-[26px] items-center whitespace-nowrap rounded-full border border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_80%,transparent)] px-2.5 text-[10.5px] font-semibold text-[var(--ink-3)] max-[420px]:px-2 max-[420px]:text-[10px]">Page {mapPage + 1} of {mapTotalPages}</span>
         </div>
       </div>
 

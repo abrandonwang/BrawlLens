@@ -7,17 +7,31 @@ export default function Footer() {
   if (pathname === "/" || pathname.startsWith("/chat")) return null
 
   return (
-    <footer style={{ width: "100%", borderTop: "1px solid var(--line)", background: "color-mix(in srgb, var(--panel) 90%, transparent)", backdropFilter: "blur(12px)" }}>
-      <div style={{ maxWidth: 1080, margin: "0 auto", padding: "0 32px", height: 52, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <p className="bl-caption" style={{ color: "var(--ink-3)" }}>© 2025 BrawlLens.</p>
-        <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
-          <Link href="/about?section=privacy-policy" style={{ textDecoration: "none" }}>
-            <span className="bl-nav-item" style={{ padding: "6px 10px", fontSize: 11.5 }}>Privacy</span>
-          </Link>
-          <Link href="/about?section=contact" style={{ textDecoration: "none" }}>
-            <span className="bl-nav-item" style={{ padding: "6px 10px", fontSize: 11.5 }}>Contact</span>
-          </Link>
+    <footer className="w-full border-t border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_86%,transparent)] backdrop-blur-xl">
+      <div className="mx-auto flex min-h-20 w-full max-w-[1180px] items-center justify-between gap-6 px-[clamp(16px,3vw,32px)] py-4 max-sm:flex-col max-sm:items-start max-sm:gap-3">
+        <div className="min-w-0">
+          <p className="m-0 text-[13px] font-semibold text-[var(--ink)]">BrawlLens</p>
+          <p className="mt-1 mb-0 text-[11.5px] leading-snug text-[var(--ink-3)]">
+            Battle data, leaderboards, and brawler insight.
+          </p>
         </div>
+
+        <nav className="flex flex-wrap items-center gap-1.5">
+          {[
+            ["About", "/about"],
+            ["Privacy", "/about?section=privacy-policy"],
+            ["Contact", "/about?section=contact"],
+          ].map(([label, href]) => (
+            <Link
+              key={href}
+              href={href}
+              className="rounded-full px-3 py-1.5 text-[11.5px] font-medium text-[var(--ink-3)] no-underline transition-colors hover:bg-[var(--hover-bg)] hover:text-[var(--ink)]"
+            >
+              {label}
+            </Link>
+          ))}
+          <span className="px-1 text-[11px] text-[var(--ink-4)]">© 2026</span>
+        </nav>
       </div>
     </footer>
   )
