@@ -152,9 +152,9 @@ function ChatPage() {
   }
 
   return (
-    <main className="flex min-h-dvh flex-col pt-[80px]" style={{ background: "var(--bg)" }}>
+    <main className="flex h-dvh flex-col pt-[80px]" style={{ background: "var(--bg)" }}>
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 min-h-0 overflow-y-auto">
         <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
           <div style={{ fontSize: 14, lineHeight: 1.75, color: "var(--ink-2)" }}>
             What can I help you with today?
@@ -197,7 +197,7 @@ function ChatPage() {
         </div>
       </div>
 
-      <div style={{ position: "sticky", bottom: 0, borderTop: "1px solid var(--line)", background: "color-mix(in srgb, var(--panel) 90%, transparent)", backdropFilter: "blur(12px)", padding: "12px 16px" }}>
+      <div style={{ flexShrink: 0, borderTop: "1px solid var(--line)", background: "color-mix(in srgb, var(--panel) 90%, transparent)", backdropFilter: "blur(12px)", padding: "12px 16px" }}>
         <div className="max-w-2xl mx-auto">
           <div style={{ display: "flex", alignItems: "flex-end", gap: 8, background: "var(--panel)", border: "1px solid var(--line-2)", borderRadius: 16, padding: "10px 10px 10px 16px", boxShadow: "0 8px 24px -8px rgba(0,0,0,0.2)", transition: "border-color 0.16s" }}>
             <textarea

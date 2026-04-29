@@ -230,7 +230,7 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
           </div>
         </div>
 
-        <div className="mb-8 flex w-full items-center gap-2.5 rounded-[12px] border border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_78%,transparent)] p-2.5 shadow-[0_18px_36px_-34px_rgba(0,0,0,0.7)] backdrop-blur-2xl max-md:flex-col max-md:items-stretch max-md:gap-2">
+        <div className="relative z-30 mb-8 flex w-full items-center gap-2.5 rounded-[12px] border border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_78%,transparent)] p-2.5 shadow-[0_18px_36px_-34px_rgba(0,0,0,0.7)] backdrop-blur-2xl max-md:flex-col max-md:items-stretch max-md:gap-2">
           <div className="relative w-[200px] shrink-0 max-md:w-full">
             <div className="flex h-10 items-center gap-2 rounded-[10px] border border-[var(--line)] bg-[var(--panel)] px-3.5 text-[var(--ink)] transition-colors focus-within:border-[var(--line-2)]">
               <Search size={13} className="shrink-0 text-[var(--ink-4)]" />
@@ -247,7 +247,7 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
             {searchOpen && searchMatches.length > 0 && (
               <div
                 ref={searchDropdownRef}
-                className="absolute top-[calc(100%+6px)] right-0 left-0 z-40 max-h-[280px] overflow-y-auto rounded-xl border border-[var(--line-2)] bg-[var(--panel)] p-1 shadow-[0_18px_40px_-20px_rgba(0,0,0,0.45)]"
+                className="absolute top-[calc(100%+6px)] right-0 left-0 z-50 max-h-[280px] overflow-y-auto rounded-xl border border-[var(--line-2)] bg-[var(--panel)] p-1 shadow-[0_18px_40px_-20px_rgba(0,0,0,0.45)]"
               >
                 {searchMatches.slice(0, 12).map(b => (
                   <button

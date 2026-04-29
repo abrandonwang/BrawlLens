@@ -106,6 +106,37 @@ export default function MapsPageClient() {
   const [minPicks, setMinPicks] = useState(10)
   const [sortBy, setSortBy] = useState<SortKey>("picks")
   const [spotlightTopBrawler, setSpotlightTopBrawler] = useState<{ id: number; name: string; picks: number; winRate: number } | null>(null)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [mapImageLookup, setMapImageLookup] = useState<Map<string, string>>(new Map())
+  const searchInputRef = useRef<HTMLInputElement>(null)
+  const searchDropdownRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    fetch("https://api.brawlify.com/v1/maps")
+      .then(r => r.ok ? r.json() : { list: [] })
+      .then(data => {
+        const lookup = new Map<string, string>()
+        for (const m of data.list || []) {
+          lookup.set(m.name, m.imageUrl)
+          lookup.set(normalizeMapName(m.name), m.imageUrl)
+        }
+        setMapImageLookup(lookup)
+      })
+      .catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    function onDown(e: MouseEvent) {
+      if (
+        searchDropdownRef.current && !searchDropdownRef.current.contains(e.target as Node) &&
+        searchInputRef.current && !searchInputRef.current.contains(e.target as Node)
+      ) {
+        setSearchOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", onDown)
+    return () => document.removeEventListener("mousedown", onDown)
+  }, [])
 
   const updateScrollState = useCallback((resetStart = false) => {
     const el = filtersRef.current
@@ -246,6 +277,33 @@ export default function MapsPageClient() {
     return best
   }, [modes])
 
+  const allMapsList = useMemo(() => {
+    const seen = new Set<string>()
+    const list: { name: string; mode: string }[] = []
+    for (const m of modes) {
+      for (const map of m.maps) {
+        if (!seen.has(map.name)) {
+          seen.add(map.name)
+          list.push({ name: map.name, mode: m.mode })
+        }
+      }
+    }
+    return list
+  }, [modes])
+
+  const searchMatches = useMemo(() => {
+    const q = mapSearch.trim().toLowerCase()
+    if (!q) return allMapsList
+    return allMapsList.filter(m => m.name.toLowerCase().includes(q))
+  }, [allMapsList, mapSearch])
+
+  const selectFromSearch = useCallback((name: string, mode: string) => {
+    const imageUrl = mapImageLookup.get(name) ?? mapImageLookup.get(normalizeMapName(name))
+    handleSelectMap({ name, imageUrl, mode, isLive: false })
+    setMapSearch("")
+    setSearchOpen(false)
+  }, [mapImageLookup, handleSelectMap])
+
   useEffect(() => {
     if (!spotlightMap) return
     setSpotlightTopBrawler(null)
@@ -293,15 +351,47 @@ export default function MapsPageClient() {
           </div>
         </div>
 
-        <div className="mb-8 flex w-full items-center gap-2.5 rounded-[12px] border border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_78%,transparent)] p-2.5 shadow-[0_18px_36px_-34px_rgba(0,0,0,0.7)] backdrop-blur-2xl max-md:flex-col max-md:items-stretch max-md:gap-2">
-          <div className="flex h-10 w-[200px] shrink-0 items-center gap-2.5 rounded-[10px] border border-[var(--line)] bg-[var(--panel)] px-3.5 text-[var(--ink)] transition-colors focus-within:border-[var(--line-2)] max-md:w-full">
-            <Search size={13} className="shrink-0 text-[var(--ink-4)]" />
-            <input
-              value={mapSearch}
-              onChange={e => setMapSearch(e.target.value)}
-              placeholder="Search maps"
-              className="w-full border-0 bg-transparent font-inherit text-[13px] text-[var(--ink)] outline-none placeholder:text-[var(--ink-4)]"
-            />
+        <div className="relative z-30 mb-8 flex w-full items-center gap-2.5 rounded-[12px] border border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_78%,transparent)] p-2.5 shadow-[0_18px_36px_-34px_rgba(0,0,0,0.7)] backdrop-blur-2xl max-md:flex-col max-md:items-stretch max-md:gap-2">
+          <div className="relative w-[200px] shrink-0 max-md:w-full">
+            <div className="flex h-10 items-center gap-2.5 rounded-[10px] border border-[var(--line)] bg-[var(--panel)] px-3.5 text-[var(--ink)] transition-colors focus-within:border-[var(--line-2)]">
+              <Search size={13} className="shrink-0 text-[var(--ink-4)]" />
+              <input
+                ref={searchInputRef}
+                value={mapSearch}
+                onChange={e => { setMapSearch(e.target.value); setSearchOpen(true) }}
+                onFocus={() => setSearchOpen(true)}
+                placeholder="Search maps"
+                className="w-full border-0 bg-transparent font-inherit text-[13px] text-[var(--ink)] outline-none placeholder:text-[var(--ink-4)]"
+              />
+            </div>
+
+            {searchOpen && searchMatches.length > 0 && (
+              <div
+                ref={searchDropdownRef}
+                className="absolute top-[calc(100%+6px)] right-0 left-0 z-50 max-h-[280px] overflow-y-auto rounded-xl border border-[var(--line-2)] bg-[var(--panel)] p-1 shadow-[0_18px_40px_-20px_rgba(0,0,0,0.45)]"
+              >
+                {searchMatches.slice(0, 12).map(m => {
+                  const imageUrl = mapImageLookup.get(m.name) ?? mapImageLookup.get(normalizeMapName(m.name))
+                  return (
+                    <button
+                      key={m.name}
+                      onMouseDown={() => selectFromSearch(m.name, m.mode)}
+                      className="row-hover flex w-full cursor-pointer items-center gap-2.5 rounded-[9px] border-0 bg-transparent px-2.5 py-2 text-left font-inherit"
+                    >
+                      <div className="grid size-[26px] shrink-0 place-items-center overflow-hidden rounded-[5px] border border-[var(--line)] bg-[var(--panel-2)]">
+                        {imageUrl && (
+                          <BrawlImage src={imageUrl} alt={m.name} width={26} height={26} sizes="26px" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="truncate text-[12.5px] font-semibold text-[var(--ink)]">{m.name}</div>
+                        <div className="text-[10.5px] leading-snug tracking-[0.01em] text-[var(--ink-4)]">{getModeName(m.mode)}</div>
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            )}
           </div>
 
           <div className="relative ml-auto flex min-w-0 flex-1 justify-end max-w-[calc(100%-220px)] max-md:hidden">
