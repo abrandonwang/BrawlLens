@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef, useCallback, useMemo } from "react"
+import { useState, useEffect, useRef, useCallback, useMemo, type CSSProperties } from "react"
 import { createPortal } from "react-dom"
 import { useSearchParams } from "next/navigation"
 import { Search, ChevronLeft, ChevronRight, X } from "lucide-react"
@@ -72,6 +72,12 @@ function formatBrawlerName(name: string) {
   return name.split(" ").map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(" ")
 }
 
+function formatNum(n: number) {
+  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + "M"
+  if (n >= 1_000) return (n / 1_000).toFixed(1) + "K"
+  return n.toString()
+}
+
 function normalizeMapName(name: string) {
   return name
     .normalize("NFKD")
@@ -99,6 +105,7 @@ export default function MapsPageClient() {
   const [brawlerSearch, setBrawlerSearch] = useState("")
   const [minPicks, setMinPicks] = useState(10)
   const [sortBy, setSortBy] = useState<SortKey>("picks")
+  const [spotlightTopBrawler, setSpotlightTopBrawler] = useState<{ id: number; name: string; picks: number; winRate: number } | null>(null)
 
   const updateScrollState = useCallback((resetStart = false) => {
     const el = filtersRef.current
@@ -229,6 +236,27 @@ export default function MapsPageClient() {
     modes.forEach(mode => mode.maps.forEach(map => names.add(map.name)))
     return names.size
   }, [modes])
+  const spotlightMap = useMemo(() => {
+    let best: { name: string; mode: string; battles: number } | null = null
+    for (const m of modes) {
+      for (const map of m.maps) {
+        if (!best || map.battles > best.battles) best = { name: map.name, mode: m.mode, battles: map.battles }
+      }
+    }
+    return best
+  }, [modes])
+
+  useEffect(() => {
+    if (!spotlightMap) return
+    setSpotlightTopBrawler(null)
+    fetch(`/api/meta?map=${encodeURIComponent(spotlightMap.name)}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        const top = d?.brawlers?.[0]
+        if (top) setSpotlightTopBrawler({ id: top.brawlerId, name: top.name, picks: top.picks, winRate: top.winRate })
+      })
+      .catch(() => {})
+  }, [spotlightMap])
 
   return (
     <>
@@ -241,6 +269,27 @@ export default function MapsPageClient() {
           <div className="flex flex-wrap justify-end gap-2 max-md:justify-start">
             <span className="inline-flex min-h-[30px] items-center whitespace-nowrap rounded-full border border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_84%,transparent)] px-3 text-[11.5px] font-semibold text-[var(--ink-2)]">{loading ? "Loading maps" : `${totalMaps} maps`}</span>
             <span className="inline-flex min-h-[30px] items-center whitespace-nowrap rounded-full border border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_84%,transparent)] px-3 text-[11.5px] font-semibold text-[var(--ink-2)]">{selectedMode ? getModeName(selectedMode) : "All modes"}</span>
+          </div>
+        </div>
+
+        <div className="page-summary mb-3.5 flex items-center justify-between gap-3.5 p-[18px] max-md:flex-col max-md:items-stretch" style={{ "--summary-gradient": "linear-gradient(135deg, #6366F1 0%, #14B8A6 100%)" } as CSSProperties}>
+          <div className="min-w-0">
+            <p className="mb-1 text-[10.5px] leading-snug tracking-[0.12em] text-white/70 uppercase">Top Map</p>
+            <h2 className="m-0 truncate text-[22px] leading-tight font-bold text-white">{spotlightMap ? spotlightMap.name : "Loading..."}</h2>
+          </div>
+          <div className="grid min-w-[min(420px,48%)] grid-cols-3 gap-2 max-md:min-w-0">
+            <div className="page-summary-stat">
+              <span>Battles</span>
+              <strong>{spotlightMap ? formatNum(spotlightMap.battles) : "—"}</strong>
+            </div>
+            <div className="page-summary-stat">
+              <span>Mode</span>
+              <strong>{spotlightMap ? getModeName(spotlightMap.mode) : "—"}</strong>
+            </div>
+            <div className="page-summary-stat">
+              <span>Top brawler</span>
+              <strong>{spotlightTopBrawler ? formatBrawlerName(spotlightTopBrawler.name) : "—"}</strong>
+            </div>
           </div>
         </div>
 

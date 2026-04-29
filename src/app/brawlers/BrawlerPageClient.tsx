@@ -1,11 +1,11 @@
 "use client"
 
-import { useState, useEffect, useCallback, useRef, useMemo } from "react"
+import { useState, useEffect, useCallback, useRef, useMemo, type CSSProperties } from "react"
 import { createPortal } from "react-dom"
 import { useSearchParams } from "next/navigation"
 import { Search, X, ChevronLeft, ChevronRight } from "lucide-react"
 import BrawlerCatalog from "@/components/BrawlerCatalog"
-import { BrawlImage } from "@/components/BrawlImage"
+import { BrawlImage, brawlerIconUrl } from "@/components/BrawlImage"
 import { EmptyState, SkeletonBlock, StateButton } from "@/components/PolishStates"
 import { HYPERCHARGES } from "@/data/hypercharges"
 import type { Brawler } from "./page"
@@ -31,6 +31,12 @@ function winRateColor(wr: number) {
   return "#F87171"
 }
 
+function formatNum(n: number) {
+  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + "M"
+  if (n >= 1_000) return (n / 1_000).toFixed(1) + "K"
+  return n.toString()
+}
+
 interface BrawlerStats {
   totalPicks: number
   avgWinRate: number | null
@@ -49,9 +55,23 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
   const [statsLoading, setStatsLoading] = useState(false)
   const [statsError, setStatsError] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
+  const [topBrawler, setTopBrawler] = useState<{
+    id: number
+    name: string
+    winRate: number
+    picks: number
+    bestMap: { name: string; mode: string; winRate: number } | null
+  } | null>(null)
   const searchParams = useSearchParams()
   const searchInputRef = useRef<HTMLInputElement>(null)
   const searchDropdownRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    fetch("/api/brawlers/top")
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.brawler) setTopBrawler(d.brawler) })
+      .catch(() => {})
+  }, [])
 
   useEffect(() => {
     const openId = searchParams.get("open")
@@ -177,6 +197,36 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
           <div className="flex flex-wrap justify-end gap-2 max-md:justify-start">
             <span className="inline-flex min-h-[30px] items-center whitespace-nowrap rounded-full border border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_84%,transparent)] px-3 text-[11.5px] font-semibold text-[var(--ink-2)]">{brawlers.length} total</span>
             <span className="inline-flex min-h-[30px] items-center whitespace-nowrap rounded-full border border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_84%,transparent)] px-3 text-[11.5px] font-semibold text-[var(--ink-2)]">{activeRarity ? `${activeRarityCount} ${activeRarity}` : "All rarities"}</span>
+          </div>
+        </div>
+
+        <div className="page-summary mb-3.5 flex items-center justify-between gap-3.5 p-[18px] max-md:flex-col max-md:items-stretch" style={{ "--summary-gradient": "linear-gradient(135deg, #7C3AED 0%, #EC4899 46%, #FFD400 100%)" } as CSSProperties}>
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-xl border border-white/20 bg-white/10">
+              {topBrawler && (
+                <BrawlImage src={brawlerIconUrl(topBrawler.id)} alt={topBrawler.name} width={56} height={56} sizes="56px" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+              )}
+            </div>
+            <div className="min-w-0">
+              <p className="mb-1 text-[10.5px] leading-snug tracking-[0.12em] text-white/70 uppercase">Top Brawler</p>
+              <h2 className="m-0 truncate text-[22px] leading-tight font-bold text-white">
+                {topBrawler ? (brawlers.find(b => b.id === topBrawler.id)?.name ?? topBrawler.name) : "Loading..."}
+              </h2>
+            </div>
+          </div>
+          <div className="grid min-w-[min(420px,48%)] grid-cols-3 gap-2 max-md:min-w-0">
+            <div className="page-summary-stat">
+              <span>Win rate</span>
+              <strong>{topBrawler ? `${topBrawler.winRate.toFixed(1)}%` : "—"}</strong>
+            </div>
+            <div className="page-summary-stat">
+              <span>Picks</span>
+              <strong>{topBrawler ? formatNum(topBrawler.picks) : "—"}</strong>
+            </div>
+            <div className="page-summary-stat">
+              <span>Best map</span>
+              <strong>{topBrawler?.bestMap ? topBrawler.bestMap.name : "—"}</strong>
+            </div>
           </div>
         </div>
 

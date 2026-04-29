@@ -4,7 +4,7 @@ import Link from "next/link"
 
 export default function Footer() {
   const pathname = usePathname()
-  if (pathname === "/") return null
+  if (pathname === "/" || pathname.startsWith("/chat")) return null
 
   return (
     <footer className="w-full border-t border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_86%,transparent)] backdrop-blur-xl">
