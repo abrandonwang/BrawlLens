@@ -167,7 +167,7 @@ export default function BrawlerLeaderboardClient({
         <p className="py-12 text-center text-[10.5px] tracking-[0.01em] text-[var(--ink-3)]">No data available.</p>
       ) : (
         <>
-          <div className="lb-board-intro mb-3.5 flex items-stretch justify-between gap-3.5 p-[18px] max-md:flex-col">
+          <div className="relative mb-3.5 flex items-stretch justify-between gap-3.5 overflow-hidden rounded-xl border border-[var(--line)] p-[18px] shadow-[inset_0_1px_0_color-mix(in_srgb,var(--ink)_7%,transparent),0_20px_42px_-34px_rgba(0,0,0,0.55)] max-md:flex-col" style={{ background: "linear-gradient(135deg, #EC4899 0%, #14B8A6 100%)" }}>
             <div className="relative z-10 flex min-w-0 items-center gap-3">
               {activeBrawler && (
                 <img

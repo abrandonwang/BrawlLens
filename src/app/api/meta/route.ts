@@ -30,16 +30,26 @@ export async function GET(request: Request) {
       return NextResponse.json({ map, totalBattles: 0, brawlers: [] });
     }
 
-    const rows = data || [];
+    const rows = (data || []) as MapBrawlerStatRow[];
     const totalBattles = rows.reduce((sum, r) => sum + Number(r.picks), 0) / 6;
 
-    const brawlers = (rows as MapBrawlerStatRow[]).map((row) => ({
-      brawlerId: row.brawler_id,
-      name: row.brawler_name,
-      picks: Number(row.picks),
-      wins: Number(row.wins),
-      winRate: Number(row.win_rate),
-    }));
+    const aggregated = new Map<number, { brawlerId: number; name: string; picks: number; wins: number }>();
+    for (const row of rows) {
+      const id = row.brawler_id;
+      const picks = Number(row.picks);
+      const wins = Number(row.wins);
+      const existing = aggregated.get(id);
+      if (existing) {
+        existing.picks += picks;
+        existing.wins += wins;
+      } else {
+        aggregated.set(id, { brawlerId: id, name: row.brawler_name, picks, wins });
+      }
+    }
+
+    const brawlers = Array.from(aggregated.values())
+      .map(b => ({ ...b, winRate: b.picks > 0 ? (b.wins / b.picks) * 100 : 0 }))
+      .sort((a, b) => b.picks - a.picks);
 
     const res = NextResponse.json({ map, totalBattles: Math.round(totalBattles), brawlers });
     res.headers.set("Cache-Control", "s-maxage=300, stale-while-revalidate=600");

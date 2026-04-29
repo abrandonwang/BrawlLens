@@ -143,7 +143,15 @@ export default function MapsPageClient() {
   useEffect(() => {
     fetch("/api/meta")
       .then(r => r.json())
-      .then(data => { setModes(data.modes || []); setLoading(false) })
+      .then(data => {
+        const raw: ModeInfo[] = data.modes || []
+        const cleaned = raw
+          .filter(m => m.mode.toLowerCase() !== "unknown")
+          .map(m => ({ ...m, maps: m.maps.filter(map => map.name.toLowerCase() !== "unknown") }))
+          .filter(m => m.maps.length > 0)
+        setModes(cleaned)
+        setLoading(false)
+      })
       .catch(() => setLoading(false))
   }, [])
 
