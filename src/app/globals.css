@@ -76,7 +76,7 @@
 }
 
 * { box-sizing: border-box; }
-html { overscroll-behavior: none; background: var(--bg); transition: background 0.25s ease; }
+html { background: var(--bg); transition: background 0.25s ease; }
 
 *, *::before, *::after {
   transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease, box-shadow 0.25s ease;
@@ -91,7 +91,6 @@ body {
   letter-spacing: -0.01em;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  overscroll-behavior: none;
   transition: background 0.2s ease, color 0.2s ease;
 }
 
@@ -1144,7 +1143,6 @@ body {
 
 @media (max-width: 520px) {
   .home-hero-inner {
-    place-items: start center;
     padding: 96px 14px 32px;
   }
   .home-intro {
