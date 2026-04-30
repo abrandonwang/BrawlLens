@@ -5,11 +5,10 @@ import { Resend } from "resend"
 const resend = new Resend(process.env.RESEND_API)
 
 export async function sendContactEmail(formData: FormData) {
-    const name = formData.get("name") as string
     const email = formData.get("email") as string
     const message = formData.get("message") as string
 
-    if (!name || !email || !message) {
+    if (!email || !message) {
         return { error: "All fields are required." }
     }
 
@@ -17,8 +16,8 @@ export async function sendContactEmail(formData: FormData) {
         await resend.emails.send({
             from: "BrawlLens Contact <onboarding@resend.dev>",
             to: "abrandonwang@gmail.com",
-            subject: `BrawlLens: Message from ${name}`,
-            text: `From: ${name} <${email}>\n\n${message}`,
+            subject: `BrawlLens: Message from ${email}`,
+            text: `From: ${email}\n\n${message}`,
         })
         return { success: true }
     } catch {

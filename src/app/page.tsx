@@ -27,6 +27,7 @@ const MODE_LABELS: Record<string, string> = {
 
 export default function Home() {
   const [userInput, setUserInput] = useState("")
+  const [compactPlaceholder, setCompactPlaceholder] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const router = useRouter()
   const [data, setData] = useState<LandingData | null>(null)
@@ -53,6 +54,14 @@ export default function Home() {
   useEffect(() => {
     document.documentElement.classList.add("landing-bg")
     return () => document.documentElement.classList.remove("landing-bg")
+  }, [])
+
+  useEffect(() => {
+    const query = window.matchMedia("(max-width: 460px)")
+    const update = () => setCompactPlaceholder(query.matches)
+    update()
+    query.addEventListener("change", update)
+    return () => query.removeEventListener("change", update)
   }, [])
 
   function handleInput(e: React.ChangeEvent<HTMLTextAreaElement>) {
@@ -117,7 +126,7 @@ export default function Home() {
                   value={userInput}
                   onChange={handleInput}
                   onKeyDown={handleKeyDown}
-                  placeholder="Ask anything, or paste a #PlayerTag"
+                  placeholder={compactPlaceholder ? "Ask anything..." : "Ask anything, or paste a #PlayerTag"}
                   className="home-ask-input"
                 />
                 <button className="home-send-btn" onClick={handleSubmit} aria-label="Ask">
