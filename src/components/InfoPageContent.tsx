@@ -22,6 +22,9 @@ const sidebar = [
   {
     title: "More",
     links: [
+      ["Search Help", "#search-help"],
+      ["Data Status", "#data-status"],
+      ["Changelog", "#changelog"],
       ["Privacy", "#privacy"],
       ["Contact", "#contact"],
     ],
@@ -33,6 +36,9 @@ const toc = [
   ["Data Sources", "#data-sources"],
   ["Calculations", "#calculations"],
   ["Metric Notes", "#metric-notes"],
+  ["Search Help", "#search-help"],
+  ["Data Status", "#data-status"],
+  ["Changelog", "#changelog"],
   ["Privacy", "#privacy"],
   ["Contact", "#contact"],
 ]
@@ -230,6 +236,72 @@ export function AboutContent() {
                   </li>
                   <li>
                     <p><strong>Interpretation</strong><br />A high win rate does not automatically mean a brawler is universally best. Map shape, mode, team composition, pick volume, and sample size all affect the reading.</p>
+                  </li>
+                </ul>
+
+                <h2 id="search-help">
+                  <a aria-hidden="true" tabIndex={-1} href="#search-help"><span className="icon icon-link" /></a>
+                  Search Help
+                </h2>
+                <p>
+                  Global search works like a small command palette. It is meant for jumping to pages, documentation anchors, leaderboard surfaces, or public player profiles without deciding which navigation path to use first.
+                </p>
+                <ul>
+                  <li>
+                    <p><strong>Commands</strong><br />Search for a page name, a metric name, or a related word. For example, searching <code>formula</code> can open Calculations, while <code>clubs</code> can open Club Leaderboards.</p>
+                  </li>
+                  <li>
+                    <p><strong>Player lookup</strong><br />Paste a player tag with or without the <code>#</code>. The search panel will offer a direct public profile lookup when the query looks like a tag.</p>
+                  </li>
+                  <li>
+                    <p><strong>Keyboard flow</strong><br />Use arrow keys to move through results, Enter to open the highlighted result, and Escape to close the panel.</p>
+                  </li>
+                  <li>
+                    <p><strong>Recent jumps</strong><br />Recently opened commands may appear first. This is stored in the browser so repeat navigation stays fast without requiring an account.</p>
+                  </li>
+                </ul>
+
+                <h2 id="data-status">
+                  <a aria-hidden="true" tabIndex={-1} href="#data-status"><span className="icon icon-link" /></a>
+                  Data Status
+                </h2>
+                <p>
+                  Different parts of the site update on different rhythms. The labels on each page should be read as context for the current view, not as a promise that every surface refreshes at the exact same moment.
+                </p>
+                <ul>
+                  <li>
+                    <p><strong>Static metadata</strong><br />Brawler names, rarities, classes, map names, and images are descriptive references. They change when the underlying catalog changes.</p>
+                  </li>
+                  <li>
+                    <p><strong>Public rankings</strong><br />Leaderboards are ordered from public trophy data. If a row appears stale, retrying the page or switching regions is the safest first check.</p>
+                  </li>
+                  <li>
+                    <p><strong>Tracked aggregates</strong><br />Map and brawler performance views depend on observed battle rows. Empty states usually mean there is not enough matching data for the current filter.</p>
+                  </li>
+                  <li>
+                    <p><strong>Interface state</strong><br />Theme, recent command jumps, and similar preferences can be stored locally in the browser. They do not require a BrawlLens account.</p>
+                  </li>
+                </ul>
+
+                <h2 id="changelog">
+                  <a aria-hidden="true" tabIndex={-1} href="#changelog"><span className="icon icon-link" /></a>
+                  Changelog
+                </h2>
+                <p>
+                  This page tracks high-level product changes so the documentation does not feel detached from the interface.
+                </p>
+                <ul>
+                  <li>
+                    <p><strong>Interface polish</strong><br />Map cards, brawler cards, modals, loading states, and route motion were tightened so navigation feels less abrupt.</p>
+                  </li>
+                  <li>
+                    <p><strong>Search</strong><br />Global search now behaves like a command palette with grouped destinations, recent jumps, keyboard navigation, and player tag lookup.</p>
+                  </li>
+                  <li>
+                    <p><strong>Ranking emphasis</strong><br />Leaderboard top-three rows use a shared hover and emphasis system while preserving trophy-based ordering.</p>
+                  </li>
+                  <li>
+                    <p><strong>Documentation</strong><br />The About page was rebuilt as a text-first reference for calculations, data interpretation, privacy, contact, and feature help.</p>
                   </li>
                 </ul>
 

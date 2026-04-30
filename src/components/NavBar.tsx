@@ -1,6 +1,6 @@
 "use client";
-import { useState, useEffect, useRef, useCallback } from "react";
-import { Search, X, User, LayoutGrid, Map, Trophy, MessageSquare, ArrowRight } from "lucide-react";
+import { useState, useEffect, useRef, useCallback, type KeyboardEvent as ReactKeyboardEvent } from "react";
+import { Search, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
@@ -13,12 +13,104 @@ const navItems = [
   { label: "Ask AI",       href: "/chat" },
 ];
 
-const searchItems = [
-  { label: "Ask AI",       href: "/chat",         icon: MessageSquare },
-  { label: "Brawlers",     href: "/brawlers",     icon: LayoutGrid },
-  { label: "Maps",         href: "/meta",         icon: Map },
-  { label: "Leaderboards", href: "/leaderboards", icon: Trophy },
+type CommandItem = {
+  label: string;
+  href: string;
+  group: string;
+  description: string;
+  keywords: string[];
+  accent: string;
+};
+
+const SEARCH_RECENT_KEY = "brawllens:recent-search";
+
+const searchItems: CommandItem[] = [
+  {
+    label: "Ask AI",
+    href: "/chat",
+    group: "Core",
+    description: "Ask questions about players, maps, brawlers, and rankings.",
+    keywords: ["chat", "assistant", "question"],
+    accent: "var(--hc-purple)",
+  },
+  {
+    label: "Brawlers",
+    href: "/brawlers",
+    group: "Core",
+    description: "Browse brawler stats, abilities, rarities, and performance.",
+    keywords: ["meta", "stats", "catalog"],
+    accent: "var(--accent)",
+  },
+  {
+    label: "Maps",
+    href: "/meta",
+    group: "Core",
+    description: "Explore tracked maps, modes, live rotation, and map stats.",
+    keywords: ["meta", "rotation", "modes"],
+    accent: "var(--r-rare)",
+  },
+  {
+    label: "Player Leaderboards",
+    href: "/leaderboards/players",
+    group: "Leaderboards",
+    description: "Compare top players by region and trophies.",
+    keywords: ["rankings", "players", "global", "trophies"],
+    accent: "var(--hc-cyan)",
+  },
+  {
+    label: "Club Leaderboards",
+    href: "/leaderboards/clubs",
+    group: "Leaderboards",
+    description: "Browse the highest trophy clubs.",
+    keywords: ["clubs", "rankings", "teams"],
+    accent: "var(--r-superrare)",
+  },
+  {
+    label: "Brawler Rankings",
+    href: "/leaderboards/brawlers",
+    group: "Leaderboards",
+    description: "Open brawler-specific trophy rankings.",
+    keywords: ["brawler trophies", "rankings"],
+    accent: "var(--r-ultra)",
+  },
+  {
+    label: "About BrawlLens",
+    href: "/about",
+    group: "Docs",
+    description: "Read the project overview and how the site works.",
+    keywords: ["docs", "documentation", "intro"],
+    accent: "var(--ink-3)",
+  },
+  {
+    label: "Calculations",
+    href: "/about#calculations",
+    group: "Docs",
+    description: "See how win rate, best overall, and map highlights are computed.",
+    keywords: ["formula", "score", "metrics"],
+    accent: "var(--r-mythic)",
+  },
+  {
+    label: "Search Help",
+    href: "/about#search-help",
+    group: "Docs",
+    description: "Learn command search, player lookup, and keyboard shortcuts.",
+    keywords: ["palette", "commands", "keyboard"],
+    accent: "var(--hc-blue)",
+  },
+  {
+    label: "Contact",
+    href: "/about#contact",
+    group: "Docs",
+    description: "Send bugs, feature requests, or confusing data reports.",
+    keywords: ["email", "support", "feedback"],
+    accent: "var(--r-legendary)",
+  },
 ];
+
+function commandMatches(item: CommandItem, q: string) {
+  const haystack = [item.label, item.description, item.group, ...item.keywords].join(" ").toLowerCase();
+  return haystack.includes(q);
+}
 
 export default function NavBar() {
   const pathname = usePathname();
@@ -29,6 +121,8 @@ export default function NavBar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [menuClosing, setMenuClosing] = useState(false);
   const [query, setQuery] = useState("");
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [recentItems, setRecentItems] = useState<CommandItem[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const previousPathnameRef = useRef(pathname);
 
@@ -62,6 +156,14 @@ export default function NavBar() {
   useEffect(() => {
     if (isSearchOpen) {
       setQuery("");
+      setActiveIndex(0);
+      try {
+        const raw = window.localStorage.getItem(SEARCH_RECENT_KEY);
+        const hrefs = raw ? (JSON.parse(raw) as string[]) : [];
+        setRecentItems(hrefs.map(href => searchItems.find(item => item.href === href)).filter(Boolean) as CommandItem[]);
+      } catch {
+        setRecentItems([]);
+      }
       setTimeout(() => inputRef.current?.focus(), 50);
     }
   }, [isSearchOpen]);
@@ -83,12 +185,78 @@ export default function NavBar() {
     else setIsMenuOpen(true);
   }
 
-  const isTag = query.trim().startsWith("#") || /^[A-Z0-9]{3,}$/i.test(query.trim());
-  const filtered = searchItems.filter(i => i.label.toLowerCase().includes(query.toLowerCase()));
+  const trimmedQuery = query.trim();
+  const normalizedQuery = trimmedQuery.toLowerCase();
+  const isTag = trimmedQuery.startsWith("#") || /^[A-Z0-9]{3,}$/i.test(trimmedQuery);
+  const filtered = normalizedQuery ? searchItems.filter(i => commandMatches(i, normalizedQuery)) : [];
+  const visibleItems = normalizedQuery ? filtered : recentItems.length ? recentItems : searchItems.slice(0, 6);
+  const hasPlayerLookup = Boolean(trimmedQuery && isTag);
+  const actionCount = visibleItems.length + (hasPlayerLookup ? 1 : 0);
+  const groupedItems = visibleItems.reduce<Record<string, CommandItem[]>>((groups, item) => {
+    groups[item.group] = groups[item.group] ? [...groups[item.group], item] : [item];
+    return groups;
+  }, {});
+
+  useEffect(() => {
+    setActiveIndex(0);
+  }, [query, isSearchOpen]);
+
+  function rememberSearchItem(item: CommandItem) {
+    const next = [item.href, ...recentItems.filter(recent => recent.href !== item.href).map(recent => recent.href)].slice(0, 5);
+    try {
+      window.localStorage.setItem(SEARCH_RECENT_KEY, JSON.stringify(next));
+    } catch {
+      // Recent search history is a small enhancement; navigation should still work without storage.
+    }
+    setRecentItems(next.map(href => searchItems.find(searchItem => searchItem.href === href)).filter(Boolean) as CommandItem[]);
+  }
+
+  function closeSearch() {
+    setIsSearchOpen(false);
+    setQuery("");
+  }
+
+  function openCommand(item: CommandItem) {
+    rememberSearchItem(item);
+    router.push(item.href);
+    closeSearch();
+  }
 
   function handlePlayerSearch() {
-    const tag = query.trim().replace(/^#/, "");
-    if (tag) { router.push(`/player/${tag}`); setIsSearchOpen(false); }
+    const tag = trimmedQuery.replace(/^#/, "");
+    if (tag) {
+      router.push(`/player/${tag}`);
+      closeSearch();
+    }
+  }
+
+  function handleSearchKeyDown(e: ReactKeyboardEvent<HTMLInputElement>) {
+    if (e.key === "ArrowDown" && actionCount > 0) {
+      e.preventDefault();
+      setActiveIndex(index => (index + 1) % actionCount);
+      return;
+    }
+
+    if (e.key === "ArrowUp" && actionCount > 0) {
+      e.preventDefault();
+      setActiveIndex(index => (index - 1 + actionCount) % actionCount);
+      return;
+    }
+
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (hasPlayerLookup && activeIndex === 0) {
+        handlePlayerSearch();
+        return;
+      }
+      const item = visibleItems[activeIndex - (hasPlayerLookup ? 1 : 0)];
+      if (item) openCommand(item);
+      return;
+    }
+
+    if (e.key === "Escape") {
+      closeSearch();
+    }
   }
 
   function isActive(href: string) {
@@ -97,6 +265,7 @@ export default function NavBar() {
   }
 
   const menuVisible = isMenuOpen || menuClosing;
+  let commandIndex = hasPlayerLookup ? 1 : 0;
 
   return (
     <>
@@ -253,7 +422,7 @@ export default function NavBar() {
         <div
           className="fixed inset-0 z-[200] flex items-start justify-center px-4"
           style={{ paddingTop: "12vh", background: "rgba(0,0,0,0.55)" }}
-          onClick={() => setIsSearchOpen(false)}
+          onClick={closeSearch}
         >
           <div
             style={{
@@ -265,55 +434,92 @@ export default function NavBar() {
             onClick={e => e.stopPropagation()}
           >
             <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "0 18px", borderBottom: "1px solid var(--line)" }}>
-              <Search size={14} style={{ color: "var(--ink-4)", flexShrink: 0 }} />
               <input
                 ref={inputRef}
                 value={query}
                 onChange={e => setQuery(e.target.value)}
-                onKeyDown={e => e.key === "Enter" && isTag && handlePlayerSearch()}
-                placeholder="Search or paste a #PlayerTag…"
+                onKeyDown={handleSearchKeyDown}
+                placeholder="Search pages, docs, or paste a #PlayerTag…"
                 style={{ flex: 1, background: "transparent", border: "none", outline: "none", padding: "18px 0", fontSize: 16, color: "var(--ink)", fontFamily: "inherit" }}
               />
-              <button onClick={() => setIsSearchOpen(false)}
+              <button onClick={closeSearch}
                 style={{ fontSize: 10, fontWeight: 700, color: "var(--ink-4)", border: "1px solid var(--line)", borderRadius: 5, padding: "2px 6px", background: "transparent", cursor: "pointer", fontFamily: "var(--font-geist-mono, monospace)" }}
               >
                 Esc
               </button>
             </div>
 
-            <div style={{ padding: 6 }}>
-              {query && isTag && (
-                <button onClick={handlePlayerSearch}
-                  style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", borderRadius: 12, background: "transparent", border: "none", cursor: "pointer", color: "var(--ink-2)", fontSize: 13, fontFamily: "inherit", textAlign: "left" }}
-                  className="row-hover"
+            <div style={{ padding: 8 }}>
+              {hasPlayerLookup && (
+                <button
+                  onClick={handlePlayerSearch}
+                  onMouseEnter={() => setActiveIndex(0)}
+                  style={{
+                    width: "100%", display: "flex", alignItems: "center", gap: 12,
+                    padding: "10px 12px", borderRadius: 12,
+                    background: activeIndex === 0 ? "var(--hover-bg)" : "transparent",
+                    border: "1px solid transparent", cursor: "pointer",
+                    color: "var(--ink-2)", fontSize: 13, fontFamily: "inherit", textAlign: "left",
+                  }}
+                  className="interactive-row"
                 >
-                  <div style={{ width: 30, height: 30, borderRadius: 8, background: "var(--accent-soft)", border: "1px solid var(--accent-line)", display: "grid", placeItems: "center", flexShrink: 0 }}>
-                    <User size={13} style={{ color: "var(--accent)" }} />
+                  <div style={{ width: 5, height: 34, borderRadius: 999, background: "var(--accent)", flexShrink: 0 }} />
+                  <div style={{ width: 30, height: 30, borderRadius: 8, background: "var(--accent-soft)", border: "1px solid var(--accent-line)", display: "grid", placeItems: "center", flexShrink: 0, color: "var(--accent)", fontSize: 12, fontWeight: 800 }}>
+                    #
                   </div>
                   <span style={{ flex: 1 }}>
-                    Search player <span style={{ color: "var(--accent)", fontWeight: 700 }}>#{query.replace(/^#/, "")}</span>
+                    Search player <span style={{ color: "var(--accent)", fontWeight: 700 }}>#{trimmedQuery.replace(/^#/, "")}</span>
+                    <span style={{ display: "block", marginTop: 2, color: "var(--ink-4)", fontSize: 11 }}>Open a public player profile by tag.</span>
                   </span>
-                  <ArrowRight size={13} style={{ color: "var(--ink-4)" }} />
                 </button>
               )}
 
-              {filtered.map(({ label, href, icon: Icon }) => (
-                <Link key={href} href={href} onClick={() => setIsSearchOpen(false)}
-                  style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", borderRadius: 12, color: "var(--ink-2)", fontSize: 13, textDecoration: "none" }}
-                  className="row-hover"
-                >
-                  <div style={{ width: 30, height: 30, borderRadius: 8, background: "var(--panel-2)", border: "1px solid var(--line)", display: "grid", placeItems: "center", flexShrink: 0 }}>
-                    <Icon size={13} style={{ color: "var(--ink-3)" }} />
-                  </div>
-                  <span style={{ flex: 1 }}>{label}</span>
-                </Link>
+              {Object.entries(groupedItems).map(([group, items]) => (
+                <div key={group} style={{ paddingTop: hasPlayerLookup || group !== Object.keys(groupedItems)[0] ? 6 : 0 }}>
+                  {items.map(item => {
+                    const itemIndex = commandIndex++;
+                    return (
+                      <button
+                        key={item.href}
+                        type="button"
+                        onClick={() => openCommand(item)}
+                        onMouseEnter={() => setActiveIndex(itemIndex)}
+                        style={{
+                          width: "100%", display: "flex", alignItems: "center", gap: 12,
+                          padding: "10px 12px", borderRadius: 12,
+                          background: activeIndex === itemIndex ? "var(--hover-bg)" : "transparent",
+                          border: "1px solid transparent", cursor: "pointer",
+                          color: "var(--ink-2)", fontSize: 13, fontFamily: "inherit", textAlign: "left",
+                        }}
+                        className="interactive-row"
+                      >
+                        <div style={{ width: 5, height: 34, borderRadius: 999, background: item.accent, flexShrink: 0, opacity: activeIndex === itemIndex ? 1 : 0.72 }} />
+                        <span style={{ minWidth: 0, flex: 1 }}>
+                          <span style={{ display: "block", color: "var(--ink)", fontWeight: 650 }}>{item.label}</span>
+                          <span style={{ display: "block", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "var(--ink-4)", fontSize: 11 }}>{item.description}</span>
+                        </span>
+                        {!normalizedQuery && recentItems.some(recent => recent.href === item.href) && (
+                          <span style={{ border: "1px solid var(--line)", borderRadius: 999, padding: "2px 7px", color: "var(--ink-4)", fontSize: 10, fontWeight: 700 }}>
+                            Recent
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
               ))}
 
-              {filtered.length === 0 && !isTag && (
+              {visibleItems.length === 0 && !hasPlayerLookup && (
                 <p style={{ padding: "20px 12px", textAlign: "center", fontSize: 11, color: "var(--ink-4)" }}>
                   No results for &quot;{query}&quot;
                 </p>
               )}
+
+              <div style={{ display: "flex", justifyContent: "space-between", gap: 12, borderTop: "1px solid var(--line)", marginTop: 8, padding: "10px 12px 2px", color: "var(--ink-4)", fontSize: 10 }}>
+                <span>Up/Down navigate</span>
+                <span>Enter open</span>
+                <span>Esc close</span>
+              </div>
             </div>
           </div>
         </div>

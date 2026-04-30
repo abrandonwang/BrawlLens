@@ -143,14 +143,14 @@ export default function LeaderboardsClient({ allData }: { allData: RegionData[];
 
           <div className="mb-3.5 grid grid-cols-3 gap-2.5 max-md:grid-cols-1">
             {players.slice(0, 3).map((player, index) => (
-              <Link key={player.player_tag} href={`/player/${player.player_tag.replace("#", "")}`} className={`top-rank-card grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2.5 border border-[var(--line)] bg-[var(--panel)] p-3 text-inherit no-underline transition hover:-translate-y-0.5 hover:border-[var(--line-2)] hover:bg-[var(--hover-bg)] ${index === 0 ? "top-rank-card-first" : ""}`}>
+              <Link key={player.player_tag} href={`/player/${player.player_tag.replace("#", "")}`} className={`interactive-card top-rank-card top-rank-card-rank-${index + 1} grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2.5 border bg-[var(--panel)] p-3 text-inherit no-underline`}>
                 <span className="grid h-7 min-w-[34px] place-items-center rounded-lg border border-[var(--line)] bg-[var(--panel-2)] font-mono text-xs font-extrabold text-[var(--ink)]">#{player.rank}</span>
                 <div className="min-w-0">
                   <div className="truncate text-[13px] font-bold text-[var(--ink)]">{player.player_name}</div>
                   <div className="font-mono text-[10.5px] leading-snug tracking-[0.01em] text-[var(--ink-3)]">{player.player_tag}</div>
                 </div>
                 <div className="flex items-center justify-end gap-1.5 whitespace-nowrap font-mono text-xs font-bold text-[var(--ink)]">
-                  <Trophy size={12} className="text-[var(--accent)]" />
+                  <Trophy size={12} className="top-rank-trophy" />
                   {formatNum(player.trophies)}
                 </div>
               </Link>
@@ -170,7 +170,7 @@ export default function LeaderboardsClient({ allData }: { allData: RegionData[];
               <Link
                 key={p.player_tag}
                 href={`/player/${p.player_tag.replace("#", "")}`}
-                className="leaderboard-row grid grid-cols-[48px_1fr_180px_100px_24px] items-center gap-3 px-5 py-3 text-inherit no-underline transition hover:bg-[var(--hover-bg)] max-md:grid-cols-[40px_1fr_90px_20px] max-md:px-3.5"
+                className={`interactive-row leaderboard-row grid grid-cols-[48px_1fr_180px_100px_24px] items-center gap-3 px-5 py-3 text-inherit no-underline max-md:grid-cols-[40px_1fr_90px_20px] max-md:px-3.5 ${p.rank <= 3 ? `leaderboard-rank-row-${p.rank} border-l-2` : ""}`}
                 style={{ borderBottom: i < paginated.length - 1 ? "1px solid var(--line)" : "none" }}
               >
                 <span className="leaderboard-rank font-mono text-[13px] font-medium text-[var(--ink-3)]">

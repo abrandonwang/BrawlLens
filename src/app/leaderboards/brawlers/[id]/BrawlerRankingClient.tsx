@@ -16,10 +16,10 @@ interface Player {
 const PAGE_SIZE = 20
 
 function rankBg(rank: number) {
-  if (rank === 1) return "bg-[#FFD400]/10 dark:bg-[#FFD400]/[0.07] border-l-2 border-l-[#FFD400]/50 hover:bg-[#FFD400]/20 dark:hover:bg-[#FFD400]/[0.12]"
-  if (rank === 2) return "bg-zinc-100 dark:bg-white/[0.04] border-l-2 border-l-zinc-400/30 hover:bg-zinc-200 dark:hover:bg-white/[0.07]"
-  if (rank === 3) return "bg-orange-50 dark:bg-orange-900/10 border-l-2 border-l-orange-400/40 hover:bg-orange-100 dark:hover:bg-orange-900/20"
-  return "bg-black/[0.02] dark:bg-white/[0.02] border-l-2 border-l-transparent hover:bg-black/[0.05] dark:hover:bg-white/[0.05]"
+  if (rank === 1) return "leaderboard-rank-row-1 border-l-2"
+  if (rank === 2) return "leaderboard-rank-row-2 border-l-2"
+  if (rank === 3) return "leaderboard-rank-row-3 border-l-2"
+  return "bg-[var(--panel)] border-l-2 border-l-transparent"
 }
 
 function rankColor(rank: number) {
@@ -55,7 +55,7 @@ export default function BrawlerRankingClient({ data, brawlerName }: { data: Play
           <Link
             key={player.player_tag}
             href={`/player/${player.player_tag.replace("#", "")}`}
-            className={`leaderboard-row grid grid-cols-[52px_1fr_auto_auto_24px] gap-4 items-center px-5 py-4 transition-colors ${rankBg(player.rank)}`}
+            className={`interactive-row leaderboard-row grid grid-cols-[52px_1fr_auto_auto_24px] gap-4 items-center px-5 py-4 text-inherit no-underline ${rankBg(player.rank)}`}
           >
             <span className={`leaderboard-rank text-base font-black tabular-nums ${rankColor(player.rank)}`}>
               {player.rank}

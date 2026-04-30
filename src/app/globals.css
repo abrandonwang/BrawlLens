@@ -289,6 +289,43 @@ body {
   border-color: var(--line-2);
 }
 
+.soft-hover,
+.interactive-row,
+.interactive-card {
+  transition:
+    background-color 0.16s ease,
+    border-color 0.16s ease,
+    color 0.16s ease,
+    box-shadow 0.18s ease,
+    transform 0.18s ease;
+}
+
+.soft-hover:hover,
+.interactive-row:hover {
+  background: var(--hover-bg);
+}
+
+.interactive-row:hover {
+  border-color: var(--line-2);
+}
+
+.interactive-card {
+  border-color: var(--line);
+}
+
+.interactive-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--line-2);
+  background: var(--hover-bg);
+  box-shadow: 0 18px 38px -34px rgba(0,0,0,0.72);
+}
+
+.interactive-row:hover .leaderboard-arrow,
+.interactive-card:hover .leaderboard-arrow {
+  color: var(--ink-2);
+  transform: translateX(2px);
+}
+
 .page-transition {
   animation: page-transition-in 190ms cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -507,23 +544,89 @@ body {
 }
 
 .top-rank-card {
+  --rank-color: var(--line-2);
   border-radius: var(--r-md);
+  position: relative;
+  overflow: hidden;
 }
 
-.top-rank-card-first {
-  border-color: color-mix(in srgb, var(--accent) 44%, var(--line));
+.top-rank-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 3px;
+  border-radius: 999px;
+  background: var(--rank-color);
+}
+
+.top-rank-card-rank-1 {
+  --rank-color: #FFD400;
+  border-color: color-mix(in srgb, var(--rank-color) 42%, var(--line));
+}
+
+.top-rank-card-rank-2 {
+  --rank-color: #B8C0CC;
+  border-color: color-mix(in srgb, var(--rank-color) 40%, var(--line));
+}
+
+.top-rank-card-rank-3 {
+  --rank-color: #CD7F32;
+  border-color: color-mix(in srgb, var(--rank-color) 44%, var(--line));
+}
+
+.top-rank-card-rank-1,
+.top-rank-card-rank-2,
+.top-rank-card-rank-3 {
   background: var(--panel);
   box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--accent) 12%, transparent) inset,
+    0 0 0 1px color-mix(in srgb, var(--rank-color) 10%, transparent) inset,
     var(--shadow-lift);
-  transform: translateY(-2px);
 }
 
-.top-rank-card-first .leaderboard-rank,
-.top-rank-card-first > span:first-child {
-  border-color: color-mix(in srgb, var(--accent) 42%, var(--line));
-  background: var(--accent-soft);
-  color: var(--accent) !important;
+.top-rank-card-rank-1 .leaderboard-rank,
+.top-rank-card-rank-2 .leaderboard-rank,
+.top-rank-card-rank-3 .leaderboard-rank,
+.top-rank-card-rank-1 > span:first-child,
+.top-rank-card-rank-2 > span:first-child,
+.top-rank-card-rank-3 > span:first-child {
+  border-color: color-mix(in srgb, var(--rank-color) 42%, var(--line));
+  background: color-mix(in srgb, var(--rank-color) 14%, transparent);
+  color: var(--rank-color) !important;
+}
+
+.top-rank-card-rank-1 .top-rank-trophy,
+.top-rank-card-rank-2 .top-rank-trophy,
+.top-rank-card-rank-3 .top-rank-trophy {
+  color: var(--rank-color);
+}
+
+.leaderboard-rank-row-1 {
+  --rank-color: #FFD400;
+  background: color-mix(in srgb, var(--rank-color) 8%, var(--panel));
+  border-left-color: color-mix(in srgb, var(--rank-color) 58%, var(--line)) !important;
+}
+
+.leaderboard-rank-row-2 {
+  --rank-color: #B8C0CC;
+  background: color-mix(in srgb, var(--rank-color) 7%, var(--panel));
+  border-left-color: color-mix(in srgb, var(--rank-color) 52%, var(--line)) !important;
+}
+
+.leaderboard-rank-row-3 {
+  --rank-color: #CD7F32;
+  background: color-mix(in srgb, var(--rank-color) 8%, var(--panel));
+  border-left-color: color-mix(in srgb, var(--rank-color) 55%, var(--line)) !important;
+}
+
+.leaderboard-rank-row-1 .leaderboard-rank,
+.leaderboard-rank-row-2 .leaderboard-rank,
+.leaderboard-rank-row-3 .leaderboard-rank,
+.leaderboard-rank-row-1 .leaderboard-metric svg,
+.leaderboard-rank-row-2 .leaderboard-metric svg,
+.leaderboard-rank-row-3 .leaderboard-metric svg {
+  color: var(--rank-color) !important;
 }
 .bl-card-glass {
   background: color-mix(in srgb, var(--panel) 65%, transparent);
