@@ -19,15 +19,14 @@ export async function GET(request: Request) {
     .eq("brawler_id", id)
     .order("picks", { ascending: false })
 
-  if (error || !data) return NextResponse.json({ maps: [], modes: [], totalPicks: 0, avgWinRate: null })
+  if (error || !data) return NextResponse.json({ maps: [], modes: [], totalPicks: 0, avgWinRate: null, histogram: [] })
 
   const totalPicks = data.reduce((s, r) => s + Number(r.picks), 0)
   const totalWins = data.reduce((s, r) => s + Number(r.wins), 0)
   const avgWinRate = totalPicks > 0 ? (totalWins / totalPicks) * 100 : null
-  const maps = data
+  const allMaps = data
     .filter(r => Number(r.picks) >= 20)
     .sort((a, b) => Number(b.win_rate) - Number(a.win_rate))
-    .slice(0, 15)
     .map(r => ({
       map: r.map,
       mode: getModeName(r.mode),
@@ -35,6 +34,12 @@ export async function GET(request: Request) {
       wins: Number(r.wins),
       winRate: Number(r.win_rate),
     }))
+  const maps = allMaps.slice(0, 15)
+  const histogram = allMaps.reduce<number[]>((buckets, map) => {
+    const index = Math.max(0, Math.min(4, Math.floor(map.winRate / 20)))
+    buckets[index] += 1
+    return buckets
+  }, [0, 0, 0, 0, 0])
   const modeMap = new Map<string, { picks: number; wins: number }>()
   for (const r of data) {
     const key = r.mode
@@ -52,7 +57,7 @@ export async function GET(request: Request) {
     .filter(m => m.picks >= 10)
     .sort((a, b) => b.winRate - a.winRate)
 
-  const res = NextResponse.json({ totalPicks, avgWinRate, maps, modes })
+  const res = NextResponse.json({ totalPicks, avgWinRate, maps, modes, histogram, trend7: [], trend30: [] })
   res.headers.set("Cache-Control", "s-maxage=300, stale-while-revalidate=600")
   return res
 }

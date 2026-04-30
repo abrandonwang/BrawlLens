@@ -15,7 +15,9 @@ export const metadata: Metadata = {
 export interface Brawler {
   id: number
   name: string
+  imageUrl?: string
   imageUrl2: string
+  imageUrl3?: string
   description: string
   rarity: { id: number; name: string; color: string }
   class: { id: number; name: string }

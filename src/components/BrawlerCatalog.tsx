@@ -1,101 +1,124 @@
 import type { Brawler } from "@/app/brawlers/page"
 import type { CSSProperties } from "react"
-import { BrawlImage } from "@/components/BrawlImage"
+import { Check, Plus } from "lucide-react"
+import { BrawlImage, brawlerIconUrl } from "@/components/BrawlImage"
 import { EmptyState } from "@/components/PolishStates"
+import { winRateColor } from "@/lib/tiers"
 
 function sanitizeColor(color: string): string {
   const match = color.match(/#[0-9a-fA-F]{3,6}/)
   return match ? match[0] : "#888"
 }
 
-const RARITY_ORDER = [
-  "Starting Brawler", "Common", "Rare", "Super Rare",
-  "Epic", "Mythic", "Legendary", "Ultra Legendary",
-]
+function formatPicks(picks: number | null | undefined) {
+  if (!picks) return "—"
+  return picks >= 1000 ? `${(picks / 1000).toFixed(1)}k` : String(picks)
+}
+
+export interface CatalogBrawlerStats {
+  picks: number
+  wins: number
+  winRate: number | null
+  mapCount: number
+  histogram: number[]
+  bestMap: { name: string; mode: string; winRate: number; picks: number } | null
+}
 
 interface Props {
   brawlers: Brawler[]
-  activeRarity: string | null
-  search: string
+  stats: Record<number, CatalogBrawlerStats>
+  selectedForCompare: number[]
   onSelect: (b: Brawler) => void
+  onToggleCompare: (b: Brawler) => void
 }
 
-export default function BrawlerCatalog({ brawlers, activeRarity, search, onSelect }: Props) {
-  const filtered = brawlers.filter(b => {
-    const matchesRarity = !activeRarity || b.rarity.name === activeRarity
-    const matchesSearch = !search || b.name.toLowerCase().includes(search.toLowerCase())
-    return matchesRarity && matchesSearch
-  })
+const CARD_HEIGHT = 174
 
-  const grouped = RARITY_ORDER.reduce((acc, rarity) => {
-    acc[rarity] = filtered.filter(b => b.rarity.name === rarity)
-    return acc
-  }, {} as Record<string, Brawler[]>)
-
-  if (filtered.length === 0) {
+export default function BrawlerCatalog({ brawlers, stats, selectedForCompare, onSelect, onToggleCompare }: Props) {
+  if (brawlers.length === 0) {
     return (
       <EmptyState
         title="No brawlers found"
-        description="Try a different search or clear the rarity filter."
+        description="Try a different search or clear the filters."
       />
     )
   }
 
+  const selectedSet = new Set(selectedForCompare)
+
   return (
-    <div className="flex flex-col gap-[34px] pt-1.5">
-      {RARITY_ORDER.map((rarity, sectionIndex) => {
-        const group = grouped[rarity]
-        if (!group.length) return null
-        const color = sanitizeColor(group[0]?.rarity.color ?? "#888")
-
-        return (
-          <section
-            key={rarity}
-            className="transition"
-            style={{ animationDelay: `${Math.min(sectionIndex * 35, 180)}ms`, "--rarity-color": color } as CSSProperties}
-          >
-            <div className="mb-3.5 inline-flex min-h-7 max-w-full items-center gap-2.5 rounded-full bg-[color-mix(in_srgb,var(--panel)_72%,transparent)] py-1.5 pr-2 pl-1.5">
-              <span className="block size-2.5 shrink-0 rounded-[3px] bg-[var(--rarity-color)] shadow-[0_0_0_4px_color-mix(in_srgb,var(--rarity-color)_14%,transparent)]" />
-              <span className="text-[13px] font-semibold leading-snug text-[var(--ink)]">{rarity}</span>
-              <span className="whitespace-nowrap rounded-full border border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_76%,transparent)] px-2 py-1 text-[10.5px] leading-none text-[var(--ink-3)]">
-                {group.length} brawlers
-              </span>
-            </div>
-
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(86px,1fr))] gap-2.5 max-[1100px]:grid-cols-[repeat(auto-fill,minmax(82px,1fr))] max-[900px]:grid-cols-[repeat(auto-fill,minmax(78px,1fr))] max-md:grid-cols-[repeat(auto-fill,minmax(74px,1fr))] max-[500px]:grid-cols-4 max-[500px]:gap-2 max-[360px]:grid-cols-3">
-              {group.map((brawler, index) => (
+    <div className="grid grid-cols-[repeat(auto-fill,minmax(124px,1fr))] gap-2.5 pt-1.5 max-[640px]:grid-cols-[repeat(auto-fill,minmax(108px,1fr))] max-[420px]:grid-cols-3 max-[360px]:grid-cols-2">
+      {brawlers.map((brawler, index) => {
+            const color = sanitizeColor(brawler.rarity.color)
+            const stat = stats[brawler.id]
+            const winRate = stat?.winRate
+            const compareSelected = selectedSet.has(brawler.id)
+            return (
+              <article
+                key={brawler.id}
+                className="group relative block w-full min-w-0 overflow-hidden rounded-lg border border-[var(--line)] bg-[var(--panel)] p-0 text-left no-underline shadow-[var(--shadow-lift)] transition-[transform,border-color,box-shadow,background] duration-200 hover:-translate-y-0.5 hover:border-[var(--line-2)] hover:bg-[color-mix(in_srgb,var(--panel)_70%,var(--hover-bg))] hover:shadow-[0_22px_42px_-30px_rgba(0,0,0,0.75)]"
+                style={{
+                  height: CARD_HEIGHT,
+                  animationDelay: `${Math.min(index * 8, 90)}ms`,
+                  "--rarity-color": color,
+                } as CSSProperties}
+              >
                 <button
-                  key={brawler.id}
-                  onClick={() => onSelect(brawler)}
-                  className="group relative block w-full min-w-0 cursor-pointer overflow-hidden rounded-lg border border-[var(--line)] bg-[var(--panel)] p-0 text-left no-underline shadow-[var(--shadow-lift)] transition-[transform,border-color,box-shadow,background] duration-200 hover:-translate-y-0.5 hover:border-[var(--line-2)] hover:bg-[color-mix(in_srgb,var(--panel)_70%,var(--hover-bg))] hover:shadow-[0_22px_42px_-30px_rgba(0,0,0,0.75)] active:-translate-y-px"
-                  style={{ animationDelay: `${Math.min(index * 18, 220)}ms` }}
+                  type="button"
+                  aria-label={`${compareSelected ? "Remove" : "Add"} ${brawler.name} comparison`}
+                  aria-pressed={compareSelected}
+                  onClick={() => onToggleCompare(brawler)}
+                  className={`absolute top-2 right-2 z-30 grid size-7 place-items-center rounded-md border shadow-sm backdrop-blur transition ${compareSelected ? "border-[var(--accent)] bg-[var(--accent)] text-black" : "border-white/15 bg-black/35 text-white/90 hover:bg-black/50"}`}
                 >
-                  <div
-                    className="relative grid aspect-square place-items-center overflow-hidden rounded-t-lg after:absolute after:inset-x-2.5 after:bottom-2 after:h-3 after:bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0.28),transparent_70%)] after:opacity-55 after:transition-opacity group-hover:after:opacity-90"
-                    style={{
-                      background: `radial-gradient(circle at 50% 62%, color-mix(in srgb, ${color} 30%, transparent), transparent 68%), linear-gradient(180deg, color-mix(in srgb, var(--panel-2) 86%, ${color}), var(--panel))`,
-                    }}
-                  >
-                    <BrawlImage
-                      className="relative z-10 h-[88%] w-[88%] object-contain drop-shadow-[0_4px_12px_rgba(0,0,0,0.4)] transition-[transform,filter] duration-200 group-hover:scale-[1.06] group-hover:drop-shadow-[0_8px_18px_rgba(0,0,0,0.48)]"
-                      src={brawler.imageUrl2}
-                      alt={brawler.name}
-                      width={96}
-                      height={96}
-                      sizes="100px"
-                    />
-                  </div>
-                  <div className="border-t border-[var(--line)] px-2 pt-2 pb-[9px] text-center">
-                    <span className="block truncate text-[11.5px] font-semibold text-[var(--ink)]">
-                      {brawler.name}
-                    </span>
-                  </div>
+                  {compareSelected ? <Check size={14} /> : <Plus size={14} />}
                 </button>
-              ))}
-            </div>
-          </section>
-        )
-      })}
+                <button
+                  type="button"
+                  onClick={() => onSelect(brawler)}
+                  className="block h-full w-full cursor-pointer border-0 bg-transparent p-0 text-left"
+                  aria-label={`Open ${brawler.name}`}
+                >
+                <span className="absolute top-2 left-2 z-20 max-w-[calc(100%-44px)] truncate rounded-md border border-black/10 bg-black/30 px-1.5 py-0.5 text-[9.5px] font-bold text-white/90 backdrop-blur">
+                  {brawler.class.name === "Unknown" ? brawler.rarity.name : brawler.class.name}
+                </span>
+
+                <div
+                  className="relative grid h-[104px] place-items-center overflow-hidden rounded-t-lg after:absolute after:inset-x-2.5 after:bottom-2 after:h-3 after:bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0.28),transparent_70%)] after:opacity-55 after:transition-opacity group-hover:after:opacity-90"
+                  style={{
+                    background: `radial-gradient(circle at 50% 62%, color-mix(in srgb, ${color} 30%, transparent), transparent 68%), linear-gradient(180deg, color-mix(in srgb, var(--panel-2) 86%, ${color}), var(--panel))`,
+                  }}
+                >
+                  <BrawlImage
+                    className="relative z-10 h-[88%] w-[88%] object-contain object-center drop-shadow-[0_4px_12px_rgba(0,0,0,0.4)] transition-[transform,filter] duration-200 group-hover:scale-[1.04] group-hover:drop-shadow-[0_8px_18px_rgba(0,0,0,0.48)]"
+                    src={brawlerIconUrl(brawler.id)}
+                    alt={brawler.name}
+                    width={108}
+                    height={108}
+                    sizes="116px"
+                    priority={index < 18}
+                  />
+                </div>
+                <div className="border-t border-[var(--line)] px-2.5 pt-2 pb-2">
+                  <span className="block truncate text-center text-[11.5px] font-semibold text-[var(--ink)]">
+                    {brawler.name}
+                  </span>
+                  <div className="mt-2 grid grid-cols-2 items-end gap-2">
+                    <div className="min-w-0">
+                      <span className="block text-[9.5px] font-semibold uppercase tracking-normal text-[var(--ink-4)]">Win</span>
+                      <strong className="block text-[11px] leading-tight" style={{ color: winRate != null ? winRateColor(winRate) : "var(--ink-4)" }}>
+                        {winRate != null ? `${winRate.toFixed(1)}%` : "—"}
+                      </strong>
+                    </div>
+                    <div className="min-w-0 text-right">
+                      <span className="block text-[9.5px] font-semibold uppercase tracking-normal text-[var(--ink-4)]">Picks</span>
+                      <strong className="block text-[11px] leading-tight text-[var(--ink-2)]">{formatPicks(stat?.picks)}</strong>
+                    </div>
+                  </div>
+                </div>
+                </button>
+              </article>
+            )
+          })}
     </div>
   )
 }

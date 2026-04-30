@@ -1,14 +1,14 @@
 "use client"
 
-import { useState, useEffect, useCallback, useRef, useMemo, type CSSProperties } from "react"
+import { useState, useEffect, useCallback, useRef, type CSSProperties } from "react"
 import { useSearchParams } from "next/navigation"
-import { Search, ChevronLeft, ChevronRight } from "lucide-react"
-import BrawlerCatalog from "@/components/BrawlerCatalog"
+import { BarChart3, GitCompare, Info, Search, X } from "lucide-react"
+import BrawlerCatalog, { type CatalogBrawlerStats } from "@/components/BrawlerCatalog"
 import Modal, { ModalCloseButton } from "@/components/Modal"
-import ScrollableFilters from "@/components/ScrollableFilters"
 import { BrawlImage, brawlerIconUrl } from "@/components/BrawlImage"
 import { EmptyState, SkeletonBlock, StateButton } from "@/components/PolishStates"
-import { HYPERCHARGES } from "@/data/hypercharges"
+import type { HyperchargeData } from "@/data/hypercharges"
+import { BUFFIES } from "@/data/buffies"
 import { winRateColor } from "@/lib/tiers"
 import { useClickOutside } from "@/lib/useClickOutside"
 import type { Brawler } from "./page"
@@ -32,16 +32,76 @@ interface BrawlerStats {
   avgWinRate: number | null
   maps: { map: string; mode: string; picks: number; winRate: number }[]
   modes: { mode: string; picks: number; winRate: number }[]
+  histogram: number[]
+  trend7: { label: string; winRate: number; picks: number }[]
+  trend30: { label: string; winRate: number; picks: number }[]
 }
 
 type Tab = "overview" | "maps" | "abilities"
+type CatalogSort = "name" | "winRate" | "picks" | "recentBuffs"
+type MapSort = "winRate" | "picks" | "map" | "mode"
+
+function formatPicks(picks: number | null | undefined) {
+  if (!picks) return "—"
+  return picks >= 1000 ? `${(picks / 1000).toFixed(1)}k` : String(picks)
+}
+
+function hasRecentBuffs(brawler: Brawler) {
+  const buffy = BUFFIES[brawler.id]
+  return Boolean(buffy?.hypercharge || Object.keys(buffy?.gadgets ?? {}).length || Object.keys(buffy?.starPowers ?? {}).length)
+}
+
+function formatFilterLabel(name: string) {
+  return name.replace(/-/g, " ")
+}
+
+function WinRateSparkline({ values }: { values: { winRate: number }[] }) {
+  if (values.length < 2) {
+    return <div className="grid h-[74px] place-items-center rounded-lg border border-[var(--line)] bg-[var(--panel-2)] text-[11px] text-[var(--ink-4)]">Trend data pending</div>
+  }
+  const points = values.map((point, index) => {
+    const x = (index / Math.max(values.length - 1, 1)) * 220
+    const y = 60 - (Math.max(0, Math.min(100, point.winRate)) / 100) * 52
+    return `${x.toFixed(1)},${y.toFixed(1)}`
+  }).join(" ")
+  return (
+    <svg viewBox="0 0 220 66" className="h-[74px] w-full rounded-lg border border-[var(--line)] bg-[var(--panel-2)] p-2 text-[var(--accent)]">
+      <polyline points={points} fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function WinRateHistogram({ buckets }: { buckets: number[] }) {
+  const labels = ["0-20", "20-40", "40-60", "60-80", "80-100"]
+  const max = Math.max(...buckets, 1)
+  return (
+    <div className="grid h-[112px] grid-cols-5 items-end gap-2 rounded-lg border border-[var(--line)] bg-[var(--panel-2)] px-3 py-2">
+      {labels.map((label, index) => (
+        <div key={label} className="flex h-full min-w-0 flex-col justify-end gap-1">
+          <div
+            className="min-h-1 rounded-t bg-[var(--accent)] opacity-80"
+            style={{ height: `${Math.max(6, ((buckets[index] ?? 0) / max) * 74)}px` }}
+            title={`${label}%: ${buckets[index] ?? 0} maps`}
+          />
+          <span className="truncate text-center text-[9px] text-[var(--ink-4)]">{label}</span>
+        </div>
+      ))}
+    </div>
+  )
+}
 
 export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] }) {
   const [activeRarity, setActiveRarity] = useState<string | null>(null)
+  const [activeClass, setActiveClass] = useState<string | null>(null)
+  const [catalogSort, setCatalogSort] = useState<CatalogSort>("name")
   const [search, setSearch] = useState("")
   const [selected, setSelected] = useState<Brawler | null>(null)
+  const [selectedForCompare, setSelectedForCompare] = useState<number[]>([])
   const [tab, setTab] = useState<Tab>("overview")
   const [stats, setStats] = useState<BrawlerStats | null>(null)
+  const [catalogStats, setCatalogStats] = useState<Record<number, CatalogBrawlerStats>>({})
+  const [hypercharges, setHypercharges] = useState<Record<number, HyperchargeData>>({})
+  const [mapSort, setMapSort] = useState<{ key: MapSort; dir: "asc" | "desc" }>({ key: "winRate", dir: "desc" })
   const [statsLoading, setStatsLoading] = useState(false)
   const [statsError, setStatsError] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
@@ -66,6 +126,20 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
   }, [])
 
   useEffect(() => {
+    fetch("/api/brawlers/stats")
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.stats) setCatalogStats(d.stats) })
+      .catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    fetch("/api/brawlers/hypercharges")
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.hypercharges) setHypercharges(d.hypercharges) })
+      .catch(() => {})
+  }, [])
+
+  useEffect(() => {
     const openId = searchParams.get("open")
     if (openId) {
       const match = brawlers.find(b => String(b.id) === openId)
@@ -79,15 +153,46 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
     setTab("overview")
   }, [])
 
-  const searchMatches = search.trim()
-    ? brawlers.filter(b => b.name.toLowerCase().includes(search.toLowerCase()))
+  const searchTerm = search.trim().toLowerCase()
+  const searchMatches = searchTerm
+    ? brawlers.filter(b => b.name.toLowerCase().includes(searchTerm))
     : brawlers
+  const classes = Array.from(new Set(brawlers.map(b => b.class.name).filter(name => name && name !== "Unknown"))).sort()
+  const filteredBrawlers = brawlers
+    .filter(b => {
+      const matchesRarity = !activeRarity || b.rarity.name === activeRarity
+      const matchesClass = !activeClass || b.class.name === activeClass
+      const matchesSearch = !searchTerm || b.name.toLowerCase().includes(searchTerm)
+      return matchesRarity && matchesClass && matchesSearch
+    })
+    .sort((a, b) => {
+      if (catalogSort === "winRate") {
+        return (catalogStats[b.id]?.winRate ?? -1) - (catalogStats[a.id]?.winRate ?? -1) || a.name.localeCompare(b.name)
+      }
+      if (catalogSort === "picks") {
+        return (catalogStats[b.id]?.picks ?? 0) - (catalogStats[a.id]?.picks ?? 0) || a.name.localeCompare(b.name)
+      }
+      if (catalogSort === "recentBuffs") {
+        return Number(hasRecentBuffs(b)) - Number(hasRecentBuffs(a)) || a.name.localeCompare(b.name)
+      }
+      return a.name.localeCompare(b.name)
+    })
+  const comparisonBrawlers = selectedForCompare
+    .map(id => brawlers.find(b => b.id === id))
+    .filter((b): b is Brawler => Boolean(b))
 
   function selectFromSearch(brawler: Brawler) {
     setSearch(brawler.name)
     setSelected(brawler)
     setTab("overview")
     setSearchOpen(false)
+  }
+
+  function toggleCompare(brawler: Brawler) {
+    setSelectedForCompare(current => {
+      if (current.includes(brawler.id)) return current.filter(id => id !== brawler.id)
+      return [...current, brawler.id].slice(-3)
+    })
   }
 
   useClickOutside([searchDropdownRef, searchInputRef], () => setSearchOpen(false), searchOpen)
@@ -109,7 +214,7 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
   const rarities = RARITY_ORDER
     .map(name => ({ name, color: sanitizeColor(brawlers.find(b => b.rarity.name === name)?.rarity.color ?? "#888") }))
     .filter(r => brawlers.some(b => b.rarity.name === r.name))
-  const activeRarityCount = activeRarity ? brawlers.filter(b => b.rarity.name === activeRarity).length : brawlers.length
+  const filteredCount = filteredBrawlers.length
 
   return (
     <>
@@ -121,7 +226,7 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
           </div>
           <div className="flex flex-wrap justify-end gap-2 max-md:justify-start">
             <span className="inline-flex min-h-[30px] items-center whitespace-nowrap rounded-full border border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_84%,transparent)] px-3 text-[11.5px] font-semibold text-[var(--ink-2)]">{brawlers.length} total</span>
-            <span className="inline-flex min-h-[30px] items-center whitespace-nowrap rounded-full border border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_84%,transparent)] px-3 text-[11.5px] font-semibold text-[var(--ink-2)]">{activeRarity ? `${activeRarityCount} ${activeRarity}` : "All rarities"}</span>
+            <span className="inline-flex min-h-[30px] items-center whitespace-nowrap rounded-full border border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_84%,transparent)] px-3 text-[11.5px] font-semibold text-[var(--ink-2)]">{filteredCount} shown</span>
           </div>
         </div>
 
@@ -137,6 +242,12 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
               <h2 className="m-0 truncate text-[22px] leading-tight font-bold text-white">
                 {topBrawler ? (brawlers.find(b => b.id === topBrawler.id)?.name ?? topBrawler.name) : "Loading..."}
               </h2>
+              {topBrawler && (
+                <p className="mt-1.5 mb-0 flex items-center gap-1.5 text-[11px] leading-snug text-white/75">
+                  <Info size={12} />
+                  Why: score blends win rate, volume, and map stability.
+                </p>
+              )}
             </div>
           </div>
           <div className="grid min-w-[min(420px,48%)] grid-cols-3 gap-2 max-md:min-w-0">
@@ -155,8 +266,8 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
           </div>
         </div>
 
-        <div className="relative z-30 mb-8 flex w-full items-center gap-2.5 rounded-[12px] border border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_78%,transparent)] p-2.5 shadow-[0_18px_36px_-34px_rgba(0,0,0,0.7)] backdrop-blur-2xl max-md:flex-col max-md:items-stretch max-md:gap-2">
-          <div className="relative w-[200px] shrink-0 max-md:w-full">
+        <div className="relative z-30 mb-6 grid grid-cols-[minmax(240px,320px)_minmax(0,1fr)_minmax(150px,190px)] gap-x-4 gap-y-3 rounded-[12px] border border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_72%,transparent)] p-3 shadow-[0_18px_36px_-34px_rgba(0,0,0,0.7)] backdrop-blur-2xl max-lg:grid-cols-[minmax(220px,280px)_minmax(150px,190px)] max-md:grid-cols-1">
+          <div className="relative max-md:w-full">
             <div className="flex h-10 items-center gap-2 rounded-[10px] border border-[var(--line)] bg-[var(--panel)] px-3.5 text-[var(--ink)] transition-colors focus-within:border-[var(--line-2)]">
               <Search size={13} className="shrink-0 text-[var(--ink-4)]" />
               <input
@@ -198,30 +309,142 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
             )}
           </div>
 
-          <ScrollableFilters
-            ariaLabel="Filter by rarity"
-            value={activeRarity}
-            onChange={setActiveRarity}
-            cycleLabel={activeRarity ?? "All Rarities"}
-            options={[
-              { key: "all", value: null, label: "All" },
-              ...rarities.map(r => ({ key: r.name, value: r.name as string | null, label: r.name })),
-            ]}
-          />
+          <div className="col-span-3 row-start-2 space-y-2 max-lg:col-span-2 max-lg:row-start-2 max-md:col-span-1 max-md:row-auto">
+            <div className="grid grid-cols-[46px_minmax(0,1fr)] items-center gap-2 max-sm:grid-cols-1">
+              <span className="text-[10px] font-semibold uppercase tracking-normal text-[var(--ink-4)]">Rarity</span>
+              <div className="flex min-w-0 flex-wrap gap-1">
+                <button
+                  onClick={() => setActiveRarity(null)}
+                  className={`rounded-md border px-2.5 py-1 text-[11px] font-medium transition ${activeRarity === null ? "border-[var(--line-2)] bg-[var(--panel-2)] text-[var(--ink)]" : "border-[var(--line)] bg-transparent text-[var(--ink-3)] hover:text-[var(--ink)]"}`}
+                >
+                  All
+                </button>
+                {rarities.map(rarity => (
+                  <button
+                    key={rarity.name}
+                    onClick={() => setActiveRarity(current => current === rarity.name ? null : rarity.name)}
+                    className={`rounded-md border px-2.5 py-1 text-[11px] font-medium transition ${activeRarity === rarity.name ? "border-[var(--line-2)] bg-[var(--panel-2)] text-[var(--ink)]" : "border-[var(--line)] bg-transparent text-[var(--ink-3)] hover:text-[var(--ink)]"}`}
+                  >
+                    {rarity.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-[46px_minmax(0,1fr)] items-center gap-2 max-sm:grid-cols-1">
+              <span className="text-[10px] font-semibold uppercase tracking-normal text-[var(--ink-4)]">Class</span>
+              <div className="flex min-w-0 flex-wrap gap-1">
+                <button
+                  onClick={() => setActiveClass(null)}
+                  className={`rounded-md border px-2.5 py-1 text-[11px] font-medium transition ${activeClass === null ? "border-[var(--line-2)] bg-[var(--panel-2)] text-[var(--ink)]" : "border-[var(--line)] bg-transparent text-[var(--ink-3)] hover:text-[var(--ink)]"}`}
+                >
+                  All
+                </button>
+                {classes.map(name => (
+                  <button
+                    key={name}
+                    onClick={() => setActiveClass(current => current === name ? null : name)}
+                    className={`rounded-md border px-2.5 py-1 text-[11px] font-medium capitalize transition ${activeClass === name ? "border-[var(--line-2)] bg-[var(--panel-2)] text-[var(--ink)]" : "border-[var(--line)] bg-transparent text-[var(--ink-3)] hover:text-[var(--ink)]"}`}
+                  >
+                    {formatFilterLabel(name)}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="col-start-3 row-start-1 flex h-10 items-center gap-2 rounded-[10px] border border-[var(--line)] bg-[var(--panel)] px-3 max-lg:col-start-2 max-lg:row-start-1 max-md:col-start-auto max-md:row-auto max-md:w-full">
+            <span className="text-[10.5px] font-semibold uppercase tracking-normal text-[var(--ink-4)]">Sort</span>
+            <select
+              value={catalogSort}
+              onChange={event => setCatalogSort(event.target.value as CatalogSort)}
+              className="min-w-0 flex-1 border-0 bg-transparent text-[12px] font-medium text-[var(--ink)] outline-none"
+            >
+              <option value="name">Name</option>
+              <option value="winRate">Win rate</option>
+              <option value="picks">Picks</option>
+              <option value="recentBuffs">Recent buffs</option>
+            </select>
+          </div>
         </div>
 
+        {comparisonBrawlers.length > 0 && (
+          <div className="mb-5 overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--panel)] shadow-[var(--shadow-lift)]">
+            <div className="flex items-center justify-between gap-3 border-b border-[var(--line)] bg-[var(--panel-2)] px-4 py-3">
+              <div className="flex items-center gap-2">
+                <GitCompare size={14} className="text-[var(--accent)]" />
+                <span className="text-[12px] font-semibold text-[var(--ink)]">Compare brawlers</span>
+              </div>
+              <button onClick={() => setSelectedForCompare([])} className="grid size-7 place-items-center rounded-md border border-[var(--line)] bg-transparent text-[var(--ink-3)] hover:text-[var(--ink)]" aria-label="Clear comparison">
+                <X size={13} />
+              </button>
+            </div>
+            <div className="grid grid-cols-3 gap-0 max-md:grid-cols-1">
+              {comparisonBrawlers.map(brawler => {
+                const stat = catalogStats[brawler.id]
+                const color = sanitizeColor(brawler.rarity.color)
+                return (
+                  <div key={brawler.id} className="border-r border-[var(--line)] p-4 last:border-r-0 max-md:border-r-0 max-md:border-b max-md:last:border-b-0">
+                    <div className="mb-3 flex items-center gap-3">
+                      <div className="grid size-12 shrink-0 place-items-center rounded-lg border border-[var(--line)] bg-[var(--panel-2)]">
+                        <BrawlImage src={brawler.imageUrl2} alt={brawler.name} width={42} height={42} className="size-[42px] object-contain" sizes="42px" />
+                      </div>
+                      <div className="min-w-0">
+                        <strong className="block truncate text-[14px] text-[var(--ink)]">{brawler.name}</strong>
+                        <span className="text-[11px] font-medium" style={{ color }}>{brawler.rarity.name}</span>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="rounded-lg border border-[var(--line)] bg-[var(--panel-2)] px-2 py-2">
+                        <span className="block text-[9.5px] uppercase text-[var(--ink-4)]">Win</span>
+                        <strong className="text-[12px]" style={{ color: stat?.winRate != null ? winRateColor(stat.winRate) : "var(--ink-4)" }}>{stat?.winRate != null ? `${stat.winRate.toFixed(1)}%` : "—"}</strong>
+                      </div>
+                      <div className="rounded-lg border border-[var(--line)] bg-[var(--panel-2)] px-2 py-2">
+                        <span className="block text-[9.5px] uppercase text-[var(--ink-4)]">Picks</span>
+                        <strong className="text-[12px] text-[var(--ink)]">{formatPicks(stat?.picks)}</strong>
+                      </div>
+                      <div className="rounded-lg border border-[var(--line)] bg-[var(--panel-2)] px-2 py-2">
+                        <span className="block text-[9.5px] uppercase text-[var(--ink-4)]">Maps</span>
+                        <strong className="text-[12px] text-[var(--ink)]">{stat?.mapCount ?? "—"}</strong>
+                      </div>
+                    </div>
+                    <div className="mt-3 min-h-8 text-[11.5px] leading-snug text-[var(--ink-3)]">
+                      {stat?.bestMap ? `${stat.bestMap.name} is the best tracked map at ${stat.bestMap.winRate.toFixed(1)}%.` : "No qualifying map data yet."}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
         <BrawlerCatalog
-          key={`${activeRarity ?? "all"}-${search.trim().toLowerCase()}`}
-          brawlers={brawlers}
-          activeRarity={activeRarity}
-          search={search}
+          key={`${activeRarity ?? "all"}-${activeClass ?? "all"}-${searchTerm}-${catalogSort}`}
+          brawlers={filteredBrawlers}
+          stats={catalogStats}
+          selectedForCompare={selectedForCompare}
+          onToggleCompare={toggleCompare}
           onSelect={b => { setSelected(b); setTab("overview") }}
         />
       </div>
       <Modal open={!!selected} onClose={close} size="md" className="bl-modal-sheet-brawler" labelledBy="brawler-modal-title">
         {selected && (() => {
           const color = sanitizeColor(selected.rarity.color)
-          const hc = HYPERCHARGES[selected.id]
+          const hc = hypercharges[selected.id]
+          const sortedMaps = stats?.maps
+            ? [...stats.maps].sort((a, b) => {
+                const dir = mapSort.dir === "asc" ? 1 : -1
+                if (mapSort.key === "map") return a.map.localeCompare(b.map) * dir
+                if (mapSort.key === "mode") return a.mode.localeCompare(b.mode) * dir
+                if (mapSort.key === "picks") return (a.picks - b.picks) * dir
+                return (a.winRate - b.winRate) * dir
+              })
+            : []
+          const setMapHeaderSort = (key: MapSort) => {
+            setMapSort(current => current.key === key
+              ? { key, dir: current.dir === "asc" ? "desc" : "asc" }
+              : { key, dir: key === "map" || key === "mode" ? "asc" : "desc" })
+          }
           return (
             <>
               <div className="bl-modal-header bl-modal-header-brawler">
@@ -289,6 +512,24 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
                         </div>
                       ))}
                     </div>
+                    {!statsLoading && stats && (
+                      <div className="grid grid-cols-2 gap-3 max-sm:grid-cols-1">
+                        <div>
+                          <div className="mb-2 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-normal text-[var(--ink-4)]">
+                            <BarChart3 size={12} />
+                            7d win-rate sparkline
+                          </div>
+                          <WinRateSparkline values={stats.trend7 ?? []} />
+                        </div>
+                        <div>
+                          <div className="mb-2 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-normal text-[var(--ink-4)]">
+                            <BarChart3 size={12} />
+                            Map win-rate histogram
+                          </div>
+                          <WinRateHistogram buckets={stats.histogram ?? []} />
+                        </div>
+                      </div>
+                    )}
                     {!statsLoading && stats && stats.modes.length > 0 && (
                       <div>
                         <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", color: "var(--ink-4)", textTransform: "uppercase", marginBottom: 8 }}>By Mode</div>
@@ -367,16 +608,27 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
                     {!statsLoading && stats && stats.maps.length > 0 && (
                       <>
                         <div style={{ display: "grid", gridTemplateColumns: "1fr 90px 64px 64px", gap: 8, padding: "0 10px 8px", borderBottom: "1px solid var(--line)" }}>
-                          {["Map", "Mode", "Picks", "Win %"].map(h => (
-                            <span key={h} style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: "0.1em", color: "var(--ink-4)", textTransform: "uppercase", textAlign: h === "Win %" || h === "Picks" ? "right" : "left" }}>{h}</span>
+                          {[
+                            ["Map", "map"],
+                            ["Mode", "mode"],
+                            ["Picks", "picks"],
+                            ["Win %", "winRate"],
+                          ].map(([label, key]) => (
+                            <button
+                              key={key}
+                              onClick={() => setMapHeaderSort(key as MapSort)}
+                              style={{ border: 0, background: "transparent", padding: 0, cursor: "pointer", fontSize: 9.5, fontWeight: 700, letterSpacing: "0.1em", color: mapSort.key === key ? "var(--ink)" : "var(--ink-4)", textTransform: "uppercase", textAlign: label === "Win %" || label === "Picks" ? "right" : "left" }}
+                            >
+                              {label}{mapSort.key === key ? (mapSort.dir === "asc" ? " ↑" : " ↓") : ""}
+                            </button>
                           ))}
                         </div>
 
                         <div style={{ display: "flex", flexDirection: "column" }}>
-                          {stats.maps.map((m, i) => (
+                          {sortedMaps.map((m, i) => (
                             <div
                               key={`${m.map}-${m.mode}-${i}`}
-                              style={{ display: "grid", gridTemplateColumns: "1fr 90px 64px 64px", gap: 8, padding: "9px 10px", borderBottom: i < stats.maps.length - 1 ? "1px solid var(--line)" : "none", alignItems: "center" }}
+                              style={{ display: "grid", gridTemplateColumns: "1fr 90px 64px 64px", gap: 8, padding: "9px 10px", borderBottom: i < sortedMaps.length - 1 ? "1px solid var(--line)" : "none", alignItems: "center" }}
                             >
                               <span style={{ fontSize: 12.5, fontWeight: 500, color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.map}</span>
                               <span style={{ fontSize: 11, color: "var(--ink-4)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.mode}</span>
