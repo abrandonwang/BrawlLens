@@ -25,6 +25,12 @@ export default function TopLoader() {
     clearTimers()
     startedRef.current = true
     setVisible(true)
+    timersRef.current.push(window.setTimeout(() => {
+      if (startedRef.current) {
+        setVisible(false)
+        startedRef.current = false
+      }
+    }, 4000))
   }, [clearTimers])
 
   const queueStart = useCallback(() => {

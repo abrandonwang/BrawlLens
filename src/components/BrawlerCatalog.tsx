@@ -93,11 +93,11 @@ export default function BrawlerCatalog({ brawlers, stats, selectedForCompare, on
                     priority={index < 18}
                   />
                 </div>
-                <div className="px-1 pt-1 pb-2">
+                <div className="px-1 pt-2.5 pb-2">
                   <span className="block truncate text-center text-[14px] font-semibold tracking-[-0.016em] text-[var(--ink)]">
                     {brawler.name}
                   </span>
-                  <div className="mt-1.5 grid grid-cols-2 items-end gap-3">
+                  <div className="mt-1 grid grid-cols-2 items-end gap-3">
                     <div className="min-w-0">
                       <span className="block text-[10px] font-normal tracking-[-0.01em] text-[var(--ink-4)]">Win</span>
                       <strong className="block text-[12px] leading-tight" style={{ color: winRate != null ? winRateColor(winRate) : "var(--ink-4)" }}>

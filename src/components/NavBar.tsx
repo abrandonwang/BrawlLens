@@ -1,9 +1,8 @@
 "use client";
 import { useState, useEffect, useRef, useCallback, type KeyboardEvent as ReactKeyboardEvent } from "react";
-import { ChevronsUpDown, Menu, Search, X } from "lucide-react";
+import { ArrowUp, ArrowDown, CornerDownLeft, Hash, Menu, Search, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useTheme } from "next-themes";
 
 const navItems = [
   { label: "Overview",     href: "/" },
@@ -11,6 +10,7 @@ const navItems = [
   { label: "Maps",         href: "/meta" },
   { label: "Leaderboards", href: "/leaderboards" },
   { label: "Ask AI",       href: "/chat" },
+  { label: "About",        href: "/about" },
 ];
 
 type CommandItem = {
@@ -115,8 +115,6 @@ function commandMatches(item: CommandItem, q: string) {
 export default function NavBar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [menuClosing, setMenuClosing] = useState(false);
@@ -134,8 +132,6 @@ export default function NavBar() {
       setMenuClosing(false);
     }, 380);
   }, [isMenuOpen]);
-
-  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     if (isMenuOpen || menuClosing) {
@@ -285,11 +281,6 @@ export default function NavBar() {
           <button onClick={() => setIsSearchOpen(true)} aria-label="Search">
             <Search size={16} strokeWidth={1.8} />
           </button>
-          {mounted && (
-            <button onClick={() => setTheme(theme === "dark" ? "light" : "dark")} aria-label="Toggle theme">
-              <ChevronsUpDown size={16} strokeWidth={1.8} />
-            </button>
-          )}
           <button className="lovable-menu-button" onClick={toggleMenu} aria-label="Menu" aria-expanded={isMenuOpen}>
             {isMenuOpen ? <X size={15} strokeWidth={1.9} /> : <Menu size={17} strokeWidth={1.8} />}
           </button>
@@ -361,89 +352,79 @@ export default function NavBar() {
       )}
       {isSearchOpen && (
         <div
-          className="fixed inset-0 z-[200] flex items-start justify-center px-4"
-          style={{ paddingTop: "12vh", background: "rgba(0,0,0,0.55)" }}
+          className="lovable-search-backdrop"
           onClick={closeSearch}
         >
           <div
-            style={{
-              width: "100%", maxWidth: 540,
-              background: "var(--panel)", border: "1px solid var(--line-2)",
-              borderRadius: 20, overflow: "hidden",
-              boxShadow: "0 40px 80px -20px rgba(0,0,0,0.5)",
-            }}
+            className="lovable-search-panel"
             onClick={e => e.stopPropagation()}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "0 18px", borderBottom: "1px solid var(--line)" }}>
+            <div className="lovable-search-input-row">
+              <Search size={15} strokeWidth={1.8} className="lovable-search-input-icon" />
               <input
                 ref={inputRef}
                 value={query}
                 onChange={e => setQuery(e.target.value)}
                 onKeyDown={handleSearchKeyDown}
-                placeholder="Search pages, docs, or paste a #PlayerTag…"
-                style={{ flex: 1, background: "transparent", border: "none", outline: "none", padding: "18px 0", fontSize: 16, color: "var(--ink)", fontFamily: "inherit" }}
+                placeholder="Search pages, docs, or paste a #PlayerTag"
+                className="lovable-search-input"
               />
-              <button onClick={closeSearch}
-                style={{ fontSize: 10, fontWeight: 700, color: "var(--ink-4)", border: "1px solid var(--line)", borderRadius: 5, padding: "2px 6px", background: "transparent", cursor: "pointer", fontFamily: "var(--font-geist-mono, monospace)" }}
-              >
-                Esc
-              </button>
+              <button onClick={closeSearch} className="lovable-search-esc">Esc</button>
             </div>
 
-            <div style={{ padding: 8 }}>
+            <div className="lovable-search-body">
               {hasPlayerLookup && (
-                <button
-                  onClick={handlePlayerSearch}
-                  onMouseEnter={() => setActiveIndex(0)}
-                  style={{
-                    width: "100%", display: "flex", alignItems: "center", gap: 12,
-                    padding: "10px 12px", borderRadius: 12,
-                    background: activeIndex === 0 ? "var(--hover-bg)" : "transparent",
-                    border: "1px solid transparent", cursor: "pointer",
-                    color: "var(--ink-2)", fontSize: 13, fontFamily: "inherit", textAlign: "left",
-                  }}
-                  className="interactive-row"
-                >
-                  <div style={{ width: 5, height: 34, borderRadius: 999, background: "var(--accent)", flexShrink: 0 }} />
-                  <div style={{ width: 30, height: 30, borderRadius: 8, background: "var(--accent-soft)", border: "1px solid var(--accent-line)", display: "grid", placeItems: "center", flexShrink: 0, color: "var(--accent)", fontSize: 12, fontWeight: 800 }}>
-                    #
-                  </div>
-                  <span style={{ flex: 1 }}>
-                    Search player <span style={{ color: "var(--accent)", fontWeight: 700 }}>#{trimmedQuery.replace(/^#/, "")}</span>
-                    <span style={{ display: "block", marginTop: 2, color: "var(--ink-4)", fontSize: 11 }}>Open a public player profile by tag.</span>
-                  </span>
-                </button>
+                <div className="lovable-search-section">
+                  <div className="lovable-search-group-label">Player Lookup</div>
+                  <button
+                    type="button"
+                    onClick={handlePlayerSearch}
+                    onMouseEnter={() => setActiveIndex(0)}
+                    aria-selected={activeIndex === 0}
+                    className={`lovable-search-row ${activeIndex === 0 ? "is-active" : ""}`}
+                  >
+                    <span className="lovable-search-row-icon" style={{ background: "var(--ink)", color: "var(--bg)", borderColor: "transparent" }}>
+                      <Hash size={13} strokeWidth={2.2} />
+                    </span>
+                    <span className="lovable-search-row-content">
+                      <span className="lovable-search-row-title">
+                        Open player <span style={{ fontWeight: 600 }}>#{trimmedQuery.replace(/^#/, "")}</span>
+                      </span>
+                      <span className="lovable-search-row-desc">Public profile lookup by tag.</span>
+                    </span>
+                    <CornerDownLeft size={13} strokeWidth={1.8} className="lovable-search-row-chevron" />
+                  </button>
+                </div>
               )}
 
               {Object.entries(groupedItems).map(([group, items]) => (
-                <div key={group} style={{ paddingTop: hasPlayerLookup || group !== Object.keys(groupedItems)[0] ? 6 : 0 }}>
+                <div key={group} className="lovable-search-section">
+                  <div className="lovable-search-group-label">{group}</div>
                   {items.map(item => {
                     const itemIndex = commandIndex++;
+                    const isActiveRow = activeIndex === itemIndex;
+                    const isRecent = !normalizedQuery && recentItems.some(recent => recent.href === item.href);
                     return (
                       <button
                         key={item.href}
                         type="button"
                         onClick={() => openCommand(item)}
                         onMouseEnter={() => setActiveIndex(itemIndex)}
-                        style={{
-                          width: "100%", display: "flex", alignItems: "center", gap: 12,
-                          padding: "10px 12px", borderRadius: 12,
-                          background: activeIndex === itemIndex ? "var(--hover-bg)" : "transparent",
-                          border: "1px solid transparent", cursor: "pointer",
-                          color: "var(--ink-2)", fontSize: 13, fontFamily: "inherit", textAlign: "left",
-                        }}
-                        className="interactive-row"
+                        aria-selected={isActiveRow}
+                        className={`lovable-search-row ${isActiveRow ? "is-active" : ""}`}
                       >
-                        <div style={{ width: 5, height: 34, borderRadius: 999, background: item.accent, flexShrink: 0, opacity: activeIndex === itemIndex ? 1 : 0.72 }} />
-                        <span style={{ minWidth: 0, flex: 1 }}>
-                          <span style={{ display: "block", color: "var(--ink)", fontWeight: 650 }}>{item.label}</span>
-                          <span style={{ display: "block", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "var(--ink-4)", fontSize: 11 }}>{item.description}</span>
+                        <span
+                          className="lovable-search-row-icon"
+                          style={{ color: item.accent, borderColor: "var(--line)" }}
+                        >
+                          <span className="lovable-search-row-dot" style={{ background: item.accent }} />
                         </span>
-                        {!normalizedQuery && recentItems.some(recent => recent.href === item.href) && (
-                          <span style={{ border: "1px solid var(--line)", borderRadius: 999, padding: "2px 7px", color: "var(--ink-4)", fontSize: 10, fontWeight: 700 }}>
-                            Recent
-                          </span>
-                        )}
+                        <span className="lovable-search-row-content">
+                          <span className="lovable-search-row-title">{item.label}</span>
+                          <span className="lovable-search-row-desc">{item.description}</span>
+                        </span>
+                        {isRecent && <span className="lovable-search-row-badge">Recent</span>}
+                        <CornerDownLeft size={13} strokeWidth={1.8} className="lovable-search-row-chevron" />
                       </button>
                     );
                   })}
@@ -451,16 +432,26 @@ export default function NavBar() {
               ))}
 
               {visibleItems.length === 0 && !hasPlayerLookup && (
-                <p style={{ padding: "20px 12px", textAlign: "center", fontSize: 11, color: "var(--ink-4)" }}>
-                  No results for &quot;{query}&quot;
+                <p className="lovable-search-empty">
+                  No results for &ldquo;{query}&rdquo;
                 </p>
               )}
+            </div>
 
-              <div style={{ display: "flex", justifyContent: "space-between", gap: 12, borderTop: "1px solid var(--line)", marginTop: 8, padding: "10px 12px 2px", color: "var(--ink-4)", fontSize: 10 }}>
-                <span>Up/Down navigate</span>
-                <span>Enter open</span>
-                <span>Esc close</span>
-              </div>
+            <div className="lovable-search-footer">
+              <span className="lovable-search-hint">
+                <kbd className="lovable-kbd"><ArrowUp size={9} strokeWidth={2.4} /></kbd>
+                <kbd className="lovable-kbd"><ArrowDown size={9} strokeWidth={2.4} /></kbd>
+                navigate
+              </span>
+              <span className="lovable-search-hint">
+                <kbd className="lovable-kbd"><CornerDownLeft size={9} strokeWidth={2.4} /></kbd>
+                open
+              </span>
+              <span className="lovable-search-hint">
+                <kbd className="lovable-kbd lovable-kbd-text">esc</kbd>
+                close
+              </span>
             </div>
           </div>
         </div>
