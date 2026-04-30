@@ -7,11 +7,11 @@ import { BrawlImage, brawlerIconUrl } from "@/components/BrawlImage"
 const PLAYER_API_URL = process.env.PLAYER_API_URL || "http://165.227.206.51:3000"
 
 function rankColor(rank: number) {
-  if (rank >= 30) return "#FFD400"
+  if (rank >= 30) return "#14B8D6"
   if (rank >= 25) return "#FB923C"
   if (rank >= 20) return "#A855F7"
   if (rank >= 15) return "#22D3EE"
-  if (rank >= 10) return "#EAB308"
+  if (rank >= 10) return "#0EA5B8"
   if (rank >= 5)  return "#94A3B8"
   return "#92400E"
 }

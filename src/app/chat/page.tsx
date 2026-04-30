@@ -27,7 +27,7 @@ const markdownComponents: Components = {
     )
   },
   a: ({ href, children }) => (
-    <Link href={href ?? "/"} className="font-semibold text-[#FFD400] hover:text-yellow-400 transition-colors">
+    <Link href={href ?? "/"} className="font-semibold text-[var(--accent)] hover:text-[color-mix(in_srgb,var(--accent)_82%,white)] transition-colors">
       {children}
     </Link>
   ),

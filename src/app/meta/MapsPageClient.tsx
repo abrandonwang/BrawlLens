@@ -487,7 +487,7 @@ export default function MapsPageClient() {
             className="bl-modal-sheet bl-modal-sheet-map"
             style={{
               width: "100%",
-              maxWidth: 560,
+              maxWidth: 760,
               maxHeight: "90vh",
               display: "flex",
               flexDirection: "column",
@@ -505,25 +505,15 @@ export default function MapsPageClient() {
                 <X size={12} />
               </button>
 
-              <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16, paddingRight: 40 }}>
+              <div className="bl-map-modal-hero">
                 {selectedMap.imageUrl && (
-                  <div style={{ width: 56, height: 56, borderRadius: 12, background: "var(--panel-2)", border: "1px solid var(--line)", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <div className="bl-map-modal-thumb">
                     <BrawlImage src={selectedMap.imageUrl} alt={selectedMap.name} width={56} height={56} style={{ width: "100%", height: "100%", objectFit: "cover" }} sizes="56px" />
                   </div>
                 )}
 
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                    <span style={{ fontSize: 20, fontWeight: 700, color: "var(--ink)", letterSpacing: "-0.025em", lineHeight: 1.1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {selectedMap.name}
-                    </span>
-                    {selectedMap.isLive && (
-                      <span style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "rgba(73,212,126,0.12)", border: "1px solid rgba(73,212,126,0.3)", borderRadius: 99, padding: "2px 8px", flexShrink: 0 }}>
-                        <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#49D47E", boxShadow: "0 0 5px #49D47E" }} />
-                        <span style={{ fontSize: 9.5, fontWeight: 700, color: "#49D47E", letterSpacing: "0.08em" }}>LIVE</span>
-                      </span>
-                    )}
-                  </div>
+                  <h2 className={`bl-map-modal-title ${selectedMap.isLive ? "is-live" : ""}`}>{selectedMap.name}</h2>
                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                     {modeColor && <span style={{ width: 6, height: 6, borderRadius: 2, background: modeColor, display: "inline-block", flexShrink: 0 }} />}
                     <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.03em", color: "var(--ink-4)" }}>
@@ -533,12 +523,12 @@ export default function MapsPageClient() {
                   </div>
                 </div>
               </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 14 }}>
+              <div className="bl-map-modal-controls">
                 <div className="bl-input">
                   <Search size={12} style={{ color: "var(--ink-4)", flexShrink: 0 }} />
                   <input placeholder="Search brawler…" value={brawlerSearch} onChange={e => setBrawlerSearch(e.target.value)} />
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <div className="bl-map-modal-filters">
                   <div className="bl-seg">
                     {([["picks", "Picks"], ["winRate", "Win Rate"], ["wins", "Wins"]] as [SortKey, string][]).map(([key, label]) => (
                       <button key={key} onClick={() => setSortBy(key)} className={sortBy === key ? "on" : ""}>{label}</button>

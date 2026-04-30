@@ -2,11 +2,11 @@ import { PlayerBrawler } from "@/types/brawler"
 import { BrawlImage, brawlerIconUrl } from "@/components/BrawlImage"
 
 function rankColor(rank: number): string {
-  if (rank >= 30) return "#FFD400"
+  if (rank >= 30) return "#14B8D6"
   if (rank >= 25) return "#FB923C"
   if (rank >= 20) return "#A855F7"
   if (rank >= 15) return "#22D3EE"
-  if (rank >= 10) return "#EAB308"
+  if (rank >= 10) return "#0EA5B8"
   if (rank >= 5)  return "#94A3B8"
   return "#92400E"
 }

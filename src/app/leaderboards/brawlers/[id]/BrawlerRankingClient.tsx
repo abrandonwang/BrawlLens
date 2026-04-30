@@ -71,8 +71,8 @@ export default function BrawlerRankingClient({ data, brawlerName }: { data: Play
             </span>
 
             <div className="leaderboard-metric flex items-center gap-1.5 justify-end">
-              <Trophy size={12} className="text-red-500/50 dark:text-[#FFD400]/50 shrink-0" />
-              <span className="text-base font-bold text-red-500/80 dark:text-[#FFD400]/80 tabular-nums">
+              <Trophy size={12} className="text-red-500/50 dark:text-[color-mix(in_srgb,var(--accent)_72%,transparent)] shrink-0" />
+              <span className="text-base font-bold text-red-500/80 dark:text-[color-mix(in_srgb,var(--accent)_82%,white)] tabular-nums">
                 {player.trophies.toLocaleString()}
               </span>
             </div>
@@ -98,7 +98,7 @@ export default function BrawlerRankingClient({ data, brawlerName }: { data: Play
               onClick={() => setPage(idx)}
               className={`w-7 h-7 text-xs font-semibold rounded transition-colors ${
                 idx === page
-                  ? "bg-red-500 text-white dark:bg-[#FFD400] dark:text-black"
+                  ? "bg-red-500 text-white dark:bg-[var(--accent)] dark:text-black"
                   : "text-zinc-400 hover:text-zinc-900 hover:bg-black/5 dark:text-white/40 dark:hover:text-white dark:hover:bg-white/5"
               }`}
             >

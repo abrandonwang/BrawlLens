@@ -196,7 +196,7 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
           </div>
         </div>
 
-        <div className="page-summary mb-3.5 flex items-center justify-between gap-3.5 p-[18px] max-md:flex-col max-md:items-stretch" style={{ "--summary-gradient": "linear-gradient(135deg, #7C3AED 0%, #EC4899 46%, #FFD400 100%)" } as CSSProperties}>
+        <div className="page-summary mb-3.5 flex items-center justify-between gap-3.5 p-[18px] max-md:flex-col max-md:items-stretch" style={{ "--summary-gradient": "linear-gradient(135deg, #7C3AED 0%, #EC4899 46%, #14B8D6 100%)" } as CSSProperties}>
           <div className="flex min-w-0 items-center gap-3">
             <div className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-xl border border-white/20 bg-white/10">
               {topBrawler && (
