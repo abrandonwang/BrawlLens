@@ -17,10 +17,10 @@ interface BrawlerStat {
 type SortKey = "winRate" | "wins" | "picks"
 
 function getTierInfo(winRate: number) {
-  if (winRate >= 58) return { label: "S", color: "#F87171", bg: "rgba(248,113,113,0.08)", border: "rgba(248,113,113,0.2)" }
-  if (winRate >= 54) return { label: "A", color: "#FB923C", bg: "rgba(251,146,60,0.08)", border: "rgba(251,146,60,0.2)" }
-  if (winRate >= 50) return { label: "B", color: "#FACC15", bg: "rgba(250,204,21,0.08)", border: "rgba(250,204,21,0.2)" }
-  if (winRate >= 46) return { label: "C", color: "#60A5FA", bg: "rgba(96,165,250,0.08)", border: "rgba(96,165,250,0.2)" }
+  if (winRate >= 58) return { label: "S", color: "#DC2626", bg: "rgba(220,38,38,0.10)", border: "rgba(220,38,38,0.26)" }
+  if (winRate >= 54) return { label: "A", color: "#C2410C", bg: "rgba(194,65,12,0.10)", border: "rgba(194,65,12,0.24)" }
+  if (winRate >= 50) return { label: "B", color: "#A16207", bg: "rgba(161,98,7,0.10)", border: "rgba(161,98,7,0.24)" }
+  if (winRate >= 46) return { label: "C", color: "#2563EB", bg: "rgba(37,99,235,0.10)", border: "rgba(37,99,235,0.24)" }
   return { label: "D", color: "var(--ink-4)", bg: "var(--panel-2)", border: "var(--line)" }
 }
 
@@ -72,9 +72,9 @@ export default function MapDetailClient({ mapName, imageUrl, totalBattles, brawl
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24, marginBottom: 28 }}>
         <div style={{ flex: 1, minWidth: 0 }}>
           {isLive && (
-            <div style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "rgba(73,212,126,0.12)", border: "1px solid rgba(73,212,126,0.3)", borderRadius: 99, padding: "3px 10px", marginBottom: 10 }}>
-              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#49D47E", flexShrink: 0, boxShadow: "0 0 6px #49D47E" }} />
-              <span style={{ fontSize: 10.5, fontWeight: 700, color: "#49D47E", letterSpacing: "0.1em" }}>LIVE</span>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "var(--win-soft)", border: "1px solid var(--win-line)", borderRadius: 99, padding: "3px 10px", marginBottom: 10 }}>
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--win)", flexShrink: 0, boxShadow: "0 0 6px var(--win)" }} />
+              <span style={{ fontSize: 10.5, fontWeight: 700, color: "var(--win)", letterSpacing: "0.1em" }}>LIVE</span>
             </div>
           )}
           <h1 className="bl-h-display">{mapName}</h1>

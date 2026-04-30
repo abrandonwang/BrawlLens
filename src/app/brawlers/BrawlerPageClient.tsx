@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef, type CSSProperties } from "react"
 import { useSearchParams } from "next/navigation"
-import { BarChart3, GitCompare, Info, Search, X } from "lucide-react"
+import { BarChart3, Info, Search, X } from "lucide-react"
 import BrawlerCatalog, { type CatalogBrawlerStats } from "@/components/BrawlerCatalog"
 import Modal, { ModalCloseButton } from "@/components/Modal"
 import { BrawlImage, brawlerIconUrl } from "@/components/BrawlImage"
@@ -218,19 +218,19 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
 
   return (
     <>
-      <div className="mx-auto w-full max-w-[1080px] px-6 pt-9 pb-20 max-md:px-4 max-md:pt-6 max-md:pb-[60px] max-[360px]:px-3 max-[360px]:pt-5 max-[360px]:pb-12">
-        <div className="mb-[18px] flex items-end justify-between gap-[18px] max-md:flex-col max-md:items-start">
+      <div className="mx-auto w-full max-w-[1080px] px-6 pt-12 pb-24 max-md:px-4 max-md:pt-8 max-md:pb-[64px] max-[360px]:px-3 max-[360px]:pt-6 max-[360px]:pb-12">
+        <div className="mb-8 flex items-end justify-between gap-8 max-md:flex-col max-md:items-start">
           <div className="min-w-0">
-            <h1 className="m-0 text-[clamp(28px,4vw,40px)] leading-none font-extrabold tracking-normal text-[var(--ink)]">Brawlers</h1>
-            <p className="mt-2 mb-0 max-w-[560px] text-[13px] leading-normal text-[var(--ink-3)]">Browse every brawler, filter by rarity, and open quick ability and meta details.</p>
+            <h1 className="m-0 text-[clamp(34px,5vw,56px)] leading-[1.07] font-semibold tracking-[-0.01em] text-[var(--ink)]">Brawlers</h1>
+            <p className="mt-3 mb-0 max-w-[640px] text-[17px] leading-[1.47] tracking-[-0.022em] text-[var(--ink-3)]">Browse every brawler, filter by rarity, and open quick ability and meta details.</p>
           </div>
           <div className="flex flex-wrap justify-end gap-2 max-md:justify-start">
-            <span className="inline-flex min-h-[30px] items-center whitespace-nowrap rounded-full border border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_84%,transparent)] px-3 text-[11.5px] font-semibold text-[var(--ink-2)]">{brawlers.length} total</span>
-            <span className="inline-flex min-h-[30px] items-center whitespace-nowrap rounded-full border border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_84%,transparent)] px-3 text-[11.5px] font-semibold text-[var(--ink-2)]">{filteredCount} shown</span>
+            <span className="inline-flex min-h-9 items-center whitespace-nowrap rounded-full border border-[var(--line)] bg-[var(--panel)] px-4 text-[14px] font-normal tracking-[-0.016em] text-[var(--ink-2)]">{brawlers.length} total</span>
+            <span className="inline-flex min-h-9 items-center whitespace-nowrap rounded-full border border-[var(--line)] bg-[var(--panel)] px-4 text-[14px] font-normal tracking-[-0.016em] text-[var(--ink-2)]">{filteredCount} shown</span>
           </div>
         </div>
 
-        <div className="page-summary mb-3.5 flex items-center justify-between gap-3.5 p-[18px] max-md:flex-col max-md:items-stretch" style={{ "--summary-gradient": "linear-gradient(135deg, #7C3AED 0%, #EC4899 46%, #14B8D6 100%)" } as CSSProperties}>
+        <div className="page-summary mb-6 flex items-center justify-between gap-6 p-8 max-md:flex-col max-md:items-stretch max-sm:p-6" style={{ "--summary-gradient": "linear-gradient(135deg, #7C3AED 0%, #EC4899 46%, #14B8D6 100%)" } as CSSProperties}>
           <div className="flex min-w-0 items-center gap-3">
             <div className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-xl border border-white/20 bg-white/10">
               {topBrawler && (
@@ -238,12 +238,12 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
               )}
             </div>
             <div className="min-w-0">
-              <p className="mb-1 text-[10.5px] leading-snug tracking-[0.12em] text-white/70 uppercase">Best Overall Brawler</p>
-              <h2 className="m-0 truncate text-[22px] leading-tight font-bold text-white">
+              <p className="mb-1 text-[12px] leading-none tracking-[0.08em] text-white/70 uppercase">Best Overall Brawler</p>
+              <h2 className="m-0 truncate text-[28px] leading-[1.15] font-semibold tracking-[-0.01em] text-white">
                 {topBrawler ? (brawlers.find(b => b.id === topBrawler.id)?.name ?? topBrawler.name) : "Loading..."}
               </h2>
               {topBrawler && (
-                <p className="mt-1.5 mb-0 flex items-center gap-1.5 text-[11px] leading-snug text-white/75">
+                <p className="mt-2 mb-0 flex items-center gap-1.5 text-[14px] leading-[1.43] tracking-[-0.016em] text-white/75">
                   <Info size={12} />
                   Why: score blends win rate, volume, and map stability.
                 </p>
@@ -266,9 +266,9 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
           </div>
         </div>
 
-        <div className="relative z-30 mb-6 grid grid-cols-[minmax(240px,320px)_minmax(0,1fr)_minmax(150px,190px)] gap-x-4 gap-y-3 rounded-[12px] border border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_72%,transparent)] p-3 shadow-[0_18px_36px_-34px_rgba(0,0,0,0.7)] backdrop-blur-2xl max-lg:grid-cols-[minmax(220px,280px)_minmax(150px,190px)] max-md:grid-cols-1">
+        <div className="relative z-30 mb-8 grid grid-cols-[minmax(240px,320px)_minmax(0,1fr)_minmax(150px,190px)] gap-x-4 gap-y-3 rounded-[18px] border border-[var(--line)] bg-[var(--panel)] p-4 max-lg:grid-cols-[minmax(220px,280px)_minmax(150px,190px)] max-md:grid-cols-1">
           <div className="relative max-md:w-full">
-            <div className="flex h-10 items-center gap-2 rounded-[10px] border border-[var(--line)] bg-[var(--panel)] px-3.5 text-[var(--ink)] transition-colors focus-within:border-[var(--line-2)]">
+            <div className="flex h-11 items-center gap-2 rounded-full border border-[var(--line)] bg-[var(--panel)] px-4 text-[var(--ink)] transition-colors focus-within:border-[var(--accent)]">
               <Search size={13} className="shrink-0 text-[var(--ink-4)]" />
               <input
                 ref={searchInputRef}
@@ -276,14 +276,14 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
                 onChange={e => { setSearch(e.target.value); setSearchOpen(true) }}
                 onFocus={() => setSearchOpen(true)}
                 placeholder="Search brawlers"
-                className="w-full border-0 bg-transparent font-inherit text-[13px] text-[var(--ink)] outline-none placeholder:text-[var(--ink-4)]"
+                className="w-full border-0 bg-transparent font-inherit text-[17px] tracking-[-0.022em] text-[var(--ink)] outline-none placeholder:text-[var(--ink-4)]"
               />
             </div>
 
             {searchOpen && searchMatches.length > 0 && (
               <div
                 ref={searchDropdownRef}
-                className="absolute top-[calc(100%+6px)] right-0 left-0 z-50 max-h-[280px] overflow-y-auto rounded-xl border border-[var(--line-2)] bg-[var(--panel)] p-1 shadow-[0_18px_40px_-20px_rgba(0,0,0,0.45)]"
+                className="absolute top-[calc(100%+6px)] right-0 left-0 z-50 max-h-[280px] overflow-y-auto rounded-[18px] border border-[var(--line-2)] bg-[var(--panel)] p-1"
               >
                 {searchMatches.slice(0, 12).map(b => (
                   <button
@@ -311,11 +311,11 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
 
           <div className="col-span-3 row-start-2 space-y-2 max-lg:col-span-2 max-lg:row-start-2 max-md:col-span-1 max-md:row-auto">
             <div className="grid grid-cols-[46px_minmax(0,1fr)] items-center gap-2 max-sm:grid-cols-1">
-              <span className="text-[10px] font-semibold uppercase tracking-normal text-[var(--ink-4)]">Rarity</span>
+              <span className="text-[12px] font-normal tracking-[-0.01em] text-[var(--ink-4)]">Rarity</span>
               <div className="flex min-w-0 flex-wrap gap-1">
                 <button
                   onClick={() => setActiveRarity(null)}
-                  className={`rounded-md border px-2.5 py-1 text-[11px] font-medium transition ${activeRarity === null ? "border-[var(--line-2)] bg-[var(--panel-2)] text-[var(--ink)]" : "border-[var(--line)] bg-transparent text-[var(--ink-3)] hover:text-[var(--ink)]"}`}
+                  className={`rounded-full border px-3 py-1.5 text-[14px] font-normal tracking-[-0.016em] transition ${activeRarity === null ? "border-[var(--accent)] bg-[var(--accent)] text-white" : "border-[var(--line)] bg-transparent text-[var(--ink-3)] hover:text-[var(--ink)]"}`}
                 >
                   All
                 </button>
@@ -323,7 +323,7 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
                   <button
                     key={rarity.name}
                     onClick={() => setActiveRarity(current => current === rarity.name ? null : rarity.name)}
-                    className={`rounded-md border px-2.5 py-1 text-[11px] font-medium transition ${activeRarity === rarity.name ? "border-[var(--line-2)] bg-[var(--panel-2)] text-[var(--ink)]" : "border-[var(--line)] bg-transparent text-[var(--ink-3)] hover:text-[var(--ink)]"}`}
+                    className={`rounded-full border px-3 py-1.5 text-[14px] font-normal tracking-[-0.016em] transition ${activeRarity === rarity.name ? "border-[var(--accent)] bg-[var(--accent)] text-white" : "border-[var(--line)] bg-transparent text-[var(--ink-3)] hover:text-[var(--ink)]"}`}
                   >
                     {rarity.name}
                   </button>
@@ -332,11 +332,11 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
             </div>
 
             <div className="grid grid-cols-[46px_minmax(0,1fr)] items-center gap-2 max-sm:grid-cols-1">
-              <span className="text-[10px] font-semibold uppercase tracking-normal text-[var(--ink-4)]">Class</span>
+              <span className="text-[12px] font-normal tracking-[-0.01em] text-[var(--ink-4)]">Class</span>
               <div className="flex min-w-0 flex-wrap gap-1">
                 <button
                   onClick={() => setActiveClass(null)}
-                  className={`rounded-md border px-2.5 py-1 text-[11px] font-medium transition ${activeClass === null ? "border-[var(--line-2)] bg-[var(--panel-2)] text-[var(--ink)]" : "border-[var(--line)] bg-transparent text-[var(--ink-3)] hover:text-[var(--ink)]"}`}
+                  className={`rounded-full border px-3 py-1.5 text-[14px] font-normal tracking-[-0.016em] transition ${activeClass === null ? "border-[var(--accent)] bg-[var(--accent)] text-white" : "border-[var(--line)] bg-transparent text-[var(--ink-3)] hover:text-[var(--ink)]"}`}
                 >
                   All
                 </button>
@@ -344,7 +344,7 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
                   <button
                     key={name}
                     onClick={() => setActiveClass(current => current === name ? null : name)}
-                    className={`rounded-md border px-2.5 py-1 text-[11px] font-medium capitalize transition ${activeClass === name ? "border-[var(--line-2)] bg-[var(--panel-2)] text-[var(--ink)]" : "border-[var(--line)] bg-transparent text-[var(--ink-3)] hover:text-[var(--ink)]"}`}
+                    className={`rounded-full border px-3 py-1.5 text-[14px] font-normal tracking-[-0.016em] capitalize transition ${activeClass === name ? "border-[var(--accent)] bg-[var(--accent)] text-white" : "border-[var(--line)] bg-transparent text-[var(--ink-3)] hover:text-[var(--ink)]"}`}
                   >
                     {formatFilterLabel(name)}
                   </button>
@@ -353,12 +353,12 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
             </div>
           </div>
 
-          <div className="col-start-3 row-start-1 flex h-10 items-center gap-2 rounded-[10px] border border-[var(--line)] bg-[var(--panel)] px-3 max-lg:col-start-2 max-lg:row-start-1 max-md:col-start-auto max-md:row-auto max-md:w-full">
-            <span className="text-[10.5px] font-semibold uppercase tracking-normal text-[var(--ink-4)]">Sort</span>
+          <div className="col-start-3 row-start-1 flex h-11 items-center gap-2 rounded-full border border-[var(--line)] bg-[var(--panel)] px-4 max-lg:col-start-2 max-lg:row-start-1 max-md:col-start-auto max-md:row-auto max-md:w-full">
+            <span className="text-[12px] font-normal tracking-[-0.01em] text-[var(--ink-4)]">Sort</span>
             <select
               value={catalogSort}
               onChange={event => setCatalogSort(event.target.value as CatalogSort)}
-              className="min-w-0 flex-1 border-0 bg-transparent text-[12px] font-medium text-[var(--ink)] outline-none"
+              className="min-w-0 flex-1 border-0 bg-transparent text-[14px] font-normal tracking-[-0.016em] text-[var(--ink)] outline-none"
             >
               <option value="name">Name</option>
               <option value="winRate">Win rate</option>
@@ -369,10 +369,9 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
         </div>
 
         {comparisonBrawlers.length > 0 && (
-          <div className="mb-5 overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--panel)] shadow-[var(--shadow-lift)]">
+          <div className="mb-6 overflow-hidden rounded-[18px] border border-[var(--line)] bg-[var(--panel)]">
             <div className="flex items-center justify-between gap-3 border-b border-[var(--line)] bg-[var(--panel-2)] px-4 py-3">
               <div className="flex items-center gap-2">
-                <GitCompare size={14} className="text-[var(--accent)]" />
                 <span className="text-[12px] font-semibold text-[var(--ink)]">Compare brawlers</span>
               </div>
               <button onClick={() => setSelectedForCompare([])} className="grid size-7 place-items-center rounded-md border border-[var(--line)] bg-transparent text-[var(--ink-3)] hover:text-[var(--ink)]" aria-label="Clear comparison">

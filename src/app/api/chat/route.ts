@@ -2,7 +2,7 @@ export const runtime = "edge"
 
 import Anthropic from "@anthropic-ai/sdk"
 import { createClient } from "@supabase/supabase-js"
-import { playerApiUrl } from "@/lib/env"
+import { fetchPlayerResponse } from "@/lib/playerLookup"
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -199,7 +199,7 @@ async function executeTool(name: string, input: Record<string, string>): Promise
   if (name === "get_player_info") {
     const tag = input.player_tag.replace(/^#/, "")
     try {
-      const res = await fetch(`${playerApiUrl()}/player/${tag}`)
+      const res = await fetchPlayerResponse(tag)
       if (res.status === 404) return `No player found with tag #${tag}.`
       if (!res.ok) return `Error fetching player data (status ${res.status}).`
       const p = await res.json()

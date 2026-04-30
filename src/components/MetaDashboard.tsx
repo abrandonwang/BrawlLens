@@ -166,10 +166,10 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch,
 
   return (
     <div className="relative pt-1">
-      <div className="mb-3.5 flex items-end justify-between gap-2.5 rounded-lg bg-[color-mix(in_srgb,var(--panel)_72%,transparent)] px-3.5 py-3">
+      <div className="mb-5 flex items-end justify-between gap-3 rounded-[18px] border border-[var(--line)] bg-[var(--panel)] px-5 py-4">
         <div className="min-w-0">
-          <div className="mb-1 text-[10px] font-bold tracking-[0.08em] text-[var(--ink-4)] uppercase">{selectedMode === null ? "All Maps" : MODE_CONFIG[selectedMode]?.label ?? selectedMode}</div>
-          <div className="truncate text-[17px] leading-tight font-bold text-[var(--ink)]">
+          <div className="mb-1 text-[12px] font-normal tracking-[-0.01em] text-[var(--ink-4)]">{selectedMode === null ? "All Maps" : MODE_CONFIG[selectedMode]?.label ?? selectedMode}</div>
+          <div className="truncate text-[21px] leading-[1.19] font-semibold tracking-[0.011em] text-[var(--ink)]">
             {displayedMaps.length.toLocaleString()} {displayedMaps.length === 1 ? "map" : "maps"}
           </div>
         </div>
@@ -179,16 +179,16 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch,
             onClick={() => setLiveOnly(v => !v)}
             disabled={!liveOnly && liveCountAll === 0}
             aria-pressed={liveOnly}
-            className={`inline-flex min-h-[26px] cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 text-[10.5px] font-semibold transition-colors max-[420px]:px-2 max-[420px]:text-[10px] disabled:cursor-default disabled:opacity-40 ${liveOnly ? "border-[#49D47E66] bg-[rgba(73,212,126,0.12)] text-[#49D47E]" : "border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_80%,transparent)] text-[var(--ink-3)] hover:text-[var(--ink)]"}`}
+            className={`inline-flex min-h-8 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border px-3 text-[12px] font-normal tracking-[-0.01em] transition-colors max-[420px]:px-2 max-[420px]:text-[10px] disabled:cursor-default disabled:opacity-40 ${liveOnly ? "border-[var(--win-line)] bg-[var(--win-soft)] text-[var(--win)]" : "border-[var(--line)] bg-[var(--panel)] text-[var(--ink-3)] hover:text-[var(--ink)]"}`}
           >
-            <span className={`size-1.5 rounded-full ${liveOnly ? "bg-[#49D47E]" : "bg-[var(--ink-4)]"}`} />
+            <span className={`size-1.5 rounded-full ${liveOnly ? "bg-[var(--win)]" : "bg-[var(--ink-4)]"}`} />
             {liveOnly ? `${liveCount.toLocaleString()} live · on` : `${liveCountAll.toLocaleString()} live`}
           </button>
-          <span className="inline-flex min-h-[26px] items-center whitespace-nowrap rounded-full border border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_80%,transparent)] px-2.5 text-[10.5px] font-semibold text-[var(--ink-3)] max-[420px]:px-2 max-[420px]:text-[10px]">Page {mapPage + 1} of {mapTotalPages}</span>
+          <span className="inline-flex min-h-8 items-center whitespace-nowrap rounded-full border border-[var(--line)] bg-[var(--panel)] px-3 text-[12px] font-normal tracking-[-0.01em] text-[var(--ink-3)] max-[420px]:px-2 max-[420px]:text-[10px]">Page {mapPage + 1} of {mapTotalPages}</span>
         </div>
       </div>
 
-      <div className="mb-6 grid grid-cols-[repeat(auto-fill,minmax(190px,1fr))] gap-3.5 max-[520px]:grid-cols-2 max-[520px]:gap-2.5">
+      <div className="mb-8 grid grid-cols-[repeat(auto-fill,minmax(210px,1fr))] gap-5 max-[520px]:grid-cols-2 max-[520px]:gap-3">
         {paginatedMaps.map(map => {
           const imageUrl = mapImageLookup.get(map.name) ?? mapImageLookup.get(normalizeMapName(map.name));
           const isLive = rotationMapNames.has(map.name);
@@ -199,7 +199,7 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch,
             <button
               key={map.name}
               onClick={() => onSelect({ name: map.name, imageUrl, mode, isLive })}
-              className="map-card group relative block w-full cursor-pointer overflow-hidden border border-[var(--line)] bg-[var(--panel)] p-0 text-left shadow-[var(--shadow-lift)] transition-[transform,border-color,box-shadow,background] duration-200 hover:-translate-y-0.5 hover:border-[var(--line-2)] hover:bg-[color-mix(in_srgb,var(--panel)_70%,var(--hover-bg))] hover:shadow-[0_22px_42px_-30px_rgba(0,0,0,0.75)] active:-translate-y-px"
+              className="map-card group relative block w-full cursor-pointer overflow-hidden border border-[var(--line)] bg-[var(--panel)] p-0 text-left transition-[transform,border-color,background] duration-200 hover:-translate-y-px hover:border-[var(--line-2)] active:-translate-y-px"
             >
               <div className="relative z-[1] overflow-hidden rounded-t-lg bg-[radial-gradient(circle_at_50%_46%,color-mix(in_srgb,var(--line-2)_42%,transparent),transparent_70%),var(--panel-2)]">
                 <MapPreview imageUrl={imageUrl} name={map.name} mode={mode} modeColor={modeColor} />
@@ -209,11 +209,11 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch,
               </div>
 
               <div className="map-card-meta relative z-[1] border-t border-[var(--line)] px-3 pt-2.5 pb-3">
-                <div className={`mb-1 truncate text-[12.5px] font-semibold ${isLive ? "text-[#49D47E]" : "text-[var(--ink)]"}`}>
+                <div className={`mb-1 truncate text-[15px] font-semibold tracking-[-0.016em] ${isLive ? "text-[var(--win)]" : "text-[var(--ink)]"}`}>
                   {map.name}
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-[10.5px] leading-snug tracking-[0.01em] text-[var(--ink-3)]">{map.battles.toLocaleString()} battles</span>
+                  <span className="text-[12px] leading-snug tracking-[-0.01em] text-[var(--ink-3)]">{map.battles.toLocaleString()} battles</span>
                   {mode && modeColor && (
                     <span className="text-[9.5px] font-semibold tracking-[0.04em] uppercase opacity-85" style={{ color: modeColor }}>
                       {MODE_CONFIG[mode]?.label || mode}
@@ -252,7 +252,7 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch,
                 <button
                   key={p}
                   onClick={() => setMapPage(p as number)}
-                  className={`grid size-[30px] cursor-pointer place-items-center rounded-lg text-[12px] font-semibold transition ${p === mapPage ? "border border-transparent bg-[var(--accent)] text-[#0A0A0B]" : "border border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_72%,transparent)] text-[var(--ink-3)] hover:-translate-y-px hover:border-[var(--line-2)] hover:bg-[var(--hover-bg)] hover:text-[var(--ink)]"}`}
+                  className={`grid size-[30px] cursor-pointer place-items-center rounded-lg text-[12px] font-semibold transition ${p === mapPage ? "border border-transparent bg-[var(--accent)] text-[#fcfbf8]" : "border border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_72%,transparent)] text-[var(--ink-3)] hover:-translate-y-px hover:border-[var(--line-2)] hover:bg-[var(--hover-bg)] hover:text-[var(--ink)]"}`}
                 >
                   {(p as number) + 1}
                 </button>

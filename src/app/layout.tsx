@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import { Suspense } from "react";
 import "./globals.css";
 import NavBar from "../components/NavBar";
@@ -8,9 +7,6 @@ import { MenuProvider } from "../context/MenuContext";
 import { ThemeProvider } from "../components/ThemeProvider";
 import TopLoader from "../components/TopLoader";
 import { Analytics } from "@vercel/analytics/next";
-
-const geist = Geist({ subsets: ["latin"], variable: "--font-geist" });
-const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono" });
 
 export const metadata: Metadata = {
   title: "BrawlLens",
@@ -32,7 +28,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body
         suppressHydrationWarning
-        className={`${geist.variable} ${geistMono.variable} flex flex-col min-h-dvh overflow-y-auto`}
+        className="flex flex-col min-h-dvh overflow-y-auto"
       >
         <ThemeProvider>
           <MenuProvider>

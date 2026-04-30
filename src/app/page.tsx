@@ -103,74 +103,63 @@ export default function Home() {
   ]
 
   return (
-    <main className="home-hero">
+    <main className="overview-landing">
       <div className="hero-bg hero-bg-b" />
-      <div className="home-hero-inner">
-        <div className="home-center home-card-enter">
-          <div className="home-card-wrap">
-            <div className="home-card-shell">
-              <div className="home-ask-box">
-                <Search size={16} style={{ color: "var(--ink-3)", flexShrink: 0 }} />
-                <textarea
-                  ref={textareaRef}
-                  rows={1}
-                  value={userInput}
-                  onChange={handleInput}
-                  onKeyDown={handleKeyDown}
-                  placeholder={compactPlaceholder ? "Ask anything..." : "Ask anything, or paste a #PlayerTag"}
-                  className="home-ask-input"
-                />
-                <button className="home-send-btn" onClick={handleSubmit} aria-label="Ask">
-                  <span>↵</span>
-                </button>
-              </div>
+      <section className="overview-landing-inner home-card-enter">
+        <div className="overview-command-panel">
+          <div className="overview-ask-box">
+            <Search size={16} style={{ color: "var(--ink-3)", flexShrink: 0 }} />
+            <textarea
+              ref={textareaRef}
+              rows={1}
+              value={userInput}
+              onChange={handleInput}
+              onKeyDown={handleKeyDown}
+              placeholder={compactPlaceholder ? "Ask anything..." : "Ask anything, or paste a #PlayerTag"}
+              className="home-ask-input"
+            />
+            <button className="home-send-btn" onClick={handleSubmit} aria-label="Ask">
+              <ArrowRight size={16} />
+            </button>
+          </div>
 
-              <div className="home-shortcuts">
-                <Link href="/brawlers">Brawlers</Link>
-                <Link href="/meta">Maps</Link>
-                <Link href="/leaderboards">Leaderboards</Link>
-              </div>
+          <div className="overview-shortcuts">
+            <Link href="/brawlers">Brawlers</Link>
+            <Link href="/meta">Maps</Link>
+            <Link href="/leaderboards">Leaderboards</Link>
+          </div>
 
-              <div className="home-jump-grid">
-                {jumps.map((row, index) => {
-                  const showRetry = !dataLoading && dataError && !row.sub
-                  const inner = (
-                    <>
-                      <span className="home-jump-mark">{String(index + 1).padStart(2, "0")}</span>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div className="bl-caption" style={{ letterSpacing: "0.1em", marginBottom: 2 }}>{row.label}</div>
-                        {dataLoading ? (
-                          <SkeletonBlock className="mt-1 h-[13px] w-[min(150px,75%)]" />
-                        ) : showRetry ? (
-                          <button
-                            type="button"
-                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); loadLandingData() }}
-                            className="cursor-pointer border-0 bg-transparent p-0 text-left text-[12px] font-medium text-[var(--ink-3)] underline-offset-2 hover:text-[var(--ink)] hover:underline"
-                          >
-                            Could not load — retry
-                          </button>
-                        ) : row.sub ? (
-                          <div style={{ fontSize: 13, color: "var(--ink)", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{row.sub}</div>
-                        ) : (
-                          <div className="text-[12px] font-medium text-[var(--ink-4)]">Open section</div>
-                        )}
-                      </div>
-                      <ArrowRight size={14} style={{ color: "var(--ink-4)", flexShrink: 0 }} />
-                    </>
-                  )
-                  return (
-                    <Link key={row.label} href={row.href} className="home-jump-card">
-                      {inner}
-                    </Link>
-                  )
-                })}
-              </div>
-
-            </div>
+          <div className="overview-jump-grid">
+            {jumps.map((row, index) => {
+              const showRetry = !dataLoading && dataError && !row.sub
+              return (
+                <Link key={row.label} href={row.href} className="overview-jump-card">
+                  <span className="home-jump-mark">{String(index + 1).padStart(2, "0")}</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div className="bl-caption" style={{ marginBottom: 4 }}>{row.label}</div>
+                    {dataLoading ? (
+                      <SkeletonBlock className="mt-1 h-[13px] w-[min(150px,75%)]" />
+                    ) : showRetry ? (
+                      <button
+                        type="button"
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); loadLandingData() }}
+                        className="cursor-pointer border-0 bg-transparent p-0 text-left text-[12px] font-medium text-[var(--ink-3)] underline-offset-2 hover:text-[var(--ink)] hover:underline"
+                      >
+                        Could not load — retry
+                      </button>
+                    ) : row.sub ? (
+                      <div className="overview-jump-value">{row.sub}</div>
+                    ) : (
+                      <div className="text-[12px] font-medium text-[var(--ink-4)]">Open section</div>
+                    )}
+                  </div>
+                  <ArrowRight size={14} style={{ color: "var(--ink-4)", flexShrink: 0 }} />
+                </Link>
+              )
+            })}
           </div>
         </div>
-      </div>
-
+      </section>
     </main>
   )
 }

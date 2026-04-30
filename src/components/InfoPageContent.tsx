@@ -142,8 +142,8 @@ export function AboutContent() {
   }, [])
 
   return (
-    <main className="sm:container mx-auto h-auto w-[90vw]">
-      <div className="flex items-start gap-10">
+    <main className="mx-auto h-auto w-full max-w-[1080px] px-6 pb-24 max-md:px-4">
+      <div className="flex items-start gap-12">
         <aside className="hidden min-w-[238px] flex-[1] flex-col sticky top-16 h-[94.5vh] overflow-y-auto md:flex">
           <div className="py-4">
             <div className="mt-5 flex flex-col gap-3.5 pr-2 pb-6">
@@ -186,7 +186,7 @@ export function AboutContent() {
 
         <div className="flex-[4]">
           <div className="flex items-start gap-10">
-            <div className="flex-[3] pt-10">
+            <div className="flex-[3] pt-12">
               <div className="pb-5">
                 <nav aria-label="breadcrumb">
                   <ol className="flex flex-wrap items-center gap-1.5 break-words text-sm text-[var(--ink-4)] sm:gap-2.5">
@@ -203,9 +203,9 @@ export function AboutContent() {
                 </nav>
               </div>
 
-              <div className="docs-prose w-[85vw] pt-2 sm:mx-auto sm:w-full !min-w-full !max-w-[500px]">
-                <h1 id="introduction" className="scroll-mt-20 text-3xl -mt-2">About BrawlLens</h1>
-                <p className="-mt-4 text-[16.5px] text-[var(--ink-3)]">
+              <div className="docs-prose w-full pt-2 sm:mx-auto sm:w-full !min-w-full !max-w-[640px]">
+                <h1 id="introduction" className="scroll-mt-20 -mt-2">About BrawlLens</h1>
+                <p className="-mt-4 text-[21px] leading-[1.35] tracking-[-0.016em] text-[var(--ink-3)]">
                   Battle data, leaderboards, and brawler insight for players who want a precise read on what is performing right now.
                 </p>
 

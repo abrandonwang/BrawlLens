@@ -5,7 +5,6 @@ import { useSearchParams } from "next/navigation"
 import { Search } from "lucide-react"
 import MetaDashboard from "@/components/MetaDashboard"
 import Modal, { ModalCloseButton } from "@/components/Modal"
-import ScrollableFilters from "@/components/ScrollableFilters"
 import { BrawlImage, brawlerIconUrl } from "@/components/BrawlImage"
 import { EmptyState, SkeletonBlock, StateButton } from "@/components/PolishStates"
 import { formatNum, formatBrawlerName, normalizeMapName } from "@/lib/format"
@@ -200,22 +199,22 @@ export default function MapsPageClient() {
 
   return (
     <>
-      <div className="mx-auto w-full max-w-[1080px] px-6 pt-10 pb-20 max-md:px-4 max-md:pt-6 max-md:pb-[60px] max-[480px]:pt-5 max-[480px]:pb-12">
-        <div className="mb-[18px] flex items-end justify-between gap-[18px] max-md:flex-col max-md:items-start">
+      <div className="mx-auto w-full max-w-[1080px] px-6 pt-12 pb-24 max-md:px-4 max-md:pt-8 max-md:pb-[64px] max-[480px]:pt-6 max-[480px]:pb-12">
+        <div className="mb-8 flex items-end justify-between gap-8 max-md:flex-col max-md:items-start">
           <div className="min-w-0">
-            <h1 className="m-0 text-[clamp(28px,4vw,40px)] leading-none font-extrabold tracking-normal text-[var(--ink)]">Maps</h1>
-            <p className="mt-2 mb-0 max-w-[560px] text-[13px] leading-normal text-[var(--ink-3)]">Scan live maps and open matchup data for the brawlers performing best on each layout.</p>
+            <h1 className="m-0 text-[clamp(34px,5vw,56px)] leading-[1.07] font-semibold tracking-[-0.01em] text-[var(--ink)]">Maps</h1>
+            <p className="mt-3 mb-0 max-w-[640px] text-[17px] leading-[1.47] tracking-[-0.022em] text-[var(--ink-3)]">Scan live maps and open matchup data for the brawlers performing best on each layout.</p>
           </div>
           <div className="flex flex-wrap justify-end gap-2 max-md:justify-start">
-            <span className="inline-flex min-h-[30px] items-center whitespace-nowrap rounded-full border border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_84%,transparent)] px-3 text-[11.5px] font-semibold text-[var(--ink-2)]">{loading ? "Loading maps" : `${totalMaps} maps`}</span>
-            <span className="inline-flex min-h-[30px] items-center whitespace-nowrap rounded-full border border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_84%,transparent)] px-3 text-[11.5px] font-semibold text-[var(--ink-2)]">{selectedMode ? getModeName(selectedMode) : "All modes"}</span>
+            <span className="inline-flex min-h-9 items-center whitespace-nowrap rounded-full border border-[var(--line)] bg-[var(--panel)] px-4 text-[14px] font-normal tracking-[-0.016em] text-[var(--ink-2)]">{loading ? "Loading maps" : `${totalMaps} maps`}</span>
+            <span className="inline-flex min-h-9 items-center whitespace-nowrap rounded-full border border-[var(--line)] bg-[var(--panel)] px-4 text-[14px] font-normal tracking-[-0.016em] text-[var(--ink-2)]">{selectedMode ? getModeName(selectedMode) : "All modes"}</span>
           </div>
         </div>
 
-        <div className="page-summary mb-3.5 flex items-center justify-between gap-3.5 p-[18px] max-md:flex-col max-md:items-stretch" style={{ "--summary-gradient": "linear-gradient(135deg, #3B82F6 0%, #7C3AED 52%, #F97316 100%)" } as CSSProperties}>
+        <div className="page-summary mb-6 flex items-center justify-between gap-6 p-8 max-md:flex-col max-md:items-stretch max-sm:p-6" style={{ "--summary-gradient": "linear-gradient(135deg, #3B82F6 0%, #7C3AED 52%, #F97316 100%)" } as CSSProperties}>
           <div className="min-w-0">
-            <p className="mb-1 text-[10.5px] leading-snug tracking-[0.12em] text-white/70 uppercase">Most Popular Map</p>
-            <h2 className="m-0 truncate text-[22px] leading-tight font-bold text-white">{spotlightMap ? spotlightMap.name : "Loading..."}</h2>
+            <p className="mb-1 text-[12px] leading-none tracking-[0.08em] text-white/70 uppercase">Most Popular Map</p>
+            <h2 className="m-0 truncate text-[28px] leading-[1.15] font-semibold tracking-[-0.01em] text-white">{spotlightMap ? spotlightMap.name : "Loading..."}</h2>
           </div>
           <div className="grid min-w-[min(420px,48%)] grid-cols-3 gap-2 max-md:min-w-0">
             <div className="page-summary-stat">
@@ -233,9 +232,9 @@ export default function MapsPageClient() {
           </div>
         </div>
 
-        <div className="relative z-30 mb-8 flex w-full items-center gap-2.5 rounded-[12px] border border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_78%,transparent)] p-2.5 shadow-[0_18px_36px_-34px_rgba(0,0,0,0.7)] backdrop-blur-2xl max-md:flex-col max-md:items-stretch max-md:gap-2">
-          <div className="relative w-[200px] shrink-0 max-md:w-full">
-            <div className="flex h-10 items-center gap-2.5 rounded-[10px] border border-[var(--line)] bg-[var(--panel)] px-3.5 text-[var(--ink)] transition-colors focus-within:border-[var(--line-2)]">
+        <div className="relative z-30 mb-8 grid grid-cols-[minmax(240px,320px)_minmax(0,1fr)] gap-x-4 gap-y-3 rounded-[18px] border border-[var(--line)] bg-[var(--panel)] p-4 max-md:grid-cols-1">
+          <div className="relative max-md:w-full">
+            <div className="flex h-11 items-center gap-2 rounded-full border border-[var(--line)] bg-[var(--panel)] px-4 text-[var(--ink)] transition-colors focus-within:border-[var(--accent)]">
               <Search size={13} className="shrink-0 text-[var(--ink-4)]" />
               <input
                 ref={searchInputRef}
@@ -243,14 +242,14 @@ export default function MapsPageClient() {
                 onChange={e => { setMapSearch(e.target.value); setSearchOpen(true) }}
                 onFocus={() => setSearchOpen(true)}
                 placeholder="Search maps"
-                className="w-full border-0 bg-transparent font-inherit text-[13px] text-[var(--ink)] outline-none placeholder:text-[var(--ink-4)]"
+                className="w-full border-0 bg-transparent font-inherit text-[17px] tracking-[-0.022em] text-[var(--ink)] outline-none placeholder:text-[var(--ink-4)]"
               />
             </div>
 
             {searchOpen && searchMatches.length > 0 && (
               <div
                 ref={searchDropdownRef}
-                className="absolute top-[calc(100%+6px)] right-0 left-0 z-50 max-h-[280px] overflow-y-auto rounded-xl border border-[var(--line-2)] bg-[var(--panel)] p-1 shadow-[0_18px_40px_-20px_rgba(0,0,0,0.45)]"
+                className="absolute top-[calc(100%+6px)] right-0 left-0 z-50 max-h-[280px] overflow-y-auto rounded-[18px] border border-[var(--line-2)] bg-[var(--panel)] p-1"
               >
                 {searchMatches.slice(0, 12).map(m => {
                   const imageUrl = mapImageLookup.get(m.name) ?? mapImageLookup.get(normalizeMapName(m.name))
@@ -276,16 +275,30 @@ export default function MapsPageClient() {
             )}
           </div>
 
-          <ScrollableFilters
-            ariaLabel="Filter by mode"
-            value={selectedMode}
-            onChange={setSelectedMode}
-            cycleLabel={selectedMode ? getModeName(selectedMode) : "All Modes"}
-            options={[
-              { key: "all", value: null, label: "All Modes" },
-              ...modes.map(m => ({ key: m.mode, value: m.mode as string | null, label: getModeName(m.mode) })),
-            ]}
-          />
+          <div className="col-span-2 row-start-2 space-y-2 max-md:col-span-1 max-md:row-auto">
+            <div className="grid grid-cols-[46px_minmax(0,1fr)] items-center gap-2 max-sm:grid-cols-1">
+              <span className="text-[12px] font-normal tracking-[-0.01em] text-[var(--ink-4)]">Mode</span>
+              <div className="flex min-w-0 flex-wrap gap-1">
+                <button
+                  type="button"
+                  onClick={() => setSelectedMode(null)}
+                  className={`rounded-full border px-3 py-1.5 text-[14px] font-normal tracking-[-0.016em] transition ${selectedMode === null ? "border-[var(--accent)] bg-[var(--accent)] text-white" : "border-[var(--line)] bg-transparent text-[var(--ink-3)] hover:text-[var(--ink)]"}`}
+                >
+                  All
+                </button>
+                {modes.map(mode => (
+                  <button
+                    type="button"
+                    key={mode.mode}
+                    onClick={() => setSelectedMode(current => current === mode.mode ? null : mode.mode)}
+                    className={`rounded-full border px-3 py-1.5 text-[14px] font-normal tracking-[-0.016em] transition ${selectedMode === mode.mode ? "border-[var(--accent)] bg-[var(--accent)] text-white" : "border-[var(--line)] bg-transparent text-[var(--ink-3)] hover:text-[var(--ink)]"}`}
+                  >
+                    {getModeName(mode.mode)}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
 
         <MetaDashboard

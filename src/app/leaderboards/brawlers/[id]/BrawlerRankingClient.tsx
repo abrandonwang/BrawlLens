@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { ArrowLeft, Trophy, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react"
+import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react"
 
 interface Player {
   rank: number
@@ -70,8 +70,7 @@ export default function BrawlerRankingClient({ data, brawlerName }: { data: Play
               {player.club_name ?? "—"}
             </span>
 
-            <div className="leaderboard-metric flex items-center gap-1.5 justify-end">
-              <Trophy size={12} className="text-red-500/50 dark:text-[color-mix(in_srgb,var(--accent)_72%,transparent)] shrink-0" />
+            <div className="leaderboard-metric flex items-center justify-end">
               <span className="text-base font-bold text-red-500/80 dark:text-[color-mix(in_srgb,var(--accent)_82%,white)] tabular-nums">
                 {player.trophies.toLocaleString()}
               </span>

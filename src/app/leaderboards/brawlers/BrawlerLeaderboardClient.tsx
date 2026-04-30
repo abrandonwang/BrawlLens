@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Search, Trophy, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react"
+import { Search, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { BrawlImage, brawlerIconUrl } from "@/components/BrawlImage"
@@ -92,25 +92,25 @@ export default function BrawlerLeaderboardClient({
   }, [])
 
   return (
-    <div className="mx-auto w-full max-w-[1080px] px-6 pt-9 pb-20 max-md:px-4 max-md:pt-6 max-md:pb-[60px] max-[480px]:pt-5 max-[480px]:pb-12">
-      <div className="mb-[18px] flex items-end justify-between gap-[18px] max-md:flex-col max-md:items-start">
+    <div className="mx-auto w-full max-w-[1080px] px-6 pt-12 pb-24 max-md:px-4 max-md:pt-8 max-md:pb-[64px] max-[480px]:pt-6 max-[480px]:pb-12">
+      <div className="mb-8 flex items-end justify-between gap-8 max-md:flex-col max-md:items-start">
         <div className="min-w-0">
-          <h1 className="m-0 text-[clamp(28px,4vw,40px)] leading-none font-extrabold tracking-normal text-[var(--ink)]">Brawler Leaderboards</h1>
-          <p className="mt-2 mb-0 max-w-[560px] text-[13px] leading-normal text-[var(--ink-3)]">Pick a brawler to see the highest-ranked players using that brawler worldwide.</p>
+          <h1 className="m-0 text-[clamp(34px,5vw,56px)] leading-[1.07] font-semibold tracking-[-0.01em] text-[var(--ink)]">Brawler Leaderboards</h1>
+          <p className="mt-3 mb-0 max-w-[640px] text-[17px] leading-[1.47] tracking-[-0.022em] text-[var(--ink-3)]">Pick a brawler to see the highest-ranked players using that brawler worldwide.</p>
         </div>
         <div className="flex flex-wrap justify-end gap-2 max-md:justify-start">
-          <span className="inline-flex min-h-[30px] items-center whitespace-nowrap rounded-full border border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_84%,transparent)] px-3 text-[11.5px] font-semibold text-[var(--ink-2)]">{activeBrawler?.name ?? "Select brawler"}</span>
-          <span className="inline-flex min-h-[30px] items-center whitespace-nowrap rounded-full border border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_84%,transparent)] px-3 text-[11.5px] font-semibold text-[var(--ink-2)]">{data.length.toLocaleString()} players</span>
+          <span className="inline-flex min-h-9 items-center whitespace-nowrap rounded-full border border-[var(--line)] bg-[var(--panel)] px-4 text-[14px] font-normal tracking-[-0.016em] text-[var(--ink-2)]">{activeBrawler?.name ?? "Select brawler"}</span>
+          <span className="inline-flex min-h-9 items-center whitespace-nowrap rounded-full border border-[var(--line)] bg-[var(--panel)] px-4 text-[14px] font-normal tracking-[-0.016em] text-[var(--ink-2)]">{data.length.toLocaleString()} players</span>
         </div>
       </div>
 
-      <div className="relative z-30 mb-7 flex items-center justify-between gap-3 rounded-[12px] border border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_78%,transparent)] p-2.5 shadow-[0_18px_36px_-34px_rgba(0,0,0,0.7)] backdrop-blur-2xl max-md:flex-col max-md:items-stretch">
+      <div className="relative z-30 mb-8 flex items-center justify-between gap-3 rounded-[18px] border border-[var(--line)] bg-[var(--panel)] p-4 max-md:flex-col max-md:items-stretch">
         <div className="inline-flex gap-0.5 overflow-x-auto rounded-full border border-[var(--line)] bg-[var(--panel)] p-[3px] [scrollbar-width:none] max-md:w-full [&::-webkit-scrollbar]:hidden">
           {CATEGORIES.map(c => (
             <Link
               key={c.href}
               href={c.href}
-              className={`shrink-0 rounded-full px-3.5 py-[5px] text-[11.5px] font-medium no-underline transition-all max-md:flex-1 max-md:text-center ${c.href === "/leaderboards/brawlers" ? "bl-rainbow-border bg-[var(--panel-2)] text-[var(--ink)]" : "text-[var(--ink-3)] hover:bg-[color-mix(in_srgb,var(--panel-2)_70%,transparent)] hover:text-[var(--ink)]"}`}
+              className={`shrink-0 rounded-full px-4 py-2 text-[14px] font-normal tracking-[-0.016em] no-underline transition-all max-md:flex-1 max-md:text-center ${c.href === "/leaderboards/brawlers" ? "bg-[var(--accent)] text-white" : "text-[var(--ink-3)] hover:bg-[var(--panel-2)] hover:text-[var(--ink)]"}`}
             >
               {c.label}
             </Link>
@@ -118,7 +118,7 @@ export default function BrawlerLeaderboardClient({
         </div>
         <div className="flex items-center gap-3 max-md:w-full max-md:flex-col max-md:items-stretch">
           <div className="relative w-60 shrink-0 max-md:w-full">
-            <div className="flex h-10 w-full items-center gap-2.5 rounded-[10px] border border-[var(--line)] bg-[var(--panel)] px-3.5 text-[var(--ink)] transition-colors focus-within:border-[var(--line-2)]">
+            <div className="flex h-11 w-full items-center gap-2.5 rounded-full border border-[var(--line)] bg-[var(--panel)] px-4 text-[var(--ink)] transition-colors focus-within:border-[var(--accent)]">
               <Search size={13} className="shrink-0 text-[var(--ink-4)]" />
               <input
                 ref={inputRef}
@@ -126,7 +126,7 @@ export default function BrawlerLeaderboardClient({
                 onChange={e => { setSearch(e.target.value); setOpen(true) }}
                 onFocus={() => setOpen(true)}
                 placeholder="Search brawler…"
-                className="w-full border-0 bg-transparent text-[13px] text-[var(--ink)] outline-none placeholder:text-[var(--ink-4)]"
+                className="w-full border-0 bg-transparent text-[17px] tracking-[-0.022em] text-[var(--ink)] outline-none placeholder:text-[var(--ink-4)]"
               />
               {activeBrawler && (
                 <BrawlImage
@@ -143,7 +143,7 @@ export default function BrawlerLeaderboardClient({
             {open && filtered.length > 0 && (
               <div
                 ref={dropdownRef}
-                className="absolute top-[calc(100%+6px)] right-0 left-0 z-[80] max-h-[280px] overflow-y-auto rounded-xl border border-[var(--line-2)] bg-[var(--panel)] shadow-[0_18px_40px_-20px_rgba(0,0,0,0.45)]"
+                className="absolute top-[calc(100%+6px)] right-0 left-0 z-[80] max-h-[280px] overflow-y-auto rounded-[18px] border border-[var(--line-2)] bg-[var(--panel)]"
               >
                 {filtered.map(b => (
                   <button
@@ -179,7 +179,7 @@ export default function BrawlerLeaderboardClient({
         />
       ) : (
         <>
-          <div className="leaderboard-summary relative mb-3.5 flex items-stretch justify-between gap-3.5 overflow-hidden border border-[var(--line)] p-[18px] shadow-[inset_0_1px_0_color-mix(in_srgb,var(--ink)_7%,transparent),0_20px_42px_-34px_rgba(0,0,0,0.55)] max-md:flex-col" style={{ background: "linear-gradient(135deg, #EC4899 0%, #14B8A6 100%)" }}>
+          <div className="leaderboard-summary relative mb-6 flex items-stretch justify-between gap-6 overflow-hidden border border-[var(--line)] p-8 max-md:flex-col max-sm:p-6" style={{ background: "linear-gradient(135deg, #EC4899 0%, #14B8A6 100%)" }}>
             <div className="relative z-10 flex min-w-0 items-center gap-3">
               {activeBrawler && (
                 <BrawlImage
@@ -192,10 +192,10 @@ export default function BrawlerLeaderboardClient({
                 />
               )}
               <div className="min-w-0">
-                <p className="mb-1 text-[10.5px] leading-snug tracking-[0.12em] text-white/70 uppercase">
+                <p className="mb-1 text-[12px] leading-none tracking-[0.08em] text-white/70 uppercase">
                   Brawler Rankings
                 </p>
-                <h2 className="m-0 truncate text-[22px] leading-tight font-bold text-white">{activeBrawler?.name ?? "Select a brawler"}</h2>
+                <h2 className="m-0 truncate text-[28px] leading-[1.15] font-semibold tracking-[-0.01em] text-white">{activeBrawler?.name ?? "Select a brawler"}</h2>
               </div>
             </div>
             <div className="relative z-10 grid min-w-[min(420px,48%)] grid-cols-3 gap-2 max-md:min-w-0">
@@ -223,8 +223,7 @@ export default function BrawlerLeaderboardClient({
                     <div className="truncate text-[13px] font-bold text-[var(--ink)]">{player.player_name}</div>
                     <div className="font-mono text-[10.5px] leading-snug tracking-[0.01em] text-[var(--ink-3)]">{player.player_tag}</div>
                   </div>
-                  <div className="flex items-center justify-end gap-1.5 whitespace-nowrap font-mono text-xs font-bold text-[var(--ink)]">
-                    <Trophy size={12} className="top-rank-trophy" />
+                  <div className="flex items-center justify-end whitespace-nowrap font-mono text-xs font-bold text-[var(--ink)]">
                     {formatNum(player.trophies)}
                   </div>
                 </Link>
@@ -232,7 +231,7 @@ export default function BrawlerLeaderboardClient({
             </div>
           )}
 
-          <div className="leaderboard-table overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--panel)] shadow-[var(--shadow-lift)]">
+          <div className="leaderboard-table overflow-hidden rounded-[18px] border border-[var(--line)] bg-[var(--panel)]">
             <div className="leaderboard-header grid grid-cols-[48px_1fr_180px_100px_24px] gap-3 border-b border-[var(--line)] bg-[var(--panel-2)] px-5 py-2.5 max-md:grid-cols-[40px_1fr_90px_20px] max-md:px-3.5">
               <span className="text-[10.5px] leading-snug tracking-[0.01em] text-[var(--ink-3)]">#</span>
               <span className="text-[10.5px] leading-snug tracking-[0.01em] text-[var(--ink-3)]">Player</span>
@@ -261,8 +260,7 @@ export default function BrawlerLeaderboardClient({
                   {p.club_name ?? "—"}
                 </span>
 
-                <div className="leaderboard-metric flex items-center justify-end gap-1.5">
-                  <Trophy size={11} className="text-[var(--accent)] opacity-70" />
+                <div className="leaderboard-metric flex items-center justify-end">
                   <span className="font-mono text-[13px] font-medium text-[var(--ink)]">
                     {formatNum(p.trophies)}
                   </span>
@@ -289,7 +287,7 @@ export default function BrawlerLeaderboardClient({
                 <button
                   key={idx}
                   onClick={() => setPage(idx)}
-                  className={`grid size-[30px] cursor-pointer place-items-center rounded-lg text-xs font-semibold ${idx === page ? "border border-transparent bg-[var(--accent)] text-[#0A0A0B]" : "border border-[var(--line)] bg-transparent text-[var(--ink-3)]"}`}
+                  className={`grid size-[30px] cursor-pointer place-items-center rounded-lg text-xs font-semibold ${idx === page ? "border border-transparent bg-[var(--accent)] text-[#fcfbf8]" : "border border-[var(--line)] bg-transparent text-[var(--ink-3)]"}`}
                 >
                   {idx + 1}
                 </button>

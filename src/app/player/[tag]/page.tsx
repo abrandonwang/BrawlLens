@@ -2,9 +2,9 @@ import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { Player, PlayerBrawler } from "@/types/brawler"
 import Link from "next/link"
-import { ArrowLeft, Search, Trophy } from "lucide-react"
+import { ArrowLeft, Trophy } from "lucide-react"
 import { BrawlImage, brawlerIconUrl } from "@/components/BrawlImage"
-import { playerApiUrl } from "@/lib/env"
+import { fetchPlayerResponse } from "@/lib/playerLookup"
 import { sanitizePlayerTag } from "@/lib/validation"
 
 export const revalidate = 60
@@ -17,7 +17,7 @@ export async function generateMetadata(
   if (!tag) return { title: "Player — BrawlLens" }
 
   try {
-    const res = await fetch(`${playerApiUrl()}/player/${tag}`, { next: { revalidate: 300 } })
+    const res = await fetchPlayerResponse(tag, { next: { revalidate: 300 } })
     if (!res.ok) throw new Error()
     const data = (await res.json()) as Player
     const name = data?.name ?? `#${tag}`
@@ -62,7 +62,7 @@ export default async function PlayerProfile({ params }: { params: Promise<{ tag:
 
   let player: Player
   try {
-    const res = await fetch(`${playerApiUrl()}/player/${tag}`, { next: { revalidate: 60 } })
+    const res = await fetchPlayerResponse(tag, { next: { revalidate: 60 } })
     if (res.status === 404) notFound()
     if (!res.ok) throw new Error()
     player = await res.json()
@@ -77,7 +77,6 @@ export default async function PlayerProfile({ params }: { params: Promise<{ tag:
         <p className="bl-mono mt-3 text-[11px] text-[var(--ink-4)]">#{tag}</p>
         <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
           <Link href={`/player/${tag}`} className="bl-state-action" prefetch={false}>
-            <Search size={12} />
             Try again
           </Link>
           <Link href="/leaderboards/players" className="bl-state-action">Browse leaderboard</Link>
@@ -106,19 +105,19 @@ export default async function PlayerProfile({ params }: { params: Promise<{ tag:
         Leaderboard
       </Link>
       <div style={{ marginBottom: 28 }}>
-        <div className="bl-mono bl-caption" style={{ marginBottom: 6, color: "var(--ink-4)" }}>#{tag}</div>
-        <div style={{ fontSize: 28, fontWeight: 650, letterSpacing: "-0.03em", color: "var(--ink)", lineHeight: 1.1, marginBottom: 6 }}>
+        <div className="bl-mono bl-caption" style={{ marginBottom: 8, color: "var(--ink-4)" }}>#{tag}</div>
+        <div style={{ fontSize: "clamp(40px, 7vw, 56px)", fontWeight: 600, letterSpacing: "-0.01em", color: "var(--ink)", lineHeight: 1.07, marginBottom: 8 }}>
           {player.name}
         </div>
         {club?.name && (
-          <div style={{ fontSize: 12, color: "var(--ink-4)", fontWeight: 500 }}>{club.name}</div>
+          <div style={{ fontSize: 17, lineHeight: 1.47, color: "var(--ink-3)", fontWeight: 400 }}>{club.name}</div>
         )}
       </div>
       <div className="player-stats">
         {stats.map(s => (
           <div key={s.label} style={{ display: "flex", flexDirection: "column", gap: 2 }}>
             <div className="bl-caption" style={{ letterSpacing: "0.08em" }}>{s.label}</div>
-            <div style={{ fontSize: 18, fontWeight: 650, letterSpacing: "-0.03em", color: "var(--ink)" }}>{s.value}</div>
+            <div style={{ fontSize: 21, fontWeight: 600, letterSpacing: "0.011em", color: "var(--ink)" }}>{s.value}</div>
             {s.sub && <div className="bl-caption" style={{ color: "var(--ink-4)" }}>{s.sub}</div>}
           </div>
         ))}

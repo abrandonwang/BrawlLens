@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { playerApiUrl } from "@/lib/env";
+import { fetchPlayerResponse } from "@/lib/playerLookup";
 import { sanitizePlayerTag } from "@/lib/validation";
 
 export async function GET(request: Request) {
@@ -12,7 +12,7 @@ export async function GET(request: Request) {
     }
 
     try {
-        const response = await fetch(`${playerApiUrl()}/player/${tag}`)
+        const response = await fetchPlayerResponse(tag)
         if (!response.ok) {
             return NextResponse.json({ error: "Player not found" }, { status: response.status });
         }

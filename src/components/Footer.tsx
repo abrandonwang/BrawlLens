@@ -7,23 +7,23 @@ export default function Footer() {
   if (pathname === "/" || pathname.startsWith("/chat")) return null
 
   return (
-    <footer className="w-full border-t border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_86%,transparent)] backdrop-blur-xl">
-      <div className="mx-auto flex min-h-20 w-full max-w-[1080px] items-center justify-between gap-6 px-6 py-4 max-md:px-4 max-sm:flex-col max-sm:items-start max-sm:gap-3 max-[360px]:px-3">
-        <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1">
-          <p className="m-0 text-[13px] font-semibold text-[var(--ink)]">BrawlLens</p>
-          <p className="m-0 text-[11.5px] leading-snug text-[var(--ink-3)]">
+    <footer className="w-full px-6 pb-8 max-md:px-4 max-[360px]:px-3">
+      <div className="mx-auto flex min-h-28 w-full max-w-[1200px] items-center justify-between gap-8 rounded-2xl border border-[var(--line)] bg-[var(--panel)] px-6 py-8 max-sm:flex-col max-sm:items-start max-sm:gap-4">
+        <div className="flex min-w-0 flex-col gap-1.5">
+          <p className="m-0 text-[14px] leading-tight font-semibold tracking-normal text-[var(--ink)]">BrawlLens</p>
+          <p className="m-0 max-w-[420px] text-[12px] leading-[1.45] tracking-[-0.01em] text-[var(--ink-3)]">
             Battle data, leaderboards, and brawler insight.
           </p>
         </div>
 
-        <nav className="flex flex-wrap items-center justify-end gap-1.5 max-sm:justify-start">
+        <nav className="flex flex-wrap items-center justify-end gap-2 text-[12px] leading-none tracking-normal max-sm:justify-start">
           <Link
             href="/about"
-            className="rounded-full px-3 py-1.5 text-[11.5px] font-medium text-[var(--ink-3)] no-underline transition-colors hover:bg-[var(--hover-bg)] hover:text-[var(--ink)]"
+            className="rounded-md border border-[var(--line-2)] px-3 py-2 font-normal text-[var(--ink)] no-underline transition-colors hover:bg-[var(--hover-bg)]"
           >
             About
           </Link>
-          <span className="px-1 text-[11px] text-[var(--ink-4)]">© 2026</span>
+          <span className="px-1 text-[var(--ink-4)]">© 2026</span>
         </nav>
       </div>
     </footer>

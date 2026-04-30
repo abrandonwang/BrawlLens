@@ -153,27 +153,28 @@ function ChatPage() {
   }
 
   return (
-    <main className="flex flex-1 min-h-0 flex-col" style={{ background: "var(--bg)" }}>
+    <main className="flex min-h-0 flex-1 flex-col" style={{ background: "var(--bg)" }}>
 
       <div className="flex-1 min-h-0 overflow-y-auto">
-        <div className="max-w-2xl mx-auto px-4 pt-8 pb-8 space-y-6">
-          <div style={{ fontSize: 14, lineHeight: 1.75, color: "var(--ink-2)" }}>
+        <div className="mx-auto max-w-3xl space-y-8 px-5 pt-12 pb-10">
+          <div style={{ fontSize: 28, lineHeight: 1.19, letterSpacing: "-0.01em", fontWeight: 600, color: "var(--ink)" }}>
             What can I help you with today?
           </div>
 
           {messages.map((msg, i) => (
             <div key={i} style={{ display: "flex", gap: 12, alignItems: "flex-start", justifyContent: msg.role === "user" ? "flex-end" : "flex-start" }}>
               <div style={{
-                fontSize: 14,
-                lineHeight: 1.75,
+                fontSize: 17,
+                lineHeight: 1.47,
+                letterSpacing: "-0.022em",
                 maxWidth: msg.role === "user" ? "80%" : "85%",
                 paddingTop: msg.role === "user" ? undefined : 2,
                 ...(msg.role === "user" ? {
-                  background: "var(--panel-2)",
+                  background: "var(--panel)",
                   border: "1px solid var(--line)",
                   color: "var(--ink)",
                   borderRadius: 18,
-                  padding: "10px 16px",
+                  padding: "11px 18px",
                 } : {
                   color: "var(--ink-2)",
                 }),
@@ -198,9 +199,9 @@ function ChatPage() {
         </div>
       </div>
 
-      <div style={{ flexShrink: 0, borderTop: "1px solid var(--line)", background: "color-mix(in srgb, var(--panel) 90%, transparent)", backdropFilter: "blur(12px)", padding: "12px 16px" }}>
-        <div className="max-w-2xl mx-auto">
-          <div style={{ display: "flex", alignItems: "flex-end", gap: 8, background: "var(--panel)", border: "1px solid var(--line-2)", borderRadius: 16, padding: "10px 10px 10px 16px", boxShadow: "0 8px 24px -8px rgba(0,0,0,0.2)", transition: "border-color 0.16s" }}>
+      <div style={{ flexShrink: 0, borderTop: "1px solid var(--line)", background: "color-mix(in srgb, var(--panel-2) 84%, transparent)", backdropFilter: "blur(18px)", padding: "14px 16px" }}>
+        <div className="mx-auto max-w-3xl">
+          <div style={{ display: "flex", alignItems: "flex-end", gap: 10, background: "var(--panel)", border: "1px solid var(--line-2)", borderRadius: 999, padding: "10px 10px 10px 20px", transition: "border-color 0.16s" }}>
             <textarea
               ref={textareaRef}
               rows={1}
@@ -235,11 +236,11 @@ function ChatPage() {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                borderRadius: 10,
+                borderRadius: 999,
                 border: "none",
                 flexShrink: 0,
                 background: !userInput.trim() || streaming ? "var(--line)" : "var(--accent)",
-                color: !userInput.trim() || streaming ? "var(--ink-4)" : "#0A0A0B",
+                color: !userInput.trim() || streaming ? "var(--ink-4)" : "#ffffff",
                 cursor: !userInput.trim() || streaming ? "default" : "pointer",
                 transition: "all 0.15s",
               }}

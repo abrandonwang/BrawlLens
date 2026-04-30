@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef, useCallback, type KeyboardEvent as ReactKeyboardEvent } from "react";
-import { Search, X } from "lucide-react";
+import { ChevronsUpDown, Menu, Search, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
@@ -269,95 +269,36 @@ export default function NavBar() {
 
   return (
     <>
-      <nav style={{
-        position: "fixed",
-        top: 20,
-        left: "50%",
-        transform: "translateX(-50%)",
-        zIndex: 100,
-        display: "flex",
-        alignItems: "center",
-        gap: 4,
-        padding: 6,
-        background: "color-mix(in srgb, var(--panel) 80%, transparent)",
-        backdropFilter: "blur(20px) saturate(180%)",
-        WebkitBackdropFilter: "blur(20px) saturate(180%)",
-        border: "1px solid var(--line)",
-        borderRadius: 999,
-        boxShadow: "var(--shadow-lift)",
-        whiteSpace: "nowrap",
-      }}>
-        <Link href="/about" style={{
-          display: "flex", alignItems: "center", gap: 8,
-          padding: "6px 14px 6px 10px",
-          borderRight: "1px solid var(--line)",
-          marginRight: 4,
-          textDecoration: "none",
-        }}>
-          <div className="bl-nav-logo">
-            <div style={{ position: "absolute", inset: 4, background: "var(--panel)", borderRadius: 2 }} />
-          </div>
-          <span style={{ fontWeight: 600, fontSize: 13, letterSpacing: "-0.02em", color: "var(--ink)" }}>
-            BrawlLens
-          </span>
+      <nav className="lovable-nav">
+        <Link href="/" className="lovable-nav-brand" aria-label="BrawlLens home">
+          <span className="lovable-brand-mark" />
+          <span>BrawlLens</span>
         </Link>
-        <div className="hidden lg:flex" style={{ alignItems: "center", gap: 0 }}>
+        <div className="lovable-nav-links">
           {navItems.map(item => (
-            <Link key={item.label} href={item.href}
-              className={isActive(item.href) ? "bl-rainbow-border" : ""}
-              style={{
-                padding: "8px 14px", fontSize: 12.5, fontWeight: isActive(item.href) ? 600 : 500,
-                color: isActive(item.href) ? "var(--ink)" : "var(--ink-2)",
-                borderRadius: 999, cursor: "pointer", whiteSpace: "nowrap",
-                textDecoration: "none",
-                background: isActive(item.href) ? "var(--elev)" : "transparent",
-              }}
-            >
+            <Link key={item.label} href={item.href} className={isActive(item.href) ? "is-active" : ""}>
               {item.label}
             </Link>
           ))}
         </div>
-        <div style={{ display: "flex", gap: 4 }} className="nav-right-controls">
-          <button onClick={() => setIsSearchOpen(true)} aria-label="Search"
-            style={{ width: 32, height: 32, display: "grid", placeItems: "center", borderRadius: 999, color: "var(--ink-3)", background: "transparent", border: "none", cursor: "pointer" }}
-          >
-            <Search size={14} />
+        <div className="lovable-nav-actions">
+          <button onClick={() => setIsSearchOpen(true)} aria-label="Search">
+            <Search size={16} strokeWidth={1.8} />
           </button>
-
           {mounted && (
-            <button onClick={() => setTheme(theme === "dark" ? "light" : "dark")} aria-label="Toggle theme"
-              style={{ width: 32, height: 32, display: "grid", placeItems: "center", borderRadius: 999, color: "var(--ink-3)", background: "transparent", border: "none", cursor: "pointer" }}
-            >
-              <div style={{
-                width: 12, height: 12,
-                border: "1.75px solid var(--ink-3)",
-                borderRadius: theme === "dark" ? 2 : 999,
-                background: "transparent",
-                transition: "border-radius 0.2s ease",
-              }} />
+            <button onClick={() => setTheme(theme === "dark" ? "light" : "dark")} aria-label="Toggle theme">
+              <ChevronsUpDown size={16} strokeWidth={1.8} />
             </button>
           )}
-          <div className="lg:hidden">
-            <button onClick={toggleMenu} aria-label="Menu"
-              style={{ width: 32, height: 32, display: "grid", placeItems: "center", borderRadius: 999, color: "var(--ink-3)", background: "transparent", border: "none", cursor: "pointer" }}
-            >
-              {isMenuOpen ? (
-                <X size={15} />
-              ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: 4.5, width: 15 }}>
-                  <span style={{ display: "block", height: 1.5, borderRadius: 1, background: "var(--ink-3)" }} />
-                  <span style={{ display: "block", height: 1.5, borderRadius: 1, background: "var(--ink-3)", width: "70%" }} />
-                </div>
-              )}
-            </button>
-          </div>
+          <button className="lovable-menu-button" onClick={toggleMenu} aria-label="Menu" aria-expanded={isMenuOpen}>
+            {isMenuOpen ? <X size={15} strokeWidth={1.9} /> : <Menu size={17} strokeWidth={1.8} />}
+          </button>
         </div>
       </nav>
-
-      <div style={{ height: 80 }} />
+      <div style={{ height: 64 }} />
       {menuVisible && (
         <div
-          className="lg:hidden"
+          className="nav-menu-overlay"
           style={{
             position: "fixed", inset: 0, zIndex: 90,
             background: "var(--bg)",
@@ -412,7 +353,7 @@ export default function NavBar() {
                 fontFamily: "inherit", fontWeight: 500,
               }}
             >
-              <Search size={14} />
+              <Search size={14} strokeWidth={1.8} />
               Search or look up a player…
             </button>
           </div>
