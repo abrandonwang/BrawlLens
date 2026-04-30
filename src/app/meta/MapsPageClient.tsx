@@ -7,6 +7,9 @@ import { Search, ChevronLeft, ChevronRight, X } from "lucide-react"
 import MetaDashboard from "@/components/MetaDashboard"
 import { BrawlImage, brawlerIconUrl } from "@/components/BrawlImage"
 import { EmptyState, SkeletonBlock, StateButton } from "@/components/PolishStates"
+import { formatNum, formatBrawlerName, normalizeMapName } from "@/lib/format"
+import { MODE_CONFIG, getModeName } from "@/lib/modes"
+import { getTierInfo, getBarWidth } from "@/lib/tiers"
 
 interface ModeInfo {
   mode: string
@@ -27,64 +30,6 @@ interface BrawlerStat {
   picks: number
   wins: number
   winRate: number
-}
-
-const MODE_CONFIG: Record<string, { label: string; color: string }> = {
-  brawlBall:    { label: "Brawl Ball",    color: "#8CA0EB" },
-  gemGrab:      { label: "Gem Grab",      color: "#9B59B6" },
-  knockout:     { label: "Knockout",      color: "#F9C74F" },
-  bounty:       { label: "Bounty",        color: "#2ECC71" },
-  heist:        { label: "Heist",         color: "#E74C3C" },
-  hotZone:      { label: "Hot Zone",      color: "#E67E22" },
-  wipeout:      { label: "Wipeout",       color: "#1ABC9C" },
-  duels:        { label: "Duels",         color: "#E84393" },
-  siege:        { label: "Siege",         color: "#636E72" },
-  soloShowdown: { label: "Showdown",      color: "#2ECC71" },
-  duoShowdown:  { label: "Duo SD",        color: "#00B894" },
-  trioShowdown: { label: "Trio SD",       color: "#55E6C1" },
-  payload:      { label: "Payload",       color: "#6C5CE7" },
-  basketBrawl:  { label: "Basket Brawl", color: "#E17055" },
-  volleyBrawl:  { label: "Volley Brawl", color: "#FDCB6E" },
-  botDrop:      { label: "Bot Drop",      color: "#636E72" },
-  hunters:      { label: "Hunters",       color: "#D63031" },
-  trophyEscape: { label: "Trophy Escape", color: "#00CEC9" },
-  paintBrawl:   { label: "Paint Brawl",   color: "#A29BFE" },
-  wipeout5V5:   { label: "5v5 Wipeout",   color: "#1ABC9C" },
-}
-
-function getModeName(mode: string): string {
-  return MODE_CONFIG[mode]?.label || mode.charAt(0).toUpperCase() + mode.slice(1).replace(/([A-Z])/g, " $1")
-}
-
-function getTierInfo(winRate: number) {
-  if (winRate >= 58) return { label: "S", color: "#F87171", bg: "rgba(248,113,113,0.08)", border: "rgba(248,113,113,0.2)" }
-  if (winRate >= 54) return { label: "A", color: "#FB923C", bg: "rgba(251,146,60,0.08)", border: "rgba(251,146,60,0.2)" }
-  if (winRate >= 50) return { label: "B", color: "#FACC15", bg: "rgba(250,204,21,0.08)", border: "rgba(250,204,21,0.2)" }
-  if (winRate >= 46) return { label: "C", color: "#60A5FA", bg: "rgba(96,165,250,0.08)", border: "rgba(96,165,250,0.2)" }
-  return { label: "D", color: "var(--ink-4)", bg: "var(--panel-2)", border: "var(--line)" }
-}
-
-function getBarWidth(winRate: number): number {
-  return Math.max(0, Math.min(100, ((winRate - 30) / 40) * 100))
-}
-
-function formatBrawlerName(name: string) {
-  return name.split(" ").map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(" ")
-}
-
-function formatNum(n: number) {
-  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + "M"
-  if (n >= 1_000) return (n / 1_000).toFixed(1) + "K"
-  return n.toString()
-}
-
-function normalizeMapName(name: string) {
-  return name
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/&/g, "and")
-    .replace(/[^a-z0-9]+/g, "")
 }
 
 type SortKey = "winRate" | "wins" | "picks"
@@ -402,7 +347,7 @@ export default function MapsPageClient() {
                 <ChevronLeft size={14} />
               </button>
             )}
-            <div className="flex w-auto max-w-full flex-nowrap justify-end overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" ref={filtersRef}>
+            <div className="flex w-auto max-w-full flex-nowrap justify-start overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" ref={filtersRef}>
               <div className="inline-flex shrink-0 gap-0.5 rounded-full border border-[var(--line)] bg-[var(--panel)] p-[3px]">
                 <button
                   onClick={() => setSelectedMode(null)}

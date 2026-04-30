@@ -1,10 +1,12 @@
 import { notFound } from "next/navigation"
 import { Player, PlayerBrawler } from "@/types/brawler"
 import Link from "next/link"
-import { ArrowLeft, Trophy } from "lucide-react"
+import { ArrowLeft, Search, Trophy } from "lucide-react"
 import { BrawlImage, brawlerIconUrl } from "@/components/BrawlImage"
+import { playerApiUrl } from "@/lib/env"
+import { sanitizePlayerTag } from "@/lib/validation"
 
-const PLAYER_API_URL = process.env.PLAYER_API_URL || "http://165.227.206.51:3000"
+export const revalidate = 60
 
 function rankColor(rank: number) {
   if (rank >= 30) return "#14B8D6"
@@ -26,18 +28,32 @@ function get3v3Wins(player: Player) {
 }
 
 export default async function PlayerProfile({ params }: { params: Promise<{ tag: string }> }) {
-  const { tag } = await params
+  const { tag: rawTag } = await params
+  const tag = sanitizePlayerTag(decodeURIComponent(rawTag))
+  if (!tag) notFound()
 
   let player: Player
   try {
-    const res = await fetch(`${PLAYER_API_URL}/player/${tag}`, { cache: "no-store" })
+    const res = await fetch(`${playerApiUrl()}/player/${tag}`, { next: { revalidate: 60 } })
     if (res.status === 404) notFound()
     if (!res.ok) throw new Error()
     player = await res.json()
   } catch {
     return (
-      <main style={{ maxWidth: 480, margin: "0 auto", padding: "60px 24px" }}>
-        <p className="bl-caption" style={{ color: "var(--ink-4)" }}>Could not load player. Try again later.</p>
+      <main className="mx-auto flex w-full max-w-[520px] flex-col items-center px-6 py-20 text-center">
+        <div className="bl-mono bl-caption mb-3 text-[var(--ink-4)]">CONNECTION ERROR</div>
+        <h1 className="m-0 text-[22px] font-semibold tracking-tight text-[var(--ink)]">Could not load player</h1>
+        <p className="mt-2 max-w-[400px] text-[13px] leading-relaxed text-[var(--ink-3)]">
+          The player API did not respond. Try again in a moment, or search for a different tag.
+        </p>
+        <p className="bl-mono mt-3 text-[11px] text-[var(--ink-4)]">#{tag}</p>
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+          <Link href={`/player/${tag}`} className="bl-state-action" prefetch={false}>
+            <Search size={12} />
+            Try again
+          </Link>
+          <Link href="/leaderboards/players" className="bl-state-action">Browse leaderboard</Link>
+        </div>
       </main>
     )
   }

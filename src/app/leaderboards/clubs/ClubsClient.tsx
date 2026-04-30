@@ -5,6 +5,7 @@ import { Search, Trophy, Users, ChevronLeft, ChevronRight } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { EmptyState, StateButton, StateLink } from "@/components/PolishStates"
+import { formatNum, formatRelativeTime, getPageItems } from "@/lib/format"
 
 interface Club {
   rank: number
@@ -29,24 +30,6 @@ const CATEGORIES = [
   { label: "Brawlers", href: "/leaderboards/brawlers" },
 ]
 
-function getPageItems(current: number, total: number): (number | "...")[] {
-  const pages: (number | "...")[] = []
-  for (let i = 0; i < total; i++) {
-    if (i === 0 || i === total - 1 || Math.abs(i - current) <= 1) {
-      pages.push(i)
-    } else if (pages[pages.length - 1] !== "...") {
-      pages.push("...")
-    }
-  }
-  return pages
-}
-
-function formatNum(n: number) {
-  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + "M"
-  if (n >= 1_000) return (n / 1_000).toFixed(1) + "K"
-  return n.toString()
-}
-
 export default function ClubsClient({ allData }: { allData: RegionData[] }) {
   const pathname = usePathname()
   const [activeRegion, setActiveRegion] = useState<string>("global")
@@ -61,6 +44,11 @@ export default function ClubsClient({ allData }: { allData: RegionData[] }) {
       c.club_name.toLowerCase().includes(search.toLowerCase()) ||
       c.club_tag.toLowerCase().includes(search.toLowerCase())
   )
+  const lastUpdated = (regionData?.clubs ?? []).reduce<string | null>((latest, c) => {
+    if (!c.updated_at) return latest
+    if (!latest || c.updated_at > latest) return c.updated_at
+    return latest
+  }, null)
 
   const page = pageByRegion[activeRegion] ?? 0
   const totalPages = Math.ceil(clubs.length / PAGE_SIZE)
@@ -80,6 +68,15 @@ export default function ClubsClient({ allData }: { allData: RegionData[] }) {
         <div className="flex flex-wrap justify-end gap-2 max-md:justify-start">
           <span className="inline-flex min-h-[30px] items-center whitespace-nowrap rounded-full border border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_84%,transparent)] px-3 text-[11.5px] font-semibold text-[var(--ink-2)]">{regionData?.label ?? activeRegion}</span>
           <span className="inline-flex min-h-[30px] items-center whitespace-nowrap rounded-full border border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_84%,transparent)] px-3 text-[11.5px] font-semibold text-[var(--ink-2)]">{clubs.length.toLocaleString()} clubs</span>
+          {lastUpdated && (
+            <span
+              title={new Date(lastUpdated).toLocaleString()}
+              className="inline-flex min-h-[30px] items-center gap-1.5 whitespace-nowrap rounded-full border border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_84%,transparent)] px-3 text-[11.5px] font-medium text-[var(--ink-3)]"
+            >
+              <span className="size-1.5 rounded-full bg-[#49D47E]" />
+              Updated {formatRelativeTime(lastUpdated)}
+            </span>
+          )}
         </div>
       </div>
 

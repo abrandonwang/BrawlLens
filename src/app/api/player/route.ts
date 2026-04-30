@@ -1,17 +1,18 @@
 import { NextResponse } from "next/server";
-
-const PLAYER_API_URL = process.env.PLAYER_API_URL || "http://165.227.206.51:3000";
+import { playerApiUrl } from "@/lib/env";
+import { sanitizePlayerTag } from "@/lib/validation";
 
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url)
-    const tag = searchParams.get('tag')
+    const rawTag = searchParams.get('tag')
+    const tag = rawTag ? sanitizePlayerTag(rawTag) : null
 
     if (!tag) {
-        return NextResponse.json({ error: "Missing tag" }, { status: 400 });
+        return NextResponse.json({ error: "Invalid tag" }, { status: 400 });
     }
 
     try {
-        const response = await fetch(`${PLAYER_API_URL}/player/${tag}`)
+        const response = await fetch(`${playerApiUrl()}/player/${tag}`)
         if (!response.ok) {
             return NextResponse.json({ error: "Player not found" }, { status: response.status });
         }

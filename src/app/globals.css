@@ -1628,6 +1628,16 @@ body {
   flex: 0 0 auto;
   align-items: center;
   gap: 8px;
+  min-width: 0;
+}
+.bl-map-modal-filters .bl-seg {
+  max-width: 100%;
+  overflow-x: auto;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.bl-map-modal-filters .bl-seg::-webkit-scrollbar {
+  display: none;
 }
 
 @keyframes modalOverlayIn {
@@ -1659,6 +1669,7 @@ body {
   }
   .bl-map-modal-filters {
     justify-content: flex-start;
+    flex-wrap: wrap;
   }
 }
 

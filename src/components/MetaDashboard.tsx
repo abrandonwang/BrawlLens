@@ -3,6 +3,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { BrawlImage } from "@/components/BrawlImage";
 import { EmptyState, MapGridSkeleton, StateButton } from "@/components/PolishStates";
+import { MODE_CONFIG } from "@/lib/modes";
+import { normalizeMapName } from "@/lib/format";
 
 interface MapInfo {
   name: string;
@@ -31,43 +33,11 @@ interface Props {
   onClearFilters?: () => void;
 }
 
-const MODE_CONFIG: Record<string, { label: string; color: string }> = {
-  brawlBall:    { label: "Brawl Ball",    color: "#8CA0EB" },
-  gemGrab:      { label: "Gem Grab",      color: "#9B59B6" },
-  knockout:     { label: "Knockout",      color: "#F9C74F" },
-  bounty:       { label: "Bounty",        color: "#2ECC71" },
-  heist:        { label: "Heist",         color: "#E74C3C" },
-  hotZone:      { label: "Hot Zone",      color: "#E67E22" },
-  wipeout:      { label: "Wipeout",       color: "#1ABC9C" },
-  duels:        { label: "Duels",         color: "#E84393" },
-  siege:        { label: "Siege",         color: "#636E72" },
-  soloShowdown: { label: "Showdown",      color: "#2ECC71" },
-  duoShowdown:  { label: "Duo SD",        color: "#00B894" },
-  trioShowdown: { label: "Trio SD",       color: "#55E6C1" },
-  payload:      { label: "Payload",       color: "#6C5CE7" },
-  basketBrawl:  { label: "Basket Brawl", color: "#E17055" },
-  volleyBrawl:  { label: "Volley Brawl", color: "#FDCB6E" },
-  botDrop:      { label: "Bot Drop",      color: "#636E72" },
-  hunters:      { label: "Hunters",       color: "#D63031" },
-  trophyEscape: { label: "Trophy Escape", color: "#00CEC9" },
-  paintBrawl:   { label: "Paint Brawl",   color: "#A29BFE" },
-  wipeout5V5:   { label: "5v5 Wipeout",   color: "#1ABC9C" },
-};
-
 function getModeForMap(modes: ModeInfo[], mapName: string): string | null {
   for (const m of modes) {
     if (m.maps.some(map => map.name === mapName)) return m.mode;
   }
   return null;
-}
-
-function normalizeMapName(name: string) {
-  return name
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/&/g, "and")
-    .replace(/[^a-z0-9]+/g, "");
 }
 
 function MapPreview({ imageUrl, name, modeColor }: { imageUrl?: string; name: string; mode: string | null; modeColor?: string }) {
@@ -111,6 +81,7 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch,
   const [mapImageLookup, setMapImageLookup] = useState<Map<string, string>>(new Map());
   const [rotationMapNames, setRotationMapNames] = useState<Set<string>>(new Set());
   const [mapPage, setMapPage] = useState(0);
+  const [liveOnly, setLiveOnly] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -155,15 +126,18 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch,
   }, [modes, selectedMode, rotationMapNames, allUniqueMaps]);
 
   const displayedMaps = useMemo(() => {
-    if (!mapSearch) return sortedMaps;
-    return sortedMaps.filter(m => m.name.toLowerCase().includes(mapSearch.toLowerCase()));
-  }, [sortedMaps, mapSearch]);
+    let list = sortedMaps;
+    if (mapSearch) list = list.filter(m => m.name.toLowerCase().includes(mapSearch.toLowerCase()));
+    if (liveOnly) list = list.filter(m => rotationMapNames.has(m.name));
+    return list;
+  }, [sortedMaps, mapSearch, liveOnly, rotationMapNames]);
 
   useEffect(() => { setMapPage(0); }, [displayedMaps]);
 
   const MAP_PAGE_SIZE = 12;
   const mapTotalPages = Math.ceil(displayedMaps.length / MAP_PAGE_SIZE);
   const paginatedMaps = displayedMaps.slice(mapPage * MAP_PAGE_SIZE, (mapPage + 1) * MAP_PAGE_SIZE);
+  const liveCountAll = sortedMaps.filter(map => rotationMapNames.has(map.name)).length;
   const liveCount = displayedMaps.filter(map => rotationMapNames.has(map.name)).length;
 
   if (loading) {
@@ -200,7 +174,16 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch,
           </div>
         </div>
         <div className="flex shrink-0 flex-nowrap items-center justify-end gap-1.5">
-          <span className="inline-flex min-h-[26px] items-center whitespace-nowrap rounded-full border border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_80%,transparent)] px-2.5 text-[10.5px] font-semibold text-[var(--ink-3)] max-[420px]:px-2 max-[420px]:text-[10px]">{liveCount.toLocaleString()} live</span>
+          <button
+            type="button"
+            onClick={() => setLiveOnly(v => !v)}
+            disabled={!liveOnly && liveCountAll === 0}
+            aria-pressed={liveOnly}
+            className={`inline-flex min-h-[26px] cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 text-[10.5px] font-semibold transition-colors max-[420px]:px-2 max-[420px]:text-[10px] disabled:cursor-default disabled:opacity-40 ${liveOnly ? "border-[#49D47E66] bg-[rgba(73,212,126,0.12)] text-[#49D47E]" : "border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_80%,transparent)] text-[var(--ink-3)] hover:text-[var(--ink)]"}`}
+          >
+            <span className={`size-1.5 rounded-full ${liveOnly ? "bg-[#49D47E]" : "bg-[var(--ink-4)]"}`} />
+            {liveOnly ? `${liveCount.toLocaleString()} live · on` : `${liveCountAll.toLocaleString()} live`}
+          </button>
           <span className="inline-flex min-h-[26px] items-center whitespace-nowrap rounded-full border border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_80%,transparent)] px-2.5 text-[10.5px] font-semibold text-[var(--ink-3)] max-[420px]:px-2 max-[420px]:text-[10px]">Page {mapPage + 1} of {mapTotalPages}</span>
         </div>
       </div>

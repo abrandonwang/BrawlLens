@@ -1,25 +1,55 @@
 "use client"
 
-import { useState, type ReactNode, type SyntheticEvent } from "react"
+import { useState, useEffect, type ReactNode, type SyntheticEvent } from "react"
 import Link from "next/link"
 import { CheckCircle2, ChevronRight, Mail } from "lucide-react"
 import { sendContactEmail } from "@/app/actions/contact"
 
+function slugify(s: string): string {
+  return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")
+}
+
 function Disclosure({
   title,
+  slug: explicitSlug,
   children,
   defaultOpen = false,
 }: {
   title: ReactNode
+  slug?: string
   children: ReactNode
   defaultOpen?: boolean
 }) {
+  const slug = explicitSlug ?? (typeof title === "string" ? slugify(title) : undefined)
+  const id = slug ? `d-${slug}` : undefined
   const [open, setOpen] = useState(defaultOpen)
+
+  useEffect(() => {
+    if (!id) return
+    function check() {
+      if (window.location.hash === `#${id}`) {
+        setOpen(true)
+        document.getElementById(id!)?.scrollIntoView({ block: "start", behavior: "smooth" })
+      }
+    }
+    check()
+    window.addEventListener("hashchange", check)
+    return () => window.removeEventListener("hashchange", check)
+  }, [id])
+
+  function toggle() {
+    const next = !open
+    setOpen(next)
+    if (id && next && typeof window !== "undefined") {
+      history.replaceState(null, "", `#${id}`)
+    }
+  }
+
   return (
-    <div className="border-b border-[var(--line)] last:border-b-0">
+    <div id={id} className="scroll-mt-20 border-b border-[var(--line)] last:border-b-0">
       <button
         type="button"
-        onClick={() => setOpen(v => !v)}
+        onClick={toggle}
         aria-expanded={open}
         className="flex w-full items-center gap-2 border-0 bg-transparent px-0 py-3 text-left font-inherit text-[var(--ink)] hover:text-[var(--ink)]"
       >
@@ -217,7 +247,7 @@ export function AboutContent() {
                   The goal is to keep every metric readable while still filtering out obvious noise. The site favors simple formulas with visible supporting context instead of opaque black-box scoring.
                 </p>
                 <DisclosureGroup>
-                  <Disclosure title={<>Win rate <code className="ml-1 text-[13px] text-[var(--ink-3)]">wins / picks * 100</code></>}>
+                  <Disclosure slug="win-rate" title={<>Win rate <code className="ml-1 text-[13px] text-[var(--ink-3)]">wins / picks * 100</code></>}>
                     <p>For map stats, wins and picks are aggregated first, then the rate is calculated.</p>
                     <ul>
                       <li>A brawler with 60 wins from 100 picks has a 60% win rate.</li>

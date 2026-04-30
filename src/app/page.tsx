@@ -4,25 +4,13 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { ArrowRight, Search } from "lucide-react"
 import { SkeletonBlock, StateButton } from "@/components/PolishStates"
+import { formatTrophies } from "@/lib/format"
+import { getModeName } from "@/lib/modes"
 
 interface LandingData {
   player: { name: string; tag: string; trophies: number } | null
   map:    { name: string; mode: string } | null
   brawler: { name: string; id: number; winRate: number } | null
-}
-
-function formatTrophies(n: number) {
-  if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, "") + "K"
-  return n.toString()
-}
-
-const MODE_LABELS: Record<string, string> = {
-  brawlBall: "Brawl Ball", gemGrab: "Gem Grab", knockout: "Knockout",
-  bounty: "Bounty", heist: "Heist", hotZone: "Hot Zone", wipeout: "Wipeout",
-  duels: "Duels", siege: "Siege", soloShowdown: "Showdown", duoShowdown: "Duo SD",
-  trioShowdown: "Trio SD", payload: "Payload", basketBrawl: "Basket Brawl",
-  volleyBrawl: "Volley Brawl", botDrop: "Bot Drop", hunters: "Hunters",
-  trophyEscape: "Trophy Escape", paintBrawl: "Paint Brawl", wipeout5V5: "5v5 Wipeout",
 }
 
 export default function Home() {
@@ -101,7 +89,7 @@ export default function Home() {
     },
     {
       label: "TOP MAP",
-      sub: data?.map ? `${data.map.name} · ${MODE_LABELS[data.map.mode] ?? data.map.mode}` : null,
+      sub: data?.map ? `${data.map.name} · ${getModeName(data.map.mode)}` : null,
       href: data?.map ? `/meta?open=${encodeURIComponent(data.map.name)}` : "/meta",
     },
     {

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { parseMapName } from "@/lib/validation";
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
@@ -16,7 +17,12 @@ interface MapBrawlerStatRow {
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const map = searchParams.get("map");
+  const rawMap = searchParams.get("map");
+  const map = rawMap === null ? null : parseMapName(rawMap);
+
+  if (rawMap !== null && map === null) {
+    return NextResponse.json({ error: "invalid map" }, { status: 400 });
+  }
 
   if (map) {
     const { data, error } = await supabase

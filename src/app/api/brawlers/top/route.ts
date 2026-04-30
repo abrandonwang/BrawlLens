@@ -1,19 +1,11 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
+import { getModeName } from "@/lib/modes"
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_KEY!
 )
-
-const MODE_LABELS: Record<string, string> = {
-  brawlBall: "Brawl Ball", gemGrab: "Gem Grab", knockout: "Knockout",
-  bounty: "Bounty", heist: "Heist", hotZone: "Hot Zone", wipeout: "Wipeout",
-  duels: "Duels", siege: "Siege", soloShowdown: "Showdown", duoShowdown: "Duo SD",
-  trioShowdown: "Trio SD", payload: "Payload", basketBrawl: "Basket Brawl",
-  volleyBrawl: "Volley Brawl", botDrop: "Bot Drop", hunters: "Hunters",
-  trophyEscape: "Trophy Escape", paintBrawl: "Paint Brawl", wipeout5V5: "5v5 Wipeout",
-}
 
 const MIN_TOTAL_PICKS = 500
 const MIN_MAP_PICKS = 20
@@ -96,7 +88,7 @@ export async function GET() {
       score: top.score,
       consistency: top.consistency,
       bestMap: bestMap
-        ? { name: bestMap.map, mode: MODE_LABELS[bestMap.mode] ?? bestMap.mode, winRate: bestMap.winRate }
+        ? { name: bestMap.map, mode: getModeName(bestMap.mode), winRate: bestMap.winRate }
         : null,
     },
   })

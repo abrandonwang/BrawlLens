@@ -1,24 +1,17 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
+import { getModeName } from "@/lib/modes"
+import { parseBrawlerId } from "@/lib/validation"
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_KEY!
 )
 
-const MODE_LABELS: Record<string, string> = {
-  brawlBall: "Brawl Ball", gemGrab: "Gem Grab", knockout: "Knockout",
-  bounty: "Bounty", heist: "Heist", hotZone: "Hot Zone", wipeout: "Wipeout",
-  duels: "Duels", siege: "Siege", soloShowdown: "Showdown", duoShowdown: "Duo SD",
-  trioShowdown: "Trio SD", payload: "Payload", basketBrawl: "Basket Brawl",
-  volleyBrawl: "Volley Brawl", botDrop: "Bot Drop", hunters: "Hunters",
-  trophyEscape: "Trophy Escape", paintBrawl: "Paint Brawl", wipeout5V5: "5v5 Wipeout",
-}
-
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
-  const id = searchParams.get("id")
-  if (!id) return NextResponse.json({ error: "missing id" }, { status: 400 })
+  const id = parseBrawlerId(searchParams.get("id"))
+  if (id === null) return NextResponse.json({ error: "invalid id" }, { status: 400 })
 
   const { data, error } = await supabase
     .from("map_brawler_stats")
@@ -37,7 +30,7 @@ export async function GET(request: Request) {
     .slice(0, 15)
     .map(r => ({
       map: r.map,
-      mode: MODE_LABELS[r.mode] ?? r.mode,
+      mode: getModeName(r.mode),
       picks: Number(r.picks),
       wins: Number(r.wins),
       winRate: Number(r.win_rate),
@@ -52,7 +45,7 @@ export async function GET(request: Request) {
   }
   const modes = Array.from(modeMap.entries())
     .map(([mode, s]) => ({
-      mode: MODE_LABELS[mode] ?? mode,
+      mode: getModeName(mode),
       picks: s.picks,
       winRate: s.picks > 0 ? (s.wins / s.picks) * 100 : 0,
     }))

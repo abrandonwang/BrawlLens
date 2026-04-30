@@ -8,6 +8,7 @@ import BrawlerCatalog from "@/components/BrawlerCatalog"
 import { BrawlImage, brawlerIconUrl } from "@/components/BrawlImage"
 import { EmptyState, SkeletonBlock, StateButton } from "@/components/PolishStates"
 import { HYPERCHARGES } from "@/data/hypercharges"
+import { winRateColor } from "@/lib/tiers"
 import type { Brawler } from "./page"
 
 const RARITY_ORDER = [
@@ -22,13 +23,6 @@ function cleanDesc(text: string) {
 function sanitizeColor(color: string): string {
   const match = color.match(/#[0-9a-fA-F]{3,6}/)
   return match ? match[0] : "#888"
-}
-
-function winRateColor(wr: number) {
-  if (wr >= 55) return "#49D47E"
-  if (wr >= 50) return "#FACC15"
-  if (wr >= 45) return "var(--ink-3)"
-  return "#F87171"
 }
 
 interface BrawlerStats {
