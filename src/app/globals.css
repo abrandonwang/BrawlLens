@@ -41,6 +41,34 @@
   --r-legendary: #14B8D6;
   --r-ultra:     #FF7A3D;
 
+  /* semantic performance / outcome tokens */
+  --win:        #49D47E;
+  --win-soft:   rgba(73, 212, 126, 0.12);
+  --win-line:   rgba(73, 212, 126, 0.30);
+  --loss:       #F87171;
+  --loss-soft:  rgba(248, 113, 113, 0.10);
+  --loss-line:  rgba(248, 113, 113, 0.28);
+  --neutral:    #FACC15;
+  --neutral-soft: rgba(250, 204, 21, 0.10);
+  --warn:       #FB923C;
+  --warn-soft:  rgba(251, 146, 60, 0.10);
+  --info:       #60A5FA;
+  --info-soft:  rgba(96, 165, 250, 0.10);
+
+  /* tier tokens (S → D) */
+  --tier-s:     var(--loss);
+  --tier-s-bg:  var(--loss-soft);
+  --tier-s-bd:  var(--loss-line);
+  --tier-a:     var(--warn);
+  --tier-a-bg:  var(--warn-soft);
+  --tier-a-bd:  rgba(251, 146, 60, 0.20);
+  --tier-b:     var(--neutral);
+  --tier-b-bg:  var(--neutral-soft);
+  --tier-b-bd:  rgba(250, 204, 21, 0.20);
+  --tier-c:     var(--info);
+  --tier-c-bg:  var(--info-soft);
+  --tier-c-bd:  rgba(96, 165, 250, 0.20);
+
   --r-sm: 8px;
   --r-md: 12px;
   --r-lg: 12px;
@@ -1943,4 +1971,17 @@ html:not(.dark) .hero-grid {
   .player-stats > div:nth-child(3) { border-right: 1px solid var(--line); }
   .player-stats > div:nth-child(3),
   .player-stats > div:nth-child(4) { border-top: 1px solid var(--line); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .bl-modal-overlay,
+  .bl-modal-sheet { animation: none !important; }
 }

@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { Player, PlayerBrawler } from "@/types/brawler"
 import Link from "next/link"
@@ -7,6 +8,33 @@ import { playerApiUrl } from "@/lib/env"
 import { sanitizePlayerTag } from "@/lib/validation"
 
 export const revalidate = 60
+
+export async function generateMetadata(
+  { params }: { params: Promise<{ tag: string }> },
+): Promise<Metadata> {
+  const { tag: rawTag } = await params
+  const tag = sanitizePlayerTag(decodeURIComponent(rawTag))
+  if (!tag) return { title: "Player — BrawlLens" }
+
+  try {
+    const res = await fetch(`${playerApiUrl()}/player/${tag}`, { next: { revalidate: 300 } })
+    if (!res.ok) throw new Error()
+    const data = (await res.json()) as Player
+    const name = data?.name ?? `#${tag}`
+    const trophies = data?.trophies ?? 0
+    const description = `${name} (#${tag}) — ${trophies.toLocaleString()} trophies on BrawlLens.`
+    return {
+      title: `${name} — BrawlLens`,
+      description,
+      openGraph: { title: `${name} (#${tag})`, description, type: "profile" },
+    }
+  } catch {
+    return {
+      title: `Player #${tag} — BrawlLens`,
+      description: `BrawlLens profile lookup for player #${tag}.`,
+    }
+  }
+}
 
 function rankColor(rank: number) {
   if (rank >= 30) return "#14B8D6"

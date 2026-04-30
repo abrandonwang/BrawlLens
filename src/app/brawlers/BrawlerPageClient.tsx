@@ -1,14 +1,16 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef, useMemo, type CSSProperties } from "react"
-import { createPortal } from "react-dom"
 import { useSearchParams } from "next/navigation"
-import { Search, X, ChevronLeft, ChevronRight } from "lucide-react"
+import { Search, ChevronLeft, ChevronRight } from "lucide-react"
 import BrawlerCatalog from "@/components/BrawlerCatalog"
+import Modal, { ModalCloseButton } from "@/components/Modal"
+import ScrollableFilters from "@/components/ScrollableFilters"
 import { BrawlImage, brawlerIconUrl } from "@/components/BrawlImage"
 import { EmptyState, SkeletonBlock, StateButton } from "@/components/PolishStates"
 import { HYPERCHARGES } from "@/data/hypercharges"
 import { winRateColor } from "@/lib/tiers"
+import { useClickOutside } from "@/lib/useClickOutside"
 import type { Brawler } from "./page"
 
 const RARITY_ORDER = [
@@ -71,54 +73,11 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
     }
   }, [searchParams, brawlers])
 
-  const [canScrollLeft, setCanScrollLeft] = useState(false)
-  const [canScrollRight, setCanScrollRight] = useState(false)
-  const filtersRef = useRef<HTMLDivElement>(null)
-
   const close = useCallback(() => {
     setSelected(null)
     setStats(null)
     setTab("overview")
   }, [])
-
-  const updateScrollState = useCallback((resetStart = false) => {
-    const el = filtersRef.current
-    if (!el) return
-    if (resetStart) {
-      el.scrollLeft = 0
-    }
-    setCanScrollLeft(el.scrollLeft > 0)
-    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 1)
-  }, [])
-
-  useEffect(() => {
-    const el = filtersRef.current
-    if (!el) return
-    let frame = 0
-    const refresh = (resetStart = false) => {
-      cancelAnimationFrame(frame)
-      frame = requestAnimationFrame(() => updateScrollState(resetStart))
-    }
-    const refreshFromStart = () => refresh(true)
-    const onScroll = () => updateScrollState()
-    const observer = new ResizeObserver(refreshFromStart)
-
-    refreshFromStart()
-    observer.observe(el)
-    if (el.firstElementChild) observer.observe(el.firstElementChild)
-    el.addEventListener("scroll", onScroll)
-    window.addEventListener("resize", refreshFromStart)
-    return () => {
-      cancelAnimationFrame(frame)
-      observer.disconnect()
-      el.removeEventListener("scroll", onScroll)
-      window.removeEventListener("resize", refreshFromStart)
-    }
-  }, [brawlers, updateScrollState])
-
-  function scrollFilters(dir: "left" | "right") {
-    filtersRef.current?.scrollBy({ left: dir === "left" ? -160 : 160, behavior: "smooth" })
-  }
 
   const searchMatches = search.trim()
     ? brawlers.filter(b => b.name.toLowerCase().includes(search.toLowerCase()))
@@ -131,25 +90,8 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
     setSearchOpen(false)
   }
 
-  useEffect(() => {
-    function onDown(e: MouseEvent) {
-      if (
-        searchDropdownRef.current && !searchDropdownRef.current.contains(e.target as Node) &&
-        searchInputRef.current && !searchInputRef.current.contains(e.target as Node)
-      ) {
-        setSearchOpen(false)
-      }
-    }
-    document.addEventListener("mousedown", onDown)
-    return () => document.removeEventListener("mousedown", onDown)
-  }, [])
+  useClickOutside([searchDropdownRef, searchInputRef], () => setSearchOpen(false), searchOpen)
 
-  useEffect(() => {
-    if (!selected) return
-    function onKey(e: KeyboardEvent) { if (e.key === "Escape") close() }
-    window.addEventListener("keydown", onKey)
-    return () => window.removeEventListener("keydown", onKey)
-  }, [selected, close])
   useEffect(() => {
     if (!selected) return
     setStats(null)
@@ -168,13 +110,6 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
     .map(name => ({ name, color: sanitizeColor(brawlers.find(b => b.rarity.name === name)?.rarity.color ?? "#888") }))
     .filter(r => brawlers.some(b => b.rarity.name === r.name))
   const activeRarityCount = activeRarity ? brawlers.filter(b => b.rarity.name === activeRarity).length : brawlers.length
-
-  const rarityOptions = useMemo(() => [null, ...rarities.map(r => r.name)] as (string | null)[], [rarities])
-  function goRarity(dir: 1 | -1) {
-    const idx = rarityOptions.indexOf(activeRarity)
-    const next = (idx + dir + rarityOptions.length) % rarityOptions.length
-    setActiveRarity(rarityOptions[next])
-  }
 
   return (
     <>
@@ -263,62 +198,16 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
             )}
           </div>
 
-          <div className="relative ml-auto flex min-w-0 flex-1 justify-end max-w-[calc(100%-220px)] max-md:hidden">
-            {canScrollLeft && (
-              <button onClick={() => scrollFilters("left")} className="absolute top-0 bottom-0 left-0 z-10 flex cursor-pointer items-center border-0 bg-[linear-gradient(to_right,var(--panel)_50%,transparent)] py-0 pr-3.5 pl-0.5 text-[var(--ink-3)]">
-                <ChevronLeft size={14} />
-              </button>
-            )}
-            <div className="flex w-auto max-w-full flex-nowrap justify-end overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" ref={filtersRef}>
-              <div className="inline-flex shrink-0 gap-0.5 rounded-full border border-[var(--line)] bg-[var(--panel)] p-[3px]">
-                <button
-                  onClick={() => setActiveRarity(null)}
-                  className={`relative shrink-0 cursor-pointer whitespace-nowrap rounded-full border-0 px-[13px] py-[5px] text-[11.5px] font-medium transition-all ${!activeRarity ? "bg-[var(--panel-2)] text-[var(--ink)]" : "bg-transparent text-[var(--ink-3)] hover:bg-[color-mix(in_srgb,var(--panel-2)_70%,transparent)] hover:text-[var(--ink)]"}`}
-                >
-                  All
-                </button>
-                {rarities.map(r => (
-                  <button
-                    key={r.name}
-                    onClick={() => setActiveRarity(activeRarity === r.name ? null : r.name)}
-                    className={`relative shrink-0 cursor-pointer whitespace-nowrap rounded-full border-0 px-[13px] py-[5px] text-[11.5px] font-medium transition-all ${activeRarity === r.name ? "bg-[var(--panel-2)] text-[var(--ink)]" : "bg-transparent text-[var(--ink-3)] hover:bg-[color-mix(in_srgb,var(--panel-2)_70%,transparent)] hover:text-[var(--ink)]"}`}
-                  >
-                    {r.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-            {canScrollRight && (
-              <button onClick={() => scrollFilters("right")} className="absolute top-0 right-0 bottom-0 z-10 flex cursor-pointer items-center border-0 bg-[linear-gradient(to_left,var(--panel)_50%,transparent)] py-0 pr-0.5 pl-3.5 text-[var(--ink-3)]">
-                <ChevronRight size={14} />
-              </button>
-            )}
-          </div>
-
-          <div className="hidden w-full items-center gap-1 rounded-full border border-[var(--line)] bg-[var(--panel)] p-1 max-md:flex">
-            <button
-              onClick={() => goRarity(-1)}
-              disabled={rarityOptions.length <= 1}
-              className="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-full border-0 bg-transparent text-[var(--ink-3)] transition-colors hover:bg-[color-mix(in_srgb,var(--panel-2)_70%,transparent)] hover:text-[var(--ink)] disabled:cursor-default disabled:opacity-25"
-              aria-label="Previous rarity"
-            >
-              <ChevronLeft size={15} />
-            </button>
-            <span className="flex-1 truncate px-2 text-center text-[12.5px] font-semibold text-[var(--ink)]">
-              {activeRarity ?? "All Rarities"}
-            </span>
-            <span className="shrink-0 pr-1 font-mono text-[10px] text-[var(--ink-4)]">
-              {rarityOptions.indexOf(activeRarity) + 1}/{rarityOptions.length}
-            </span>
-            <button
-              onClick={() => goRarity(1)}
-              disabled={rarityOptions.length <= 1}
-              className="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-full border-0 bg-transparent text-[var(--ink-3)] transition-colors hover:bg-[color-mix(in_srgb,var(--panel-2)_70%,transparent)] hover:text-[var(--ink)] disabled:cursor-default disabled:opacity-25"
-              aria-label="Next rarity"
-            >
-              <ChevronRight size={15} />
-            </button>
-          </div>
+          <ScrollableFilters
+            ariaLabel="Filter by rarity"
+            value={activeRarity}
+            onChange={setActiveRarity}
+            cycleLabel={activeRarity ?? "All Rarities"}
+            options={[
+              { key: "all", value: null, label: "All" },
+              ...rarities.map(r => ({ key: r.name, value: r.name as string | null, label: r.name })),
+            ]}
+          />
         </div>
 
         <BrawlerCatalog
@@ -329,49 +218,14 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
           onSelect={b => { setSelected(b); setTab("overview") }}
         />
       </div>
-      {selected && typeof document !== "undefined" && (() => {
-        const color = sanitizeColor(selected.rarity.color)
-        const hc = HYPERCHARGES[selected.id]
-
-        return createPortal((
-          <div
-            className="bl-modal-overlay"
-            style={{
-              position: "fixed",
-              inset: 0,
-              zIndex: 300,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              padding: 20,
-              background: "rgba(0,0,0,0.58)",
-              backdropFilter: "blur(10px) saturate(120%)",
-              WebkitBackdropFilter: "blur(10px) saturate(120%)",
-              animation: "modalOverlayIn 0.18s ease both",
-            }}
-            onClick={close}
-          >
-            <div
-              className="bl-modal-sheet bl-modal-sheet-brawler"
-              style={{
-                width: "100%",
-                maxWidth: 540,
-                maxHeight: "90vh",
-                display: "flex",
-                flexDirection: "column",
-                overflow: "hidden",
-                background: "var(--panel)",
-                border: "1px solid var(--line-2)",
-                borderRadius: 16,
-                boxShadow: "0 36px 90px -28px rgba(0,0,0,0.72)",
-                animation: "modalSheetIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) both",
-              }}
-              onClick={e => e.stopPropagation()}
-            >
+      <Modal open={!!selected} onClose={close} size="md" className="bl-modal-sheet-brawler" labelledBy="brawler-modal-title">
+        {selected && (() => {
+          const color = sanitizeColor(selected.rarity.color)
+          const hc = HYPERCHARGES[selected.id]
+          return (
+            <>
               <div className="bl-modal-header bl-modal-header-brawler">
-                <button onClick={close} className="bl-modal-close" aria-label="Close brawler details">
-                  <X size={12} />
-                </button>
+                <ModalCloseButton onClick={close} label="Close brawler details" />
 
                 <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16, paddingRight: 40 }}>
                   <div style={{ width: 56, height: 56, borderRadius: 14, background: "var(--panel-2)", border: "1px solid var(--line)", display: "grid", placeItems: "center", flexShrink: 0, overflow: "hidden" }}>
@@ -379,7 +233,7 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
                   </div>
 
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 20, fontWeight: 700, color: "var(--ink)", letterSpacing: "-0.025em", lineHeight: 1.1, marginBottom: 4 }}>{selected.name}</div>
+                    <div id="brawler-modal-title" style={{ fontSize: 20, fontWeight: 700, color: "var(--ink)", letterSpacing: "-0.025em", lineHeight: 1.1, marginBottom: 4 }}>{selected.name}</div>
                     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                       <span style={{ width: 6, height: 6, borderRadius: 2, background: color, display: "inline-block", flexShrink: 0 }} />
                       <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.03em", color: "var(--ink-4)" }}>
@@ -600,10 +454,10 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
                 )}
 
               </div>
-            </div>
-          </div>
-        ), document.body)
-      })()}
+            </>
+          )
+        })()}
+      </Modal>
     </>
   )
 }

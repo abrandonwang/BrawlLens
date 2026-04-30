@@ -1,7 +1,18 @@
 export const dynamic = "force-dynamic"
 
+import type { Metadata } from "next"
 import { createClient } from "@supabase/supabase-js"
 import ClubsClient from "./ClubsClient"
+
+export const metadata: Metadata = {
+  title: "Club Leaderboards — BrawlLens",
+  description: "Top Brawl Stars clubs ranked by trophy total with member counts across global and regional leaderboards.",
+  openGraph: {
+    title: "Club Leaderboards — BrawlLens",
+    description: "Top clubs ranked by trophies and members.",
+    type: "website",
+  },
+}
 
 const REGIONS = [
   { code: "global", label: "Global" },

@@ -1,5 +1,16 @@
+import type { Metadata } from "next"
 import { Suspense } from "react"
 import BrawlerPageClient from "./BrawlerPageClient"
+
+export const metadata: Metadata = {
+  title: "Brawlers — BrawlLens",
+  description: "Browse every Brawl Stars brawler with rarity, class, abilities, hypercharges, win rates, and best maps from real battle data.",
+  openGraph: {
+    title: "Brawlers — BrawlLens",
+    description: "Every brawler with stats, abilities, and meta context from tracked battles.",
+    type: "website",
+  },
+}
 
 export interface Brawler {
   id: number

@@ -3,7 +3,7 @@ import { useState, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { ArrowRight, Search } from "lucide-react"
-import { SkeletonBlock, StateButton } from "@/components/PolishStates"
+import { SkeletonBlock } from "@/components/PolishStates"
 import { formatTrophies } from "@/lib/format"
 import { getModeName } from "@/lib/modes"
 
@@ -11,6 +11,7 @@ interface LandingData {
   player: { name: string; tag: string; trophies: number } | null
   map:    { name: string; mode: string } | null
   brawler: { name: string; id: number; winRate: number } | null
+  club:   { name: string; tag: string; trophies: number } | null
 }
 
 export default function Home() {
@@ -93,9 +94,11 @@ export default function Home() {
       href: data?.map ? `/meta?open=${encodeURIComponent(data.map.name)}` : "/meta",
     },
     {
-      label: "LEADERBOARD",
-      sub: "Global top 200 players",
-      href: "/leaderboards/players",
+      label: "TOP CLUB",
+      sub: data?.club
+        ? `${data.club.name} · ${formatTrophies(data.club.trophies)} trophies`
+        : null,
+      href: "/leaderboards/clubs",
     },
   ]
 
@@ -128,36 +131,39 @@ export default function Home() {
                 <Link href="/leaderboards">Leaderboards</Link>
               </div>
 
-              {dataError && (
-                <div className="mb-2 flex items-center justify-between gap-3 rounded-[10px] border border-[var(--line)] bg-[var(--panel-2)] px-3 py-2">
-                  <span className="text-[12px] font-medium text-[var(--ink-3)]">Live landing stats could not load.</span>
-                  <StateButton onClick={loadLandingData}>Retry</StateButton>
-                </div>
-              )}
-
               <div className="home-jump-grid">
-                {jumps.map((row, index) => (
-                  <Link
-                    key={row.label}
-                    href={row.href}
-                    className="home-jump-card"
-                  >
-                    <span className="home-jump-mark">{String(index + 1).padStart(2, "0")}</span>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div className="bl-caption" style={{ letterSpacing: "0.1em", marginBottom: 2 }}>{row.label}</div>
-                      {dataLoading ? (
-                        <SkeletonBlock className="mt-1 h-[13px] w-[min(150px,75%)]" />
-                      ) : dataError && index < 3 ? (
-                        <div className="truncate text-[12px] font-medium text-[var(--ink-4)]">Open section</div>
-                      ) : row.sub ? (
-                        <div style={{ fontSize: 13, color: "var(--ink)", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{row.sub}</div>
-                      ) : (
-                        <div className="text-[12px] font-medium text-[var(--ink-4)]">Open section</div>
-                      )}
-                    </div>
-                    <ArrowRight size={14} style={{ color: "var(--ink-4)", flexShrink: 0 }} />
-                  </Link>
-                ))}
+                {jumps.map((row, index) => {
+                  const showRetry = !dataLoading && dataError && !row.sub
+                  const inner = (
+                    <>
+                      <span className="home-jump-mark">{String(index + 1).padStart(2, "0")}</span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div className="bl-caption" style={{ letterSpacing: "0.1em", marginBottom: 2 }}>{row.label}</div>
+                        {dataLoading ? (
+                          <SkeletonBlock className="mt-1 h-[13px] w-[min(150px,75%)]" />
+                        ) : showRetry ? (
+                          <button
+                            type="button"
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); loadLandingData() }}
+                            className="cursor-pointer border-0 bg-transparent p-0 text-left text-[12px] font-medium text-[var(--ink-3)] underline-offset-2 hover:text-[var(--ink)] hover:underline"
+                          >
+                            Could not load — retry
+                          </button>
+                        ) : row.sub ? (
+                          <div style={{ fontSize: 13, color: "var(--ink)", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{row.sub}</div>
+                        ) : (
+                          <div className="text-[12px] font-medium text-[var(--ink-4)]">Open section</div>
+                        )}
+                      </div>
+                      <ArrowRight size={14} style={{ color: "var(--ink-4)", flexShrink: 0 }} />
+                    </>
+                  )
+                  return (
+                    <Link key={row.label} href={row.href} className="home-jump-card">
+                      {inner}
+                    </Link>
+                  )
+                })}
               </div>
 
             </div>

@@ -7,7 +7,7 @@ const supabase = createClient(
 );
 
 export async function GET() {
-  const [playerRes, mapRes] = await Promise.all([
+  const [playerRes, mapRes, clubRes] = await Promise.all([
     supabase
       .from("leaderboards")
       .select("player_tag, player_name, trophies")
@@ -20,10 +20,17 @@ export async function GET() {
       .order("battle_count", { ascending: false })
       .limit(1)
       .single(),
+    supabase
+      .from("club_leaderboards")
+      .select("club_tag, club_name, trophies")
+      .eq("region", "global")
+      .eq("rank", 1)
+      .single(),
   ]);
 
   const player = playerRes.data ?? null;
   const topMap = mapRes.data ?? null;
+  const topClub = clubRes.data ?? null;
 
   let topBrawler: { brawler_name: string; brawler_id: number; win_rate: number } | null = null;
   if (topMap) {
@@ -44,6 +51,9 @@ export async function GET() {
     map: topMap ? { name: topMap.map, mode: topMap.mode } : null,
     brawler: topBrawler
       ? { name: topBrawler.brawler_name, id: topBrawler.brawler_id, winRate: Number(topBrawler.win_rate) }
+      : null,
+    club: topClub
+      ? { name: topClub.club_name, tag: topClub.club_tag, trophies: topClub.trophies }
       : null,
   });
 

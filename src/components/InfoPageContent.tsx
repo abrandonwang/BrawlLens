@@ -115,10 +115,31 @@ export function AboutContent() {
     BrawlLens: true,
     More: true,
   })
+  const [activeSection, setActiveSection] = useState<string>("introduction")
 
   function toggleGroup(title: string) {
     setOpenGroups(current => ({ ...current, [title]: !current[title] }))
   }
+
+  useEffect(() => {
+    const ids = sidebar.flatMap(g => g.links.map(([, href]) => href.replace(/^#/, "")))
+    const elements = ids
+      .map(id => document.getElementById(id))
+      .filter((el): el is HTMLElement => el !== null)
+    if (elements.length === 0) return
+
+    const observer = new IntersectionObserver(
+      entries => {
+        const visible = entries
+          .filter(e => e.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)
+        if (visible[0]) setActiveSection(visible[0].target.id)
+      },
+      { rootMargin: "-80px 0px -60% 0px", threshold: 0 },
+    )
+    elements.forEach(el => observer.observe(el))
+    return () => observer.disconnect()
+  }, [])
 
   return (
     <main className="sm:container mx-auto h-auto w-[90vw]">
@@ -140,12 +161,21 @@ export function AboutContent() {
                     </span>
                   </button>
                   {openGroups[group.title] && (
-                    <div className="mt-2.5 ml-0.5 flex flex-col items-start gap-3 text-sm text-[var(--ink-2)]">
-                      {group.links.map(([label, href]) => (
-                        <a key={href} href={href} className="no-underline hover:text-[var(--ink)]">
-                          {label}
-                        </a>
-                      ))}
+                    <div className="mt-2.5 ml-0.5 flex flex-col items-start gap-3 text-sm">
+                      {group.links.map(([label, href]) => {
+                        const id = href.replace(/^#/, "")
+                        const active = activeSection === id
+                        return (
+                          <a
+                            key={href}
+                            href={href}
+                            aria-current={active ? "true" : undefined}
+                            className={`no-underline transition-colors ${active ? "font-medium text-[var(--ink)]" : "text-[var(--ink-3)] hover:text-[var(--ink)]"}`}
+                          >
+                            {label}
+                          </a>
+                        )
+                      })}
                     </div>
                   )}
                 </div>
@@ -412,10 +442,21 @@ export function AboutContent() {
               <div className="flex w-full flex-col gap-3 pl-2">
                 <h3 className="text-sm font-medium">On this page</h3>
                 <div className="overflow-y-auto pt-0.5 pb-2">
-                  <div className="ml-0.5 flex flex-col gap-2.5 text-sm text-[var(--ink-2)]">
-                    {toc.map(([label, href]) => (
-                      <a key={href} href={href} className="pl-0 no-underline hover:text-[var(--ink)]">{label}</a>
-                    ))}
+                  <div className="ml-0.5 flex flex-col gap-2.5 text-sm">
+                    {toc.map(([label, href]) => {
+                      const id = href.replace(/^#/, "")
+                      const active = activeSection === id
+                      return (
+                        <a
+                          key={href}
+                          href={href}
+                          aria-current={active ? "true" : undefined}
+                          className={`pl-0 no-underline transition-colors ${active ? "font-medium text-[var(--ink)]" : "text-[var(--ink-3)] hover:text-[var(--ink)]"}`}
+                        >
+                          {label}
+                        </a>
+                      )
+                    })}
                   </div>
                 </div>
               </div>
@@ -430,13 +471,24 @@ export function AboutContent() {
 function ContactForm() {
   const [pending, setPending] = useState(false)
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle")
+  const [errorMessage, setErrorMessage] = useState<string>("")
+  const startedAt = useState(() => Date.now())[0]
 
   async function handleSubmit(e: SyntheticEvent<HTMLFormElement>) {
     e.preventDefault()
+    if (Date.now() - startedAt < 1500) {
+      setStatus("success")
+      return
+    }
     setPending(true)
     const result = await sendContactEmail(new FormData(e.currentTarget))
     setPending(false)
-    setStatus(result.error ? "error" : "success")
+    if (result.error) {
+      setErrorMessage(result.error)
+      setStatus("error")
+    } else {
+      setStatus("success")
+    }
   }
 
   if (status === "success") {
@@ -449,20 +501,26 @@ function ContactForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="my-6 space-y-5">
+    <form onSubmit={handleSubmit} className="relative my-6 space-y-5">
+      <div aria-hidden="true" className="absolute -left-[10000px] top-auto h-px w-px overflow-hidden">
+        <label>
+          Website
+          <input name="website" type="text" tabIndex={-1} autoComplete="off" />
+        </label>
+      </div>
       <label className="block">
         <span className="mb-1 block text-sm font-medium text-[var(--ink)]">Email</span>
-        <input name="email" type="email" required className="h-9 w-full border-0 border-b border-[var(--line)] bg-transparent px-0 text-sm text-[var(--ink)] outline-none focus:border-[var(--line-2)]" />
+        <input name="email" type="email" required maxLength={254} autoComplete="email" className="h-9 w-full border-0 border-b border-[var(--line)] bg-transparent px-0 text-sm text-[var(--ink)] outline-none focus:border-[var(--line-2)]" />
       </label>
       <label className="block">
         <span className="mb-1 block text-sm font-medium text-[var(--ink)]">Message</span>
-        <textarea name="message" rows={3} required className="w-full resize-none border-0 border-b border-[var(--line)] bg-transparent px-0 py-2 text-sm text-[var(--ink)] outline-none focus:border-[var(--line-2)]" />
+        <textarea name="message" rows={3} required maxLength={4000} className="w-full resize-none border-0 border-b border-[var(--line)] bg-transparent px-0 py-2 text-sm text-[var(--ink)] outline-none focus:border-[var(--line-2)]" />
       </label>
       <button type="submit" disabled={pending} className="inline-flex h-9 items-center gap-2 rounded-md border border-[var(--line)] bg-[var(--panel)] px-3 text-sm font-medium text-[var(--ink)] hover:bg-[var(--hover-bg)] disabled:opacity-50">
         <Mail size={14} />
         {pending ? "Sending" : "Send message"}
       </button>
-      {status === "error" && <span className="ml-3 text-sm text-[#F87171]">Could not send. Try again in a bit.</span>}
+      {status === "error" && <span className="ml-3 text-sm text-[var(--loss)]">{errorMessage || "Could not send. Try again in a bit."}</span>}
     </form>
   )
 }
