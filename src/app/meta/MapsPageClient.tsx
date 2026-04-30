@@ -310,7 +310,9 @@ export default function MapsPageClient() {
     fetch(`/api/meta?map=${encodeURIComponent(spotlightMap.name)}`)
       .then(r => r.ok ? r.json() : null)
       .then(d => {
-        const top = d?.brawlers?.[0]
+        const eligible = (d?.brawlers || []).filter((b: BrawlerStat) => b.picks >= 10)
+        const source = eligible.length ? eligible : (d?.brawlers || [])
+        const top = [...source].sort((a: BrawlerStat, b: BrawlerStat) => b.winRate - a.winRate)[0]
         if (top) setSpotlightTopBrawler({ id: top.brawlerId, name: top.name, picks: top.picks, winRate: top.winRate })
       })
       .catch(() => {})
@@ -330,9 +332,9 @@ export default function MapsPageClient() {
           </div>
         </div>
 
-        <div className="page-summary mb-3.5 flex items-center justify-between gap-3.5 p-[18px] max-md:flex-col max-md:items-stretch" style={{ "--summary-gradient": "linear-gradient(135deg, #6366F1 0%, #14B8A6 100%)" } as CSSProperties}>
+        <div className="page-summary mb-3.5 flex items-center justify-between gap-3.5 p-[18px] max-md:flex-col max-md:items-stretch" style={{ "--summary-gradient": "linear-gradient(135deg, #3B82F6 0%, #7C3AED 52%, #F97316 100%)" } as CSSProperties}>
           <div className="min-w-0">
-            <p className="mb-1 text-[10.5px] leading-snug tracking-[0.12em] text-white/70 uppercase">Top Map</p>
+            <p className="mb-1 text-[10.5px] leading-snug tracking-[0.12em] text-white/70 uppercase">Most Popular Map</p>
             <h2 className="m-0 truncate text-[22px] leading-tight font-bold text-white">{spotlightMap ? spotlightMap.name : "Loading..."}</h2>
           </div>
           <div className="grid min-w-[min(420px,48%)] grid-cols-3 gap-2 max-md:min-w-0">
@@ -345,8 +347,8 @@ export default function MapsPageClient() {
               <strong>{spotlightMap ? getModeName(spotlightMap.mode) : "—"}</strong>
             </div>
             <div className="page-summary-stat">
-              <span>Top brawler</span>
-              <strong>{spotlightTopBrawler ? formatBrawlerName(spotlightTopBrawler.name) : "—"}</strong>
+              <span>Best brawler</span>
+              <strong>{spotlightTopBrawler ? `${formatBrawlerName(spotlightTopBrawler.name)} - ${spotlightTopBrawler.winRate.toFixed(1)}%` : "—"}</strong>
             </div>
           </div>
         </div>

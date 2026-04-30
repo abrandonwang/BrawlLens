@@ -727,8 +727,9 @@ body {
   position: fixed;
   left: 50%;
   top: 50%;
-  width: 100vw;
-  height: 100vh;
+  width: 150vw;
+  height: 150vh;
+  height: 150dvh;
   transform: translate(-50%, -50%);
   pointer-events: none;
   z-index: 0;
@@ -861,6 +862,20 @@ body {
   position: fixed;
   inset: 0;
   overflow: auto;
+  background:
+    radial-gradient(ellipse 800px 500px at 50% 50%,
+      rgba(255, 212, 0, 0.12) 0%, transparent 60%),
+    conic-gradient(from 220deg at 50% 50%,
+      rgba(168, 85, 247, 0.20) 0deg,
+      rgba(99, 102, 241, 0.20) 90deg,
+      rgba(34, 211, 238, 0.14) 160deg,
+      rgba(255, 212, 0, 0.18) 240deg,
+      rgba(168, 85, 247, 0.20) 360deg),
+    #0A0A0B;
+  background-attachment: scroll;
+  background-repeat: no-repeat;
+  background-size: 160vw 160dvh, 160vw 160dvh, auto;
+  background-position: 50% 50%;
 }
 
 .home-hero-inner {
@@ -1430,6 +1445,22 @@ html:not(.dark).landing-bg {
       rgba(255, 212, 0, 0.16) 240deg,
       rgba(168, 85, 247, 0.16) 360deg),
     #FAFAF8;
+}
+
+html:not(.dark) .home-hero {
+  background:
+    radial-gradient(ellipse 800px 500px at 50% 50%,
+      rgba(255, 212, 0, 0.20) 0%, transparent 60%),
+    conic-gradient(from 220deg at 50% 50%,
+      rgba(168, 85, 247, 0.16) 0deg,
+      rgba(99, 102, 241, 0.16) 90deg,
+      rgba(34, 211, 238, 0.12) 160deg,
+      rgba(255, 212, 0, 0.16) 240deg,
+      rgba(168, 85, 247, 0.16) 360deg),
+    #FAFAF8;
+  background-repeat: no-repeat;
+  background-size: 160vw 160dvh, 160vw 160dvh, auto;
+  background-position: 50% 50%;
 }
 
 html:not(.dark) .hero-bg-d {

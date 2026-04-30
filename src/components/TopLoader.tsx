@@ -10,6 +10,7 @@ export default function TopLoader() {
   const startedRef = useRef(false)
   const timersRef = useRef<number[]>([])
   const queuedStartRef = useRef<number | null>(null)
+  const routeKeyRef = useRef("")
 
   const clearTimers = useCallback(() => {
     timersRef.current.forEach(window.clearTimeout)
@@ -45,6 +46,7 @@ export default function TopLoader() {
 
   useEffect(() => {
     const sameOrigin = window.location.origin
+    routeKeyRef.current = `${window.location.pathname}${window.location.search}`
 
     function shouldStart(url: string) {
       try {
@@ -77,19 +79,33 @@ export default function TopLoader() {
       return originalReplaceState.call(this, data, unused, url)
     }
 
+    function onPopState() {
+      const nextKey = `${window.location.pathname}${window.location.search}`
+      if (nextKey !== routeKeyRef.current) {
+        queueStart()
+      } else {
+        done()
+      }
+    }
+
     document.addEventListener("click", onClick, true)
-    window.addEventListener("popstate", queueStart)
+    window.addEventListener("popstate", onPopState)
+    window.addEventListener("hashchange", done)
 
     return () => {
       clearTimers()
       document.removeEventListener("click", onClick, true)
-      window.removeEventListener("popstate", queueStart)
+      window.removeEventListener("popstate", onPopState)
+      window.removeEventListener("hashchange", done)
       window.history.pushState = originalPushState
       window.history.replaceState = originalReplaceState
     }
-  }, [clearTimers, queueStart])
+  }, [clearTimers, done, queueStart])
 
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      routeKeyRef.current = `${window.location.pathname}${window.location.search}`
+    }
     done()
   }, [pathname, searchParams, done])
 

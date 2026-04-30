@@ -18,6 +18,11 @@ const MODE_LABELS: Record<string, string> = {
 const MIN_TOTAL_PICKS = 500
 const MIN_MAP_PICKS = 20
 
+function getVolumeScore(picks: number, maxPicks: number) {
+  if (maxPicks <= 0) return 0
+  return (Math.log1p(picks) / Math.log1p(maxPicks)) * 100
+}
+
 export async function GET() {
   const { data, error } = await supabase
     .from("map_brawler_stats")
@@ -25,21 +30,49 @@ export async function GET() {
 
   if (error || !data) return NextResponse.json({ brawler: null })
 
-  const agg = new Map<number, { id: number; name: string; picks: number; wins: number }>()
+  const agg = new Map<number, {
+    id: number
+    name: string
+    picks: number
+    wins: number
+    qualifyingMapPicks: number
+    strongMapPicks: number
+  }>()
   for (const r of data) {
     const id = r.brawler_id
     const picks = Number(r.picks)
     const wins = Number(r.wins)
+    const winRate = Number(r.win_rate)
     const cur = agg.get(id)
-    if (cur) { cur.picks += picks; cur.wins += wins }
-    else agg.set(id, { id, name: r.brawler_name, picks, wins })
+    const qualifyingMapPicks = picks >= MIN_MAP_PICKS ? picks : 0
+    const strongMapPicks = picks >= MIN_MAP_PICKS && winRate >= 50 ? picks : 0
+    if (cur) {
+      cur.picks += picks
+      cur.wins += wins
+      cur.qualifyingMapPicks += qualifyingMapPicks
+      cur.strongMapPicks += strongMapPicks
+    } else {
+      agg.set(id, { id, name: r.brawler_name, picks, wins, qualifyingMapPicks, strongMapPicks })
+    }
   }
 
-  let top: { id: number; name: string; picks: number; wins: number; winRate: number } | null = null
+  const maxPicks = Math.max(...Array.from(agg.values()).map(b => b.picks), 0)
+  let top: {
+    id: number
+    name: string
+    picks: number
+    wins: number
+    winRate: number
+    score: number
+    consistency: number
+  } | null = null
   for (const b of agg.values()) {
     if (b.picks < MIN_TOTAL_PICKS) continue
-    const wr = (b.wins / b.picks) * 100
-    if (!top || wr > top.winRate) top = { ...b, winRate: wr }
+    const winRate = (b.wins / b.picks) * 100
+    const volumeScore = getVolumeScore(b.picks, maxPicks)
+    const consistency = b.qualifyingMapPicks > 0 ? (b.strongMapPicks / b.qualifyingMapPicks) * 100 : winRate
+    const score = winRate * 0.68 + volumeScore * 0.18 + consistency * 0.14
+    if (!top || score > top.score) top = { ...b, winRate, score, consistency }
   }
 
   if (!top) {
@@ -60,6 +93,8 @@ export async function GET() {
       name: top.name,
       winRate: top.winRate,
       picks: top.picks,
+      score: top.score,
+      consistency: top.consistency,
       bestMap: bestMap
         ? { name: bestMap.map, mode: MODE_LABELS[bestMap.mode] ?? bestMap.mode, winRate: bestMap.winRate }
         : null,

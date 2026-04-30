@@ -118,7 +118,7 @@ export default function NavBar() {
         boxShadow: "var(--shadow-lift)",
         whiteSpace: "nowrap",
       }}>
-        <Link href="/" style={{
+        <Link href="/about" style={{
           display: "flex", alignItems: "center", gap: 8,
           padding: "6px 14px 6px 10px",
           borderRight: "1px solid var(--line)",

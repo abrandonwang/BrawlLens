@@ -31,12 +31,6 @@ function winRateColor(wr: number) {
   return "#F87171"
 }
 
-function formatNum(n: number) {
-  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + "M"
-  if (n >= 1_000) return (n / 1_000).toFixed(1) + "K"
-  return n.toString()
-}
-
 interface BrawlerStats {
   totalPicks: number
   avgWinRate: number | null
@@ -60,6 +54,8 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
     name: string
     winRate: number
     picks: number
+    score: number
+    consistency: number
     bestMap: { name: string; mode: string; winRate: number } | null
   } | null>(null)
   const searchParams = useSearchParams()
@@ -208,7 +204,7 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
               )}
             </div>
             <div className="min-w-0">
-              <p className="mb-1 text-[10.5px] leading-snug tracking-[0.12em] text-white/70 uppercase">Top Brawler</p>
+              <p className="mb-1 text-[10.5px] leading-snug tracking-[0.12em] text-white/70 uppercase">Best Overall Brawler</p>
               <h2 className="m-0 truncate text-[22px] leading-tight font-bold text-white">
                 {topBrawler ? (brawlers.find(b => b.id === topBrawler.id)?.name ?? topBrawler.name) : "Loading..."}
               </h2>
@@ -216,16 +212,16 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
           </div>
           <div className="grid min-w-[min(420px,48%)] grid-cols-3 gap-2 max-md:min-w-0">
             <div className="page-summary-stat">
+              <span>Overall score</span>
+              <strong>{topBrawler ? topBrawler.score.toFixed(1) : "—"}</strong>
+            </div>
+            <div className="page-summary-stat">
               <span>Win rate</span>
               <strong>{topBrawler ? `${topBrawler.winRate.toFixed(1)}%` : "—"}</strong>
             </div>
             <div className="page-summary-stat">
-              <span>Picks</span>
-              <strong>{topBrawler ? formatNum(topBrawler.picks) : "—"}</strong>
-            </div>
-            <div className="page-summary-stat">
-              <span>Best map</span>
-              <strong>{topBrawler?.bestMap ? topBrawler.bestMap.name : "—"}</strong>
+              <span>Stability</span>
+              <strong>{topBrawler ? `${topBrawler.consistency.toFixed(0)}%` : "—"}</strong>
             </div>
           </div>
         </div>
