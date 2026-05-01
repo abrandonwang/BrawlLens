@@ -95,7 +95,7 @@ export function AboutContent() {
           <div className="sticky top-20 flex flex-col gap-6 pb-6">
             {groups.map(group => (
               <div key={group.title} className="flex flex-col gap-2">
-                <h4 className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--ink-4)]">
+                <h4 className="text-[12px] font-medium tracking-normal text-[var(--ink-2)]">
                   {group.title}
                 </h4>
                 <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
@@ -253,7 +253,7 @@ export function AboutContent() {
 
         <aside className="hidden lg:block">
           <div className="sticky top-20 flex flex-col gap-3 pb-6">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--ink-4)]">
+            <div className="text-[12px] font-medium tracking-normal text-[var(--ink-2)]">
               Reading
             </div>
             <div className="rounded-md border border-[var(--line)] bg-[var(--panel-2)] p-3">
