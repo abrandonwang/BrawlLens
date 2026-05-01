@@ -1,6 +1,6 @@
 "use client"
 
-import { Sparkles } from "lucide-react"
+import Image from "next/image"
 
 export default function PlayerInsightButton({ playerName, tag }: { playerName: string; tag: string }) {
   function askAssistant() {
@@ -15,9 +15,9 @@ export default function PlayerInsightButton({ playerName, tag }: { playerName: s
     <button
       type="button"
       onClick={askAssistant}
-      className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-[var(--line)] bg-[var(--ink)] px-3.5 text-[13px] font-medium text-[var(--bg)] shadow-[var(--shadow-lift)] transition-colors hover:bg-[var(--accent-focus)]"
+      className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-[var(--line)] bg-[var(--panel-2)] px-3.5 text-[13px] font-medium text-[var(--ink-2)] shadow-[var(--shadow-lift)] transition-colors hover:border-[var(--line-2)] hover:text-[var(--ink)]"
     >
-      <Sparkles size={14} />
+      <Image src="/ai-sparkle-512.png" alt="" width={18} height={18} className="size-[18px] shrink-0" />
       Ask AI
     </button>
   )

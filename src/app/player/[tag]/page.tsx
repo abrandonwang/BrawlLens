@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { Player, PlayerBrawler } from "@/types/brawler"
 import Link from "next/link"
-import { Activity, ArrowLeft, BrainCircuit, Crown, Gauge, Medal, ShieldCheck, Sparkles, Target, Trophy, Zap } from "lucide-react"
+import { ArrowLeft, Crown } from "lucide-react"
 import { BrawlImage, brawlerIconUrl } from "@/components/BrawlImage"
 import { fetchPlayerResponse } from "@/lib/playerLookup"
 import { sanitizePlayerTag } from "@/lib/validation"
@@ -91,25 +91,21 @@ function buildInsights(player: Player, sorted: PlayerBrawler[]) {
 
   return [
     {
-      icon: Crown,
       label: "Carry profile",
       title: top ? `${top.name} anchors the account.` : "No carry brawler detected.",
       body: top ? `${fmt(top.trophies)} trophies, ${rankLabel(top.rank)}, Power ${top.power}. This is ${pct(topShare)} of current account trophies.` : "The account has no visible brawler roster data.",
     },
     {
-      icon: Target,
       label: "Push target",
       title: recovery && getBrawlerGap(recovery) > 0 ? `${recovery.name} has the cleanest recovery lane.` : "No obvious trophy recovery target.",
       body: recovery && getBrawlerGap(recovery) > 0 ? `${fmt(getBrawlerGap(recovery))} trophies below peak, with a best of ${fmt(recovery.highestTrophies)}.` : "Current trophies are close to peak across the visible roster.",
     },
     {
-      icon: Zap,
       label: "Upgrade signal",
       title: underpowered ? `${underpowered.name} is carrying value below max power.` : "Power curve is healthy at the top.",
       body: underpowered ? `${fmt(underpowered.trophies)} trophies at Power ${underpowered.power}. This is a strong upgrade candidate before deeper ladder pushes.` : `${highPower}/${totalBrawlers} brawlers are Power 11, with ${hyperCount} hypercharges available.`,
     },
     {
-      icon: BrainCircuit,
       label: "Model read",
       title: eliteCount > 0 ? `${eliteCount} brawlers are already in elite ladder range.` : "The account is still building elite depth.",
       body: "BrawlLens weights trophy peaks, power readiness, rank depth, and recovery gaps to surface practical next moves.",
@@ -261,10 +257,10 @@ export default async function PlayerProfile({ params }: { params: Promise<{ tag:
   const insights = buildInsights(player, sorted)
 
   const stats = [
-    { label: "Current", value: fmt(player.trophies ?? 0), sub: `${fmt(peakGap)} off peak`, icon: Trophy },
-    { label: "Best", value: fmt(player.highestTrophies ?? 0), sub: "personal record", icon: Medal },
-    { label: "Wins", value: fmt(totalWins), sub: `${fmt(threeVThreeWins)} in 3v3`, icon: ShieldCheck },
-    { label: "Roster", value: totalBrawlers.toLocaleString(), sub: `${power11} max power`, icon: Gauge },
+    { label: "Current", value: fmt(player.trophies ?? 0), sub: `${fmt(peakGap)} off peak` },
+    { label: "Best", value: fmt(player.highestTrophies ?? 0), sub: "personal record" },
+    { label: "Wins", value: fmt(totalWins), sub: `${fmt(threeVThreeWins)} in 3v3` },
+    { label: "Roster", value: totalBrawlers.toLocaleString(), sub: `${power11} max power` },
   ]
 
   return (
@@ -274,10 +270,10 @@ export default async function PlayerProfile({ params }: { params: Promise<{ tag:
         Leaderboard
       </Link>
 
-      <section className="relative mb-5 overflow-hidden rounded-lg border border-[var(--line)] bg-[var(--panel)] p-6 shadow-[var(--shadow-lift)] max-md:p-5">
+      <section className="relative isolate mb-5 overflow-hidden rounded-lg border border-[var(--line)] bg-[var(--panel)] p-6 shadow-[var(--shadow-lift)] max-md:p-5">
         <div className="absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,#EC4899,#14B8D6,#FB923C)]" />
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-end">
-          <div className="min-w-0">
+          <div className="relative z-10 min-w-0">
             <div className="mb-5 flex flex-wrap items-center gap-2">
               <span className="inline-flex min-h-8 items-center rounded-full border border-[var(--line)] bg-[var(--panel-2)] px-3 text-[12px] font-medium tabular-nums text-[var(--ink-3)]">#{tag}</span>
               {club?.name && (
@@ -290,10 +286,10 @@ export default async function PlayerProfile({ params }: { params: Promise<{ tag:
                 </span>
               )}
             </div>
-            <h1 className="m-0 truncate text-[clamp(42px,7vw,78px)] font-semibold leading-[0.98] tracking-[-0.025em] text-[var(--ink)]">
+            <h1 className="relative z-20 m-0 max-w-full overflow-hidden text-ellipsis whitespace-nowrap pb-2 text-[clamp(42px,7vw,78px)] font-semibold leading-[1.08] tracking-[-0.025em] text-[var(--ink)]">
               {player.name}
             </h1>
-            <p className="mt-4 max-w-[660px] text-[16px] leading-[1.55] text-[var(--ink-3)]">
+            <p className="mt-2 max-w-[660px] text-[16px] leading-[1.55] text-[var(--ink-3)]">
               A live profile view built from public player data, roster depth, trophy peaks, power readiness, and BrawlLens insight signals.
             </p>
             <div className="mt-6 flex flex-wrap items-center gap-2">
@@ -304,20 +300,14 @@ export default async function PlayerProfile({ params }: { params: Promise<{ tag:
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-2">
-            {stats.map(stat => {
-              const Icon = stat.icon
-              return (
-                <div key={stat.label} className="rounded-lg border border-[var(--line)] bg-[var(--panel-2)] p-4">
-                  <div className="mb-5 flex items-center justify-between gap-3">
-                    <span className="text-[12px] font-medium text-[var(--ink-3)]">{stat.label}</span>
-                    <Icon size={15} className="text-[var(--ink-4)]" />
-                  </div>
-                  <strong className="block text-[26px] font-semibold leading-none tracking-[-0.01em] text-[var(--ink)]">{stat.value}</strong>
-                  <span className="mt-1.5 block text-[11px] text-[var(--ink-4)]">{stat.sub}</span>
-                </div>
-              )
-            })}
+          <div className="relative z-0 grid grid-cols-2 gap-2">
+            {stats.map(stat => (
+              <div key={stat.label} className="rounded-lg border border-[var(--line)] bg-[var(--panel-2)] p-4">
+                <div className="mb-5 text-[12px] font-medium text-[var(--ink-3)]">{stat.label}</div>
+                <strong className="block text-[26px] font-semibold leading-none tracking-[-0.01em] text-[var(--ink)]">{stat.value}</strong>
+                <span className="mt-1.5 block text-[11px] text-[var(--ink-4)]">{stat.sub}</span>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -338,15 +328,13 @@ export default async function PlayerProfile({ params }: { params: Promise<{ tag:
 
         <div className="grid gap-5">
           <div className="rounded-lg border border-[var(--line)] bg-[var(--panel)] p-5 shadow-[var(--shadow-lift)]">
-            <div className="mb-5 flex items-center gap-2">
-              <Activity size={15} className="text-[var(--accent)]" />
+            <div className="mb-5">
               <h2 className="m-0 text-[16px] font-semibold tracking-[-0.012em] text-[var(--ink)]">Rank depth</h2>
             </div>
             <RankDistribution brawlers={sorted} />
           </div>
           <div className="rounded-lg border border-[var(--line)] bg-[var(--panel)] p-5 shadow-[var(--shadow-lift)]">
-            <div className="mb-5 flex items-center gap-2">
-              <Zap size={15} className="text-[var(--accent)]" />
+            <div className="mb-5">
               <h2 className="m-0 text-[16px] font-semibold tracking-[-0.012em] text-[var(--ink)]">Power readiness</h2>
             </div>
             <PowerReadiness brawlers={sorted} />
@@ -357,8 +345,7 @@ export default async function PlayerProfile({ params }: { params: Promise<{ tag:
       <section className="mb-5 rounded-lg border border-[var(--line)] bg-[var(--panel)] p-5 shadow-[var(--shadow-lift)]">
         <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
           <div>
-            <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[var(--line)] bg-[var(--panel-2)] px-3 py-1 text-[12px] font-medium text-[var(--ink-3)]">
-              <Sparkles size={13} className="text-[var(--accent)]" />
+            <div className="mb-2 inline-flex items-center rounded-full border border-[var(--line)] bg-[var(--panel-2)] px-3 py-1 text-[12px] font-medium text-[var(--ink-3)]">
               Insight engine
             </div>
             <h2 className="m-0 text-[22px] font-semibold tracking-[-0.016em] text-[var(--ink)]">Actionable player read</h2>
@@ -369,19 +356,13 @@ export default async function PlayerProfile({ params }: { params: Promise<{ tag:
           </div>
         </div>
         <div className="grid gap-3 md:grid-cols-2">
-          {insights.map(insight => {
-            const Icon = insight.icon
-            return (
-              <div key={insight.label} className="rounded-lg border border-[var(--line)] bg-[var(--panel-2)] p-4">
-                <div className="mb-3 flex items-center gap-2 text-[12px] font-medium text-[var(--ink-4)]">
-                  <Icon size={14} className="text-[var(--accent)]" />
-                  {insight.label}
-                </div>
-                <h3 className="m-0 text-[15px] font-semibold leading-[1.25] text-[var(--ink)]">{insight.title}</h3>
-                <p className="m-0 mt-2 text-[12.5px] leading-[1.5] text-[var(--ink-3)]">{insight.body}</p>
-              </div>
-            )
-          })}
+          {insights.map(insight => (
+            <div key={insight.label} className="rounded-lg border border-[var(--line)] bg-[var(--panel-2)] p-4">
+              <div className="mb-3 text-[12px] font-medium text-[var(--ink-4)]">{insight.label}</div>
+              <h3 className="m-0 text-[15px] font-semibold leading-[1.25] text-[var(--ink)]">{insight.title}</h3>
+              <p className="m-0 mt-2 text-[12.5px] leading-[1.5] text-[var(--ink-3)]">{insight.body}</p>
+            </div>
+          ))}
         </div>
       </section>
 
