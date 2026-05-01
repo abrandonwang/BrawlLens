@@ -388,9 +388,8 @@ body {
   cursor: pointer;
 }
 
-.lovable-nav-actions button.lovable-menu-button:hover {
-  border-color: var(--line-2);
-  background: var(--hover-bg);
+.lovable-nav-actions button:hover {
+  color: var(--ink);
 }
 
 .lovable-search-mark {
@@ -428,18 +427,15 @@ body {
 }
 
 .lovable-menu-button {
-  width: auto !important;
-  min-width: 44px;
-  border: 1px solid var(--line) !important;
-  border-radius: 9999px !important;
-  background: color-mix(in srgb, var(--panel) 70%, transparent) !important;
-  padding: 0 11px !important;
+  border: 0 !important;
+  background: transparent !important;
+  padding: 0 !important;
 }
 
-.lovable-menu-button:hover,
-.lovable-menu-button[aria-expanded="true"] {
-  border-color: var(--line-2) !important;
-  background: var(--hover-bg) !important;
+.lovable-menu-button:focus,
+.lovable-menu-button:focus-visible {
+  outline: none;
+  box-shadow: none;
 }
 
 .lovable-theme-mark {
