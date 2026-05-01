@@ -63,7 +63,7 @@ export default function BrawlerRankingClient({ data, brawlerName }: { data: Play
 
             <div className="leaderboard-main min-w-0">
               <p className="text-base font-semibold text-zinc-900 truncate dark:text-white">{player.player_name}</p>
-              <p className="text-xs text-zinc-400 font-mono dark:text-white/45">{player.player_tag}</p>
+              <p className="text-xs text-zinc-400 tabular-nums dark:text-white/45">{player.player_tag}</p>
             </div>
 
             <span className="leaderboard-secondary hidden sm:block text-sm text-zinc-400 truncate max-w-[160px] dark:text-white/50">
@@ -71,7 +71,7 @@ export default function BrawlerRankingClient({ data, brawlerName }: { data: Play
             </span>
 
             <div className="leaderboard-metric flex items-center justify-end">
-              <span className="text-base font-bold text-red-500/80 dark:text-[color-mix(in_srgb,var(--accent)_82%,white)] tabular-nums">
+              <span className="text-base font-bold tabular-nums text-[var(--ink)]">
                 {player.trophies.toLocaleString()}
               </span>
             </div>

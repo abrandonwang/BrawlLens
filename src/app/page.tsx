@@ -1,6 +1,5 @@
 "use client"
 import { useState, useRef, useEffect } from "react"
-import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { ArrowRight, Search } from "lucide-react"
 import { SkeletonBlock } from "@/components/PolishStates"
@@ -18,7 +17,6 @@ export default function Home() {
   const [userInput, setUserInput] = useState("")
   const [compactPlaceholder, setCompactPlaceholder] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const router = useRouter()
   const [data, setData] = useState<LandingData | null>(null)
   const [dataLoading, setDataLoading] = useState(true)
   const [dataError, setDataError] = useState(false)
@@ -70,7 +68,9 @@ export default function Home() {
   function handleSubmit() {
     const q = userInput.trim()
     if (!q) return
-    router.push(`/chat?q=${encodeURIComponent(q)}`)
+    setUserInput("")
+    if (textareaRef.current) textareaRef.current.style.height = "auto"
+    window.dispatchEvent(new CustomEvent("brawllens:open-assistant", { detail: { query: q } }))
   }
 
   const jumps = [

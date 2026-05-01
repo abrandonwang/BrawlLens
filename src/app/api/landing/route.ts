@@ -6,8 +6,26 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_KEY!
 );
 
+type BrawlifyBrawler = {
+  id: number;
+  name: string;
+};
+
+async function getCanonicalBrawlerNames() {
+  try {
+    const response = await fetch("https://api.brawlify.com/v1/brawlers", {
+      next: { revalidate: 3600 },
+    });
+    if (!response.ok) return new Map<number, string>();
+    const data = await response.json() as { list?: BrawlifyBrawler[] };
+    return new Map((data.list ?? []).map(brawler => [Number(brawler.id), brawler.name]));
+  } catch {
+    return new Map<number, string>();
+  }
+}
+
 export async function GET() {
-  const [playerRes, mapRes, clubRes] = await Promise.all([
+  const [playerRes, mapRes, clubRes, canonicalBrawlers] = await Promise.all([
     supabase
       .from("leaderboards")
       .select("player_tag, player_name, trophies")
@@ -26,6 +44,7 @@ export async function GET() {
       .eq("region", "global")
       .eq("rank", 1)
       .single(),
+    getCanonicalBrawlerNames(),
   ]);
 
   const player = playerRes.data ?? null;
@@ -33,15 +52,22 @@ export async function GET() {
   const topClub = clubRes.data ?? null;
 
   let topBrawler: { brawler_name: string; brawler_id: number; win_rate: number } | null = null;
-  if (topMap) {
+  if (topMap && canonicalBrawlers.size > 0) {
     const { data } = await supabase
       .from("map_brawler_stats")
-      .select("brawler_name, brawler_id, win_rate")
+      .select("brawler_name, brawler_id, win_rate, picks")
       .eq("map", topMap.map)
+      .gte("picks", 20)
       .order("win_rate", { ascending: false })
-      .limit(1)
-      .single();
-    topBrawler = data ?? null;
+      .limit(20);
+    const validRow = data?.find(row => canonicalBrawlers.has(Number(row.brawler_id)));
+    topBrawler = validRow
+      ? {
+          brawler_name: canonicalBrawlers.get(Number(validRow.brawler_id)) ?? validRow.brawler_name,
+          brawler_id: Number(validRow.brawler_id),
+          win_rate: Number(validRow.win_rate),
+        }
+      : null;
   }
 
   const res = NextResponse.json({

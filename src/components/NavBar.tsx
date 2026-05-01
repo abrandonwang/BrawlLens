@@ -1,15 +1,15 @@
 "use client";
 import { useState, useEffect, useRef, useCallback, type KeyboardEvent as ReactKeyboardEvent } from "react";
-import { ArrowUp, ArrowDown, CornerDownLeft, Hash, Menu, Search, X } from "lucide-react";
+import { Menu, Search, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import AssistantPopup from "./AssistantPopup";
 
 const navItems = [
   { label: "Overview",     href: "/" },
   { label: "Brawlers",     href: "/brawlers" },
   { label: "Maps",         href: "/meta" },
   { label: "Leaderboards", href: "/leaderboards" },
-  { label: "Ask AI",       href: "/chat" },
   { label: "About",        href: "/about" },
 ];
 
@@ -20,18 +20,18 @@ type CommandItem = {
   description: string;
   keywords: string[];
   accent: string;
+  action?: "open-assistant";
 };
-
-const SEARCH_RECENT_KEY = "brawllens:recent-search";
 
 const searchItems: CommandItem[] = [
   {
     label: "Ask AI",
-    href: "/chat",
+    href: "#assistant",
     group: "Core",
-    description: "Ask questions about players, maps, brawlers, and rankings.",
-    keywords: ["chat", "assistant", "question"],
+    description: "Open the assistant popup to ask questions.",
+    keywords: ["chat", "assistant", "question", "ai"],
     accent: "var(--hc-purple)",
+    action: "open-assistant",
   },
   {
     label: "Brawlers",
@@ -116,11 +116,12 @@ export default function NavBar() {
   const pathname = usePathname();
   const router = useRouter();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isAssistantOpen, setIsAssistantOpen] = useState(false);
+  const [pendingAssistantQuery, setPendingAssistantQuery] = useState<string | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [menuClosing, setMenuClosing] = useState(false);
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
-  const [recentItems, setRecentItems] = useState<CommandItem[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const previousPathnameRef = useRef(pathname);
 
@@ -153,13 +154,6 @@ export default function NavBar() {
     if (isSearchOpen) {
       setQuery("");
       setActiveIndex(0);
-      try {
-        const raw = window.localStorage.getItem(SEARCH_RECENT_KEY);
-        const hrefs = raw ? (JSON.parse(raw) as string[]) : [];
-        setRecentItems(hrefs.map(href => searchItems.find(item => item.href === href)).filter(Boolean) as CommandItem[]);
-      } catch {
-        setRecentItems([]);
-      }
       setTimeout(() => inputRef.current?.focus(), 50);
     }
   }, [isSearchOpen]);
@@ -167,14 +161,20 @@ export default function NavBar() {
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") { setIsSearchOpen(false); closeMenu(); }
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
-        e.preventDefault();
-        setIsSearchOpen(true);
-      }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [closeMenu]);
+
+  useEffect(() => {
+    function onOpenAssistant(e: Event) {
+      const detail = (e as CustomEvent<{ query?: string }>).detail;
+      setIsAssistantOpen(true);
+      if (detail?.query) setPendingAssistantQuery(detail.query);
+    }
+    window.addEventListener("brawllens:open-assistant", onOpenAssistant);
+    return () => window.removeEventListener("brawllens:open-assistant", onOpenAssistant);
+  }, []);
 
   function toggleMenu() {
     if (isMenuOpen) closeMenu();
@@ -185,7 +185,7 @@ export default function NavBar() {
   const normalizedQuery = trimmedQuery.toLowerCase();
   const isTag = trimmedQuery.startsWith("#") || /^[A-Z0-9]{3,}$/i.test(trimmedQuery);
   const filtered = normalizedQuery ? searchItems.filter(i => commandMatches(i, normalizedQuery)) : [];
-  const visibleItems = normalizedQuery ? filtered : recentItems.length ? recentItems : searchItems.slice(0, 6);
+  const visibleItems = normalizedQuery ? filtered : searchItems.slice(0, 6);
   const hasPlayerLookup = Boolean(trimmedQuery && isTag);
   const actionCount = visibleItems.length + (hasPlayerLookup ? 1 : 0);
   const groupedItems = visibleItems.reduce<Record<string, CommandItem[]>>((groups, item) => {
@@ -197,24 +197,17 @@ export default function NavBar() {
     setActiveIndex(0);
   }, [query, isSearchOpen]);
 
-  function rememberSearchItem(item: CommandItem) {
-    const next = [item.href, ...recentItems.filter(recent => recent.href !== item.href).map(recent => recent.href)].slice(0, 5);
-    try {
-      window.localStorage.setItem(SEARCH_RECENT_KEY, JSON.stringify(next));
-    } catch {
-      // Recent search history is a small enhancement; navigation should still work without storage.
-    }
-    setRecentItems(next.map(href => searchItems.find(searchItem => searchItem.href === href)).filter(Boolean) as CommandItem[]);
-  }
-
   function closeSearch() {
     setIsSearchOpen(false);
     setQuery("");
   }
 
   function openCommand(item: CommandItem) {
-    rememberSearchItem(item);
-    router.push(item.href);
+    if (item.action === "open-assistant") {
+      setIsAssistantOpen(true);
+    } else {
+      router.push(item.href);
+    }
     closeSearch();
   }
 
@@ -280,6 +273,14 @@ export default function NavBar() {
         <div className="lovable-nav-actions">
           <button onClick={() => setIsSearchOpen(true)} aria-label="Search">
             <Search size={16} strokeWidth={1.8} />
+          </button>
+          <button
+            className={`lovable-ai-button ${isAssistantOpen ? "is-active" : ""}`}
+            onClick={() => setIsAssistantOpen(o => !o)}
+            aria-label="Ask AI assistant"
+            aria-expanded={isAssistantOpen}
+          >
+            <img src="/ai-sparkle-512.png" alt="AI Assistant" width={32} height={32}/>
           </button>
           <button className="lovable-menu-button" onClick={toggleMenu} aria-label="Menu" aria-expanded={isMenuOpen}>
             {isMenuOpen ? <X size={15} strokeWidth={1.9} /> : <Menu size={17} strokeWidth={1.8} />}
@@ -383,27 +384,21 @@ export default function NavBar() {
                     aria-selected={activeIndex === 0}
                     className={`lovable-search-row ${activeIndex === 0 ? "is-active" : ""}`}
                   >
-                    <span className="lovable-search-row-icon" style={{ background: "var(--ink)", color: "var(--bg)", borderColor: "transparent" }}>
-                      <Hash size={13} strokeWidth={2.2} />
-                    </span>
                     <span className="lovable-search-row-content">
                       <span className="lovable-search-row-title">
                         Open player <span style={{ fontWeight: 600 }}>#{trimmedQuery.replace(/^#/, "")}</span>
                       </span>
                       <span className="lovable-search-row-desc">Public profile lookup by tag.</span>
                     </span>
-                    <CornerDownLeft size={13} strokeWidth={1.8} className="lovable-search-row-chevron" />
                   </button>
                 </div>
               )}
 
               {Object.entries(groupedItems).map(([group, items]) => (
-                <div key={group} className="lovable-search-section">
-                  <div className="lovable-search-group-label">{group}</div>
+                <div key={group}>
                   {items.map(item => {
                     const itemIndex = commandIndex++;
                     const isActiveRow = activeIndex === itemIndex;
-                    const isRecent = !normalizedQuery && recentItems.some(recent => recent.href === item.href);
                     return (
                       <button
                         key={item.href}
@@ -413,18 +408,10 @@ export default function NavBar() {
                         aria-selected={isActiveRow}
                         className={`lovable-search-row ${isActiveRow ? "is-active" : ""}`}
                       >
-                        <span
-                          className="lovable-search-row-icon"
-                          style={{ color: item.accent, borderColor: "var(--line)" }}
-                        >
-                          <span className="lovable-search-row-dot" style={{ background: item.accent }} />
-                        </span>
                         <span className="lovable-search-row-content">
                           <span className="lovable-search-row-title">{item.label}</span>
                           <span className="lovable-search-row-desc">{item.description}</span>
                         </span>
-                        {isRecent && <span className="lovable-search-row-badge">Recent</span>}
-                        <CornerDownLeft size={13} strokeWidth={1.8} className="lovable-search-row-chevron" />
                       </button>
                     );
                   })}
@@ -437,26 +424,16 @@ export default function NavBar() {
                 </p>
               )}
             </div>
-
-            <div className="lovable-search-footer">
-              <span className="lovable-search-hint">
-                <kbd className="lovable-kbd"><ArrowUp size={9} strokeWidth={2.4} /></kbd>
-                <kbd className="lovable-kbd"><ArrowDown size={9} strokeWidth={2.4} /></kbd>
-                navigate
-              </span>
-              <span className="lovable-search-hint">
-                <kbd className="lovable-kbd"><CornerDownLeft size={9} strokeWidth={2.4} /></kbd>
-                open
-              </span>
-              <span className="lovable-search-hint">
-                <kbd className="lovable-kbd lovable-kbd-text">esc</kbd>
-                close
-              </span>
-            </div>
           </div>
         </div>
       )}
 
+      <AssistantPopup
+        open={isAssistantOpen}
+        onClose={() => setIsAssistantOpen(false)}
+        pendingQuery={pendingAssistantQuery}
+        onPendingConsumed={() => setPendingAssistantQuery(null)}
+      />
     </>
   );
 }

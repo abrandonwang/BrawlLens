@@ -141,12 +141,12 @@ export default function ClubsClient({ allData }: { allData: RegionData[] }) {
           <div className="mb-3.5 grid grid-cols-3 gap-2.5 max-md:grid-cols-1">
             {clubs.slice(0, 3).map((club, index) => (
               <div key={club.club_tag} className={`interactive-card top-rank-card top-rank-card-rank-${index + 1} grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2.5 border bg-[var(--panel)] p-3`}>
-                <span className="grid h-7 min-w-[34px] place-items-center rounded-lg border border-[var(--line)] bg-[var(--panel-2)] font-mono text-xs font-extrabold text-[var(--ink)]">#{club.rank}</span>
+                <span className="grid h-7 min-w-[34px] place-items-center rounded-lg border border-[var(--line)] bg-[var(--panel-2)] text-xs font-extrabold tabular-nums text-[var(--ink)]">#{club.rank}</span>
                 <div className="min-w-0">
                   <div className="truncate text-[13px] font-bold text-[var(--ink)]">{club.club_name}</div>
-                  <div className="font-mono text-[10.5px] leading-snug tracking-[0.01em] text-[var(--ink-3)]">{club.club_tag}</div>
+                  <div className="text-[10.5px] leading-snug tracking-[0.01em] tabular-nums text-[var(--ink-3)]">{club.club_tag}</div>
                 </div>
-                <div className="flex items-center justify-end whitespace-nowrap font-mono text-xs font-bold text-[var(--ink)]">
+                <div className="flex items-center justify-end whitespace-nowrap text-xs font-bold tabular-nums text-[var(--ink)]">
                   {formatNum(club.trophies)}
                 </div>
               </div>
@@ -167,19 +167,19 @@ export default function ClubsClient({ allData }: { allData: RegionData[] }) {
                 className={`interactive-row leaderboard-row grid grid-cols-[48px_1fr_100px_100px] items-center gap-3 px-5 py-3 max-md:grid-cols-[40px_1fr_80px] max-md:px-3.5 ${club.rank <= 3 ? `leaderboard-rank-row-${club.rank} border-l-2` : ""}`}
                 style={{ borderBottom: i < paginated.length - 1 ? "1px solid var(--line)" : "none" }}
               >
-                <span className="leaderboard-rank font-mono text-[13px] font-medium text-[var(--ink-3)]">
+                <span className="leaderboard-rank text-[13px] font-medium tabular-nums text-[var(--ink-3)]">
                   {String(club.rank).padStart(2, "0")}
                 </span>
                 <div className="leaderboard-main min-w-0">
                   <div className="truncate text-[13px] font-medium text-[var(--ink)]">{club.club_name}</div>
-                  <div className="font-mono text-[10.5px] leading-snug text-[var(--ink-4)]">{club.club_tag}</div>
+                  <div className="text-[10.5px] leading-snug tabular-nums text-[var(--ink-4)]">{club.club_tag}</div>
                 </div>
                 <div className="leaderboard-secondary flex items-center gap-1.5 max-md:hidden">
                   <Users size={11} className="text-[var(--ink-4)]" />
-                  <span className="font-mono text-[13px] text-[var(--ink-3)]">{club.member_count ?? "—"}</span>
+                  <span className="text-[13px] tabular-nums text-[var(--ink-3)]">{club.member_count ?? "—"}</span>
                 </div>
                 <div className="leaderboard-metric flex items-center justify-end">
-                  <span className="font-mono text-[13px] font-medium text-[var(--ink)]">{formatNum(club.trophies)}</span>
+                  <span className="text-[13px] font-medium tabular-nums text-[var(--ink)]">{formatNum(club.trophies)}</span>
                 </div>
               </div>
             ))}

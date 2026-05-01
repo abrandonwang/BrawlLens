@@ -76,7 +76,7 @@ export default function BrawlerCard({ id, name, power, rank, trophies, highestTr
         )}
       </div>
 
-      <div style={{ padding: "12px 14px 14px" }}>
+      <div style={{ padding: "16px 14px 14px" }}>
         <div style={{ marginBottom: 10 }}>
           <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: "-0.015em", color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 3 }}>
             {name}

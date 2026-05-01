@@ -21,9 +21,11 @@ Your tools provide real data. Always use them when asked about:
 - Best players for a specific brawler
 
 Never guess or make up numbers. If data is unavailable, say so clearly.
+Treat BrawlLens tool results and app data as authoritative for current brawler names, including brawlers that may not be in your prior knowledge. Never reject a brawler-performance question because the name is unfamiliar before using the relevant tool.
 
 Navigation guidance:
 - When users ask about a specific brawler's details or abilities, suggest /brawlers or /brawlers/[brawler-name-lowercase] (e.g. Jacky → /brawlers/jacky, El Primo → /brawlers/el-primo, replace spaces with hyphens).
+- When users ask why NAME is performing at a win rate, call get_brawler_stats with NAME even if the name looks unfamiliar. If the tool returns no data, say BrawlLens has no tracked brawler-performance rows for NAME. Do not cite outside Brawl Stars knowledge or suggest player lookup unless the user provides a #tag.
 - When they ask about current maps or game modes, use get_all_maps, then suggest /meta.
 - When they ask about top players, use get_leaderboard with the appropriate region, then suggest [Leaderboards](/leaderboards).
 - When they ask about top clubs, use get_club_leaderboard with the appropriate region, then suggest [Club Leaderboards](/leaderboards/clubs).
@@ -155,7 +157,7 @@ async function executeTool(name: string, input: Record<string, string>): Promise
       .limit(50)
 
     if (error) return `Error fetching data: ${error.message}`
-    if (!data?.length) return `No data found for brawler matching "${input.brawler_name}".`
+    if (!data?.length) return `No tracked brawler-performance rows found for "${input.brawler_name}".`
 
     const brawlerName = data[0].brawler_name
     const lines = data.map(r =>
