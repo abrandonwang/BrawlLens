@@ -79,7 +79,7 @@ export default function Home() {
       sub: data?.player
         ? `${data.player.name} · ${formatTrophies(data.player.trophies)} trophies`
         : null,
-      href: data?.player ? `/player/${data.player.tag.replace(/^#/, "")}` : "/leaderboards/players",
+      href: data?.player ? `/player/${encodeURIComponent(data.player.tag.replace(/^#/, ""))}` : "/leaderboards/players",
     },
     {
       label: "TOP BRAWLER",

@@ -217,7 +217,7 @@ export default function BrawlerLeaderboardClient({
           {activeBrawler && (
             <div className="mb-3.5 grid grid-cols-3 gap-2.5 max-md:grid-cols-1">
               {data.slice(0, 3).map((player, index) => (
-                <Link key={player.player_tag} href={`/player/${player.player_tag.replace("#", "")}`} className={`interactive-card top-rank-card top-rank-card-rank-${index + 1} grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2.5 border bg-[var(--panel)] p-3 text-inherit no-underline`}>
+                <Link key={player.player_tag} href={`/player/${encodeURIComponent(player.player_tag.replace(/^#/, ""))}`} className={`interactive-card top-rank-card top-rank-card-rank-${index + 1} grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2.5 border bg-[var(--panel)] p-3 text-inherit no-underline`}>
                   <span className="grid h-7 min-w-[34px] place-items-center rounded-lg border border-[var(--line)] bg-[var(--panel-2)] text-xs font-extrabold tabular-nums text-[var(--ink)]">#{player.rank}</span>
                   <div className="min-w-0">
                     <div className="truncate text-[13px] font-bold text-[var(--ink)]">{player.player_name}</div>
@@ -243,7 +243,7 @@ export default function BrawlerLeaderboardClient({
             {paginated.map((p, i) => (
               <Link
                 key={p.player_tag}
-                href={`/player/${p.player_tag.replace("#", "")}`}
+                href={`/player/${encodeURIComponent(p.player_tag.replace(/^#/, ""))}`}
                 className={`interactive-row leaderboard-row grid grid-cols-[48px_1fr_180px_100px_24px] items-center gap-3 px-5 py-3 text-inherit no-underline max-md:grid-cols-[40px_1fr_90px_20px] max-md:px-3.5 ${p.rank <= 3 ? `leaderboard-rank-row-${p.rank} border-l-2` : ""}`}
                 style={{ borderBottom: i < paginated.length - 1 ? "1px solid var(--line)" : "none" }}
               >

@@ -54,7 +54,7 @@ export default function BrawlerRankingClient({ data, brawlerName }: { data: Play
         {paginated.map((player) => (
           <Link
             key={player.player_tag}
-            href={`/player/${player.player_tag.replace("#", "")}`}
+            href={`/player/${encodeURIComponent(player.player_tag.replace(/^#/, ""))}`}
             className={`interactive-row leaderboard-row grid grid-cols-[52px_1fr_auto_auto_24px] gap-4 items-center px-5 py-4 text-inherit no-underline ${rankBg(player.rank)}`}
           >
             <span className={`leaderboard-rank text-base font-black tabular-nums ${rankColor(player.rank)}`}>

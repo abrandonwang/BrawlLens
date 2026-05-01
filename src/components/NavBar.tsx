@@ -4,6 +4,7 @@ import { Menu, Search, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import AssistantPopup from "./AssistantPopup";
+import { sanitizePlayerTag } from "@/lib/validation";
 
 const navItems = [
   { label: "Overview",     href: "/" },
@@ -183,10 +184,10 @@ export default function NavBar() {
 
   const trimmedQuery = query.trim();
   const normalizedQuery = trimmedQuery.toLowerCase();
-  const isTag = trimmedQuery.startsWith("#") || /^[A-Z0-9]{3,}$/i.test(trimmedQuery);
+  const playerTag = sanitizePlayerTag(trimmedQuery);
   const filtered = normalizedQuery ? searchItems.filter(i => commandMatches(i, normalizedQuery)) : [];
   const visibleItems = normalizedQuery ? filtered : searchItems.slice(0, 6);
-  const hasPlayerLookup = Boolean(trimmedQuery && isTag);
+  const hasPlayerLookup = Boolean(playerTag);
   const actionCount = visibleItems.length + (hasPlayerLookup ? 1 : 0);
   const groupedItems = visibleItems.reduce<Record<string, CommandItem[]>>((groups, item) => {
     groups[item.group] = groups[item.group] ? [...groups[item.group], item] : [item];
@@ -212,9 +213,8 @@ export default function NavBar() {
   }
 
   function handlePlayerSearch() {
-    const tag = trimmedQuery.replace(/^#/, "");
-    if (tag) {
-      router.push(`/player/${tag}`);
+    if (playerTag) {
+      router.push(`/player/${encodeURIComponent(playerTag)}`);
       closeSearch();
     }
   }
@@ -386,7 +386,7 @@ export default function NavBar() {
                   >
                     <span className="lovable-search-row-content">
                       <span className="lovable-search-row-title">
-                        Open player <span style={{ fontWeight: 600 }}>#{trimmedQuery.replace(/^#/, "")}</span>
+                        Open player <span style={{ fontWeight: 600 }}>#{playerTag}</span>
                       </span>
                       <span className="lovable-search-row-desc">Public profile lookup by tag.</span>
                     </span>
