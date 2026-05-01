@@ -200,10 +200,10 @@ export default function MapsPageClient() {
   return (
     <>
       <div className="mx-auto w-full max-w-[1080px] px-6 pt-12 pb-24 max-md:px-4 max-md:pt-8 max-md:pb-[64px] max-[480px]:pt-6 max-[480px]:pb-12">
-        <div className="mb-8 flex items-end justify-between gap-8 max-md:flex-col max-md:items-start">
+        <div className="mb-8 grid grid-cols-[minmax(0,1fr)_auto] items-end gap-8 max-md:grid-cols-1 max-md:items-start">
           <div className="min-w-0">
-            <h1 className="m-0 text-[clamp(34px,5vw,56px)] leading-[1.07] font-semibold tracking-[-0.01em] text-[var(--ink)]">Maps</h1>
-            <p className="mt-3 mb-0 max-w-[640px] text-[17px] leading-[1.47] tracking-[-0.022em] text-[var(--ink-3)]">Scan live maps and open matchup data for the brawlers performing best on each layout.</p>
+            <h1 className="m-0 text-[clamp(31px,4.7vw,52px)] leading-[1.07] font-semibold tracking-[-0.01em] text-[var(--ink)]">Maps</h1>
+            <p className="mt-3 mb-0 max-w-none whitespace-nowrap text-[17px] leading-[1.47] tracking-[-0.022em] text-[var(--ink-3)] max-xl:whitespace-normal">Scan live maps and open matchup data for the brawlers performing best on each layout.</p>
           </div>
           <div className="flex flex-wrap justify-end gap-2 max-md:justify-start">
             <span className="inline-flex min-h-9 items-center whitespace-nowrap rounded-full border border-[var(--line)] bg-[var(--panel)] px-4 text-[14px] font-normal tracking-[-0.016em] text-[var(--ink-2)]">{loading ? "Loading maps" : `${totalMaps} maps`}</span>

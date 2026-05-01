@@ -7,7 +7,7 @@ import AssistantPopup from "./AssistantPopup";
 import { sanitizePlayerTag } from "@/lib/validation";
 
 const navItems = [
-  { label: "Overview",     href: "/" },
+  { label: "Dashboard",    href: "/" },
   { label: "Brawlers",     href: "/brawlers" },
   { label: "Maps",         href: "/meta" },
   { label: "Leaderboards", href: "/leaderboards" },
@@ -33,6 +33,14 @@ const searchItems: CommandItem[] = [
     keywords: ["chat", "assistant", "question", "ai"],
     accent: "var(--hc-purple)",
     action: "open-assistant",
+  },
+  {
+    label: "Dashboard",
+    href: "/",
+    group: "Core",
+    description: "Open the BrawlLens dashboard.",
+    keywords: ["home", "overview", "watchlist", "meta", "daily"],
+    accent: "var(--accent)",
   },
   {
     label: "Brawlers",

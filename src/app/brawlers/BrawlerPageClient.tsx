@@ -221,7 +221,7 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
       <div className="mx-auto w-full max-w-[1080px] px-6 pt-12 pb-24 max-md:px-4 max-md:pt-8 max-md:pb-[64px] max-[360px]:px-3 max-[360px]:pt-6 max-[360px]:pb-12">
         <div className="mb-8 flex items-end justify-between gap-8 max-md:flex-col max-md:items-start">
           <div className="min-w-0">
-            <h1 className="m-0 text-[clamp(34px,5vw,56px)] leading-[1.07] font-semibold tracking-[-0.01em] text-[var(--ink)]">Brawlers</h1>
+            <h1 className="m-0 text-[clamp(31px,4.7vw,52px)] leading-[1.07] font-semibold tracking-[-0.01em] text-[var(--ink)]">Brawlers</h1>
             <p className="mt-3 mb-0 max-w-[640px] text-[17px] leading-[1.47] tracking-[-0.022em] text-[var(--ink-3)]">Browse every brawler, filter by rarity, and open quick ability and meta details.</p>
           </div>
           <div className="flex flex-wrap justify-end gap-2 max-md:justify-start">

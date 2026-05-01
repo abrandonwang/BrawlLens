@@ -26,7 +26,12 @@ export async function fetchPlayerResponse(tag: string, init?: NextFetchOptions):
   const proxyUrl = playerProxyUrl()
 
   if (proxyUrl) {
-    return fetch(`${proxyUrl.replace(/\/$/, "")}/player/${tag}`, init)
+    const encodedTag = encodeURIComponent(tag)
+    const encodedHashTag = encodeURIComponent(`#${tag}`)
+    const url = proxyUrl.includes("{tag}")
+      ? proxyUrl.replaceAll("{tag}", encodedTag).replaceAll("{hashTag}", encodedHashTag)
+      : `${proxyUrl.replace(/\/$/, "")}/player/${encodedTag}`
+    return fetch(url, init)
   }
 
   const apiKey = brawlApiKey()
