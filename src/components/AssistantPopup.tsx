@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ChangeEvent } from "react"
 import { ArrowUp, Plus, Square, X } from "lucide-react"
+import Image from "next/image"
 import Link from "next/link"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
@@ -273,7 +274,7 @@ export default function AssistantPopup({ open, onClose, pendingQuery, onPendingC
         aria-modal="false"
       >
         <header className="assistant-header">
-          <img src="/ai-sparkle-512.png" alt="AI Assistant" width={28} height={28} className="assistant-header-logo" />
+          <Image src="/ai-sparkle-512.png" alt="AI Assistant" width={28} height={28} className="assistant-header-logo" />
           <div className="assistant-header-text">
             <span className="assistant-title">Assistant</span>
           </div>

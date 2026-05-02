@@ -32,7 +32,7 @@ interface Props {
   onToggleCompare: (b: Brawler) => void
 }
 
-const CARD_HEIGHT = 210
+const CARD_HEIGHT = 216
 
 export default function BrawlerCatalog({ brawlers, stats, selectedForCompare, onSelect, onToggleCompare }: Props) {
   if (brawlers.length === 0) {
@@ -93,7 +93,7 @@ export default function BrawlerCatalog({ brawlers, stats, selectedForCompare, on
                     priority={index < 18}
                   />
                 </div>
-                <div className="px-1 pt-2.5 pb-2">
+                <div className="px-1 pt-2.5 pb-3.5">
                   <span className="block truncate text-center text-[14px] font-semibold tracking-[-0.016em] text-[var(--ink)]">
                     {brawler.name}
                   </span>

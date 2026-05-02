@@ -26,7 +26,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body
         suppressHydrationWarning
-        className="flex flex-col min-h-dvh overflow-y-auto"
+        className="flex min-h-dvh flex-col overflow-x-hidden overflow-y-auto"
       >
         <MenuProvider>
           <TopLoader />

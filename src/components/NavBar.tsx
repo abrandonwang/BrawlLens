@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef, useCallback, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { Menu, Search, X } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import AssistantPopup from "./AssistantPopup";
@@ -296,7 +297,7 @@ export default function NavBar() {
             aria-label="Ask AI assistant"
             aria-expanded={isAssistantOpen}
           >
-            <img src="/ai-sparkle-512.png" alt="AI Assistant" width={32} height={32}/>
+            <Image src="/ai-sparkle-512.png" alt="AI Assistant" width={32} height={32} />
           </button>
           <button className="lovable-menu-button" onClick={toggleMenu} aria-label="Menu" aria-expanded={isMenuOpen}>
             {isMenuOpen ? <X size={15} strokeWidth={1.9} /> : <Menu size={17} strokeWidth={1.8} />}
@@ -397,7 +398,6 @@ export default function NavBar() {
                     type="button"
                     onClick={handlePlayerSearch}
                     onMouseEnter={() => setActiveIndex(0)}
-                    aria-selected={activeIndex === 0}
                     className={`lovable-search-row ${activeIndex === 0 ? "is-active" : ""}`}
                   >
                     <span className="lovable-search-row-content">
@@ -421,7 +421,6 @@ export default function NavBar() {
                         type="button"
                         onClick={() => openCommand(item)}
                         onMouseEnter={() => setActiveIndex(itemIndex)}
-                        aria-selected={isActiveRow}
                         className={`lovable-search-row ${isActiveRow ? "is-active" : ""}`}
                       >
                         <span className="lovable-search-row-content">

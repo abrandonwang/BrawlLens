@@ -300,7 +300,7 @@ export default async function PlayerProfile({ params }: { params: Promise<{ tag:
             </div>
           </div>
 
-          <div className="relative z-0 grid grid-cols-2 gap-2">
+          <div className="relative z-0 grid grid-cols-2 gap-2 max-[420px]:grid-cols-1">
             {stats.map(stat => (
               <div key={stat.label} className="rounded-lg border border-[var(--line)] bg-[var(--panel-2)] p-4">
                 <div className="mb-5 text-[12px] font-medium text-[var(--ink-3)]">{stat.label}</div>
@@ -314,12 +314,12 @@ export default async function PlayerProfile({ params }: { params: Promise<{ tag:
 
       <section className="mb-5 grid gap-5 lg:grid-cols-[minmax(0,1.3fr)_minmax(320px,0.7fr)]">
         <div className="rounded-lg border border-[var(--line)] bg-[var(--panel)] p-5 shadow-[var(--shadow-lift)]">
-          <div className="mb-4 flex items-center justify-between gap-4">
-            <div>
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div className="min-w-0">
               <h2 className="m-0 text-[18px] font-semibold tracking-[-0.012em] text-[var(--ink)]">Roster curve</h2>
               <p className="m-0 mt-1 text-[12px] text-[var(--ink-4)]">Top brawlers by current trophies.</p>
             </div>
-            <span className="rounded-full border border-[var(--line)] bg-[var(--panel-2)] px-3 py-1 text-[11px] font-medium text-[var(--ink-3)]">
+            <span className="shrink-0 rounded-full border border-[var(--line)] bg-[var(--panel-2)] px-3 py-1 text-[11px] font-medium text-[var(--ink-3)]">
               Avg top 8: {fmt(Math.round(avgTopTrophies))}
             </span>
           </div>
