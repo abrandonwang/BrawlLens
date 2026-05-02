@@ -14,6 +14,14 @@ const navItems = [
   { label: "About",        href: "/about" },
 ];
 
+const menuOverlayBackground = `
+  linear-gradient(180deg, var(--bg) 0, var(--bg) 64px, color-mix(in srgb, var(--bg) 88%, #eff8ff 12%) 132px, color-mix(in srgb, var(--bg) 70%, transparent) 260px, transparent 520px),
+  radial-gradient(ellipse 920px 520px at 68% 20%, rgba(186, 230, 253, 0.36) 0%, rgba(224, 242, 254, 0.22) 44%, transparent 76%),
+  radial-gradient(ellipse 760px 560px at 8% 42%, rgba(221, 214, 254, 0.40) 0%, rgba(237, 233, 254, 0.22) 48%, transparent 78%),
+  radial-gradient(ellipse 620px 560px at 92% 72%, rgba(207, 250, 254, 0.30) 0%, transparent 72%),
+  linear-gradient(180deg, var(--bg) 0%, #f7f6fb 34%, #eef9fb 70%, #f4efff 100%)
+`;
+
 type CommandItem = {
   label: string;
   href: string;
@@ -301,7 +309,7 @@ export default function NavBar() {
           className="nav-menu-overlay"
           style={{
             position: "fixed", inset: 0, zIndex: 90,
-            background: "var(--bg)",
+            background: menuOverlayBackground,
             display: "flex", flexDirection: "column",
             animation: menuClosing
               ? "menuOverlayOut 0.38s cubic-bezier(0.4,0,1,1) forwards"

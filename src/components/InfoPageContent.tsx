@@ -126,7 +126,7 @@ export function AboutContent() {
             <span className="text-[var(--ink)]">About</span>
           </nav>
 
-          <h1 id="introduction" className="scroll-mt-20 text-[30px] font-semibold leading-[1.1] tracking-[-0.025em] text-[var(--ink)]">
+          <h1 id="introduction" className="scroll-mt-20 text-[28px] font-semibold leading-[1.1] tracking-[-0.025em] text-[var(--ink)]">
             About BrawlLens
           </h1>
           <p className="mt-2 text-[15px] leading-[1.55] text-[var(--ink-3)]">
@@ -154,11 +154,11 @@ export function AboutContent() {
           <Section id="data-sources" title="Data Sources">
             <P>BrawlLens combines public game data, static brawler metadata, live rotation context, and tracked battle aggregates. Each surface uses the source that best matches the metric being shown.</P>
             <UL>
-              <Li><B>Brawler catalog</B> — static metadata for names, icons, classes, rarities, and ability references.</Li>
-              <Li><B>Player and leaderboard data</B> — public game endpoints. Trophy values are ordering fields, not performance rates.</Li>
-              <Li><B>Map statistics</B> — tracked battle rows grouped by map, mode, and brawler before rates are calculated.</Li>
-              <Li><B>Rotation data</B> — used for live labels and map context only, not as a substitute for battle volume.</Li>
-              <Li><B>Normalization</B> — names and modes are normalized so display labels, route parameters, and aggregate rows resolve to the same entity.</Li>
+              <Li><B>Brawler catalog</B> - static metadata for names, icons, classes, rarities, and ability references.</Li>
+              <Li><B>Player and leaderboard data</B> - public game endpoints. Trophy values are ordering fields, not performance rates.</Li>
+              <Li><B>Map statistics</B> - tracked battle rows grouped by map, mode, and brawler before rates are calculated.</Li>
+              <Li><B>Rotation data</B> - used for live labels and map context only, not as a substitute for battle volume.</Li>
+              <Li><B>Normalization</B> - names and modes are normalized so display labels, route parameters, and aggregate rows resolve to the same entity.</Li>
             </UL>
           </Section>
 
@@ -176,50 +176,50 @@ export function AboutContent() {
             </UL>
             <H3>Other rules</H3>
             <UL>
-              <Li><B>Qualifying thresholds</B> — minimum pick floors keep single-match outliers out of banner slots.</Li>
-              <Li><B>Map spotlight</B> — the Maps banner uses the most-played tracked map, with the highest qualifying win rate as its supporting stat.</Li>
-              <Li><B>Leaderboard top three</B> — ranking order follows trophies; the larger top-three treatment is visual emphasis only.</Li>
-              <Li><B>Display formatting</B> — large counts may be abbreviated for readability; underlying ordering uses the numeric value.</Li>
+              <Li><B>Qualifying thresholds</B> - minimum pick floors keep single-match outliers out of banner slots.</Li>
+              <Li><B>Map spotlight</B> - the Maps banner uses the most-played tracked map, with the highest qualifying win rate as its supporting stat.</Li>
+              <Li><B>Leaderboard top three</B> - ranking order follows trophies; the larger top-three treatment is visual emphasis only.</Li>
+              <Li><B>Display formatting</B> - large counts may be abbreviated for readability; underlying ordering uses the numeric value.</Li>
             </UL>
           </Section>
 
           <Section id="metric-notes" title="Metric Notes">
             <P>How to read the numbers. The stats are designed for fast comparison, not perfect prediction.</P>
             <UL>
-              <Li><B>Aggregation order</B> — counts are summed before rates are calculated so a 10-pick row and a 1,000-pick row do not contribute equally.</Li>
-              <Li><B>Sample floors</B> — highlights can require a minimum number of picks. This is a guardrail against small samples, not a claim that the remaining data is perfect.</Li>
-              <Li><B>Ranking fields</B> — leaderboards use trophies; meta surfaces use picks, wins, win rate, or blended score depending on the control selected.</Li>
-              <Li><B>Display values</B> — abbreviated labels like <Code>2.7k</Code> are for readability. Score and ordering use the underlying numeric value.</Li>
-              <Li><B>Interpretation</B> — a high win rate does not automatically mean a brawler is universally best. Map shape, mode, team composition, pick volume, and sample size all affect the reading.</Li>
+              <Li><B>Aggregation order</B> - counts are summed before rates are calculated so a 10-pick row and a 1,000-pick row do not contribute equally.</Li>
+              <Li><B>Sample floors</B> - highlights can require a minimum number of picks. This is a guardrail against small samples, not a claim that the remaining data is perfect.</Li>
+              <Li><B>Ranking fields</B> - leaderboards use trophies; meta surfaces use picks, wins, win rate, or blended score depending on the control selected.</Li>
+              <Li><B>Display values</B> - abbreviated labels like <Code>2.7k</Code> are for readability. Score and ordering use the underlying numeric value.</Li>
+              <Li><B>Interpretation</B> - a high win rate does not automatically mean a brawler is universally best. Map shape, mode, team composition, pick volume, and sample size all affect the reading.</Li>
             </UL>
           </Section>
 
           <Section id="search-help" title="Search Help">
             <P>Global search works like a small command palette. It is meant for jumping to pages, documentation anchors, leaderboard surfaces, or public player profiles without deciding which navigation path to use first.</P>
             <UL>
-              <Li><B>Commands</B> — search for a page name, a metric name, or a related word. <Code>formula</Code> opens Calculations; <Code>clubs</Code> opens Club Leaderboards.</Li>
-              <Li><B>Player lookup</B> — paste a player tag with or without the <Code>#</Code>. The panel offers a direct profile lookup when the query looks like a tag.</Li>
-              <Li><B>Keyboard flow</B> — arrow keys move through results, Enter opens the highlighted result, Escape closes the panel.</Li>
+              <Li><B>Commands</B> - search for a page name, a metric name, or a related word. <Code>formula</Code> opens Calculations; <Code>clubs</Code> opens Club Leaderboards.</Li>
+              <Li><B>Player lookup</B> - paste a player tag with or without the <Code>#</Code>. The panel offers a direct profile lookup when the query looks like a tag.</Li>
+              <Li><B>Keyboard flow</B> - arrow keys move through results, Enter opens the highlighted result, Escape closes the panel.</Li>
             </UL>
           </Section>
 
           <Section id="data-status" title="Data Status">
             <P>Different parts of the site update on different rhythms. The labels on each page should be read as context for the current view, not as a promise that every surface refreshes at the same moment.</P>
             <UL>
-              <Li><B>Static metadata</B> — brawler names, rarities, classes, map names, and images change only when the underlying catalog changes.</Li>
-              <Li><B>Public rankings</B> — leaderboards order from public trophy data. If a row appears stale, retrying the page or switching regions is the safest first check.</Li>
-              <Li><B>Tracked aggregates</B> — map and brawler performance views depend on observed battle rows. Empty states usually mean the current filter does not have enough matching data.</Li>
-              <Li><B>Interface state</B> — recent jumps and similar preferences are stored locally in the browser. They do not require a BrawlLens account.</Li>
+              <Li><B>Static metadata</B> - brawler names, rarities, classes, map names, and images change only when the underlying catalog changes.</Li>
+              <Li><B>Public rankings</B> - leaderboards order from public trophy data. If a row appears stale, retrying the page or switching regions is the safest first check.</Li>
+              <Li><B>Tracked aggregates</B> - map and brawler performance views depend on observed battle rows. Empty states usually mean the current filter does not have enough matching data.</Li>
+              <Li><B>Interface state</B> - recent jumps and similar preferences are stored locally in the browser. They do not require a BrawlLens account.</Li>
             </UL>
           </Section>
 
           <Section id="changelog" title="Changelog">
             <P>High-level product changes so the documentation does not feel detached from the interface.</P>
             <UL>
-              <Li><B>Interface polish</B> — map cards, brawler cards, modals, loading states, and route motion were tightened so navigation feels less abrupt.</Li>
-              <Li><B>Search</B> — global search behaves like a command palette with grouped destinations, keyboard navigation, and player tag lookup.</Li>
-              <Li><B>Ranking emphasis</B> — leaderboard top-three rows share a hover and emphasis system while preserving trophy-based ordering.</Li>
-              <Li><B>Documentation</B> — the About page was rebuilt as a text-first reference for calculations, data interpretation, privacy, contact, and feature help.</Li>
+              <Li><B>Interface polish</B> - map cards, brawler cards, modals, loading states, and route motion were tightened so navigation feels less abrupt.</Li>
+              <Li><B>Search</B> - global search behaves like a command palette with grouped destinations, keyboard navigation, and player tag lookup.</Li>
+              <Li><B>Ranking emphasis</B> - leaderboard top-three rows share a hover and emphasis system while preserving trophy-based ordering.</Li>
+              <Li><B>Documentation</B> - the About page was rebuilt as a text-first reference for calculations, data interpretation, privacy, contact, and feature help.</Li>
             </UL>
           </Section>
 

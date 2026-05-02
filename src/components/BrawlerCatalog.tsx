@@ -11,7 +11,7 @@ function sanitizeColor(color: string): string {
 }
 
 function formatPicks(picks: number | null | undefined) {
-  if (!picks) return "—"
+  if (!picks) return "-"
   return picks >= 1000 ? `${(picks / 1000).toFixed(1)}k` : String(picks)
 }
 
@@ -101,7 +101,7 @@ export default function BrawlerCatalog({ brawlers, stats, selectedForCompare, on
                     <div className="min-w-0">
                       <span className="block text-[10px] font-normal tracking-[-0.01em] text-[var(--ink-4)]">Win</span>
                       <strong className="block text-[12px] leading-tight" style={{ color: winRate != null ? winRateColor(winRate) : "var(--ink-4)" }}>
-                        {winRate != null ? `${winRate.toFixed(1)}%` : "—"}
+                        {winRate != null ? `${winRate.toFixed(1)}%` : "-"}
                       </strong>
                     </div>
                     <div className="min-w-0 text-right">

@@ -1760,7 +1760,7 @@ body {
   color: var(--ink-3);
 }
 
-.bl-h-display { font-size: 56px; line-height: 1; letter-spacing: 0; font-weight: 600; }
+.bl-h-display { font-size: 48px; line-height: 1; letter-spacing: 0; font-weight: 600; }
 .bl-h1 { font-size: 40px; line-height: 1.1; letter-spacing: 0; font-weight: 600; }
 .bl-h2 { font-size: 28px; line-height: 1.15; letter-spacing: 0; font-weight: 600; }
 .bl-h3 { font-size: 17px; line-height: 1.25; letter-spacing: 0; font-weight: 600; }

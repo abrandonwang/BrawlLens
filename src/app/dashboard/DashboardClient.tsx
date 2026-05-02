@@ -155,7 +155,7 @@ export default function DashboardClient() {
       <div className="relative z-[1] mx-auto w-full max-w-[1220px] px-6 pb-20 pt-10 max-md:px-4 max-md:pt-7 max-sm:px-3.5 max-sm:pb-14">
         <div className="mb-5 grid grid-cols-[minmax(0,1fr)_auto] items-end gap-5 max-md:grid-cols-1 max-md:items-start">
           <div className="min-w-0">
-            <h1 className="m-0 text-[clamp(30px,9vw,52px)] font-semibold leading-none tracking-[-0.024em] text-[var(--ink)]">
+            <h1 className="m-0 text-[clamp(28px,7vw,46px)] font-semibold leading-none tracking-[-0.024em] text-[var(--ink)]">
               Dashboard
             </h1>
             <p className="m-0 mt-3 max-w-none whitespace-nowrap text-[15px] leading-[1.55] text-[var(--ink-3)] max-xl:whitespace-normal">
@@ -176,9 +176,9 @@ export default function DashboardClient() {
           {[
             { label: "Tracked battles", value: loading ? null : formatNum(totalBattles) },
             { label: "Maps indexed", value: loading ? null : String(totalMaps) },
-            { label: "Top mode", value: loading ? null : topMode ? getModeName(topMode.mode) : "—" },
-            { label: "Top player", value: loading ? null : landing?.player ? landing.player.name : "—" },
-            { label: "Top club", value: loading ? null : landing?.club ? landing.club.name : "—" },
+            { label: "Top mode", value: loading ? null : topMode ? getModeName(topMode.mode) : "-" },
+            { label: "Top player", value: loading ? null : landing?.player ? landing.player.name : "-" },
+            { label: "Top club", value: loading ? null : landing?.club ? landing.club.name : "-" },
           ].map(item => (
               <article key={item.label} className="min-h-[78px] rounded-lg border border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_88%,transparent)] p-3.5 backdrop-blur-xl">
                 <div className="mb-3 text-[12px] text-[var(--ink-4)]">{item.label}</div>
@@ -343,11 +343,11 @@ export default function DashboardClient() {
                 <div className="mt-4 grid grid-cols-2 gap-2 max-[360px]:grid-cols-1">
                   <div className="rounded-md border border-[var(--line)] bg-[var(--panel-2)] p-3">
                     <div className="text-[11px] text-[var(--ink-4)]">Score</div>
-                    <div className="mt-1 text-[17px] font-semibold text-[var(--ink)]">{brawlerForCard.score ? brawlerForCard.score.toFixed(1) : "—"}</div>
+                    <div className="mt-1 text-[17px] font-semibold text-[var(--ink)]">{brawlerForCard.score ? brawlerForCard.score.toFixed(1) : "-"}</div>
                   </div>
                   <div className="rounded-md border border-[var(--line)] bg-[var(--panel-2)] p-3">
                     <div className="text-[11px] text-[var(--ink-4)]">Picks</div>
-                    <div className="mt-1 text-[17px] font-semibold text-[var(--ink)]">{brawlerForCard.picks ? formatNum(brawlerForCard.picks) : "—"}</div>
+                    <div className="mt-1 text-[17px] font-semibold text-[var(--ink)]">{brawlerForCard.picks ? formatNum(brawlerForCard.picks) : "-"}</div>
                   </div>
                 </div>
                 {brawlerForCard.bestMap && (

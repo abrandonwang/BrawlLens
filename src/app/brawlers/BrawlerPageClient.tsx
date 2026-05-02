@@ -42,7 +42,7 @@ type CatalogSort = "name" | "winRate" | "picks" | "recentBuffs"
 type MapSort = "winRate" | "picks" | "map" | "mode"
 
 function formatPicks(picks: number | null | undefined) {
-  if (!picks) return "—"
+  if (!picks) return "-"
   return picks >= 1000 ? `${(picks / 1000).toFixed(1)}k` : String(picks)
 }
 
@@ -221,7 +221,7 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
       <div className="mx-auto w-full max-w-[1080px] px-6 pt-12 pb-24 max-md:px-4 max-md:pt-8 max-md:pb-[64px] max-[360px]:px-3 max-[360px]:pt-6 max-[360px]:pb-12">
         <div className="mb-8 flex items-end justify-between gap-8 max-md:flex-col max-md:items-start">
           <div className="min-w-0">
-            <h1 className="m-0 text-[clamp(31px,4.7vw,52px)] leading-[1.07] font-semibold tracking-[-0.01em] text-[var(--ink)]">Brawlers</h1>
+            <h1 className="m-0 text-[clamp(28px,4.1vw,46px)] leading-[1.07] font-semibold tracking-[-0.01em] text-[var(--ink)]">Brawlers</h1>
             <p className="mt-3 mb-0 max-w-[640px] text-[17px] leading-[1.47] tracking-[-0.022em] text-[var(--ink-3)]">Browse every brawler, filter by rarity, and open quick ability and meta details.</p>
           </div>
           <div className="flex flex-wrap justify-end gap-2 max-md:justify-start">
@@ -253,15 +253,15 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
           <div className="grid min-w-[min(420px,48%)] grid-cols-3 gap-2 max-md:min-w-0">
             <div className="page-summary-stat">
               <span>Overall score</span>
-              <strong>{topBrawler ? topBrawler.score.toFixed(1) : "—"}</strong>
+              <strong>{topBrawler ? topBrawler.score.toFixed(1) : "-"}</strong>
             </div>
             <div className="page-summary-stat">
               <span>Win rate</span>
-              <strong>{topBrawler ? `${topBrawler.winRate.toFixed(1)}%` : "—"}</strong>
+              <strong>{topBrawler ? `${topBrawler.winRate.toFixed(1)}%` : "-"}</strong>
             </div>
             <div className="page-summary-stat">
               <span>Stability</span>
-              <strong>{topBrawler ? `${topBrawler.consistency.toFixed(0)}%` : "—"}</strong>
+              <strong>{topBrawler ? `${topBrawler.consistency.toFixed(0)}%` : "-"}</strong>
             </div>
           </div>
         </div>
@@ -396,7 +396,7 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
                     <div className="grid grid-cols-3 gap-2">
                       <div className="rounded-lg border border-[var(--line)] bg-[var(--panel-2)] px-2 py-2">
                         <span className="block text-[9.5px] uppercase text-[var(--ink-4)]">Win</span>
-                        <strong className="text-[12px]" style={{ color: stat?.winRate != null ? winRateColor(stat.winRate) : "var(--ink-4)" }}>{stat?.winRate != null ? `${stat.winRate.toFixed(1)}%` : "—"}</strong>
+                        <strong className="text-[12px]" style={{ color: stat?.winRate != null ? winRateColor(stat.winRate) : "var(--ink-4)" }}>{stat?.winRate != null ? `${stat.winRate.toFixed(1)}%` : "-"}</strong>
                       </div>
                       <div className="rounded-lg border border-[var(--line)] bg-[var(--panel-2)] px-2 py-2">
                         <span className="block text-[9.5px] uppercase text-[var(--ink-4)]">Picks</span>
@@ -404,7 +404,7 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
                       </div>
                       <div className="rounded-lg border border-[var(--line)] bg-[var(--panel-2)] px-2 py-2">
                         <span className="block text-[9.5px] uppercase text-[var(--ink-4)]">Maps</span>
-                        <strong className="text-[12px] text-[var(--ink)]">{stat?.mapCount ?? "—"}</strong>
+                        <strong className="text-[12px] text-[var(--ink)]">{stat?.mapCount ?? "-"}</strong>
                       </div>
                     </div>
                     <div className="mt-3 min-h-8 text-[11.5px] leading-snug text-[var(--ink-3)]">
@@ -491,18 +491,18 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
                       {[
                         {
                           label: "Total Picks",
-                          value: statsLoading ? "—" : stats?.totalPicks
+                          value: statsLoading ? "-" : stats?.totalPicks
                             ? stats.totalPicks >= 1000 ? `${(stats.totalPicks / 1000).toFixed(1)}k` : String(stats.totalPicks)
-                            : "—",
+                            : "-",
                         },
                         {
                           label: "Avg Win Rate",
-                          value: statsLoading ? "—" : stats?.avgWinRate != null ? `${stats.avgWinRate.toFixed(1)}%` : "—",
+                          value: statsLoading ? "-" : stats?.avgWinRate != null ? `${stats.avgWinRate.toFixed(1)}%` : "-",
                           color: stats?.avgWinRate != null ? winRateColor(stats.avgWinRate) : undefined,
                         },
                         {
                           label: "Maps Tracked",
-                          value: statsLoading ? "—" : stats ? String(stats.maps.length) : "—",
+                          value: statsLoading ? "-" : stats ? String(stats.maps.length) : "-",
                         },
                       ].map(s => (
                         <div key={s.label} style={{ background: "var(--panel-2)", border: "1px solid var(--line)", borderRadius: 10, padding: "12px 14px" }}>

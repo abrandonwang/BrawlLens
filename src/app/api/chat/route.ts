@@ -12,7 +12,7 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_KEY!
 )
 
-const SYSTEM_PROMPT = `You are BrawlLens AI, an assistant built into BrawlLens — a Brawl Stars analytics platform powered by real battle data from top-ranked players across 6 regions (NA, EU, ASIA, KR, BR, DE). The platform tracks competitive ladder statistics, win rates, pick rates, map meta, leaderboards, and brawler performance data.
+const SYSTEM_PROMPT = `You are BrawlLens AI, an assistant built into BrawlLens - a Brawl Stars analytics platform powered by real battle data from top-ranked players across 6 regions (NA, EU, ASIA, KR, BR, DE). The platform tracks competitive ladder statistics, win rates, pick rates, map meta, leaderboards, and brawler performance data.
 
 Your tools provide real data. Always use them when asked about:
 - Brawler performance, win rates, or pick rates across maps
@@ -34,7 +34,7 @@ Navigation guidance:
 - When a user mentions a player tag (format: #ALPHANUMERIC) or asks about a specific player's stats, use get_player_info and then suggest [Player Profile](/player/[tag]).
 - When they ask about brawler matchups or performance on specific maps, use get_map_brawler_stats or get_brawler_stats.
 
-Formatting rules — follow these exactly:
+Formatting rules - follow these exactly:
 - No emojis (unless used in player names, club names, or official game content).
 - No exclamation marks.
 - Use **bold** only for: player names, brawler names, club names, and map names.
@@ -194,7 +194,7 @@ async function executeTool(name: string, input: Record<string, string>): Promise
     if (!data?.length) return `No leaderboard data found for region "${region}".`
 
     const lines = data.map(r =>
-      `#${r.rank} ${r.player_name} (${r.player_tag}) — ${r.trophies.toLocaleString()} trophies${r.club_name ? ` [${r.club_name}]` : ""}`
+      `#${r.rank} ${r.player_name} (${r.player_tag}) - ${r.trophies.toLocaleString()} trophies${r.club_name ? ` [${r.club_name}]` : ""}`
     ).join("\n")
     return `Top ${data.length} players in ${region.toUpperCase()} leaderboard:\n${lines}`
   }
@@ -240,7 +240,7 @@ ${top}`
     if (!data?.length) return `No club leaderboard data found for region "${region}".`
 
     const lines = data.map(r =>
-      `#${r.rank} ${r.club_name} (${r.club_tag}) — ${r.trophies.toLocaleString()} trophies, ${r.member_count} members`
+      `#${r.rank} ${r.club_name} (${r.club_tag}) - ${r.trophies.toLocaleString()} trophies, ${r.member_count} members`
     ).join("\n")
     return `Top ${data.length} clubs in ${region.toUpperCase()} leaderboard:\n${lines}`
   }
@@ -259,7 +259,7 @@ ${top}`
 
     const brawlerName = data[0].brawler_name
     const lines = data.map(r =>
-      `#${r.rank} ${r.player_name} (${r.player_tag}) — ${r.trophies.toLocaleString()} trophies${r.club_name ? ` [${r.club_name}]` : ""}`
+      `#${r.rank} ${r.player_name} (${r.player_tag}) - ${r.trophies.toLocaleString()} trophies${r.club_name ? ` [${r.club_name}]` : ""}`
     ).join("\n")
     return `Top ${data.length} players for ${brawlerName} (global):\n${lines}`
   }

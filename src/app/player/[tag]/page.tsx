@@ -15,7 +15,7 @@ export async function generateMetadata(
 ): Promise<Metadata> {
   const { tag: rawTag } = await params
   const tag = sanitizePlayerTag(decodeURIComponent(rawTag))
-  if (!tag) return { title: "Player - BrawlLens" }
+  if (!tag) return { title: "Player | BrawlLens" }
 
   try {
     const res = await fetchPlayerResponse(tag, { next: { revalidate: 300 } })
@@ -25,13 +25,13 @@ export async function generateMetadata(
     const trophies = data?.trophies ?? 0
     const description = `${name} (#${tag}) - ${trophies.toLocaleString()} trophies on BrawlLens.`
     return {
-      title: `${name} - BrawlLens`,
+      title: `${name} | BrawlLens`,
       description,
       openGraph: { title: `${name} (#${tag})`, description, type: "profile" },
     }
   } catch {
     return {
-      title: `Player #${tag} - BrawlLens`,
+      title: `Player #${tag} | BrawlLens`,
       description: `BrawlLens profile lookup for player #${tag}.`,
     }
   }
@@ -286,7 +286,7 @@ export default async function PlayerProfile({ params }: { params: Promise<{ tag:
                 </span>
               )}
             </div>
-            <h1 className="relative z-20 m-0 max-w-full overflow-hidden text-ellipsis whitespace-nowrap pb-2 text-[clamp(42px,7vw,78px)] font-semibold leading-[1.08] tracking-[-0.025em] text-[var(--ink)]">
+            <h1 className="relative z-20 m-0 max-w-full overflow-hidden text-ellipsis whitespace-nowrap pb-2 text-[clamp(38px,6vw,68px)] font-semibold leading-[1.08] tracking-[-0.025em] text-[var(--ink)]">
               {player.name}
             </h1>
             <p className="mt-2 max-w-[660px] text-[16px] leading-[1.55] text-[var(--ink-3)]">

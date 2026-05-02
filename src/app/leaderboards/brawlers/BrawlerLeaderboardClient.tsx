@@ -95,7 +95,7 @@ export default function BrawlerLeaderboardClient({
     <div className="mx-auto w-full max-w-[1080px] px-6 pt-12 pb-24 max-md:px-4 max-md:pt-8 max-md:pb-[64px] max-[480px]:pt-6 max-[480px]:pb-12">
       <div className="mb-8 flex items-end justify-between gap-8 max-md:flex-col max-md:items-start">
         <div className="min-w-0">
-          <h1 className="m-0 text-[clamp(31px,4.7vw,52px)] leading-[1.07] font-semibold tracking-[-0.01em] text-[var(--ink)]">Brawler Leaderboards</h1>
+          <h1 className="m-0 text-[clamp(28px,4.1vw,46px)] leading-[1.07] font-semibold tracking-[-0.01em] text-[var(--ink)]">Brawler Leaderboards</h1>
           <p className="mt-3 mb-0 max-w-[640px] text-[17px] leading-[1.47] tracking-[-0.022em] text-[var(--ink-3)]">Pick a brawler to see the highest-ranked players using that brawler worldwide.</p>
         </div>
         <div className="flex flex-wrap justify-end gap-2 max-md:justify-start">
@@ -205,7 +205,7 @@ export default function BrawlerLeaderboardClient({
               </div>
               <div className="min-w-0 rounded-[10px] border border-white/20 bg-black/30 px-3 py-2.5 backdrop-blur-xl">
                 <span className="text-[10.5px] text-white/70">Leader</span>
-                <strong className="mt-0.5 block truncate text-[13px] font-bold text-white">{data[0]?.player_name ?? "—"}</strong>
+                <strong className="mt-0.5 block truncate text-[13px] font-bold text-white">{data[0]?.player_name ?? "-"}</strong>
               </div>
               <div className="min-w-0 rounded-[10px] border border-white/20 bg-black/30 px-3 py-2.5 backdrop-blur-xl">
                 <span className="text-[10.5px] text-white/70">Page</span>
@@ -257,7 +257,7 @@ export default function BrawlerLeaderboardClient({
                 </div>
 
                 <span className="leaderboard-secondary truncate text-xs text-[var(--ink-3)] max-md:hidden">
-                  {p.club_name ?? "—"}
+                  {p.club_name ?? "-"}
                 </span>
 
                 <div className="leaderboard-metric flex items-center justify-end">

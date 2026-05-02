@@ -202,7 +202,7 @@ export default function MapsPageClient() {
       <div className="mx-auto w-full max-w-[1080px] px-6 pt-12 pb-24 max-md:px-4 max-md:pt-8 max-md:pb-[64px] max-[480px]:pt-6 max-[480px]:pb-12">
         <div className="mb-8 grid grid-cols-[minmax(0,1fr)_auto] items-end gap-8 max-md:grid-cols-1 max-md:items-start">
           <div className="min-w-0">
-            <h1 className="m-0 text-[clamp(31px,4.7vw,52px)] leading-[1.07] font-semibold tracking-[-0.01em] text-[var(--ink)]">Maps</h1>
+            <h1 className="m-0 text-[clamp(28px,4.1vw,46px)] leading-[1.07] font-semibold tracking-[-0.01em] text-[var(--ink)]">Maps</h1>
             <p className="mt-3 mb-0 max-w-none whitespace-nowrap text-[17px] leading-[1.47] tracking-[-0.022em] text-[var(--ink-3)] max-xl:whitespace-normal">Scan live maps and open matchup data for the brawlers performing best on each layout.</p>
           </div>
           <div className="flex flex-wrap justify-end gap-2 max-md:justify-start">
@@ -219,15 +219,15 @@ export default function MapsPageClient() {
           <div className="grid min-w-[min(420px,48%)] grid-cols-3 gap-2 max-md:min-w-0">
             <div className="page-summary-stat">
               <span>Battles</span>
-              <strong>{spotlightMap ? formatNum(spotlightMap.battles) : "—"}</strong>
+              <strong>{spotlightMap ? formatNum(spotlightMap.battles) : "-"}</strong>
             </div>
             <div className="page-summary-stat">
               <span>Mode</span>
-              <strong>{spotlightMap ? getModeName(spotlightMap.mode) : "—"}</strong>
+              <strong>{spotlightMap ? getModeName(spotlightMap.mode) : "-"}</strong>
             </div>
             <div className="page-summary-stat">
               <span>Best brawler</span>
-              <strong>{spotlightTopBrawler ? `${formatBrawlerName(spotlightTopBrawler.name)} - ${spotlightTopBrawler.winRate.toFixed(1)}%` : "—"}</strong>
+              <strong>{spotlightTopBrawler ? `${formatBrawlerName(spotlightTopBrawler.name)} - ${spotlightTopBrawler.winRate.toFixed(1)}%` : "-"}</strong>
             </div>
           </div>
         </div>

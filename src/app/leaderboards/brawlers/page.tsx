@@ -5,10 +5,10 @@ import { createClient } from "@supabase/supabase-js"
 import BrawlerLeaderboardClient from "./BrawlerLeaderboardClient"
 
 export const metadata: Metadata = {
-  title: "Brawler Trophy Leaderboards — BrawlLens",
+  title: "Brawler Trophy Leaderboards | BrawlLens",
   description: "Top trophy holders for every Brawl Stars brawler. Pick a brawler to see who is leading the global trophy race.",
   openGraph: {
-    title: "Brawler Leaderboards — BrawlLens",
+    title: "Brawler Leaderboards | BrawlLens",
     description: "Top trophy holders for every brawler.",
     type: "website",
   },

@@ -5,10 +5,10 @@ import { createClient } from "@supabase/supabase-js"
 import LeaderboardsClient from "../LeaderboardsClient"
 
 export const metadata: Metadata = {
-  title: "Player Leaderboards — BrawlLens",
+  title: "Player Leaderboards | BrawlLens",
   description: "Top Brawl Stars players ranked by trophies across global and regional leaderboards. Open any profile for detailed stats.",
   openGraph: {
-    title: "Player Leaderboards — BrawlLens",
+    title: "Player Leaderboards | BrawlLens",
     description: "Top players ranked by trophies. Global and regional.",
     type: "website",
   },

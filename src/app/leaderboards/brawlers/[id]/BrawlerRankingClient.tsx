@@ -39,7 +39,7 @@ export default function BrawlerRankingClient({ data, brawlerName }: { data: Play
       <Link href="/leaderboards/brawlers" className="inline-flex items-center gap-1.5 text-xs text-zinc-400 dark:text-white/50 hover:text-zinc-700 dark:hover:text-white/60 transition-colors mb-6">
         <ArrowLeft size={12} /> Brawler Rankings
       </Link>
-      <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-zinc-900 dark:text-white mb-2">{brawlerName}</h1>
+      <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-zinc-900 dark:text-white mb-2">{brawlerName}</h1>
       <p className="text-sm text-zinc-500 dark:text-white/40 mb-10">Top 200 global players ranked by {brawlerName} trophies.</p>
 
       <div className="leaderboard-table space-y-1">
@@ -67,7 +67,7 @@ export default function BrawlerRankingClient({ data, brawlerName }: { data: Play
             </div>
 
             <span className="leaderboard-secondary hidden sm:block text-sm text-zinc-400 truncate max-w-[160px] dark:text-white/50">
-              {player.club_name ?? "—"}
+              {player.club_name ?? "-"}
             </span>
 
             <div className="leaderboard-metric flex items-center justify-end">
