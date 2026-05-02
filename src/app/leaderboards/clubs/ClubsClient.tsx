@@ -122,7 +122,7 @@ export default function ClubsClient({ allData }: { allData: RegionData[] }) {
               </p>
               <h2 className="m-0 truncate text-[28px] leading-[1.15] font-semibold tracking-[-0.01em] text-white">{clubs.length.toLocaleString()} ranked clubs</h2>
             </div>
-            <div className="relative z-10 grid min-w-[min(420px,48%)] grid-cols-3 gap-2 max-md:min-w-0">
+            <div className="relative z-10 grid min-w-[min(420px,48%)] grid-cols-3 gap-2 max-md:min-w-0 max-[420px]:grid-cols-1">
               <div className="min-w-0 rounded-[10px] border border-white/20 bg-black/30 px-3 py-2.5 backdrop-blur-xl">
                 <span className="text-[10.5px] text-white/70">Leader</span>
                 <strong className="mt-0.5 block truncate text-[13px] font-bold text-white">{clubs[0]?.club_name ?? "-"}</strong>

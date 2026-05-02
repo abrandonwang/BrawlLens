@@ -2374,10 +2374,9 @@ html.landing-bg .bl-caption {
   }
   .leaderboard-row {
     grid-template-columns: auto minmax(0, 1fr) auto !important;
-    grid-template-areas:
-      "rank main metric"
-      "rank main arrow";
-    gap: 4px 10px !important;
+    grid-template-areas: "rank main metric";
+    align-items: center;
+    gap: 10px !important;
     padding: 12px !important;
     border: 1px solid var(--line) !important;
     border-radius: 12px;
@@ -2406,23 +2405,15 @@ html.landing-bg .bl-caption {
   }
   .leaderboard-metric {
     grid-area: metric;
-    align-self: end;
-    padding: 3px 0 0 8px;
+    align-self: center;
+    padding: 0;
     white-space: nowrap;
   }
   .leaderboard-metric::after {
-    content: " trophies";
-    margin-left: 2px;
-    font-family: var(--font-geist, system-ui, sans-serif);
-    font-size: 10px;
-    font-weight: 600;
-    color: var(--ink-4);
+    content: none;
   }
   .leaderboard-arrow {
-    grid-area: arrow;
-    justify-self: end;
-    align-self: start;
-    opacity: 0.55;
+    display: none !important;
   }
 
   .map-brawler-row {
