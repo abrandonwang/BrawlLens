@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef, type CSSProperties } from "react"
 import { useSearchParams } from "next/navigation"
+import Link from "next/link"
 import { BarChart3, Info, Search, X } from "lucide-react"
 import BrawlerCatalog, { type CatalogBrawlerStats } from "@/components/BrawlerCatalog"
 import Modal, { ModalCloseButton } from "@/components/Modal"
@@ -243,10 +244,10 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
                 {topBrawler ? (brawlers.find(b => b.id === topBrawler.id)?.name ?? topBrawler.name) : "Loading..."}
               </h2>
               {topBrawler && (
-                <p className="mt-2 mb-0 flex items-center gap-1.5 text-[14px] leading-[1.43] tracking-[-0.016em] text-white/75">
+                <Link href="/calculations" className="mt-2 mb-0 flex items-center gap-1.5 text-[14px] leading-[1.43] tracking-[-0.016em] text-white/75 hover:underline underline-offset-4">
                   <Info size={12} />
-                  Why: score blends win rate, volume, and map stability.
-                </p>
+                  <span>Why: score blends win rate, volume, map stability.</span>
+                </Link>
               )}
             </div>
           </div>

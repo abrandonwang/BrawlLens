@@ -310,7 +310,7 @@ export default function NavBar() {
           className="nav-menu-overlay"
           style={{
             position: "fixed", inset: 0, zIndex: 90,
-            background: menuOverlayBackground,
+            background: "var(--bg)",
             display: "flex", flexDirection: "column",
             animation: menuClosing
               ? "menuOverlayOut 0.38s cubic-bezier(0.4,0,1,1) forwards"
@@ -320,7 +320,7 @@ export default function NavBar() {
           <div style={{ height: 80, flexShrink: 0 }} />
           <div style={{
             flex: 1, display: "flex", flexDirection: "column",
-            justifyContent: "center", padding: "0 36px 80px",
+            justifyContent: "start", padding: "0 36px 80px",
             gap: 4,
           }}>
             {navItems.map((item, i) => (
@@ -336,7 +336,6 @@ export default function NavBar() {
                   color: isActive(item.href) ? "var(--ink)" : "var(--ink-3)",
                   textDecoration: "none",
                   padding: "10px 0",
-                  borderBottom: "1px solid var(--line)",
                   animation: menuClosing
                     ? `menuItemOut 0.28s cubic-bezier(0.4,0,1,1) forwards`
                     : `menuItemIn 0.4s cubic-bezier(0,0,0.2,1) ${i * 55}ms both`,
@@ -352,19 +351,6 @@ export default function NavBar() {
               ? "menuItemOut 0.24s cubic-bezier(0.4,0,1,1) forwards"
               : `menuItemIn 0.4s cubic-bezier(0,0,0.2,1) ${navItems.length * 55 + 40}ms both`,
           }}>
-            <button
-              onClick={() => { closeMenu(); setTimeout(() => setIsSearchOpen(true), 200); }}
-              style={{
-                display: "flex", alignItems: "center", gap: 10,
-                background: "var(--panel)", border: "1px solid var(--line)",
-                borderRadius: 14, padding: "12px 16px", width: "100%",
-                cursor: "pointer", color: "var(--ink-3)", fontSize: 13,
-                fontFamily: "inherit", fontWeight: 500,
-              }}
-            >
-              <Search size={14} strokeWidth={1.8} />
-              Search or look up a player…
-            </button>
           </div>
         </div>
       )}
