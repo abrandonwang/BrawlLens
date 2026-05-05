@@ -14,6 +14,14 @@ const navItems = [
   { label: "About",        href: "/about" },
 ];
 
+const navMenuCopy: Record<string, string> = {
+  Dashboard: "Daily signals and quick reads",
+  Brawlers: "Stats, abilities, and meta context",
+  Maps: "Modes, layouts, and matchup data",
+  Leaderboards: "Players, clubs, and brawler rankings",
+  About: "Docs, formulas, and contact",
+};
+
 const navIconButtonClass = "grid size-9 cursor-pointer place-items-center rounded-full border-0 bg-transparent text-[var(--ink-3)] hover:text-[var(--ink)]";
 const searchRowBaseClass = "flex w-full cursor-pointer items-center gap-3 rounded-[9px] border-0 bg-transparent px-2.5 py-[9px] text-left font-inherit text-[var(--ink)] transition-colors duration-100";
 
@@ -292,7 +300,7 @@ export default function NavBar() {
           <button
             type="button"
             onClick={() => setIsAssistantOpen(o => !o)}
-            className={`flex h-[34px] cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-md border-0 bg-[#1c1c1c] px-3.5 text-[13px] font-normal text-[#fcfbf8] shadow-[var(--shadow-lift)] transition-opacity duration-150 hover:opacity-85 max-sm:hidden ${isAssistantOpen ? "opacity-70" : ""}`}
+            className={`flex h-[34px] cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-md border-0 bg-[#1c1c1c] px-3.5 text-[13px] font-normal text-[#fcfbf8] shadow-[var(--shadow-lift)] transition-opacity duration-150 hover:opacity-85 max-[380px]:px-2.5 max-[380px]:text-[12px] ${isAssistantOpen ? "opacity-70" : ""}`}
             aria-label="Ask AI assistant"
             aria-expanded={isAssistantOpen}
           >
@@ -306,72 +314,35 @@ export default function NavBar() {
       <div style={{ height: 64 }} />
       {menuVisible && (
         <div
-          className="nav-menu-overlay"
+          className="fixed inset-0 z-[90] bg-[color-mix(in_srgb,var(--bg)_72%,transparent)] px-3 pt-[76px] pb-4 backdrop-blur-[14px] backdrop-saturate-[140%]"
           style={{
-            position: "fixed", inset: 0, zIndex: 90,
-            background: "var(--bg)",
-            display: "flex", flexDirection: "column",
             animation: menuClosing
               ? "menuOverlayOut 0.38s cubic-bezier(0.4,0,1,1) forwards"
               : "menuOverlayIn 0.32s cubic-bezier(0,0,0.2,1) forwards",
           }}
         >
-          <div style={{ height: 80, flexShrink: 0 }} />
-          <div style={{
-            flex: 1, display: "flex", flexDirection: "column",
-            justifyContent: "start", padding: "0 36px 80px",
-            gap: 4,
-          }}>
-            {navItems.map((item, i) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={closeMenu}
-                style={{
-                  display: "block",
-                  fontSize: 32,
-                  fontWeight: 650,
-                  letterSpacing: "-0.03em",
-                  color: isActive(item.href) ? "var(--ink)" : "var(--ink-3)",
-                  textDecoration: "none",
-                  padding: "10px 0",
-                  animation: menuClosing
-                    ? `menuItemOut 0.28s cubic-bezier(0.4,0,1,1) forwards`
-                    : `menuItemIn 0.4s cubic-bezier(0,0,0.2,1) ${i * 55}ms both`,
-                }}
-              >
-                {item.label}
-              </Link>
-            ))}
-            <button
-              onClick={() => { setIsAssistantOpen(true); closeMenu(); }}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 0,
-                fontSize: 32,
-                fontWeight: 650,
-                letterSpacing: "-0.03em",
-                color: "var(--ink-3)",
-                background: "transparent",
-                border: "none",
-                padding: "10px 0",
-                cursor: "pointer",
-                textAlign: "left",
-                animation: menuClosing
-                  ? `menuItemOut 0.28s cubic-bezier(0.4,0,1,1) forwards`
-                  : `menuItemIn 0.4s cubic-bezier(0,0,0.2,1) ${navItems.length * 55}ms both`,
-              }}
-            >
-              Ask AI
-            </button>
-          </div>
-          <div style={{
-            padding: "24px 36px",
-            animation: menuClosing
-              ? "menuItemOut 0.24s cubic-bezier(0.4,0,1,1) forwards"
-              : `menuItemIn 0.4s cubic-bezier(0,0,0.2,1) ${navItems.length * 55 + 40}ms both`,
-          }}>
+          <div className="mx-auto flex max-h-[calc(100vh-92px)] max-w-[520px] flex-col overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--panel)] p-2 shadow-[0_28px_70px_rgba(0,0,0,0.18)]">
+            <div className="min-h-0 overflow-y-auto p-2">
+              {navItems.map((item, i) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={closeMenu}
+                  className={`flex items-center justify-between gap-4 rounded-xl px-3 py-3 text-inherit no-underline transition-colors ${isActive(item.href) ? "bg-[var(--ink)] text-[#fcfbf8]" : "text-[var(--ink)] hover:bg-[var(--panel-2)]"}`}
+                  style={{
+                    animation: menuClosing
+                      ? "menuItemOut 0.28s cubic-bezier(0.4,0,1,1) forwards"
+                      : `menuItemIn 0.4s cubic-bezier(0,0,0.2,1) ${i * 45}ms both`,
+                  }}
+                >
+                  <span className="min-w-0">
+                    <span className={`block truncate text-[17px] font-semibold ${isActive(item.href) ? "text-[#fcfbf8]" : "text-[var(--ink)]"}`}>{item.label}</span>
+                    <span className={`mt-0.5 block truncate text-[12px] ${isActive(item.href) ? "text-[#fcfbf8]/70" : "text-[var(--ink-4)]"}`}>{navMenuCopy[item.label]}</span>
+                  </span>
+                  <span className={`grid size-7 shrink-0 place-items-center rounded-full text-[15px] ${isActive(item.href) ? "bg-[#fcfbf8]/14" : "bg-[var(--panel-2)] text-[var(--ink-3)]"}`}>&rarr;</span>
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
       )}

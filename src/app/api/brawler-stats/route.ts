@@ -35,6 +35,20 @@ export async function GET(request: Request) {
       winRate: Number(r.win_rate),
     }))
   const maps = allMaps.slice(0, 15)
+  let cumulativePicks = 0
+  let cumulativeWins = 0
+  const trend7 = [...allMaps]
+    .sort((a, b) => b.picks - a.picks)
+    .slice(0, 12)
+    .map((map, index, source) => {
+      cumulativePicks += map.picks
+      cumulativeWins += map.wins
+      return {
+        label: index === 0 ? "Top map" : index === source.length - 1 ? `${index + 1} maps` : `${index + 1}`,
+        winRate: cumulativePicks > 0 ? (cumulativeWins / cumulativePicks) * 100 : 0,
+        picks: cumulativePicks,
+      }
+    })
   const histogram = allMaps.reduce<number[]>((buckets, map) => {
     const index = Math.max(0, Math.min(4, Math.floor(map.winRate / 20)))
     buckets[index] += 1
@@ -57,7 +71,7 @@ export async function GET(request: Request) {
     .filter(m => m.picks >= 10)
     .sort((a, b) => b.winRate - a.winRate)
 
-  const res = NextResponse.json({ totalPicks, avgWinRate, maps, modes, histogram, trend7: [], trend30: [] })
+  const res = NextResponse.json({ totalPicks, avgWinRate, maps, modes, histogram, trend7, trend30: trend7 })
   res.headers.set("Cache-Control", "s-maxage=300, stale-while-revalidate=600")
   return res
 }

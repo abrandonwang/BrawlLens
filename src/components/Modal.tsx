@@ -1,8 +1,8 @@
 "use client"
 
-import { useEffect, useId, useRef, type ReactNode } from "react"
+import { useEffect, useId, useRef, type ComponentType, type ReactNode } from "react"
 import { createPortal } from "react-dom"
-import { X } from "lucide-react"
+import { X, type LucideProps } from "lucide-react"
 
 const FOCUSABLE = [
   "a[href]",
@@ -116,10 +116,34 @@ export default function Modal({
   )
 }
 
-export function ModalCloseButton({ onClick, label = "Close" }: { onClick: () => void; label?: string }) {
+export function ModalIconButton({
+  onClick,
+  label,
+  icon: Icon,
+  pressed,
+  className = "",
+  iconClassName = "",
+}: {
+  onClick: () => void
+  label: string
+  icon: ComponentType<LucideProps>
+  pressed?: boolean
+  className?: string
+  iconClassName?: string
+}) {
   return (
-    <button onClick={onClick} className="absolute top-4 right-4 grid size-[34px] cursor-pointer place-items-center rounded-full border border-[var(--line)] bg-[var(--panel-2)] text-[var(--ink-3)] hover:border-[var(--line-2)] hover:bg-[var(--hover-bg)] hover:text-[var(--ink)]" aria-label={label}>
-      <X size={12} />
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      aria-pressed={pressed}
+      className={`group grid size-8 cursor-pointer place-items-center rounded-full border-0 bg-transparent text-[var(--ink-3)] transition-[background,color,transform,opacity] duration-200 ease-out hover:-translate-y-0.5 hover:bg-[color-mix(in_srgb,var(--ink)_6%,transparent)] hover:text-[var(--ink)] active:translate-y-0 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--line-2)] ${className}`}
+    >
+      <Icon size={15} strokeWidth={2} className={`transition-transform duration-200 ease-out group-hover:scale-110 ${iconClassName}`} />
     </button>
   )
+}
+
+export function ModalCloseButton({ onClick, label = "Close" }: { onClick: () => void; label?: string }) {
+  return <ModalIconButton onClick={onClick} label={label} icon={X} className="ml-auto" iconClassName="group-hover:rotate-90" />
 }

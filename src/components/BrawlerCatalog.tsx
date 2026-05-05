@@ -83,15 +83,17 @@ export default function BrawlerCatalog({ brawlers, stats, selectedForCompare, on
                 </span>
 
                 <div className="relative grid h-[130px] place-items-center rounded-[10px] bg-[var(--panel)] px-3 pt-8 pb-1">
-                  <BrawlImage
-                    className="relative z-10 h-[104px] w-[104px] rounded-[7px] border border-[rgba(28,28,28,0.62)] object-contain object-center transition-transform duration-200 group-hover:scale-[1.025]"
-                    src={brawler.imageUrl2}
-                    alt={brawler.name}
-                    width={148}
-                    height={148}
-                    sizes="160px"
-                    priority={index < 18}
-                  />
+                  <div className="relative z-10 size-[108px] overflow-hidden rounded-[9px] border border-[rgba(28,28,28,0.62)] bg-[var(--panel-2)] transition-transform duration-200 group-hover:scale-[1.025]">
+                    <BrawlImage
+                      className="size-full object-cover object-center"
+                      src={brawler.imageUrl2}
+                      alt={brawler.name}
+                      width={148}
+                      height={148}
+                      sizes="160px"
+                      priority={index < 18}
+                    />
+                  </div>
                 </div>
                 <div className="px-1 pt-2.5 pb-3.5">
                   <span className="block truncate text-center text-[14px] font-semibold tracking-[-0.016em] text-[var(--ink)]">

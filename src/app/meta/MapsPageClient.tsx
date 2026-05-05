@@ -3,9 +3,9 @@
 import { useState, useEffect, useRef, useCallback, useMemo, type CSSProperties } from "react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
-import { Info, Maximize2, Minimize2, Search, X } from "lucide-react"
+import { Check, ChevronDown, Info, Maximize2, Minimize2, Search } from "lucide-react"
 import MetaDashboard from "@/components/MetaDashboard"
-import Modal, { ModalCloseButton } from "@/components/Modal"
+import Modal, { ModalCloseButton, ModalIconButton } from "@/components/Modal"
 import { BrawlImage, brawlerIconUrl } from "@/components/BrawlImage"
 import { EmptyState, SkeletonBlock, StateButton } from "@/components/PolishStates"
 import { formatNum, formatBrawlerName, normalizeMapName } from "@/lib/format"
@@ -35,6 +35,7 @@ interface BrawlerStat {
 }
 
 type SortKey = "winRate" | "wins" | "picks"
+const MIN_PICK_OPTIONS = [5, 10, 25, 50, 100] as const
 
 export default function MapsPageClient() {
   const [modes, setModes] = useState<ModeInfo[]>([])
@@ -51,10 +52,11 @@ export default function MapsPageClient() {
   const [sortBy, setSortBy] = useState<SortKey>("winRate")
   const [spotlightTopBrawler, setSpotlightTopBrawler] = useState<{ id: number; name: string; picks: number; winRate: number } | null>(null)
   const [searchOpen, setSearchOpen] = useState(false)
+  const [minPicksOpen, setMinPicksOpen] = useState(false)
   const [mapImageLookup, setMapImageLookup] = useState<Map<string, string>>(new Map())
   const searchInputRef = useRef<HTMLInputElement>(null)
   const searchDropdownRef = useRef<HTMLDivElement>(null)
-  const [zoomMapName, setZoomMapName] = useState<string | null>(null)
+  const minPicksRef = useRef<HTMLDivElement>(null)
   const [mapExpanded, setMapExpanded] = useState(false)
 
   useEffect(() => {
@@ -72,6 +74,7 @@ export default function MapsPageClient() {
   }, [])
 
   useClickOutside([searchDropdownRef, searchInputRef], () => setSearchOpen(false), searchOpen)
+  useClickOutside(minPicksRef, () => setMinPicksOpen(false), minPicksOpen)
 
   useEffect(() => {
     fetch("/api/meta")
@@ -351,24 +354,15 @@ export default function MapsPageClient() {
             <div className="sticky top-0 z-10 shrink-0 bg-[var(--panel)] px-6 pt-5 shadow-[0_1px_0_var(--line)] max-[600px]:px-4 max-[600px]:pt-4">
               <div className="mb-3 flex items-center justify-between gap-2">
                 {selectedMap.imageUrl && (
-                  <button
-                    type="button"
+                  <ModalIconButton
                     onClick={() => setMapExpanded(e => !e)}
-                    className="grid size-8 cursor-pointer place-items-center rounded-full border-0 bg-[var(--ink)] text-[var(--bg)] shadow-[var(--shadow-lift)] transition-colors hover:bg-[var(--accent-focus)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--line-2)]"
-                    aria-label={mapExpanded ? "Collapse map image" : "Expand map image"}
-                    aria-pressed={mapExpanded}
-                  >
-                    {mapExpanded ? <Minimize2 size={14} strokeWidth={2.25} /> : <Maximize2 size={14} strokeWidth={2.25} />}
-                  </button>
+                    label={mapExpanded ? "Collapse map image" : "Expand map image"}
+                    icon={mapExpanded ? Minimize2 : Maximize2}
+                    pressed={mapExpanded}
+                    iconClassName={mapExpanded ? "group-hover:-rotate-6" : "group-hover:rotate-6"}
+                  />
                 )}
-                <button
-                  type="button"
-                  onClick={closeModal}
-                  className="ml-auto grid size-8 cursor-pointer place-items-center rounded-full border-0 bg-[var(--ink)] text-[var(--bg)] shadow-[var(--shadow-lift)] transition-colors hover:bg-[var(--accent-focus)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--line-2)]"
-                  aria-label="Close map details"
-                >
-                  <X size={14} strokeWidth={2.25} />
-                </button>
+                <ModalCloseButton onClick={closeModal} label="Close map details" />
               </div>
 
               <div className="mb-4">
@@ -386,10 +380,10 @@ export default function MapsPageClient() {
                   )}
 
                   <div className="min-w-0 flex-1">
-                    <h2 id="map-modal-title" className="m-0 flex max-w-full flex-wrap items-baseline gap-x-2 gap-y-1 text-[32px] leading-[1.05] font-semibold break-words text-[var(--ink)] max-[600px]:text-[26px]">
+                    <h2 id="map-modal-title" className="m-0 flex max-w-full flex-wrap items-baseline gap-x-2.5 gap-y-0.5 text-[31px] leading-[1.08] font-semibold break-words text-[var(--ink)] max-[600px]:text-[25px]">
                       <span>{selectedMap.name}</span>
-                      <span aria-hidden="true" className="text-[var(--ink-5)]">|</span>
-                      <span className="text-[0.72em] font-normal text-[var(--ink-3)]">{selectedModeLabel}</span>
+                      <span aria-hidden="true" className="font-normal text-[var(--ink-5)]">|</span>
+                      <span className="font-normal text-[var(--ink-2)]">{selectedModeLabel}</span>
                     </h2>
                     <div className="mt-3 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5 text-[12px] text-[var(--ink-4)]">
                       <span className="whitespace-nowrap">
@@ -407,30 +401,72 @@ export default function MapsPageClient() {
                   </div>
                 </div>
               </div>
-              <div className="mb-4 flex items-center gap-2.5 max-[600px]:flex-col max-[600px]:items-stretch">
-                <div className="flex min-h-11 min-w-[220px] flex-[1_1_260px] items-center gap-2.5 rounded-md border border-[var(--line)] bg-[var(--panel)] px-4 text-[var(--ink)] transition-[border-color,box-shadow] focus-within:border-[var(--line-2)] focus-within:shadow-[0_4px_12px_rgba(0,0,0,0.1)] max-[600px]:min-w-0 max-[600px]:basis-auto">
+              <div className={`mb-4 flex gap-2.5 ${mapExpanded ? "flex-col items-stretch" : "items-center max-[720px]:flex-col max-[720px]:items-stretch"}`}>
+                <div className="flex min-h-11 min-w-0 flex-[1_1_260px] items-center gap-2.5 rounded-md border border-[var(--line)] bg-[var(--panel)] px-4 text-[var(--ink)] transition-[border-color,box-shadow] focus-within:border-[var(--line-2)] focus-within:shadow-[0_4px_12px_rgba(0,0,0,0.1)] max-[720px]:basis-auto">
                   <Search size={12} className="shrink-0 text-[var(--ink-4)]" />
                   <input className="w-full border-0 bg-transparent text-[16px] font-[inherit] text-inherit outline-none placeholder:text-[var(--ink-4)]" placeholder="Search brawler…" value={brawlerSearch} onChange={e => setBrawlerSearch(e.target.value)} />
                 </div>
-                <div className="flex min-w-0 flex-none items-center gap-2 max-[600px]:flex-wrap">
-                  <div className="inline-flex max-w-full gap-0.5 overflow-x-auto rounded-lg border border-[var(--line)] bg-[var(--panel)] p-[3px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                <div className={`flex min-w-0 items-center gap-2 ${mapExpanded ? "w-full" : "flex-none max-[720px]:w-full"} max-[420px]:flex-wrap`}>
+                  <div className="inline-flex w-fit max-w-full flex-none gap-0.5 overflow-x-auto rounded-lg border border-[var(--line)] bg-[var(--panel)] p-[3px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                     {([["picks", "Picks"], ["winRate", "Win Rate"], ["wins", "Wins"]] as [SortKey, string][]).map(([key, label]) => (
                       <button
                         key={key}
                         onClick={() => setSortBy(key)}
-                        className={`relative cursor-pointer rounded-md border-0 px-[15px] py-[7px] text-[14px] font-normal transition-all ${sortBy === key ? "bg-[var(--ink)] text-[#fcfbf8] shadow-[var(--shadow-lift)]" : "bg-transparent text-[var(--ink-3)] hover:bg-[color-mix(in_srgb,var(--panel-2)_70%,transparent)] hover:text-[var(--ink)]"}`}
+                        className={`relative shrink-0 cursor-pointer rounded-md border-0 px-[15px] py-[7px] text-[14px] font-normal transition-all ${sortBy === key ? "bg-[var(--ink)] text-[#fcfbf8] shadow-[var(--shadow-lift)]" : "bg-transparent text-[var(--ink-3)] hover:bg-[color-mix(in_srgb,var(--panel-2)_70%,transparent)] hover:text-[var(--ink)]"}`}
                       >
                         {label}
                       </button>
                     ))}
                   </div>
-                  <select value={minPicks} onChange={e => setMinPicks(Number(e.target.value))} style={{ background: "var(--panel)", border: "1px solid var(--line)", borderRadius: 8, padding: "5px 8px", fontSize: 12, color: "var(--ink)", outline: "none", fontFamily: "inherit", cursor: "pointer" }}>
-                    <option value={5}>5+</option>
-                    <option value={10}>10+</option>
-                    <option value={25}>25+</option>
-                    <option value={50}>50+</option>
-                    <option value={100}>100+</option>
-                  </select>
+                  <div ref={minPicksRef} className="relative shrink-0">
+                    <button
+                      type="button"
+                      aria-haspopup="listbox"
+                      aria-expanded={minPicksOpen}
+                      aria-label="Minimum picks"
+                      onClick={() => setMinPicksOpen(open => !open)}
+                      onKeyDown={e => {
+                        if (e.key === "Escape") setMinPicksOpen(false)
+                        if (e.key === "ArrowDown" || e.key === "Enter" || e.key === " ") {
+                          e.preventDefault()
+                          setMinPicksOpen(true)
+                        }
+                      }}
+                      className={`group inline-flex h-11 cursor-pointer items-center gap-1.5 rounded-lg border px-3 text-[var(--ink)] transition-[border-color,box-shadow,background-color,transform] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--line-2)] ${minPicksOpen ? "border-[var(--line-2)] bg-[color-mix(in_srgb,var(--panel-2)_62%,var(--panel))] shadow-[0_4px_12px_rgba(0,0,0,0.08)]" : "border-[var(--line)] bg-[var(--panel)] hover:border-[var(--line-2)] hover:bg-[color-mix(in_srgb,var(--panel-2)_55%,var(--panel))]"}`}
+                    >
+                      <span className="text-[11px] font-normal text-[var(--ink-4)]">Min</span>
+                      <span className="min-w-[30px] text-left text-[14px] font-semibold text-[var(--ink)]">{minPicks}+</span>
+                      <ChevronDown size={13} strokeWidth={2.25} className={`text-[var(--ink-4)] transition-transform duration-200 ${minPicksOpen ? "rotate-180" : ""}`} />
+                    </button>
+
+                    <div
+                      className={`absolute right-0 top-[calc(100%+8px)] z-30 w-[124px] origin-top-right overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--panel)] p-1 shadow-[0_18px_42px_rgba(0,0,0,0.18)] transition-[opacity,transform] duration-150 ${minPicksOpen ? "pointer-events-auto translate-y-0 scale-100 opacity-100" : "pointer-events-none -translate-y-1 scale-[0.98] opacity-0"}`}
+                      role="listbox"
+                      aria-label="Minimum picks"
+                      aria-hidden={!minPicksOpen}
+                    >
+                      {MIN_PICK_OPTIONS.map(option => {
+                        const active = minPicks === option
+                        return (
+                          <button
+                            key={option}
+                            type="button"
+                            role="option"
+                            tabIndex={minPicksOpen ? 0 : -1}
+                            aria-selected={active}
+                            onClick={() => {
+                              setMinPicks(option)
+                              setMinPicksOpen(false)
+                            }}
+                            className={`flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg px-3 py-1.5 text-left text-[13px] leading-5 transition-colors ${active ? "bg-[var(--ink)] font-semibold text-[#fcfbf8]" : "text-[var(--ink-2)] hover:bg-[var(--panel-2)] hover:text-[var(--ink)]"}`}
+                          >
+                            <span>{option}+ picks</span>
+                            <Check size={12} strokeWidth={2.5} className={active ? "opacity-100" : "opacity-0"} />
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -461,7 +497,7 @@ export default function MapsPageClient() {
               ) : (
                 <>
                   <div className="px-5 pt-4 pb-5 max-[600px]:px-3 max-[600px]:pt-3">
-                    <div className="hidden overflow-hidden rounded-xl border border-[var(--line)] min-[760px]:block">
+                    <div className={`overflow-hidden rounded-xl border border-[var(--line)] ${mapExpanded ? "hidden min-[1050px]:block" : "hidden min-[760px]:block"}`}>
                       <div
                         className="grid items-center gap-4 border-b border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_94%,var(--panel-2))] px-4 py-3"
                         style={{ gridTemplateColumns: "44px minmax(0,1.25fr) minmax(116px,0.9fr) 72px 72px 48px" }}
@@ -514,7 +550,7 @@ export default function MapsPageClient() {
                       })}
                     </div>
 
-                    <div className="grid gap-2 min-[760px]:hidden">
+                    <div className={`grid gap-2 ${mapExpanded ? "min-[1050px]:hidden" : "min-[760px]:hidden"}`}>
                       {filteredBrawlers.map(b => {
                         const tier = getTierInfo(b.winRate)
                         return (
@@ -552,31 +588,6 @@ export default function MapsPageClient() {
             </div>{/* map modal main */}
           </div>
         )}
-      </Modal>
-      <Modal open={!!zoomMapName} onClose={() => setZoomMapName(null)} size="lg">
-        {zoomMapName && mapImageLookup && (() => {
-          const imageUrl = mapImageLookup.get(zoomMapName) ?? mapImageLookup.get(normalizeMapName(zoomMapName))
-          return (
-            <div className="flex flex-col items-stretch">
-              <div className="flex items-center justify-end border-b border-[var(--line)] p-2">
-                <ModalCloseButton onClick={() => setZoomMapName(null)} label="Close zoom" />
-              </div>
-              <div className="flex flex-col items-center justify-center p-6">
-                {imageUrl && (
-                  <BrawlImage
-                    src={imageUrl}
-                    alt={zoomMapName}
-                    width={350}
-                    height={560}
-                    sizes="350px"
-                    className="block h-auto w-auto max-w-[350px] max-h-[80vh] rounded-xl"
-                  />
-                )}
-                <p className="mt-4 mb-0 text-[18px] font-semibold text-[var(--ink)]">{zoomMapName}</p>
-              </div>
-            </div>
-          )
-        })()}
       </Modal>
     </>
   )
