@@ -46,7 +46,10 @@ function MapPreview({ imageUrl, name, modeColor }: { imageUrl?: string; name: st
 
   if (!imageUrl || failed) {
     return (
-      <div className="map-preview-frame relative grid aspect-square w-full place-items-center gap-2.5 p-[18px] text-center text-[var(--ink-4)]">
+      <div
+        className="map-preview-frame relative grid w-full place-items-center gap-2.5 p-[18px] text-center text-[var(--ink-4)]"
+        style={{ aspectRatio }}
+      >
         <div className="size-10 rounded-lg opacity-30" style={{ background: modeColor || "var(--line)" }} />
         <span className="max-w-full truncate text-[11px] font-semibold">{name}</span>
       </div>
@@ -55,7 +58,7 @@ function MapPreview({ imageUrl, name, modeColor }: { imageUrl?: string; name: st
 
   return (
     <div
-      className="map-preview-frame relative grid w-full place-items-center"
+      className="map-preview-frame relative grid w-full place-items-center rounded-t-lg"
       style={{ aspectRatio }}
     >
       <BrawlImage
@@ -63,7 +66,7 @@ function MapPreview({ imageUrl, name, modeColor }: { imageUrl?: string; name: st
         alt={name}
         fill
         sizes="(max-width: 520px) 50vw, 220px"
-        className="block object-contain transition-[transform,filter] duration-200"
+        className="block object-contain transition-[transform,filter] duration-200 rounded-t-lg"
         loading="lazy"
         onLoad={(event) => {
           const img = event.currentTarget;

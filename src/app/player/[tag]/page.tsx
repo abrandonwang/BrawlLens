@@ -10,6 +10,8 @@ import PlayerInsightButton from "./PlayerInsightButton"
 
 export const revalidate = 60
 
+const stateActionClass = "inline-flex min-h-9 cursor-pointer items-center justify-center rounded-md border border-transparent bg-[var(--ink)] px-4 text-[14px] font-normal text-[#fcfbf8] no-underline shadow-[var(--shadow-lift)] active:scale-95 hover:bg-[var(--accent-focus)]"
+
 export async function generateMetadata(
   { params }: { params: Promise<{ tag: string }> },
 ): Promise<Metadata> {
@@ -232,10 +234,10 @@ export default async function PlayerProfile({ params }: { params: Promise<{ tag:
         </p>
         <p className="mt-3 text-[12px] tabular-nums text-[var(--ink-4)]">#{tag}</p>
         <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
-          <Link href={`/player/${encodeURIComponent(tag)}`} className="bl-state-action" prefetch={false}>
+          <Link href={`/player/${encodeURIComponent(tag)}`} className={stateActionClass} prefetch={false}>
             Try again
           </Link>
-          <Link href="/leaderboards/players" className="bl-state-action">Browse leaderboard</Link>
+          <Link href="/leaderboards/players" className={stateActionClass}>Browse leaderboard</Link>
         </div>
       </main>
     )

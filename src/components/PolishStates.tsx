@@ -1,8 +1,15 @@
 import Link from "next/link"
 import type { ReactNode } from "react"
 
+const stateActionClass = "inline-flex min-h-9 cursor-pointer items-center justify-center rounded-md border border-transparent bg-[var(--ink)] px-4 text-[14px] font-normal text-[#fcfbf8] no-underline shadow-[var(--shadow-lift)] active:scale-95 hover:bg-[var(--accent-focus)]"
+
 export function SkeletonBlock({ className = "" }: { className?: string }) {
-  return <div className={`bl-skeleton ${className}`} aria-hidden="true" />
+  return (
+    <div
+      className={`relative overflow-hidden rounded-lg bg-[color-mix(in_srgb,var(--line-2)_54%,transparent)] after:absolute after:inset-0 after:-translate-x-full after:bg-[linear-gradient(90deg,transparent,color-mix(in_srgb,var(--ink)_10%,transparent),transparent)] after:animate-[skeleton-shimmer_1.25s_ease-in-out_infinite] after:content-[''] ${className}`}
+      aria-hidden="true"
+    />
+  )
 }
 
 export function EmptyState({
@@ -38,7 +45,7 @@ export function StateButton({
   onClick: () => void
 }) {
   return (
-    <button type="button" onClick={onClick} className="bl-state-action">
+    <button type="button" onClick={onClick} className={stateActionClass}>
       {children}
     </button>
   )
@@ -46,7 +53,7 @@ export function StateButton({
 
 export function StateLink({ href, children }: { href: string; children: ReactNode }) {
   return (
-    <Link href={href} className="bl-state-action">
+    <Link href={href} className={stateActionClass}>
       {children}
     </Link>
   )

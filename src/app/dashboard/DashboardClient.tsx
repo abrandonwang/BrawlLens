@@ -216,7 +216,7 @@ export default function DashboardClient() {
                     className="grid size-10 shrink-0 cursor-pointer place-items-center rounded-md border-0 bg-[var(--ink)] text-[var(--bg)] shadow-[var(--shadow-lift)] transition-colors hover:bg-[var(--accent-focus)] disabled:cursor-default disabled:opacity-35"
                     aria-label="Open player"
                   >
-                    <span className="text-[12px] font-semibold">Go</span>
+                    <span className="text-[12px] font-semibold">`{'>'}`</span>
                   </button>
                 </form>
                 <div className={`mt-2 min-h-5 text-[12px] ${invalidLookup ? "text-[var(--loss)]" : "text-[var(--ink-4)]"}`}>

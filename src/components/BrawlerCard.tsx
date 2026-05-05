@@ -16,7 +16,7 @@ export default function BrawlerCard({ id, name, power, rank, trophies, highestTr
 
   return (
     <div
-      className={`bl-card bl-hc-hover`}
+      className="relative cursor-pointer overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--panel)] transition-[transform,border-color,box-shadow,background] duration-200 hover:border-[var(--line-2)] hover:bg-[var(--hover-bg)]"
       style={{ cursor: "pointer" }}
     >
       <div style={{
@@ -82,10 +82,10 @@ export default function BrawlerCard({ id, name, power, rank, trophies, highestTr
             {name}
           </div>
           <div style={{ display: "flex", alignItems: "baseline", gap: 5 }}>
-            <span className="bl-num" style={{ fontSize: 15, fontWeight: 600, color: "var(--ink)", letterSpacing: "-0.02em" }}>
+            <span className="font-mono tabular-nums" style={{ fontSize: 15, fontWeight: 600, color: "var(--ink)", letterSpacing: "-0.02em" }}>
               {trophies.toLocaleString()}
             </span>
-            <span className="bl-num" style={{ fontSize: 10.5, color: "var(--ink-4)" }}>
+            <span className="font-mono tabular-nums" style={{ fontSize: 10.5, color: "var(--ink-4)" }}>
               / {highestTrophies.toLocaleString()}
             </span>
           </div>

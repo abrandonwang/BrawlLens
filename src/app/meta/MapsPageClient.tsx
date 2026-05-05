@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo, type CSSProperties } from "react"
 import { useSearchParams } from "next/navigation"
-import { Search } from "lucide-react"
+import Link from "next/link"
+import { Info, Maximize2, Minimize2, Search } from "lucide-react"
 import MetaDashboard from "@/components/MetaDashboard"
 import Modal, { ModalCloseButton } from "@/components/Modal"
 import { BrawlImage, brawlerIconUrl } from "@/components/BrawlImage"
@@ -47,12 +48,14 @@ export default function MapsPageClient() {
   const [mapDataLoading, setMapDataLoading] = useState(false)
   const [brawlerSearch, setBrawlerSearch] = useState("")
   const [minPicks, setMinPicks] = useState(10)
-  const [sortBy, setSortBy] = useState<SortKey>("picks")
+  const [sortBy, setSortBy] = useState<SortKey>("winRate")
   const [spotlightTopBrawler, setSpotlightTopBrawler] = useState<{ id: number; name: string; picks: number; winRate: number } | null>(null)
   const [searchOpen, setSearchOpen] = useState(false)
   const [mapImageLookup, setMapImageLookup] = useState<Map<string, string>>(new Map())
   const searchInputRef = useRef<HTMLInputElement>(null)
   const searchDropdownRef = useRef<HTMLDivElement>(null)
+  const [zoomMapName, setZoomMapName] = useState<string | null>(null)
+  const [mapExpanded, setMapExpanded] = useState(false)
 
   useEffect(() => {
     fetch("https://api.brawlify.com/v1/maps")
@@ -128,6 +131,7 @@ export default function MapsPageClient() {
     setBrawlerSearch("")
     setMinPicks(10)
     setSortBy("picks")
+    setMapExpanded(false)
   }, [])
 
   const filteredBrawlers = useMemo(() => {
@@ -212,9 +216,15 @@ export default function MapsPageClient() {
         </div>
 
         <div className="page-summary mb-6 flex items-center justify-between gap-6 p-8 max-md:flex-col max-md:items-stretch max-sm:p-6" style={{ "--summary-gradient": "linear-gradient(135deg, #3B82F6 0%, #7C3AED 52%, #F97316 100%)" } as CSSProperties}>
-          <div className="min-w-0">
-            <p className="mb-1 text-[12px] leading-none tracking-[0.08em] text-white/70 uppercase">Most Popular Map</p>
-            <h2 className="m-0 truncate text-[28px] leading-[1.15] font-semibold tracking-[-0.01em] text-white">{spotlightMap ? spotlightMap.name : "Loading..."}</h2>
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="min-w-0">
+              <p className="mb-1 text-[12px] leading-none tracking-[0.08em] text-white/70 uppercase">Most Popular Map</p>
+              <h2 className="m-0 truncate text-[28px] leading-[1.15] font-semibold tracking-[-0.01em] text-white">{spotlightMap ? spotlightMap.name : "Loading..."}</h2>
+              <Link href="/calculations" className="mt-2 mb-0 flex items-start gap-1.5 text-[14px] leading-[1.43] tracking-[-0.016em] text-white/75 hover:underline underline-offset-4">
+                <Info size={12} className="mt-[4px] shrink-0" />
+                <span>Why: most battles played on this map layout.</span>
+              </Link>
+            </div>
           </div>
           <div className="grid min-w-[min(420px,48%)] grid-cols-3 gap-2 max-md:min-w-0">
             <div className="page-summary-stat">
@@ -310,11 +320,33 @@ export default function MapsPageClient() {
           onClearFilters={() => { setMapSearch(""); setSelectedMode(null) }}
         />
       </div>
-      <Modal open={!!selectedMap} onClose={closeModal} size="lg" className="bl-modal-sheet-map" labelledBy="map-modal-title">
+      <Modal open={!!selectedMap} onClose={closeModal} size={mapExpanded ? "xl" : "md"} labelledBy="map-modal-title">
         {selectedMap && (
-          <>
+          <div className={`bl-map-expand-layout${mapExpanded ? " is-expanded" : ""}`}>
+            {mapExpanded && selectedMap.imageUrl && (
+              <div className="bl-map-expand-panel">
+                <BrawlImage
+                  src={selectedMap.imageUrl}
+                  alt={selectedMap.name}
+                  width={280}
+                  height={448}
+                  sizes="280px"
+                  className="bl-map-expand-img"
+                />
+              </div>
+            )}
+            <div className="bl-map-expand-main">
             <div className="bl-modal-header">
               <ModalCloseButton onClick={closeModal} label="Close map details" />
+              <button
+                type="button"
+                onClick={() => setMapExpanded(e => !e)}
+                className="bl-map-expand-btn"
+                aria-label={mapExpanded ? "Collapse map image" : "Expand map image"}
+                aria-pressed={mapExpanded}
+              >
+                {mapExpanded ? <Minimize2 size={12} /> : <Maximize2 size={12} />}
+              </button>
 
               <div className="bl-map-modal-hero">
                 {selectedMap.imageUrl && (
@@ -431,8 +463,34 @@ export default function MapsPageClient() {
                 </>
               )}
             </div>
-          </>
+            </div>{/* bl-map-expand-main */}
+          </div>
         )}
+      </Modal>
+      <Modal open={!!zoomMapName} onClose={() => setZoomMapName(null)} size="lg">
+        {zoomMapName && mapImageLookup && (() => {
+          const imageUrl = mapImageLookup.get(zoomMapName) ?? mapImageLookup.get(normalizeMapName(zoomMapName))
+          return (
+            <div className="flex flex-col items-stretch">
+              <div className="flex items-center justify-end border-b border-[var(--line)] p-2">
+                <ModalCloseButton onClick={() => setZoomMapName(null)} label="Close zoom" />
+              </div>
+              <div className="flex flex-col items-center justify-center p-6">
+                {imageUrl && (
+                  <BrawlImage
+                    src={imageUrl}
+                    alt={zoomMapName}
+                    width={350}
+                    height={560}
+                    sizes="350px"
+                    className="block h-auto w-auto max-w-[350px] max-h-[80vh] rounded-xl"
+                  />
+                )}
+                <p className="mt-4 mb-0 text-[18px] font-semibold text-[var(--ink)]">{zoomMapName}</p>
+              </div>
+            </div>
+          )
+        })()}
       </Modal>
     </>
   )

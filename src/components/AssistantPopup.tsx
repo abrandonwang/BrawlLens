@@ -71,6 +71,9 @@ const FALLBACK_SUGGESTIONS = [
   "How is win rate calculated?",
 ]
 
+const iconButtonClass = "grid size-[26px] shrink-0 cursor-pointer place-items-center rounded-[7px] border-0 bg-transparent text-[var(--ink-3)] transition-[color,background,opacity] duration-150 hover:bg-[var(--hover-bg)] hover:text-[var(--ink)] disabled:cursor-default disabled:opacity-35 disabled:hover:bg-transparent disabled:hover:text-[var(--ink-3)]"
+const sendButtonClass = "grid size-7 shrink-0 cursor-pointer place-items-center rounded-full border-0 bg-[var(--ink)] text-[var(--bg)] transition-[background,opacity] duration-150 disabled:cursor-default disabled:bg-[var(--line-2)] disabled:text-[var(--ink-4)]"
+
 interface LandingData {
   player: { name: string; tag: string; trophies: number } | null
   map:    { name: string; mode: string } | null
@@ -92,6 +95,7 @@ export default function AssistantPopup({ open, onClose, pendingQuery, onPendingC
   const [suggestions, setSuggestions] = useState<string[]>(FALLBACK_SUGGESTIONS)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
   const wasOpenRef = useRef(false)
   const abortRef = useRef<AbortController | null>(null)
 
@@ -208,7 +212,7 @@ export default function AssistantPopup({ open, onClose, pendingQuery, onPendingC
         return
       }
       if (e.key === "Tab") {
-        const panel = document.querySelector<HTMLElement>(".assistant-panel")
+        const panel = panelRef.current
         if (!panel) return
         const focusables = Array.from(
           panel.querySelectorAll<HTMLElement>(
@@ -266,21 +270,22 @@ export default function AssistantPopup({ open, onClose, pendingQuery, onPendingC
 
   return (
     <>
-      <div className="assistant-scrim" onClick={onClose} aria-hidden="true" />
+      <div className="pointer-events-none fixed inset-0 z-[195] bg-transparent" onClick={onClose} aria-hidden="true" />
       <div
-        className="assistant-panel"
+        ref={panelRef}
+        className="fixed right-[22px] bottom-[22px] z-[196] flex max-h-[min(640px,calc(100dvh-100px))] w-96 origin-bottom-right flex-col overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--bg)] shadow-[0_32px_60px_-20px_rgba(28,28,28,0.28),0_12px_24px_-10px_rgba(28,28,28,0.10),rgba(255,255,255,0.4)_0_0.5px_0_0_inset] animate-[assistantPanelIn_0.24s_cubic-bezier(0.2,0,0,1)] max-[700px]:right-3 max-[700px]:bottom-3 max-[700px]:w-[calc(100vw-24px)] max-[700px]:max-w-[360px] max-[700px]:max-h-[min(560px,calc(100dvh-96px))] max-[700px]:rounded-[14px] max-[380px]:right-2 max-[380px]:bottom-2 max-[380px]:w-[calc(100vw-16px)] max-[380px]:max-h-[min(540px,calc(100dvh-80px))]"
         role="dialog"
         aria-label="BrawlLens assistant"
         aria-modal="false"
       >
-        <header className="assistant-header">
+        <header className="flex items-center gap-2.5 border-b border-[var(--line)] bg-[var(--panel-2)] py-[11px] pr-3 pl-3.5 max-[380px]:py-2.5 max-[380px]:pr-2.5 max-[380px]:pl-3">
           <Image src="/ai-sparkle-512.png" alt="AI Assistant" width={28} height={28} className="assistant-header-logo" />
-          <div className="assistant-header-text">
-            <span className="assistant-title">Assistant</span>
+          <div className="flex min-w-0 flex-1 flex-col leading-[1.2]">
+            <span className="text-[13px] font-semibold tracking-[-0.005em] text-[var(--ink)]">Assistant</span>
           </div>
           <button
             type="button"
-            className="assistant-icon-btn"
+            className={iconButtonClass}
             onClick={newChat}
             aria-label="New chat"
             disabled={messages.length === 0 && !streaming}
@@ -288,22 +293,22 @@ export default function AssistantPopup({ open, onClose, pendingQuery, onPendingC
           >
             <Plus size={14} strokeWidth={1.9} />
           </button>
-          <button type="button" className="assistant-icon-btn" onClick={onClose} aria-label="Close assistant" title="Close">
+          <button type="button" className={iconButtonClass} onClick={onClose} aria-label="Close assistant" title="Close">
             <X size={14} strokeWidth={1.9} />
           </button>
         </header>
 
-        <div className="assistant-body">
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 pt-3.5 pb-1.5 [-webkit-overflow-scrolling:touch] max-[380px]:px-3 max-[380px]:pt-3 max-[380px]:pb-1">
           {messages.length === 0 && (
-            <div className="assistant-empty">
-              <div className="assistant-empty-title">What can I help with?</div>
-              <div className="assistant-suggestions">
+            <div className="flex flex-col items-start gap-1.5 px-1 pt-4 pb-[18px]">
+              <div className="text-[16px] font-semibold tracking-[-0.012em] text-[var(--ink)]">What can I help with?</div>
+              <div className="flex w-full flex-col items-stretch gap-1.5">
                 {suggestions.map(s => (
                   <button
                     type="button"
                     key={s}
                     onClick={() => handleSuggestion(s)}
-                    className="assistant-suggestion"
+                    className="block w-full cursor-pointer rounded-[9px] border border-[var(--line)] bg-[var(--panel-2)] px-2.5 py-2 text-left font-inherit text-[12.5px] text-[var(--ink-2)] transition-colors duration-150 hover:border-[var(--line-2)] hover:bg-[var(--hover-bg)] hover:text-[var(--ink)]"
                   >
                     {s}
                   </button>
@@ -313,12 +318,14 @@ export default function AssistantPopup({ open, onClose, pendingQuery, onPendingC
           )}
 
           {messages.map((msg, i) => (
-            <div key={i} className={`assistant-msg-row assistant-msg-${msg.role}`}>
-              <div className="assistant-msg">
+            <div key={i} className={`mb-3 flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+              <div className={`max-w-[86%] break-words text-[13.5px] leading-normal tracking-[-0.005em] ${msg.role === "user" ? "rounded-[14px_14px_4px_14px] bg-[var(--ink)] px-3 py-2 text-[var(--bg)]" : "text-[var(--ink-2)]"}`}>
                 {msg.role === "assistant" ? (
                   streaming && i === messages.length - 1 && msg.content === "" ? (
-                    <div className="assistant-typing">
-                      <span /><span /><span />
+                    <div className="inline-flex items-center gap-1 py-1.5">
+                      <span className="size-[5px] rounded-full bg-[var(--ink-4)] animate-[assistantDot_1.05s_ease-in-out_infinite]" />
+                      <span className="size-[5px] rounded-full bg-[var(--ink-4)] animate-[assistantDot_1.05s_ease-in-out_0.12s_infinite]" />
+                      <span className="size-[5px] rounded-full bg-[var(--ink-4)] animate-[assistantDot_1.05s_ease-in-out_0.24s_infinite]" />
                     </div>
                   ) : (
                     <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>{msg.content}</ReactMarkdown>
@@ -333,8 +340,8 @@ export default function AssistantPopup({ open, onClose, pendingQuery, onPendingC
           <div ref={bottomRef} />
         </div>
 
-        <div className="assistant-input-row">
-          <div className="assistant-input-shell">
+        <div className="shrink-0 border-t border-[var(--line)] bg-[var(--bg)] px-3 pt-2.5 pb-3 max-[380px]:px-2.5 max-[380px]:pt-2 max-[380px]:pb-2.5">
+          <div className="flex items-end gap-2 rounded-full border border-[var(--line)] bg-[var(--panel)] py-[7px] pr-[7px] pl-3.5 transition-colors duration-150 focus-within:border-[var(--line-2)]">
             <textarea
               ref={textareaRef}
               rows={1}
@@ -342,13 +349,13 @@ export default function AssistantPopup({ open, onClose, pendingQuery, onPendingC
               onChange={handleInput}
               onKeyDown={handleKeyDown}
               placeholder="Ask anything…"
-              className="assistant-input"
+              className="max-h-[140px] min-w-0 flex-1 resize-none overflow-y-auto border-0 bg-transparent py-1.5 font-inherit text-[13.5px] leading-[1.45] text-[var(--ink)] outline-none appearance-none placeholder:text-[var(--ink-4)]"
             />
             {streaming ? (
               <button
                 type="button"
                 onClick={stopStreaming}
-                className="assistant-send is-stop"
+                className={sendButtonClass}
                 aria-label="Stop"
                 title="Stop"
               >
@@ -359,7 +366,7 @@ export default function AssistantPopup({ open, onClose, pendingQuery, onPendingC
                 type="button"
                 onClick={handleSubmit}
                 disabled={!userInput.trim()}
-                className="assistant-send"
+                className={sendButtonClass}
                 aria-label="Send"
               >
                 <ArrowUp size={13} strokeWidth={2.2} />

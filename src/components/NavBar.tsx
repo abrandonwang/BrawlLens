@@ -1,7 +1,6 @@
 "use client";
 import { useState, useEffect, useRef, useCallback, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { Menu, Search, X } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import AssistantPopup from "./AssistantPopup";
@@ -15,13 +14,8 @@ const navItems = [
   { label: "About",        href: "/about" },
 ];
 
-const menuOverlayBackground = `
-  linear-gradient(180deg, var(--bg) 0, var(--bg) 64px, color-mix(in srgb, var(--bg) 88%, #eff8ff 12%) 132px, color-mix(in srgb, var(--bg) 70%, transparent) 260px, transparent 520px),
-  radial-gradient(ellipse 920px 520px at 68% 20%, rgba(186, 230, 253, 0.36) 0%, rgba(224, 242, 254, 0.22) 44%, transparent 76%),
-  radial-gradient(ellipse 760px 560px at 8% 42%, rgba(221, 214, 254, 0.40) 0%, rgba(237, 233, 254, 0.22) 48%, transparent 78%),
-  radial-gradient(ellipse 620px 560px at 92% 72%, rgba(207, 250, 254, 0.30) 0%, transparent 72%),
-  linear-gradient(180deg, var(--bg) 0%, #f7f6fb 34%, #eef9fb 70%, #f4efff 100%)
-`;
+const navIconButtonClass = "grid size-9 cursor-pointer place-items-center rounded-full border-0 bg-transparent text-[var(--ink-3)] hover:text-[var(--ink)]";
+const searchRowBaseClass = "flex w-full cursor-pointer items-center gap-3 rounded-[9px] border-0 bg-transparent px-2.5 py-[9px] text-left font-inherit text-[var(--ink)] transition-colors duration-100";
 
 type CommandItem = {
   label: string;
@@ -275,31 +269,36 @@ export default function NavBar() {
 
   return (
     <>
-      <nav className="lovable-nav">
-        <Link href="/" className="lovable-nav-brand" aria-label="BrawlLens home">
-          <span className="lovable-brand-mark" />
+      <nav className="fixed top-0 left-0 z-[100] grid min-h-16 w-full grid-cols-[auto_1fr_auto] items-center gap-[18px] bg-[color-mix(in_srgb,var(--bg)_92%,transparent)] px-[max(16px,calc((100vw-1200px)/2))] backdrop-blur-[18px] backdrop-saturate-[145%] max-lg:grid-cols-[1fr_auto]">
+        <Link href="/" className="inline-flex items-center gap-[9px] whitespace-nowrap text-[14px] font-semibold text-[var(--ink)] no-underline" aria-label="BrawlLens home">
+          <span className="relative inline-block size-[22px] rounded-[7px] bg-[conic-gradient(from_var(--logo-angle),#f97316,#ec4899,#8b5cf6,#3b82f6,#14b8d6,#f97316)] animate-[logo-spin_8s_linear_infinite] after:absolute after:inset-[5px] after:rounded-[3px] after:bg-[#fcfbf8] after:content-['']" />
           <span>BrawlLens</span>
         </Link>
-        <div className="lovable-nav-links">
+        <div className="flex min-w-0 items-center justify-center gap-0.5 max-lg:hidden">
           {navItems.map(item => (
-            <Link key={item.label} href={item.href} className={isActive(item.href) ? "is-active" : ""}>
+            <Link
+              key={item.label}
+              href={item.href}
+              className={`inline-flex min-h-9 items-center whitespace-nowrap rounded-lg px-3 text-[14px] leading-none no-underline ${isActive(item.href) ? "bg-[var(--hover-bg)] text-[var(--ink)]" : "text-[var(--ink-3)] hover:bg-[var(--hover-bg)] hover:text-[var(--ink)]"}`}
+            >
               {item.label}
             </Link>
           ))}
         </div>
-        <div className="lovable-nav-actions">
-          <button onClick={() => setIsSearchOpen(true)} aria-label="Search">
+        <div className="flex items-center justify-end gap-1">
+          <button className={navIconButtonClass} onClick={() => setIsSearchOpen(true)} aria-label="Search">
             <Search size={16} strokeWidth={1.8} />
           </button>
           <button
-            className={`lovable-ai-button ${isAssistantOpen ? "is-active" : ""}`}
+            type="button"
             onClick={() => setIsAssistantOpen(o => !o)}
+            className={`flex h-[34px] cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-md border-0 bg-[#1c1c1c] px-3.5 text-[13px] font-normal text-[#fcfbf8] shadow-[var(--shadow-lift)] transition-opacity duration-150 hover:opacity-85 max-sm:hidden ${isAssistantOpen ? "opacity-70" : ""}`}
             aria-label="Ask AI assistant"
             aria-expanded={isAssistantOpen}
           >
-            <Image src="/ai-sparkle-512.png" alt="AI Assistant" width={32} height={32} />
+            <span>Brawl AI</span>
           </button>
-          <button className="lovable-menu-button" onClick={toggleMenu} aria-label="Menu" aria-expanded={isMenuOpen}>
+          <button className={`${navIconButtonClass} p-0 lg:hidden`} onClick={toggleMenu} aria-label="Menu" aria-expanded={isMenuOpen}>
             {isMenuOpen ? <X size={15} strokeWidth={1.9} /> : <Menu size={17} strokeWidth={1.8} />}
           </button>
         </div>
@@ -344,6 +343,28 @@ export default function NavBar() {
                 {item.label}
               </Link>
             ))}
+            <button
+              onClick={() => { setIsAssistantOpen(true); closeMenu(); }}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 0,
+                fontSize: 32,
+                fontWeight: 650,
+                letterSpacing: "-0.03em",
+                color: "var(--ink-3)",
+                background: "transparent",
+                border: "none",
+                padding: "10px 0",
+                cursor: "pointer",
+                textAlign: "left",
+                animation: menuClosing
+                  ? `menuItemOut 0.28s cubic-bezier(0.4,0,1,1) forwards`
+                  : `menuItemIn 0.4s cubic-bezier(0,0,0.2,1) ${navItems.length * 55}ms both`,
+              }}
+            >
+              Ask AI
+            </button>
           </div>
           <div style={{
             padding: "24px 36px",
@@ -356,41 +377,41 @@ export default function NavBar() {
       )}
       {isSearchOpen && (
         <div
-          className="lovable-search-backdrop"
+          className="fixed inset-0 z-[200] flex items-start justify-center bg-[color-mix(in_srgb,var(--bg)_55%,transparent)] px-4 pt-[12vh] pb-4 backdrop-blur-[10px] backdrop-saturate-[140%] animate-[searchFadeIn_0.18s_cubic-bezier(0.2,0,0,1)] max-[520px]:px-3 max-[520px]:pt-[8vh] max-[520px]:pb-3"
           onClick={closeSearch}
         >
           <div
-            className="lovable-search-panel"
+            className="w-full max-w-[560px] overflow-hidden rounded-[14px] border border-[var(--line)] bg-[var(--bg)] shadow-[0_32px_64px_-24px_rgba(28,28,28,0.22),0_8px_20px_-8px_rgba(28,28,28,0.08),rgba(255,255,255,0.4)_0_0.5px_0_0_inset] animate-[searchPanelIn_0.22s_cubic-bezier(0.2,0,0,1)] max-[520px]:rounded-xl"
             onClick={e => e.stopPropagation()}
           >
-            <div className="lovable-search-input-row">
-              <Search size={15} strokeWidth={1.8} className="lovable-search-input-icon" />
+            <div className="flex items-center gap-3 border-b border-[var(--line)] px-4">
+              <Search size={15} strokeWidth={1.8} className="shrink-0 text-[var(--ink-3)]" />
               <input
                 ref={inputRef}
                 value={query}
                 onChange={e => setQuery(e.target.value)}
                 onKeyDown={handleSearchKeyDown}
                 placeholder="Search pages, docs, or paste a #PlayerTag"
-                className="lovable-search-input"
+                className="min-w-0 flex-1 border-0 bg-transparent py-4 font-inherit text-[15px] tracking-[-0.005em] text-[var(--ink)] outline-none placeholder:text-[var(--ink-4)]"
               />
-              <button onClick={closeSearch} className="lovable-search-esc">Esc</button>
+              <button onClick={closeSearch} className="shrink-0 cursor-pointer rounded-md border border-[var(--line)] bg-transparent px-[7px] py-[3px] font-mono text-[10px] font-semibold tracking-[0.02em] text-[var(--ink-4)] transition-colors duration-150 hover:border-[var(--line-2)] hover:text-[var(--ink)]">Esc</button>
             </div>
 
-            <div className="lovable-search-body">
+            <div className="max-h-[min(60vh,480px)] overflow-y-auto p-2">
               {hasPlayerLookup && (
-                <div className="lovable-search-section">
-                  <div className="lovable-search-group-label">Player Lookup</div>
+                <div>
+                  <div className="px-3 pt-2 pb-1 text-[10px] font-semibold tracking-[0.06em] text-[var(--ink-4)] uppercase">Player Lookup</div>
                   <button
                     type="button"
                     onClick={handlePlayerSearch}
                     onMouseEnter={() => setActiveIndex(0)}
-                    className={`lovable-search-row ${activeIndex === 0 ? "is-active" : ""}`}
+                    className={`${searchRowBaseClass} ${activeIndex === 0 ? "bg-[var(--hover-bg)]" : ""}`}
                   >
-                    <span className="lovable-search-row-content">
-                      <span className="lovable-search-row-title">
+                    <span className="flex min-w-0 flex-1 flex-col gap-px">
+                      <span className="block truncate text-[13.5px] font-medium tracking-[-0.005em] text-[var(--ink)]">
                         Open player <span style={{ fontWeight: 600 }}>#{playerTag}</span>
                       </span>
-                      <span className="lovable-search-row-desc">Public profile lookup by tag.</span>
+                      <span className="block truncate text-[11.5px] font-normal text-[var(--ink-3)] max-[520px]:hidden">Public profile lookup by tag.</span>
                     </span>
                   </button>
                 </div>
@@ -407,11 +428,11 @@ export default function NavBar() {
                         type="button"
                         onClick={() => openCommand(item)}
                         onMouseEnter={() => setActiveIndex(itemIndex)}
-                        className={`lovable-search-row ${isActiveRow ? "is-active" : ""}`}
+                        className={`${searchRowBaseClass} ${isActiveRow ? "bg-[var(--hover-bg)]" : ""}`}
                       >
-                        <span className="lovable-search-row-content">
-                          <span className="lovable-search-row-title">{item.label}</span>
-                          <span className="lovable-search-row-desc">{item.description}</span>
+                        <span className="flex min-w-0 flex-1 flex-col gap-px">
+                          <span className="block truncate text-[13.5px] font-medium tracking-[-0.005em] text-[var(--ink)]">{item.label}</span>
+                          <span className="block truncate text-[11.5px] font-normal text-[var(--ink-3)] max-[520px]:hidden">{item.description}</span>
                         </span>
                       </button>
                     );
@@ -420,7 +441,7 @@ export default function NavBar() {
               ))}
 
               {visibleItems.length === 0 && !hasPlayerLookup && (
-                <p className="lovable-search-empty">
+                <p className="m-0 px-3 py-7 text-center text-[12px] text-[var(--ink-4)]">
                   No results for &ldquo;{query}&rdquo;
                 </p>
               )}

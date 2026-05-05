@@ -19,13 +19,14 @@ interface Props {
   labelledBy?: string
   children: ReactNode
   className?: string
-  size?: "sm" | "md" | "lg"
+  size?: "sm" | "md" | "lg" | "xl"
 }
 
 const SIZE_MAP = {
   sm: 480,
   md: 600,
   lg: 760,
+  xl: 1100,
 }
 
 export default function Modal({
@@ -93,19 +94,7 @@ export default function Modal({
 
   return createPortal(
     <div
-      className="bl-modal-overlay"
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 300,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 20,
-        background: "rgba(0,0,0,0.58)",
-        backdropFilter: "blur(10px) saturate(120%)",
-        WebkitBackdropFilter: "blur(10px) saturate(120%)",
-      }}
+      className="fixed inset-0 z-[300] flex items-center justify-center bg-black/[0.58] p-5 backdrop-blur-[10px] backdrop-saturate-125 animate-[modalOverlayIn_0.18s_ease_both]"
       onClick={onClose}
     >
       <div
@@ -114,19 +103,9 @@ export default function Modal({
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className={`bl-modal-sheet ${className}`}
+        className={`flex max-h-[90vh] w-full flex-col overflow-hidden rounded-2xl border border-[var(--line-2)] bg-[var(--panel)] shadow-[0_36px_90px_-28px_rgba(0,0,0,0.72)] outline-none animate-[modalSheetIn_0.22s_cubic-bezier(0.16,1,0.3,1)_both] ${className}`}
         style={{
-          width: "100%",
           maxWidth: SIZE_MAP[size],
-          maxHeight: "90vh",
-          display: "flex",
-          flexDirection: "column",
-          overflow: "hidden",
-          background: "var(--panel)",
-          border: "1px solid var(--line-2)",
-          borderRadius: 16,
-          boxShadow: "0 36px 90px -28px rgba(0,0,0,0.72)",
-          outline: "none",
         }}
         onClick={e => e.stopPropagation()}
       >
@@ -139,7 +118,7 @@ export default function Modal({
 
 export function ModalCloseButton({ onClick, label = "Close" }: { onClick: () => void; label?: string }) {
   return (
-    <button onClick={onClick} className="bl-modal-close" aria-label={label}>
+    <button onClick={onClick} className="absolute top-4 right-4 grid size-[34px] cursor-pointer place-items-center rounded-full border border-[var(--line)] bg-[var(--panel-2)] text-[var(--ink-3)] hover:border-[var(--line-2)] hover:bg-[var(--hover-bg)] hover:text-[var(--ink)]" aria-label={label}>
       <X size={12} />
     </button>
   )

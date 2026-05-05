@@ -244,8 +244,8 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
                 {topBrawler ? (brawlers.find(b => b.id === topBrawler.id)?.name ?? topBrawler.name) : "Loading..."}
               </h2>
               {topBrawler && (
-                <Link href="/calculations" className="mt-2 mb-0 flex items-center gap-1.5 text-[14px] leading-[1.43] tracking-[-0.016em] text-white/75 hover:underline underline-offset-4">
-                  <Info size={12} />
+                <Link href="/calculations" className="mt-2 mb-0 flex items-start gap-1.5 text-[14px] leading-[1.43] tracking-[-0.016em] text-white/75 hover:underline underline-offset-4">
+                  <Info size={12} className="mt-[4px] shrink-0" />
                   <span>Why: score blends win rate, volume, map stability.</span>
                 </Link>
               )}
@@ -427,7 +427,7 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
           onSelect={b => { setSelected(b); setTab("overview") }}
         />
       </div>
-      <Modal open={!!selected} onClose={close} size="md" className="bl-modal-sheet-brawler" labelledBy="brawler-modal-title">
+      <Modal open={!!selected} onClose={close} size="md" labelledBy="brawler-modal-title">
         {selected && (() => {
           const color = sanitizeColor(selected.rarity.color)
           const hc = hypercharges[selected.id]

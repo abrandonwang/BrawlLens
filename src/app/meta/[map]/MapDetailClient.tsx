@@ -129,7 +129,7 @@ export default function MapDetailClient({ mapName, imageUrl, totalBattles, brawl
           secondary={<StateLink href="/meta">All maps</StateLink>}
         />
       ) : (
-        <div className="bl-card" style={{ padding: 0, overflow: "hidden" }}>
+        <div className="relative overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--panel)] transition-[transform,border-color,box-shadow,background] duration-200 hover:border-[var(--line-2)]" style={{ padding: 0, overflow: "hidden" }}>
           <div className="map-brawler-row map-brawler-header" style={{ display: "grid", gridTemplateColumns: "36px 1fr 120px 60px 60px 36px", gap: 12, padding: "10px 20px", borderBottom: "1px solid var(--line)", background: "var(--panel-2)" }}>
             <span />
             <span className="bl-caption" style={{ letterSpacing: "0.12em", textTransform: "uppercase" }}>Brawler</span>
