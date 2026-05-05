@@ -115,7 +115,7 @@ export default function ClubsClient({ allData }: { allData: RegionData[] }) {
         />
       ) : (
         <>
-          <div className="leaderboard-summary relative mb-6 flex items-stretch justify-between gap-6 overflow-hidden border border-[var(--line)] p-8 max-md:flex-col max-sm:p-6" style={{ background: "linear-gradient(135deg, #EC4899 0%, #14B8A6 100%)" }}>
+          <div className="relative mb-6 flex items-stretch justify-between gap-6 overflow-hidden rounded-2xl border border-[var(--line-2)] p-8 max-md:flex-col max-sm:p-6" style={{ background: "linear-gradient(135deg, #EC4899 0%, #14B8A6 100%)" }}>
             <div className="relative z-10 min-w-0">
               <p className="mb-1 text-[12px] leading-none tracking-[0.08em] text-white/70 uppercase">
                 {regionData?.label ?? activeRegion} Clubs
@@ -125,15 +125,15 @@ export default function ClubsClient({ allData }: { allData: RegionData[] }) {
             <div className="relative z-10 grid min-w-[min(420px,48%)] grid-cols-3 gap-2 max-md:min-w-0 max-[420px]:grid-cols-1">
               <div className="min-w-0 rounded-[10px] border border-white/20 bg-black/30 px-3 py-2.5 backdrop-blur-xl">
                 <span className="text-[10.5px] text-white/70">Leader</span>
-                <strong className="mt-0.5 block truncate text-[13px] font-bold text-white">{clubs[0]?.club_name ?? "-"}</strong>
+                <strong className="mt-0.5 block truncate text-[13px] font-semibold text-white">{clubs[0]?.club_name ?? "-"}</strong>
               </div>
               <div className="min-w-0 rounded-[10px] border border-white/20 bg-black/30 px-3 py-2.5 backdrop-blur-xl">
                 <span className="text-[10.5px] text-white/70">Top trophies</span>
-                <strong className="mt-0.5 block truncate text-[13px] font-bold text-white">{clubs[0] ? formatNum(clubs[0].trophies) : "-"}</strong>
+                <strong className="mt-0.5 block truncate text-[13px] font-semibold text-white">{clubs[0] ? formatNum(clubs[0].trophies) : "-"}</strong>
               </div>
               <div className="min-w-0 rounded-[10px] border border-white/20 bg-black/30 px-3 py-2.5 backdrop-blur-xl">
                 <span className="text-[10.5px] text-white/70">Page</span>
-                <strong className="mt-0.5 block truncate text-[13px] font-bold text-white">{page + 1}/{Math.max(totalPages, 1)}</strong>
+                <strong className="mt-0.5 block truncate text-[13px] font-semibold text-white">{page + 1}/{Math.max(totalPages, 1)}</strong>
               </div>
             </div>
           </div>
@@ -153,33 +153,32 @@ export default function ClubsClient({ allData }: { allData: RegionData[] }) {
             ))}
           </div>
 
-          <div className="leaderboard-table overflow-hidden rounded-[18px] border border-[var(--line)] bg-[var(--panel)]">
-            <div className="leaderboard-header grid grid-cols-[48px_1fr_100px_100px] gap-3 border-b border-[var(--line)] bg-[var(--panel-2)] px-5 py-2.5 max-md:grid-cols-[40px_1fr_80px] max-md:px-3.5">
+          <div className="overflow-hidden rounded-[18px] border border-[var(--line)] bg-[var(--panel)] max-md:grid max-md:gap-2 max-md:border-0 max-md:bg-transparent">
+            <div className="grid grid-cols-[48px_1fr_100px_100px] gap-3 border-b border-[var(--line)] bg-[var(--panel-2)] px-5 py-2.5 max-md:hidden">
               <span className="text-[10.5px] leading-snug tracking-[0.01em] text-[var(--ink-3)]">#</span>
               <span className="text-[10.5px] leading-snug tracking-[0.01em] text-[var(--ink-3)]">Club</span>
               <span className="text-[10.5px] leading-snug tracking-[0.01em] text-[var(--ink-3)] max-md:hidden">Members</span>
               <span className="text-right text-[10.5px] leading-snug tracking-[0.01em] text-[var(--ink-3)]">Trophies</span>
             </div>
 
-            {paginated.map((club, i) => (
+            {paginated.map((club) => (
               <div
                 key={club.club_tag}
-                className={`interactive-row leaderboard-row grid grid-cols-[48px_1fr_100px_100px] items-center gap-3 px-5 py-3 max-md:grid-cols-[40px_1fr_80px] max-md:px-3.5 ${club.rank <= 3 ? `leaderboard-rank-row-${club.rank} border-l-2` : ""}`}
-                style={{ borderBottom: i < paginated.length - 1 ? "1px solid var(--line)" : "none" }}
+                className={`interactive-row grid min-h-[58px] grid-cols-[48px_1fr_100px_100px] items-center gap-3 border-b border-[var(--line)] bg-[var(--panel)] px-5 py-3 transition-colors last:border-b-0 hover:bg-[var(--hover-bg)] max-md:grid-cols-[40px_minmax(0,1fr)_80px] max-md:gap-2.5 max-md:rounded-xl max-md:border max-md:border-[var(--line)] max-md:p-3 max-md:shadow-[var(--shadow-lift)] ${club.rank <= 3 ? "border-l-2 border-l-[var(--line-2)]" : ""}`}
               >
-                <span className="leaderboard-rank text-[13px] font-medium tabular-nums text-[var(--ink-3)]">
+                <span className="text-[13px] font-normal tabular-nums text-[var(--ink-3)] max-md:grid max-md:h-[34px] max-md:min-w-[34px] max-md:place-items-center max-md:rounded-lg max-md:border max-md:border-[var(--line)] max-md:bg-[var(--panel-2)] max-md:text-[12px] max-md:font-semibold max-md:text-[var(--ink)]">
                   {String(club.rank).padStart(2, "0")}
                 </span>
-                <div className="leaderboard-main min-w-0">
-                  <div className="truncate text-[13px] font-medium text-[var(--ink)]">{club.club_name}</div>
+                <div className="min-w-0">
+                  <div className="truncate text-[14px] font-normal text-[var(--ink)]">{club.club_name}</div>
                   <div className="text-[10.5px] leading-snug tabular-nums text-[var(--ink-4)]">{club.club_tag}</div>
                 </div>
-                <div className="leaderboard-secondary flex items-center gap-1.5 max-md:hidden">
+                <div className="flex items-center gap-1.5 max-md:hidden">
                   <Users size={11} className="text-[var(--ink-4)]" />
                   <span className="text-[13px] tabular-nums text-[var(--ink-3)]">{club.member_count ?? "-"}</span>
                 </div>
-                <div className="leaderboard-metric flex items-center justify-end">
-                  <span className="text-[13px] font-medium tabular-nums text-[var(--ink)]">{formatNum(club.trophies)}</span>
+                <div className="flex items-center justify-end max-md:whitespace-nowrap">
+                  <span className="text-[13px] font-normal tabular-nums text-[var(--ink)]">{formatNum(club.trophies)}</span>
                 </div>
               </div>
             ))}

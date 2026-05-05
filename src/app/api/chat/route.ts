@@ -1,8 +1,11 @@
 export const runtime = "edge"
 
 import Anthropic from "@anthropic-ai/sdk"
+import { NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
+import { getRequestUser } from "@/lib/auth"
 import { fetchPlayerResponse } from "@/lib/playerLookup"
+import { canUsePremium, type PremiumUser } from "@/lib/premium"
 import { sanitizePlayerTag } from "@/lib/validation"
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
@@ -269,16 +272,45 @@ ${top}`
 
 type AssistantBlock = { type: "text"; text: string } | { type: "tool_use"; id: string; name: string; input: Record<string, string> }
 
+function chatModelForUser(user: PremiumUser | null): string {
+  if (canUsePremium(user, "ai:premium-chat")) {
+    return process.env.ANTHROPIC_PREMIUM_MODEL ?? process.env.ANTHROPIC_FREE_MODEL ?? "claude-sonnet-4-6"
+  }
+  return process.env.ANTHROPIC_FREE_MODEL ?? "claude-sonnet-4-6"
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null
+}
+
+function parseMessages(value: unknown): Anthropic.MessageParam[] | null {
+  if (!Array.isArray(value) || value.length === 0 || value.length > 24) return null
+
+  const messages: Anthropic.MessageParam[] = []
+  for (const item of value) {
+    if (!isRecord(item)) return null
+    const role = item.role
+    const content = item.content
+    if ((role !== "user" && role !== "assistant") || typeof content !== "string") return null
+    const trimmed = content.trim()
+    if (!trimmed || trimmed.length > 4000) return null
+    messages.push({ role, content: trimmed })
+  }
+
+  return messages
+}
+
 async function runStream(
   messages: Anthropic.MessageParam[],
   controller: ReadableStreamDefaultController,
   encoder: TextEncoder,
+  model: string,
   depth = 0
 ): Promise<void> {
   if (depth > 5) return
 
   const stream = client.messages.stream({
-    model: "claude-sonnet-4-6",
+    model,
     max_tokens: 4096,
     system: SYSTEM_PROMPT,
     tools,
@@ -336,18 +368,36 @@ async function runStream(
       ],
       controller,
       encoder,
+      model,
       depth + 1
     )
   }
 }
 
 export async function POST(request: Request) {
-  const { messages } = await request.json()
+  let body: unknown
+  try {
+    body = await request.json()
+  } catch {
+    return NextResponse.json({ error: "invalid_json" }, { status: 400 })
+  }
+
+  if (!isRecord(body)) {
+    return NextResponse.json({ error: "invalid_body" }, { status: 400 })
+  }
+
+  const messages = parseMessages(body.messages)
+  if (!messages) {
+    return NextResponse.json({ error: "invalid_messages" }, { status: 400 })
+  }
+
+  const user = await getRequestUser(request)
+  const model = chatModelForUser(user)
   const encoder = new TextEncoder()
 
   const readable = new ReadableStream({
     async start(controller) {
-      await runStream(messages, controller, encoder)
+      await runStream(messages, controller, encoder, model)
       controller.close()
     }
   })

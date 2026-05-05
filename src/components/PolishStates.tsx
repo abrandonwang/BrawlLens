@@ -61,8 +61,8 @@ export function StateLink({ href, children }: { href: string; children: ReactNod
 
 export function LeaderboardSkeleton({ rows = 10 }: { rows?: number }) {
   return (
-    <div className="leaderboard-table overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--panel)] shadow-[var(--shadow-lift)]">
-      <div className="leaderboard-header grid grid-cols-[48px_1fr_180px_100px_24px] gap-3 border-b border-[var(--line)] bg-[var(--panel-2)] px-5 py-2.5">
+    <div className="overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--panel)] shadow-[var(--shadow-lift)] max-md:grid max-md:gap-2 max-md:border-0 max-md:bg-transparent max-md:shadow-none">
+      <div className="grid grid-cols-[48px_1fr_180px_100px_24px] gap-3 border-b border-[var(--line)] bg-[var(--panel-2)] px-5 py-2.5 max-md:hidden">
         <SkeletonBlock className="h-3 w-5" />
         <SkeletonBlock className="h-3 w-16" />
         <SkeletonBlock className="h-3 w-14 max-md:hidden" />
@@ -70,7 +70,7 @@ export function LeaderboardSkeleton({ rows = 10 }: { rows?: number }) {
         <span />
       </div>
       {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className="leaderboard-row grid grid-cols-[48px_1fr_180px_100px_24px] items-center gap-3 px-5 py-3 max-md:grid-cols-[40px_1fr_90px_20px] max-md:px-3.5" style={{ borderBottom: i < rows - 1 ? "1px solid var(--line)" : "none" }}>
+        <div key={i} className="grid min-h-[58px] grid-cols-[48px_1fr_180px_100px_24px] items-center gap-3 border-b border-[var(--line)] bg-[var(--panel)] px-5 py-3 last:border-b-0 max-md:grid-cols-[40px_minmax(0,1fr)_90px] max-md:gap-2.5 max-md:rounded-xl max-md:border max-md:border-[var(--line)] max-md:p-3 max-md:shadow-[var(--shadow-lift)]">
           <SkeletonBlock className="h-4 w-6" />
           <div className="space-y-1.5">
             <SkeletonBlock className="h-3.5 w-[min(180px,70%)]" />

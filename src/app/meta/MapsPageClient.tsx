@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo, type CSSProperties } from "react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
-import { Info, Maximize2, Minimize2, Search } from "lucide-react"
+import { Info, Maximize2, Minimize2, Search, X } from "lucide-react"
 import MetaDashboard from "@/components/MetaDashboard"
 import Modal, { ModalCloseButton } from "@/components/Modal"
 import { BrawlImage, brawlerIconUrl } from "@/components/BrawlImage"
@@ -143,8 +143,14 @@ export default function MapsPageClient() {
       })
       .sort((a, b) => b[sortBy] - a[sortBy])
   }, [mapBrawlers, brawlerSearch, minPicks, sortBy])
+  const modalBestWinRate = useMemo(() => {
+    return [...mapBrawlers].filter(b => b.picks >= minPicks).sort((a, b) => b.winRate - a.winRate)[0] ?? null
+  }, [mapBrawlers, minPicks])
+  const modalMostPicked = useMemo(() => {
+    return [...mapBrawlers].sort((a, b) => b.picks - a.picks)[0] ?? null
+  }, [mapBrawlers])
+  const selectedModeLabel = selectedMap?.mode ? (MODE_CONFIG[selectedMap.mode]?.label ?? selectedMap.mode) : "Unknown mode"
 
-  const modeColor = selectedMap?.mode ? MODE_CONFIG[selectedMap.mode]?.color : undefined
   const totalMaps = useMemo(() => {
     const names = new Set<string>()
     modes.forEach(mode => mode.maps.forEach(map => names.add(map.name)))
@@ -320,61 +326,102 @@ export default function MapsPageClient() {
           onClearFilters={() => { setMapSearch(""); setSelectedMode(null) }}
         />
       </div>
-      <Modal open={!!selectedMap} onClose={closeModal} size={mapExpanded ? "xl" : "md"} labelledBy="map-modal-title">
+      <Modal open={!!selectedMap} onClose={closeModal} size={mapExpanded ? "xl" : "lg"} labelledBy="map-modal-title">
         {selectedMap && (
-          <div className={`bl-map-expand-layout${mapExpanded ? " is-expanded" : ""}`}>
+          <div className={`flex min-h-0 flex-1 overflow-hidden rounded-[inherit] ${mapExpanded ? "flex-col md:flex-row" : "flex-col"}`}>
             {mapExpanded && selectedMap.imageUrl && (
-              <div className="bl-map-expand-panel">
-                <BrawlImage
-                  src={selectedMap.imageUrl}
-                  alt={selectedMap.name}
-                  width={280}
-                  height={448}
-                  sizes="280px"
-                  className="bl-map-expand-img"
-                />
-              </div>
+              <aside className="flex h-[260px] shrink-0 flex-col overflow-hidden border-b border-[var(--line)] bg-[var(--panel-2)] max-[380px]:h-[230px] min-[520px]:h-[300px] md:h-auto md:w-[360px] md:border-r md:border-b-0 lg:w-[420px]">
+                <div className="flex min-h-0 flex-1 items-center justify-center p-3 md:p-5">
+                  <BrawlImage
+                    src={selectedMap.imageUrl}
+                    alt={selectedMap.name}
+                    width={360}
+                    height={448}
+                    sizes="(max-width: 640px) 88vw, 360px"
+                    className="block h-full max-h-full w-auto max-w-full rounded-lg object-contain"
+                  />
+                </div>
+                <div className="hidden items-center justify-between gap-3 border-t border-[var(--line)] px-5 py-3 md:flex">
+                  <span className="truncate text-[13px] font-semibold text-[var(--ink)]">{selectedMap.name}</span>
+                  <span className="shrink-0 text-[11px] text-[var(--ink-4)]">{selectedModeLabel}</span>
+                </div>
+              </aside>
             )}
-            <div className="bl-map-expand-main">
-            <div className="bl-modal-header">
-              <ModalCloseButton onClick={closeModal} label="Close map details" />
-              <button
-                type="button"
-                onClick={() => setMapExpanded(e => !e)}
-                className="bl-map-expand-btn"
-                aria-label={mapExpanded ? "Collapse map image" : "Expand map image"}
-                aria-pressed={mapExpanded}
-              >
-                {mapExpanded ? <Minimize2 size={12} /> : <Maximize2 size={12} />}
-              </button>
-
-              <div className="bl-map-modal-hero">
+            <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+            <div className="sticky top-0 z-10 shrink-0 bg-[var(--panel)] px-6 pt-5 shadow-[0_1px_0_var(--line)] max-[600px]:px-4 max-[600px]:pt-4">
+              <div className="mb-3 flex items-center justify-between gap-2">
                 {selectedMap.imageUrl && (
-                  <div className="bl-map-modal-thumb">
-                    <BrawlImage src={selectedMap.imageUrl} alt={selectedMap.name} width={56} height={56} style={{ width: "100%", height: "100%", objectFit: "cover" }} sizes="56px" />
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setMapExpanded(e => !e)}
+                    className="grid size-8 cursor-pointer place-items-center rounded-full border-0 bg-[var(--ink)] text-[var(--bg)] shadow-[var(--shadow-lift)] transition-colors hover:bg-[var(--accent-focus)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--line-2)]"
+                    aria-label={mapExpanded ? "Collapse map image" : "Expand map image"}
+                    aria-pressed={mapExpanded}
+                  >
+                    {mapExpanded ? <Minimize2 size={14} strokeWidth={2.25} /> : <Maximize2 size={14} strokeWidth={2.25} />}
+                  </button>
                 )}
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="ml-auto grid size-8 cursor-pointer place-items-center rounded-full border-0 bg-[var(--ink)] text-[var(--bg)] shadow-[var(--shadow-lift)] transition-colors hover:bg-[var(--accent-focus)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--line-2)]"
+                  aria-label="Close map details"
+                >
+                  <X size={14} strokeWidth={2.25} />
+                </button>
+              </div>
 
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <h2 id="map-modal-title" className={`bl-map-modal-title ${selectedMap.isLive ? "is-live" : ""}`}>{selectedMap.name}</h2>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    {modeColor && <span style={{ width: 6, height: 6, borderRadius: 2, background: modeColor, display: "inline-block", flexShrink: 0 }} />}
-                    <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.03em", color: "var(--ink-4)" }}>
-                      {selectedMap.mode ? (MODE_CONFIG[selectedMap.mode]?.label ?? selectedMap.mode).toLowerCase() : "unknown mode"}
-                      {" · "}{mapTotalBattles.toLocaleString()} battles
-                    </span>
+              <div className="mb-4">
+                <div className="flex items-start gap-4 max-[520px]:gap-3">
+                  {selectedMap.imageUrl && (
+                    <button
+                      type="button"
+                      onClick={() => setMapExpanded(e => !e)}
+                      className={`group relative flex size-16 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--panel-2)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--line-2)] ${mapExpanded ? "md:hidden" : ""}`}
+                      aria-label={mapExpanded ? "Collapse map image" : "Expand map image"}
+                    >
+                      <BrawlImage src={selectedMap.imageUrl} alt={selectedMap.name} width={64} height={64} style={{ width: "100%", height: "100%", objectFit: "cover" }} sizes="64px" />
+                      <span className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/10" />
+                    </button>
+                  )}
+
+                  <div className="min-w-0 flex-1">
+                    <h2 id="map-modal-title" className="m-0 flex max-w-full flex-wrap items-baseline gap-x-2 gap-y-1 text-[32px] leading-[1.05] font-semibold break-words text-[var(--ink)] max-[600px]:text-[26px]">
+                      <span>{selectedMap.name}</span>
+                      <span aria-hidden="true" className="text-[var(--ink-5)]">|</span>
+                      <span className="text-[0.72em] font-normal text-[var(--ink-3)]">{selectedModeLabel}</span>
+                    </h2>
+                    <div className="mt-3 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5 text-[12px] text-[var(--ink-4)]">
+                      <span className="whitespace-nowrap">
+                        <strong className="font-semibold text-[var(--ink)]">{mapTotalBattles.toLocaleString()}</strong> battles
+                      </span>
+                      <span className="hidden size-1 rounded-full bg-[var(--ink-5)] min-[420px]:block" />
+                      <span className="min-w-0 truncate">
+                        Best: <strong className="font-semibold text-[var(--ink)]">{modalBestWinRate ? `${formatBrawlerName(modalBestWinRate.name)} ${modalBestWinRate.winRate.toFixed(1)}%` : "-"}</strong>
+                      </span>
+                      <span className="hidden size-1 rounded-full bg-[var(--ink-5)] min-[520px]:block" />
+                      <span className="min-w-0 truncate">
+                        Picked: <strong className="font-semibold text-[var(--ink)]">{modalMostPicked ? `${formatBrawlerName(modalMostPicked.name)} ${formatNum(modalMostPicked.picks)}` : "-"}</strong>
+                      </span>
+                      </div>
                   </div>
                 </div>
               </div>
-              <div className="bl-map-modal-controls">
-                <div className="bl-input">
-                  <Search size={12} style={{ color: "var(--ink-4)", flexShrink: 0 }} />
-                  <input placeholder="Search brawler…" value={brawlerSearch} onChange={e => setBrawlerSearch(e.target.value)} />
+              <div className="mb-4 flex items-center gap-2.5 max-[600px]:flex-col max-[600px]:items-stretch">
+                <div className="flex min-h-11 min-w-[220px] flex-[1_1_260px] items-center gap-2.5 rounded-md border border-[var(--line)] bg-[var(--panel)] px-4 text-[var(--ink)] transition-[border-color,box-shadow] focus-within:border-[var(--line-2)] focus-within:shadow-[0_4px_12px_rgba(0,0,0,0.1)] max-[600px]:min-w-0 max-[600px]:basis-auto">
+                  <Search size={12} className="shrink-0 text-[var(--ink-4)]" />
+                  <input className="w-full border-0 bg-transparent text-[16px] font-[inherit] text-inherit outline-none placeholder:text-[var(--ink-4)]" placeholder="Search brawler…" value={brawlerSearch} onChange={e => setBrawlerSearch(e.target.value)} />
                 </div>
-                <div className="bl-map-modal-filters">
-                  <div className="bl-seg">
+                <div className="flex min-w-0 flex-none items-center gap-2 max-[600px]:flex-wrap">
+                  <div className="inline-flex max-w-full gap-0.5 overflow-x-auto rounded-lg border border-[var(--line)] bg-[var(--panel)] p-[3px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                     {([["picks", "Picks"], ["winRate", "Win Rate"], ["wins", "Wins"]] as [SortKey, string][]).map(([key, label]) => (
-                      <button key={key} onClick={() => setSortBy(key)} className={sortBy === key ? "on" : ""}>{label}</button>
+                      <button
+                        key={key}
+                        onClick={() => setSortBy(key)}
+                        className={`relative cursor-pointer rounded-md border-0 px-[15px] py-[7px] text-[14px] font-normal transition-all ${sortBy === key ? "bg-[var(--ink)] text-[#fcfbf8] shadow-[var(--shadow-lift)]" : "bg-transparent text-[var(--ink-3)] hover:bg-[color-mix(in_srgb,var(--panel-2)_70%,transparent)] hover:text-[var(--ink)]"}`}
+                      >
+                        {label}
+                      </button>
                     ))}
                   </div>
                   <select value={minPicks} onChange={e => setMinPicks(Number(e.target.value))} style={{ background: "var(--panel)", border: "1px solid var(--line)", borderRadius: 8, padding: "5px 8px", fontSize: 12, color: "var(--ink)", outline: "none", fontFamily: "inherit", cursor: "pointer" }}>
@@ -389,11 +436,11 @@ export default function MapsPageClient() {
 
               <div style={{ borderBottom: "1px solid var(--line)" }} />
             </div>
-            <div className="bl-modal-body">
+            <div className="min-h-0 flex-1 overflow-y-auto bg-[var(--panel)]">
               {mapDataLoading ? (
-                <div className="space-y-2 p-4">
+                <div className="space-y-2 p-5 max-[600px]:p-3">
                   {Array.from({ length: 8 }).map((_, i) => (
-                    <div key={i} className="grid grid-cols-[36px_1fr_90px] items-center gap-3 rounded-lg border border-[var(--line)] bg-[var(--panel)] p-3">
+                    <div key={i} className="grid grid-cols-[40px_1fr_90px] items-center gap-3 rounded-xl border border-[var(--line)] bg-[var(--panel)] p-3">
                       <SkeletonBlock className="size-8" />
                       <div className="space-y-2">
                         <SkeletonBlock className="h-3.5 w-28" />
@@ -413,57 +460,96 @@ export default function MapsPageClient() {
                 </div>
               ) : (
                 <>
-                  <div className="map-brawler-row map-brawler-header" style={{ display: "grid", gridTemplateColumns: "36px 1fr 120px 60px 60px 36px", gap: 12, padding: "10px 20px", background: "var(--panel-2)", borderBottom: "1px solid var(--line)" }}>
-                    <span />
-                    <span className="bl-caption" style={{ letterSpacing: "0.12em", textTransform: "uppercase" }}>Brawler</span>
-                    <span className="bl-caption" style={{ letterSpacing: "0.12em", textTransform: "uppercase" }}>Win Rate</span>
-                    <span className="bl-caption map-brawler-hide" style={{ letterSpacing: "0.12em", textTransform: "uppercase", textAlign: "right" }}>Wins</span>
-                    <span className="bl-caption" style={{ letterSpacing: "0.12em", textTransform: "uppercase", textAlign: "right" }}>Picks</span>
-                    <span className="bl-caption map-brawler-hide" style={{ letterSpacing: "0.12em", textTransform: "uppercase", textAlign: "center" }}>Tier</span>
-                  </div>
-
-                  {filteredBrawlers.map((b, i) => {
-                    const tier = getTierInfo(b.winRate)
-                    return (
+                  <div className="px-5 pt-4 pb-5 max-[600px]:px-3 max-[600px]:pt-3">
+                    <div className="hidden overflow-hidden rounded-xl border border-[var(--line)] min-[760px]:block">
                       <div
-                        key={b.brawlerId}
-                        className="map-brawler-row row-hover"
-                        style={{ display: "grid", gridTemplateColumns: "36px 1fr 120px 60px 60px 36px", gap: 12, padding: "10px 20px", borderBottom: i < filteredBrawlers.length - 1 ? "1px solid var(--line)" : "none" }}
+                        className="grid items-center gap-4 border-b border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_94%,var(--panel-2))] px-4 py-3"
+                        style={{ gridTemplateColumns: "44px minmax(0,1.25fr) minmax(116px,0.9fr) 72px 72px 48px" }}
                       >
-                        <div className="map-brawler-avatar" style={{ width: 30, height: 30, borderRadius: 7, background: "var(--panel-2)", display: "grid", placeItems: "center", overflow: "hidden" }}>
-                          <BrawlImage src={brawlerIconUrl(b.brawlerId)} alt={b.name} width={26} height={26} style={{ width: 26, height: 26, objectFit: "contain" }} loading="lazy" sizes="26px" />
-                        </div>
-
-                        <span className="map-brawler-name" style={{ fontSize: 13, fontWeight: 600, color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                          {formatBrawlerName(b.name)}
-                        </span>
-
-                        <div className="map-brawler-winrate" style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          <span className="bl-num" style={{ fontSize: 13, fontWeight: 600, color: tier.color, flexShrink: 0 }}>{b.winRate.toFixed(1)}%</span>
-                          <div style={{ flex: 1, height: 3, background: "var(--line-2)", borderRadius: 99, overflow: "hidden" }}>
-                            <div style={{ height: "100%", width: `${getBarWidth(b.winRate)}%`, background: tier.color, opacity: 0.7, borderRadius: 99 }} />
-                          </div>
-                        </div>
-
-                        <span className="bl-num map-brawler-hide" style={{ fontSize: 12, color: "var(--ink-3)", textAlign: "right" }}>
-                          {b.wins >= 1000 ? `${(b.wins / 1000).toFixed(1)}k` : b.wins}
-                        </span>
-                        <span className="bl-num map-brawler-picks" style={{ fontSize: 12, color: "var(--ink-3)", textAlign: "right" }}>
-                          {b.picks >= 1000 ? `${(b.picks / 1000).toFixed(1)}k` : b.picks}
-                        </span>
-
-                        <div className="map-brawler-hide" style={{ display: "flex", justifyContent: "center" }}>
-                          <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 22, height: 22, fontSize: 9.5, fontWeight: 800, borderRadius: 5, color: tier.color, background: tier.bg, border: `1px solid ${tier.border}` }}>
-                            {tier.label}
-                          </span>
-                        </div>
+                        <span />
+                        <span className="text-[12px] font-normal text-[var(--ink-4)]">Brawler</span>
+                        <span className="text-[12px] font-normal text-[var(--ink-4)]">Win rate</span>
+                        <span className="text-right text-[12px] font-normal text-[var(--ink-4)]">Wins</span>
+                        <span className="text-right text-[12px] font-normal text-[var(--ink-4)]">Picks</span>
+                        <span className="text-center text-[12px] font-normal text-[var(--ink-4)]">Tier</span>
                       </div>
-                    )
-                  })}
+
+                      {filteredBrawlers.map(b => {
+                        const tier = getTierInfo(b.winRate)
+                        return (
+                          <div
+                            key={b.brawlerId}
+                            className="grid min-h-[64px] items-center gap-4 border-b border-[var(--line)] bg-[var(--panel)] px-4 py-3 transition-colors last:border-b-0 hover:bg-[var(--hover-bg)]"
+                            style={{ gridTemplateColumns: "44px minmax(0,1.25fr) minmax(116px,0.9fr) 72px 72px 48px" }}
+                          >
+                            <div className="grid size-10 place-items-center overflow-hidden rounded-lg border border-[var(--line)] bg-[var(--panel-2)]">
+                              <BrawlImage src={brawlerIconUrl(b.brawlerId)} alt={b.name} width={34} height={34} style={{ width: 34, height: 34, objectFit: "contain" }} loading="lazy" sizes="34px" />
+                            </div>
+
+                            <span className="min-w-0 truncate text-[14px] font-semibold text-[var(--ink)]">
+                              {formatBrawlerName(b.name)}
+                            </span>
+
+                            <div className="flex min-w-0 items-center gap-3">
+                              <span className="bl-num w-[48px] shrink-0 text-[13px] font-semibold text-[var(--ink)]">{b.winRate.toFixed(1)}%</span>
+                              <div className="h-1 flex-1 overflow-hidden rounded-full bg-[color-mix(in_srgb,var(--ink)_16%,transparent)]">
+                                <div className="h-full rounded-full bg-[var(--ink)] opacity-75" style={{ width: `${getBarWidth(b.winRate)}%` }} />
+                              </div>
+                            </div>
+
+                            <span className="bl-num text-right text-[13px] font-normal text-[var(--ink-3)]">
+                              {formatNum(b.wins)}
+                            </span>
+                            <span className="bl-num text-right text-[13px] font-normal text-[var(--ink-3)]">
+                              {formatNum(b.picks)}
+                            </span>
+
+                            <div className="flex justify-center">
+                              <span className="inline-flex size-7 items-center justify-center rounded-md border border-[var(--line)] bg-[var(--panel-2)] text-[11px] font-semibold text-[var(--ink-3)]">
+                                {tier.label}
+                              </span>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+
+                    <div className="grid gap-2 min-[760px]:hidden">
+                      {filteredBrawlers.map(b => {
+                        const tier = getTierInfo(b.winRate)
+                        return (
+                          <div key={b.brawlerId} className="rounded-xl border border-[var(--line)] bg-[var(--panel)] p-3">
+                            <div className="flex items-center gap-3">
+                              <div className="grid size-10 place-items-center overflow-hidden rounded-lg border border-[var(--line)] bg-[var(--panel-2)]">
+                                <BrawlImage src={brawlerIconUrl(b.brawlerId)} alt={b.name} width={34} height={34} style={{ width: 34, height: 34, objectFit: "contain" }} loading="lazy" sizes="34px" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="truncate text-[14px] font-semibold text-[var(--ink)]">{formatBrawlerName(b.name)}</div>
+                                <div className="mt-1 flex items-center gap-2 text-[12px] text-[var(--ink-4)]">
+                                  <span>{formatNum(b.picks)} picks</span>
+                                  <span className="size-1 rounded-full bg-[var(--ink-5)]" />
+                                  <span>{formatNum(b.wins)} wins</span>
+                                </div>
+                              </div>
+                              <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-md border border-[var(--line)] bg-[var(--panel-2)] text-[11px] font-semibold text-[var(--ink-3)]">
+                                {tier.label}
+                              </span>
+                            </div>
+                            <div className="mt-3 flex items-center gap-3">
+                              <span className="bl-num w-[52px] shrink-0 text-[13px] font-semibold text-[var(--ink)]">{b.winRate.toFixed(1)}%</span>
+                              <div className="h-1 flex-1 overflow-hidden rounded-full bg-[color-mix(in_srgb,var(--ink)_16%,transparent)]">
+                                <div className="h-full rounded-full bg-[var(--ink)] opacity-75" style={{ width: `${getBarWidth(b.winRate)}%` }} />
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
                 </>
               )}
             </div>
-            </div>{/* bl-map-expand-main */}
+            </div>{/* map modal main */}
           </div>
         )}
       </Modal>

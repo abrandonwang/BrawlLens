@@ -17,11 +17,11 @@ interface BrawlerStat {
 type SortKey = "winRate" | "wins" | "picks"
 
 function getTierInfo(winRate: number) {
-  if (winRate >= 58) return { label: "S", color: "#DC2626", bg: "rgba(220,38,38,0.10)", border: "rgba(220,38,38,0.26)" }
-  if (winRate >= 54) return { label: "A", color: "#C2410C", bg: "rgba(194,65,12,0.10)", border: "rgba(194,65,12,0.24)" }
-  if (winRate >= 50) return { label: "B", color: "#A16207", bg: "rgba(161,98,7,0.10)", border: "rgba(161,98,7,0.24)" }
-  if (winRate >= 46) return { label: "C", color: "#2563EB", bg: "rgba(37,99,235,0.10)", border: "rgba(37,99,235,0.24)" }
-  return { label: "D", color: "var(--ink-4)", bg: "var(--panel-2)", border: "var(--line)" }
+  if (winRate >= 58) return { label: "S" }
+  if (winRate >= 54) return { label: "A" }
+  if (winRate >= 50) return { label: "B" }
+  if (winRate >= 46) return { label: "C" }
+  return { label: "D" }
 }
 
 function getBarWidth(winRate: number): number {
@@ -30,6 +30,12 @@ function getBarWidth(winRate: number): number {
 
 function formatBrawlerName(name: string): string {
   return name.split(" ").map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(" ")
+}
+
+function formatNum(n: number) {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`
+  return n.toString()
 }
 
 interface Props {
@@ -95,15 +101,21 @@ export default function MapDetailClient({ mapName, imageUrl, totalBattles, brawl
         )}
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20, flexWrap: "wrap" }}>
-        <div className="bl-input" style={{ width: 220 }}>
-          <Search size={13} style={{ color: "var(--ink-4)", flexShrink: 0 }} />
-          <input placeholder="Search brawler…" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+      <div className="mb-5 flex flex-wrap items-center gap-2.5">
+        <div className="flex min-h-11 w-[220px] items-center gap-2.5 rounded-md border border-[var(--line)] bg-[var(--panel)] px-4 text-[var(--ink)] transition-[border-color,box-shadow] focus-within:border-[var(--line-2)] focus-within:shadow-[0_4px_12px_rgba(0,0,0,0.1)] max-[520px]:w-full">
+          <Search size={13} className="shrink-0 text-[var(--ink-4)]" />
+          <input className="w-full border-0 bg-transparent text-[16px] font-[inherit] text-inherit outline-none placeholder:text-[var(--ink-4)]" placeholder="Search brawler…" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
         </div>
 
-        <div className="bl-seg">
+        <div className="inline-flex max-w-full gap-0.5 overflow-x-auto rounded-lg border border-[var(--line)] bg-[var(--panel)] p-[3px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {sortOptions.map(opt => (
-            <button key={opt.key} onClick={() => setSortBy(opt.key)} className={sortBy === opt.key ? "on" : ""}>{opt.label}</button>
+            <button
+              key={opt.key}
+              onClick={() => setSortBy(opt.key)}
+              className={`relative cursor-pointer rounded-md border-0 px-[15px] py-[7px] text-[14px] font-normal transition-all ${sortBy === opt.key ? "bg-[var(--ink)] text-[#fcfbf8] shadow-[var(--shadow-lift)]" : "bg-transparent text-[var(--ink-3)] hover:bg-[color-mix(in_srgb,var(--panel-2)_70%,transparent)] hover:text-[var(--ink)]"}`}
+            >
+              {opt.label}
+            </button>
           ))}
         </div>
 
@@ -118,7 +130,7 @@ export default function MapDetailClient({ mapName, imageUrl, totalBattles, brawl
           </select>
         </div>
 
-        <span className="bl-caption" style={{ marginLeft: "auto" }}>{filtered.length} brawlers</span>
+        <span className="bl-caption ml-auto">{filtered.length} brawlers</span>
       </div>
 
       {filtered.length === 0 ? (
@@ -129,65 +141,83 @@ export default function MapDetailClient({ mapName, imageUrl, totalBattles, brawl
           secondary={<StateLink href="/meta">All maps</StateLink>}
         />
       ) : (
-        <div className="relative overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--panel)] transition-[transform,border-color,box-shadow,background] duration-200 hover:border-[var(--line-2)]" style={{ padding: 0, overflow: "hidden" }}>
-          <div className="map-brawler-row map-brawler-header" style={{ display: "grid", gridTemplateColumns: "36px 1fr 120px 60px 60px 36px", gap: 12, padding: "10px 20px", borderBottom: "1px solid var(--line)", background: "var(--panel-2)" }}>
+        <div className="relative overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--panel)] transition-[border-color] duration-200 hover:border-[var(--line-2)] max-[600px]:border-0 max-[600px]:bg-transparent">
+          <div className="hidden grid-cols-[44px_minmax(0,1.25fr)_minmax(116px,0.9fr)_72px_72px_48px] items-center gap-4 border-b border-[var(--line)] bg-[var(--panel-2)] px-4 py-3 min-[760px]:grid">
             <span />
-            <span className="bl-caption" style={{ letterSpacing: "0.12em", textTransform: "uppercase" }}>Brawler</span>
-            <span className="bl-caption" style={{ letterSpacing: "0.12em", textTransform: "uppercase" }}>Win Rate</span>
-            <span className="bl-caption map-brawler-hide" style={{ letterSpacing: "0.12em", textTransform: "uppercase", textAlign: "right" }}>Wins</span>
-            <span className="bl-caption" style={{ letterSpacing: "0.12em", textTransform: "uppercase", textAlign: "right" }}>Picks</span>
-            <span className="bl-caption map-brawler-hide" style={{ letterSpacing: "0.12em", textTransform: "uppercase", textAlign: "center" }}>Tier</span>
+            <span className="text-[12px] font-normal text-[var(--ink-4)]">Brawler</span>
+            <span className="text-[12px] font-normal text-[var(--ink-4)]">Win rate</span>
+            <span className="text-right text-[12px] font-normal text-[var(--ink-4)]">Wins</span>
+            <span className="text-right text-[12px] font-normal text-[var(--ink-4)]">Picks</span>
+            <span className="text-center text-[12px] font-normal text-[var(--ink-4)]">Tier</span>
           </div>
 
-          {filtered.map((brawler, i) => {
-            const tier = getTierInfo(brawler.winRate)
-            return (
-              <div
-                key={brawler.brawlerId}
-                className="map-brawler-row row-hover"
-                style={{ display: "grid", gridTemplateColumns: "36px 1fr 120px 60px 60px 36px", gap: 12, padding: "12px 20px", borderBottom: i < filtered.length - 1 ? "1px solid var(--line)" : "none" }}
-              >
-                <div className="map-brawler-avatar" style={{ width: 36, height: 36, borderRadius: 8, background: "var(--panel-2)", display: "grid", placeItems: "center", overflow: "hidden" }}>
-                  <BrawlImage
-                    src={brawlerIconUrl(brawler.brawlerId)}
-                    alt={brawler.name}
-                    width={32}
-                    height={32}
-                    style={{ width: 32, height: 32, objectFit: "contain" }}
-                    loading="lazy"
-                    sizes="32px"
-                  />
-                </div>
+          <div className="hidden min-[760px]:block">
+            {filtered.map((brawler) => {
+              const tier = getTierInfo(brawler.winRate)
+              return (
+                <div
+                  key={brawler.brawlerId}
+                  className="grid min-h-[64px] grid-cols-[44px_minmax(0,1.25fr)_minmax(116px,0.9fr)_72px_72px_48px] items-center gap-4 border-b border-[var(--line)] bg-[var(--panel)] px-4 py-3 transition-colors last:border-b-0 hover:bg-[var(--hover-bg)]"
+                >
+                  <div className="grid size-10 place-items-center overflow-hidden rounded-lg border border-[var(--line)] bg-[var(--panel-2)]">
+                    <BrawlImage src={brawlerIconUrl(brawler.brawlerId)} alt={brawler.name} width={34} height={34} className="size-[34px] object-contain" loading="lazy" sizes="34px" />
+                  </div>
 
-                <span className="map-brawler-name" style={{ fontSize: 13.5, fontWeight: 600, color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {formatBrawlerName(brawler.name)}
-                </span>
-
-                <div className="map-brawler-winrate" style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span className="bl-num" style={{ fontSize: 13.5, fontWeight: 600, color: tier.color, flexShrink: 0 }}>
-                    {brawler.winRate.toFixed(1)}%
+                  <span className="min-w-0 truncate text-[14px] font-semibold text-[var(--ink)]">
+                    {formatBrawlerName(brawler.name)}
                   </span>
-                  <div style={{ flex: 1, height: 3, background: "var(--line-2)", borderRadius: 99, overflow: "hidden" }}>
-                    <div style={{ height: "100%", width: `${getBarWidth(brawler.winRate)}%`, background: tier.color, opacity: 0.7, borderRadius: 99, transition: "width 0.4s ease" }} />
+
+                  <div className="flex min-w-0 items-center gap-3">
+                    <span className="bl-num w-[48px] shrink-0 text-[13px] font-semibold text-[var(--ink)]">{brawler.winRate.toFixed(1)}%</span>
+                    <div className="h-1 flex-1 overflow-hidden rounded-full bg-[color-mix(in_srgb,var(--ink)_16%,transparent)]">
+                      <div className="h-full rounded-full bg-[var(--ink)] opacity-75 transition-[width]" style={{ width: `${getBarWidth(brawler.winRate)}%` }} />
+                    </div>
+                  </div>
+
+                  <span className="bl-num text-right text-[13px] font-normal text-[var(--ink-3)]">{formatNum(brawler.wins)}</span>
+                  <span className="bl-num text-right text-[13px] font-normal text-[var(--ink-3)]">{formatNum(brawler.picks)}</span>
+
+                  <div className="flex justify-center">
+                    <span className="inline-flex size-7 items-center justify-center rounded-md border border-[var(--line)] bg-[var(--panel-2)] text-[11px] font-semibold text-[var(--ink-3)]">
+                      {tier.label}
+                    </span>
                   </div>
                 </div>
+              )
+            })}
+          </div>
 
-                <span className="bl-num map-brawler-hide" style={{ fontSize: 13, color: "var(--ink-3)", textAlign: "right" }}>
-                  {brawler.wins >= 1000 ? `${(brawler.wins / 1000).toFixed(1)}k` : brawler.wins}
-                </span>
-
-                <span className="bl-num map-brawler-picks" style={{ fontSize: 13, color: "var(--ink-3)", textAlign: "right" }}>
-                  {brawler.picks >= 1000 ? `${(brawler.picks / 1000).toFixed(1)}k` : brawler.picks}
-                </span>
-
-                <div className="map-brawler-hide" style={{ display: "flex", justifyContent: "center" }}>
-                  <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 26, height: 26, fontSize: 10, fontWeight: 800, borderRadius: 6, color: tier.color, background: tier.bg, border: `1px solid ${tier.border}` }}>
-                    {tier.label}
-                  </span>
+          <div className="grid gap-2 min-[760px]:hidden">
+            {filtered.map((brawler) => {
+              const tier = getTierInfo(brawler.winRate)
+              return (
+                <div key={brawler.brawlerId} className="rounded-xl border border-[var(--line)] bg-[var(--panel)] p-3 shadow-[var(--shadow-lift)]">
+                  <div className="flex items-center gap-3">
+                    <div className="grid size-10 place-items-center overflow-hidden rounded-lg border border-[var(--line)] bg-[var(--panel-2)]">
+                      <BrawlImage src={brawlerIconUrl(brawler.brawlerId)} alt={brawler.name} width={34} height={34} className="size-[34px] object-contain" loading="lazy" sizes="34px" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-[14px] font-semibold text-[var(--ink)]">{formatBrawlerName(brawler.name)}</div>
+                      <div className="mt-1 flex items-center gap-2 text-[12px] text-[var(--ink-4)]">
+                        <span>{formatNum(brawler.picks)} picks</span>
+                        <span className="size-1 rounded-full bg-[var(--ink-5)]" />
+                        <span>{formatNum(brawler.wins)} wins</span>
+                      </div>
+                    </div>
+                    <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-md border border-[var(--line)] bg-[var(--panel-2)] text-[11px] font-semibold text-[var(--ink-3)]">
+                      {tier.label}
+                    </span>
+                  </div>
+                  <div className="mt-3 flex items-center gap-3">
+                    <span className="bl-num w-[52px] shrink-0 text-[13px] font-semibold text-[var(--ink)]">{brawler.winRate.toFixed(1)}%</span>
+                    <div className="h-1 flex-1 overflow-hidden rounded-full bg-[color-mix(in_srgb,var(--ink)_16%,transparent)]">
+                      <div className="h-full rounded-full bg-[var(--ink)] opacity-75 transition-[width]" style={{ width: `${getBarWidth(brawler.winRate)}%` }} />
+                    </div>
+                  </div>
                 </div>
-              </div>
-            )
-          })}
+              )
+            })}
+          </div>
         </div>
       )}
     </main>

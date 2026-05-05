@@ -180,12 +180,6 @@ body {
   box-shadow: rgba(0,0,0,0.06) 0 8px 24px -18px;
 }
 
-.interactive-row:hover .leaderboard-arrow,
-.interactive-card:hover .leaderboard-arrow {
-  color: var(--ink-2);
-  transform: translateX(2px);
-}
-
 @keyframes page-transition-in {
   from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -229,58 +223,6 @@ body {
 
 .map-card-meta {
   background: var(--panel);
-}
-
-.leaderboard-table {
-  border-radius: 12px;
-}
-
-.leaderboard-summary {
-  border-radius: 16px;
-  border-color: var(--line-2) !important;
-}
-
-.leaderboard-summary::before {
-  content: none;
-}
-
-.leaderboard-summary strong {
-  font-weight: 600 !important;
-}
-
-.leaderboard-table {
-  border-color: var(--line) !important;
-  background: var(--panel) !important;
-}
-
-.leaderboard-header {
-  background: transparent !important;
-}
-
-.leaderboard-header span {
-  color: var(--ink-4) !important;
-  font-size: 12px !important;
-  font-weight: 400 !important;
-}
-
-.leaderboard-row {
-  min-height: 58px;
-  background: var(--panel);
-}
-
-.leaderboard-row:hover {
-  background: var(--hover-bg);
-}
-
-.leaderboard-main > div:first-child {
-  font-size: 14px !important;
-  font-weight: 400 !important;
-}
-
-.leaderboard-rank,
-.leaderboard-secondary,
-.leaderboard-metric span {
-  font-weight: 400 !important;
 }
 
 .page-summary {
@@ -373,9 +315,6 @@ body {
   box-shadow: none;
 }
 
-.top-rank-card-rank-1 .leaderboard-rank,
-.top-rank-card-rank-2 .leaderboard-rank,
-.top-rank-card-rank-3 .leaderboard-rank,
 .top-rank-card-rank-1 > span:first-child,
 .top-rank-card-rank-2 > span:first-child,
 .top-rank-card-rank-3 > span:first-child {
@@ -384,29 +323,6 @@ body {
   color: var(--ink) !important;
 }
 
-.leaderboard-rank-row-1 {
-  --rank-color: var(--ink);
-  background: var(--panel);
-  border-left-color: var(--line-2) !important;
-}
-
-.leaderboard-rank-row-2 {
-  --rank-color: var(--ink);
-  background: var(--panel);
-  border-left-color: var(--line-2) !important;
-}
-
-.leaderboard-rank-row-3 {
-  --rank-color: var(--ink);
-  background: var(--panel);
-  border-left-color: var(--line-2) !important;
-}
-
-.leaderboard-rank-row-1 .leaderboard-rank,
-.leaderboard-rank-row-2 .leaderboard-rank,
-.leaderboard-rank-row-3 .leaderboard-rank {
-  color: var(--rank-color) !important;
-}
 @keyframes skeleton-shimmer {
   100% { transform: translateX(100%); }
 }
@@ -432,83 +348,6 @@ html.landing-bg .bl-caption {
   font-family: var(--font-geist-mono, var(--font-jetbrains-mono), ui-monospace, monospace);
   font-feature-settings: "ss01", "zero", "tnum";
   letter-spacing: 0;
-}
-
-.bl-input {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-height: 44px;
-  padding: 0 16px;
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  color: var(--ink);
-  transition: border-color 0.16s ease, box-shadow 0.16s ease;
-}
-.bl-input:focus-within {
-  border-color: var(--line-2);
-  box-shadow: rgba(0,0,0,0.1) 0 4px 12px;
-}
-.bl-input input,
-.bl-input textarea {
-  background: transparent;
-  border: none;
-  outline: none;
-  color: inherit;
-  width: 100%;
-  font: inherit;
-  font-size: 16px;
-  -webkit-appearance: none;
-  appearance: none;
-}
-@media (hover: none) and (pointer: coarse) {
-  .bl-input input,
-  .bl-input textarea {
-    font-size: 16px;
-  }
-}
-.bl-input input::placeholder,
-.bl-input textarea::placeholder { color: var(--ink-4); }
-
-.bl-seg {
-  display: inline-flex;
-  padding: 3px;
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  gap: 2px;
-}
-.bl-seg > button {
-  padding: 7px 15px;
-  font-size: 14px;
-  font-weight: 400;
-  color: var(--ink-3);
-  background: transparent;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  position: relative;
-}
-.bl-seg > button:hover {
-  color: var(--ink);
-  background: color-mix(in srgb, var(--panel-2) 70%, transparent);
-}
-.bl-seg > button.on,
-.bl-seg > button[data-active="true"] {
-  color: #fcfbf8;
-  background: var(--ink);
-  animation: segmentSelectIn 0.18s ease both;
-  box-shadow: var(--shadow-lift);
-}
-.bl-seg > button.on::before,
-.bl-seg > button[data-active="true"]::before {
-  display: none;
-}
-@keyframes segmentSelectIn {
-  from { transform: translateY(1px); }
-  to   { transform: translateY(0); }
 }
 
 .hero-bg {
@@ -551,194 +390,6 @@ html.landing-bg .bl-caption {
   to   { opacity: 0; transform: translateY(8px); }
 }
 
-.map-brawler-row {
-  align-items: center;
-}
-
-.map-brawler-header {
-  position: sticky;
-  top: -1px;
-  z-index: 2;
-  background: var(--panel) !important;
-  box-shadow: 0 -1px 0 var(--panel), 0 1px 0 var(--line);
-}
-
-@media (max-width: 600px) {
-  .leaderboard-table {
-    display: grid;
-    gap: 8px;
-    padding: 8px;
-    border-radius: 12px;
-    background: transparent;
-    box-shadow: none;
-  }
-  .leaderboard-header {
-    display: none !important;
-  }
-  .leaderboard-row {
-    grid-template-columns: auto minmax(0, 1fr) auto !important;
-    grid-template-areas: "rank main metric";
-    align-items: center;
-    gap: 10px !important;
-    padding: 12px !important;
-    border: 1px solid var(--line) !important;
-    border-radius: 12px;
-    background: var(--panel);
-    box-shadow: var(--shadow-lift);
-  }
-  .leaderboard-rank {
-    grid-area: rank;
-    display: grid;
-    min-width: 34px;
-    height: 34px;
-    place-items: center;
-    border-radius: 8px;
-    border: 1px solid var(--line);
-    background: var(--panel-2);
-    color: var(--ink) !important;
-    font-size: 12px !important;
-    font-weight: 800 !important;
-  }
-  .leaderboard-main {
-    grid-area: main;
-    align-self: center;
-  }
-  .leaderboard-secondary {
-    display: none !important;
-  }
-  .leaderboard-metric {
-    grid-area: metric;
-    align-self: center;
-    padding: 0;
-    white-space: nowrap;
-  }
-  .leaderboard-metric::after {
-    content: none;
-  }
-  .leaderboard-arrow {
-    display: none !important;
-  }
-
-  .map-brawler-row {
-    grid-template-columns: 34px minmax(0, 1fr) auto !important;
-    grid-template-areas:
-      "avatar name winrate"
-      "avatar name picks";
-    gap: 3px 10px !important;
-    margin: 8px;
-    padding: 12px !important;
-    border: 1px solid var(--line) !important;
-    border-radius: 12px;
-    background: var(--panel);
-    box-shadow: var(--shadow-lift);
-  }
-  .map-brawler-header { display: none !important; }
-  .map-brawler-hide {
-    display: none !important;
-  }
-  .map-brawler-avatar {
-    grid-area: avatar;
-    align-self: center;
-  }
-  .map-brawler-name {
-    grid-area: name;
-    align-self: center;
-    white-space: normal !important;
-    line-height: 1.2;
-  }
-  .map-brawler-winrate {
-    grid-area: winrate;
-    justify-content: flex-end;
-    align-self: end;
-  }
-  .map-brawler-winrate > div {
-    display: none;
-  }
-  .map-brawler-picks {
-    grid-area: picks;
-    align-self: start;
-    font-size: 11px !important;
-  }
-  .map-brawler-picks::after {
-    content: " picks";
-    margin-left: 2px;
-    font-family: var(--font-geist, system-ui, sans-serif);
-    font-size: 10px;
-    color: var(--ink-4);
-  }
-}
-
-.bl-map-expand-layout {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
-  border-radius: inherit;
-}
-.bl-map-expand-layout.is-expanded {
-  flex-direction: row;
-}
-.bl-map-expand-panel {
-  flex-shrink: 0;
-  aspect-ratio: 280 / 448;
-  align-self: stretch;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-right: 1px solid var(--line);
-  background: var(--panel-2);
-  overflow: hidden;
-}
-.bl-map-expand-img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-.bl-map-expand-main {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-.bl-map-expand-btn {
-  position: absolute;
-  top: 16px;
-  right: 58px;
-  width: 34px;
-  height: 34px;
-  display: grid;
-  place-items: center;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: var(--panel-2);
-  cursor: pointer;
-  color: var(--ink-3);
-}
-.bl-map-expand-btn:hover {
-  color: var(--ink);
-  border-color: var(--line-2);
-  background: var(--hover-bg);
-}
-
-@media (max-width: 600px) {
-  .bl-map-expand-layout.is-expanded {
-    flex-direction: column;
-  }
-  .bl-map-expand-panel {
-    width: 100%;
-    height: 40vh;
-    border-right: none;
-    border-bottom: 1px solid var(--line);
-  }
-  .bl-map-expand-img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-  }
-}
 .bl-modal-header {
   position: sticky;
   top: 0;
@@ -759,69 +410,6 @@ html.landing-bg .bl-caption {
   min-height: 0;
 }
 
-.bl-map-modal-hero {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  margin-bottom: 16px;
-  padding-right: 40px;
-}
-.bl-map-modal-thumb {
-  width: 58px;
-  height: 58px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--panel-2);
-  box-shadow: var(--product-shadow);
-}
-.bl-map-modal-title {
-  min-width: 0;
-  margin: 0 0 5px;
-  overflow: hidden;
-  color: var(--ink);
-  font-size: 28px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  line-height: 1.15;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.bl-map-modal-title.is-live {
-  color: var(--win);
-  text-shadow: 0 14px 40px var(--win-soft);
-}
-.bl-map-modal-controls {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 14px;
-}
-.bl-map-modal-controls .bl-input {
-  min-width: 220px;
-  flex: 1 1 260px;
-}
-.bl-map-modal-filters {
-  display: flex;
-  flex: 0 0 auto;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-}
-.bl-map-modal-filters .bl-seg {
-  max-width: 100%;
-  overflow-x: auto;
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-.bl-map-modal-filters .bl-seg::-webkit-scrollbar {
-  display: none;
-}
-
 @keyframes modalOverlayIn {
   from { opacity: 0; }
   to   { opacity: 1; }
@@ -829,22 +417,6 @@ html.landing-bg .bl-caption {
 @keyframes modalSheetIn {
   from { opacity: 0; transform: translateY(14px) scale(0.985); }
   to   { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-@media (max-width: 600px) {
-  .bl-map-modal-controls {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 8px;
-  }
-  .bl-map-modal-controls .bl-input {
-    min-width: 0;
-    flex-basis: auto;
-  }
-  .bl-map-modal-filters {
-    justify-content: flex-start;
-    flex-wrap: wrap;
-  }
 }
 
 .row-hover { transition: background 0.13s ease; }
