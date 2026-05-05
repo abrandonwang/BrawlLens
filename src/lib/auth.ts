@@ -2,10 +2,25 @@ import { createClient } from "@supabase/supabase-js"
 import {
   normalizeSubscriptionStatus,
   normalizeSubscriptionTier,
+  type SubscriptionStatus,
+  type SubscriptionTier,
   type PremiumUser,
 } from "@/lib/premium"
+import { AUTH_ACCESS_COOKIE } from "@/lib/authCookies"
 
 type Metadata = Record<string, unknown>
+
+interface AccountProfileRow {
+  role: string | null
+  display_name: string | null
+}
+
+interface AccountSubscriptionRow {
+  tier: string | null
+  status: string | null
+  provider: string | null
+  current_period_end: string | null
+}
 
 function bearerToken(request: Request): string | null {
   const header = request.headers.get("authorization")
@@ -13,6 +28,16 @@ function bearerToken(request: Request): string | null {
   const [scheme, token] = header.split(" ")
   if (scheme?.toLowerCase() !== "bearer" || !token) return null
   return token
+}
+
+function cookieValue(request: Request, name: string): string | null {
+  const cookie = request.headers.get("cookie")
+  if (!cookie) return null
+  for (const entry of cookie.split(";")) {
+    const [rawName, ...rawValue] = entry.trim().split("=")
+    if (rawName === name) return decodeURIComponent(rawValue.join("="))
+  }
+  return null
 }
 
 function metadataString(metadata: Metadata, keys: string[]): string | null {
@@ -30,7 +55,7 @@ function metadataEntitlements(metadata: Metadata): string[] {
 }
 
 export async function getRequestUser(request: Request): Promise<PremiumUser | null> {
-  const token = bearerToken(request)
+  const token = bearerToken(request) ?? cookieValue(request, AUTH_ACCESS_COOKIE)
   if (!token) return null
 
   const url = process.env.SUPABASE_URL
@@ -49,13 +74,53 @@ export async function getRequestUser(request: Request): Promise<PremiumUser | nu
     ...(data.user.user_metadata as Metadata | undefined),
   }
 
-  const role = metadataString(metadata, ["role", "account_role"])
+  let role = metadataString(metadata, ["role", "account_role"])
+  let displayName = metadataString(metadata, ["name", "full_name", "display_name"])
+  let subscriptionTier: SubscriptionTier = normalizeSubscriptionTier(metadataString(metadata, ["subscription_tier", "plan", "tier"]))
+  let subscriptionStatus: SubscriptionStatus = normalizeSubscriptionStatus(metadataString(metadata, ["subscription_status", "plan_status"]))
+  let subscriptionProvider: string | null = null
+  let currentPeriodEnd: string | null = null
+
+  const serviceKey = process.env.SUPABASE_SERVICE_KEY
+  if (url && serviceKey) {
+    const admin = createClient(url, serviceKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    })
+    const [{ data: profile }, { data: subscription }] = await Promise.all([
+      admin
+        .from("user_profiles")
+        .select("role, display_name")
+        .eq("id", data.user.id)
+        .maybeSingle<AccountProfileRow>(),
+      admin
+        .from("user_subscriptions")
+        .select("tier, status, provider, current_period_end")
+        .eq("user_id", data.user.id)
+        .maybeSingle<AccountSubscriptionRow>(),
+    ])
+
+    role = profile?.role ?? role
+    displayName = profile?.display_name ?? displayName
+    subscriptionTier = normalizeSubscriptionTier(subscription?.tier ?? subscriptionTier)
+    subscriptionStatus = normalizeSubscriptionStatus(subscription?.status ?? subscriptionStatus)
+    subscriptionProvider = subscription?.provider ?? null
+    currentPeriodEnd = subscription?.current_period_end ?? null
+  }
+
   return {
     id: data.user.id,
     email: data.user.email,
+    displayName,
     role,
-    subscriptionTier: normalizeSubscriptionTier(metadataString(metadata, ["subscription_tier", "plan", "tier"])),
-    subscriptionStatus: normalizeSubscriptionStatus(metadataString(metadata, ["subscription_status", "plan_status"])),
+    subscriptionTier,
+    subscriptionStatus,
+    subscriptionProvider,
+    currentPeriodEnd,
     entitlements: metadataEntitlements(metadata),
   }
+}
+
+export function authRedirectUrl(request: Request, path = "/auth/callback") {
+  const url = new URL(request.url)
+  return `${url.origin}${path}`
 }

@@ -359,7 +359,6 @@ export default function MapsPageClient() {
                     label={mapExpanded ? "Collapse map image" : "Expand map image"}
                     icon={mapExpanded ? Minimize2 : Maximize2}
                     pressed={mapExpanded}
-                    iconClassName={mapExpanded ? "group-hover:-rotate-6" : "group-hover:rotate-6"}
                   />
                 )}
                 <ModalCloseButton onClick={closeModal} label="Close map details" />
@@ -402,7 +401,7 @@ export default function MapsPageClient() {
                 </div>
               </div>
               <div className={`mb-4 flex gap-2.5 ${mapExpanded ? "flex-col items-stretch" : "items-center max-[720px]:flex-col max-[720px]:items-stretch"}`}>
-                <div className="flex min-h-11 min-w-0 flex-[1_1_260px] items-center gap-2.5 rounded-md border border-[var(--line)] bg-[var(--panel)] px-4 text-[var(--ink)] transition-[border-color,box-shadow] focus-within:border-[var(--line-2)] focus-within:shadow-[0_4px_12px_rgba(0,0,0,0.1)] max-[720px]:basis-auto">
+                <div className={`flex h-11 min-w-0 items-center gap-2.5 rounded-md border border-[var(--line)] bg-[var(--panel)] px-4 text-[var(--ink)] transition-[border-color,box-shadow] focus-within:border-[var(--line-2)] focus-within:shadow-[0_4px_12px_rgba(0,0,0,0.1)] ${mapExpanded ? "w-full flex-none" : "flex-[1_1_260px] max-[720px]:basis-auto"}`}>
                   <Search size={12} className="shrink-0 text-[var(--ink-4)]" />
                   <input className="w-full border-0 bg-transparent text-[16px] font-[inherit] text-inherit outline-none placeholder:text-[var(--ink-4)]" placeholder="Search brawler…" value={brawlerSearch} onChange={e => setBrawlerSearch(e.target.value)} />
                 </div>

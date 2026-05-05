@@ -94,7 +94,7 @@ export default function Modal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[300] flex items-center justify-center bg-black/[0.58] p-5 backdrop-blur-[10px] backdrop-saturate-125 animate-[modalOverlayIn_0.18s_ease_both]"
+      className="fixed inset-0 z-[300] flex items-center justify-center bg-black/[0.58] p-5 animate-[modalOverlayIn_0.18s_ease_both]"
       onClick={onClose}
     >
       <div
@@ -122,14 +122,12 @@ export function ModalIconButton({
   icon: Icon,
   pressed,
   className = "",
-  iconClassName = "",
 }: {
   onClick: () => void
   label: string
   icon: ComponentType<LucideProps>
   pressed?: boolean
   className?: string
-  iconClassName?: string
 }) {
   return (
     <button
@@ -137,13 +135,13 @@ export function ModalIconButton({
       onClick={onClick}
       aria-label={label}
       aria-pressed={pressed}
-      className={`group grid size-8 cursor-pointer place-items-center rounded-full border-0 bg-transparent text-[var(--ink-3)] transition-[background,color,transform,opacity] duration-200 ease-out hover:-translate-y-0.5 hover:bg-[color-mix(in_srgb,var(--ink)_6%,transparent)] hover:text-[var(--ink)] active:translate-y-0 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--line-2)] ${className}`}
+      className={`grid size-8 cursor-pointer place-items-center rounded-full border-0 bg-transparent text-[var(--ink-3)] transition-colors duration-200 ease-out hover:bg-[color-mix(in_srgb,var(--ink)_6%,transparent)] hover:text-[var(--ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--line-2)] ${className}`}
     >
-      <Icon size={15} strokeWidth={2} className={`transition-transform duration-200 ease-out group-hover:scale-110 ${iconClassName}`} />
+      <Icon size={15} strokeWidth={2} />
     </button>
   )
 }
 
 export function ModalCloseButton({ onClick, label = "Close" }: { onClick: () => void; label?: string }) {
-  return <ModalIconButton onClick={onClick} label={label} icon={X} className="ml-auto" iconClassName="group-hover:rotate-90" />
+  return <ModalIconButton onClick={onClick} label={label} icon={X} className="ml-auto" />
 }

@@ -1,149 +1,99 @@
 "use client";
-import { useState, useEffect, useRef, useCallback, type KeyboardEvent as ReactKeyboardEvent } from "react";
-import { Menu, Search, X } from "lucide-react";
+
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import { ChevronLeft, ChevronRight, Menu, X } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import AssistantPopup from "./AssistantPopup";
-import { sanitizePlayerTag } from "@/lib/validation";
+import { authHeaders } from "@/lib/clientAuth";
 
-const navItems = [
-  { label: "Dashboard",    href: "/" },
-  { label: "Brawlers",     href: "/brawlers" },
-  { label: "Maps",         href: "/meta" },
-  { label: "Leaderboards", href: "/leaderboards" },
-  { label: "About",        href: "/about" },
-];
-
-const navMenuCopy: Record<string, string> = {
-  Dashboard: "Daily signals and quick reads",
-  Brawlers: "Stats, abilities, and meta context",
-  Maps: "Modes, layouts, and matchup data",
-  Leaderboards: "Players, clubs, and brawler rankings",
-  About: "Docs, formulas, and contact",
-};
-
-const navIconButtonClass = "grid size-9 cursor-pointer place-items-center rounded-full border-0 bg-transparent text-[var(--ink-3)] hover:text-[var(--ink)]";
-const searchRowBaseClass = "flex w-full cursor-pointer items-center gap-3 rounded-[9px] border-0 bg-transparent px-2.5 py-[9px] text-left font-inherit text-[var(--ink)] transition-colors duration-100";
-
-type CommandItem = {
+type NavPanelItem = {
   label: string;
-  href: string;
-  group: string;
+  href?: string;
   description: string;
-  keywords: string[];
-  accent: string;
-  action?: "open-assistant";
+  action?: "assistant";
+  disabled?: boolean;
+  badge?: string;
+  wide?: boolean;
 };
 
-const searchItems: CommandItem[] = [
-  {
-    label: "Ask AI",
-    href: "#assistant",
-    group: "Core",
-    description: "Open the assistant popup to ask questions.",
-    keywords: ["chat", "assistant", "question", "ai"],
-    accent: "var(--hc-purple)",
-    action: "open-assistant",
-  },
-  {
-    label: "Dashboard",
-    href: "/",
-    group: "Core",
-    description: "Open the BrawlLens dashboard.",
-    keywords: ["home", "overview", "watchlist", "meta", "daily"],
-    accent: "var(--accent)",
-  },
-  {
-    label: "Brawlers",
-    href: "/brawlers",
-    group: "Core",
-    description: "Browse brawler stats, abilities, rarities, and performance.",
-    keywords: ["meta", "stats", "catalog"],
-    accent: "var(--accent)",
-  },
-  {
-    label: "Maps",
-    href: "/meta",
-    group: "Core",
-    description: "Explore tracked maps, modes, live rotation, and map stats.",
-    keywords: ["meta", "rotation", "modes"],
-    accent: "var(--r-rare)",
-  },
-  {
-    label: "Player Leaderboards",
-    href: "/leaderboards/players",
-    group: "Leaderboards",
-    description: "Compare top players by region and trophies.",
-    keywords: ["rankings", "players", "global", "trophies"],
-    accent: "var(--hc-cyan)",
-  },
-  {
-    label: "Club Leaderboards",
-    href: "/leaderboards/clubs",
-    group: "Leaderboards",
-    description: "Browse the highest trophy clubs.",
-    keywords: ["clubs", "rankings", "teams"],
-    accent: "var(--r-superrare)",
-  },
-  {
-    label: "Brawler Rankings",
-    href: "/leaderboards/brawlers",
-    group: "Leaderboards",
-    description: "Open brawler-specific trophy rankings.",
-    keywords: ["brawler trophies", "rankings"],
-    accent: "var(--r-ultra)",
-  },
-  {
-    label: "About BrawlLens",
-    href: "/about",
-    group: "Docs",
-    description: "Read the project overview and how the site works.",
-    keywords: ["docs", "documentation", "intro"],
-    accent: "var(--ink-3)",
-  },
-  {
-    label: "Calculations",
-    href: "/about#calculations",
-    group: "Docs",
-    description: "See how win rate, best overall, and map highlights are computed.",
-    keywords: ["formula", "score", "metrics"],
-    accent: "var(--r-mythic)",
-  },
-  {
-    label: "Search Help",
-    href: "/about#search-help",
-    group: "Docs",
-    description: "Learn command search, player lookup, and keyboard shortcuts.",
-    keywords: ["palette", "commands", "keyboard"],
-    accent: "var(--hc-blue)",
-  },
-  {
-    label: "Contact",
-    href: "/about#contact",
-    group: "Docs",
-    description: "Send bugs, feature requests, or confusing data reports.",
-    keywords: ["email", "support", "feedback"],
-    accent: "var(--r-legendary)",
-  },
+const browseItems: NavPanelItem[] = [
+  { label: "Brawlers", href: "/brawlers", description: "Stats and abilities" },
+  { label: "Maps", href: "/meta", description: "Modes and matchups" },
+  { label: "Player Leaderboard", href: "/leaderboards/players", description: "Top player trophies" },
+  { label: "Club Leaderboard", href: "/leaderboards/clubs", description: "Top club trophies" },
+  { label: "Brawler Leaderboard", href: "/leaderboards/brawlers", description: "Brawler trophy ranks" },
+  { label: "Ask AI", description: "Ask data questions", action: "assistant" },
+  { label: "Guide", description: "Coming soon", disabled: true, badge: "Coming soon", wide: true },
 ];
 
-function commandMatches(item: CommandItem, q: string) {
-  const haystack = [item.label, item.description, item.group, ...item.keywords].join(" ").toLowerCase();
-  return haystack.includes(q);
+const aboutItems: NavPanelItem[] = [
+  { label: "Overview", href: "/about", description: "Project and data philosophy" },
+  { label: "What It Tracks", href: "/about#what-it-tracks", description: "Surfaces and tools" },
+  { label: "Data Sources", href: "/about#data-sources", description: "Where numbers come from" },
+  { label: "Calculations", href: "/calculations", description: "Formulas and sample rules" },
+  { label: "Metric Notes", href: "/about#metric-notes", description: "How to read metrics" },
+  { label: "Search Help", href: "/about#search-help", description: "Commands and keyboard flow" },
+  { label: "Data Status", href: "/about#data-status", description: "Refresh and empty states" },
+  { label: "Contact", href: "/contact", description: "Bugs and requests" },
+  { label: "Privacy", href: "/privacy", description: "Account data notes" },
+];
+
+const rootMenuLinks = [
+  { label: "Dashboard", href: "/", description: "Daily signals and quick reads" },
+];
+
+type MenuPanel = "root" | "browse" | "about";
+type DesktopPanel = "browse" | "about";
+type LoginState = "idle" | "sending" | "sent" | "error";
+
+function isRouteActive(pathname: string, href: string) {
+  if (href === "/") return pathname === "/";
+  return pathname.startsWith(href);
+}
+
+function isDesktopItemActive(pathname: string, activeHash: string, href: string) {
+  const [path, rawHash] = href.split("#");
+  if (path === "/about" && pathname === "/about") {
+    if (rawHash) return activeHash === `#${rawHash}`;
+    return activeHash === "" || activeHash === "#introduction";
+  }
+  if (rawHash) return false;
+  return isRouteActive(pathname, href);
+}
+
+function LogoMark({ size = "sm" }: { size?: "sm" | "lg" }) {
+  const outer = size === "lg" ? "size-[38px] rounded-[12px]" : "size-[20px] rounded-[6px]";
+  const inner = size === "lg" ? "after:inset-[8px] after:rounded-[5px]" : "after:inset-[4.5px] after:rounded-[3px]";
+  return (
+    <span className={`relative inline-block ${outer} bg-[conic-gradient(from_var(--logo-angle),#f97316,#ec4899,#8b5cf6,#3b82f6,#14b8d6,#f97316)] animate-[logo-spin_8s_linear_infinite] after:absolute ${inner} after:bg-[#fcfbf8] after:content-['']`} />
+  );
 }
 
 export default function NavBar() {
   const pathname = usePathname();
-  const router = useRouter();
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
   const [pendingAssistantQuery, setPendingAssistantQuery] = useState<string | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [menuClosing, setMenuClosing] = useState(false);
-  const [query, setQuery] = useState("");
-  const [activeIndex, setActiveIndex] = useState(0);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [menuPanel, setMenuPanel] = useState<MenuPanel>("root");
+  const [desktopPanel, setDesktopPanel] = useState<DesktopPanel | null>(null);
+  const [hoverDesktopPanel, setHoverDesktopPanel] = useState<DesktopPanel | null>(null);
+  const [suppressedDesktopPanel, setSuppressedDesktopPanel] = useState<DesktopPanel | null>(null);
+  const [lastDesktopPanel, setLastDesktopPanel] = useState<DesktopPanel>("browse");
+  const [activeHash, setActiveHash] = useState("");
+  const [isSignedIn, setIsSignedIn] = useState(false);
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [loginState, setLoginState] = useState<LoginState>("idle");
+  const [loginResending, setLoginResending] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
   const previousPathnameRef = useRef(pathname);
+  const desktopNavRef = useRef<HTMLDivElement>(null);
+  const desktopHoverTimerRef = useRef<number | null>(null);
+  const loginInputRef = useRef<HTMLInputElement>(null);
 
   const closeMenu = useCallback(() => {
     if (!isMenuOpen) return;
@@ -151,40 +101,116 @@ export default function NavBar() {
     setTimeout(() => {
       setIsMenuOpen(false);
       setMenuClosing(false);
-    }, 380);
+      setMenuPanel("root");
+    }, 260);
   }, [isMenuOpen]);
 
   useEffect(() => {
-    if (isMenuOpen || menuClosing) {
+    if (isMenuOpen || menuClosing || isLoginOpen) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "";
     }
-    return () => { document.body.style.overflow = ""; };
-  }, [isMenuOpen, menuClosing]);
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isMenuOpen, menuClosing, isLoginOpen]);
 
   useEffect(() => {
     if (previousPathnameRef.current !== pathname) {
       previousPathnameRef.current = pathname;
       closeMenu();
+      setDesktopPanel(null);
+      setHoverDesktopPanel(null);
+      setSuppressedDesktopPanel(null);
     }
   }, [pathname, closeMenu]);
 
   useEffect(() => {
-    if (isSearchOpen) {
-      setQuery("");
-      setActiveIndex(0);
-      setTimeout(() => inputRef.current?.focus(), 50);
-    }
-  }, [isSearchOpen]);
-
-  useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") { setIsSearchOpen(false); closeMenu(); }
+      if (e.key === "Escape") {
+        closeMenu();
+        setDesktopPanel(null);
+        setHoverDesktopPanel(null);
+        setSuppressedDesktopPanel(null);
+        setIsLoginOpen(false);
+      }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [closeMenu]);
+
+  useEffect(() => {
+    return () => {
+      if (desktopHoverTimerRef.current !== null) {
+        window.clearTimeout(desktopHoverTimerRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isLoginOpen) return;
+    setLoginState("idle");
+    setLoginResending(false);
+    setLoginError(null);
+    setLoginPassword("");
+  }, [isLoginOpen]);
+
+  useEffect(() => {
+    if (!isLoginOpen) return;
+    window.setTimeout(() => loginInputRef.current?.focus(), 80);
+  }, [isLoginOpen]);
+
+  useEffect(() => {
+    function syncHash() {
+      setActiveHash(window.location.hash);
+    }
+
+    syncHash();
+    window.addEventListener("hashchange", syncHash);
+    return () => window.removeEventListener("hashchange", syncHash);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (pathname !== "/about") return;
+
+    const ids = ["introduction", ...aboutItems.flatMap(item => {
+      const hash = item.href?.split("#")[1];
+      return hash ? [hash] : [];
+    })];
+    const elements = ids.map(id => document.getElementById(id)).filter((el): el is HTMLElement => el !== null);
+    if (elements.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      entries => {
+        const visible = entries
+          .filter(entry => entry.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        const target = visible[0]?.target;
+        if (!target) return;
+        setActiveHash(target.id === "introduction" ? "" : `#${target.id}`);
+      },
+      { rootMargin: "-88px 0px -64% 0px", threshold: 0 },
+    );
+
+    elements.forEach(element => observer.observe(element));
+    return () => observer.disconnect();
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!desktopPanel) return;
+
+    function onPointerDown(event: PointerEvent) {
+      if (!desktopNavRef.current?.contains(event.target as Node)) {
+        setDesktopPanel(null);
+        setHoverDesktopPanel(null);
+        setSuppressedDesktopPanel(null);
+      }
+    }
+
+    window.addEventListener("pointerdown", onPointerDown);
+    return () => window.removeEventListener("pointerdown", onPointerDown);
+  }, [desktopPanel]);
 
   useEffect(() => {
     function onOpenAssistant(e: Event) {
@@ -196,228 +222,604 @@ export default function NavBar() {
     return () => window.removeEventListener("brawllens:open-assistant", onOpenAssistant);
   }, []);
 
-  function toggleMenu() {
-    if (isMenuOpen) closeMenu();
-    else setIsMenuOpen(true);
-  }
-
-  const trimmedQuery = query.trim();
-  const normalizedQuery = trimmedQuery.toLowerCase();
-  const playerTag = sanitizePlayerTag(trimmedQuery);
-  const filtered = normalizedQuery ? searchItems.filter(i => commandMatches(i, normalizedQuery)) : [];
-  const visibleItems = normalizedQuery ? filtered : searchItems.slice(0, 6);
-  const hasPlayerLookup = Boolean(playerTag);
-  const actionCount = visibleItems.length + (hasPlayerLookup ? 1 : 0);
-  const groupedItems = visibleItems.reduce<Record<string, CommandItem[]>>((groups, item) => {
-    groups[item.group] = groups[item.group] ? [...groups[item.group], item] : [item];
-    return groups;
-  }, {});
-
   useEffect(() => {
-    setActiveIndex(0);
-  }, [query, isSearchOpen]);
+    let active = true;
 
-  function closeSearch() {
-    setIsSearchOpen(false);
-    setQuery("");
+    async function loadAccountState() {
+      try {
+        const response = await fetch("/api/auth/me", {
+          headers: authHeaders(),
+          cache: "no-store",
+        });
+        if (active) setIsSignedIn(response.ok);
+      } catch {
+        if (active) setIsSignedIn(false);
+      }
+    }
+
+    loadAccountState();
+    return () => {
+      active = false;
+    };
+  }, [pathname]);
+
+  function toggleMenu() {
+    if (isMenuOpen) {
+      closeMenu();
+      return;
+    }
+    setMenuPanel("root");
+    setIsMenuOpen(true);
   }
 
-  function openCommand(item: CommandItem) {
-    if (item.action === "open-assistant") {
-      setIsAssistantOpen(true);
+  function openLogin() {
+    closeMenu();
+    setDesktopPanel(null);
+    setHoverDesktopPanel(null);
+    setSuppressedDesktopPanel(null);
+    setIsLoginOpen(true);
+  }
+
+  function clearDesktopHoverTimer() {
+    if (desktopHoverTimerRef.current !== null) {
+      window.clearTimeout(desktopHoverTimerRef.current);
+      desktopHoverTimerRef.current = null;
+    }
+  }
+
+  function openHoverDesktopPanel(panel: DesktopPanel) {
+    if (suppressedDesktopPanel === panel) return;
+    clearDesktopHoverTimer();
+    setHoverDesktopPanel(panel);
+  }
+
+  function scheduleHoverDesktopClose(panel: DesktopPanel) {
+    clearDesktopHoverTimer();
+    desktopHoverTimerRef.current = window.setTimeout(() => {
+      setHoverDesktopPanel(current => current === panel ? null : current);
+      desktopHoverTimerRef.current = null;
+    }, 560);
+  }
+
+  function toggleDesktopPanel(panel: DesktopPanel) {
+    clearDesktopHoverTimer();
+
+    if (desktopPanel === panel) {
+      setDesktopPanel(null);
+      setHoverDesktopPanel(null);
+      setSuppressedDesktopPanel(panel);
+      return;
+    }
+
+    setDesktopPanel(panel);
+    setHoverDesktopPanel(null);
+    setSuppressedDesktopPanel(null);
+  }
+
+  function clearSuppressedDesktopPanel(panel: DesktopPanel) {
+    setSuppressedDesktopPanel(current => current === panel ? null : current);
+  }
+
+  function isValidAccountPassword(password: string) {
+    return password.length >= 8 && /\d/.test(password);
+  }
+
+  async function sendSetupEmail(options?: { resend?: boolean }) {
+    if (!isValidAccountPassword(loginPassword)) {
+      setLoginState("error");
+      setLoginError("Password needs at least 8 characters and one number.");
+      return;
+    }
+
+    if (options?.resend) {
+      setLoginResending(true);
     } else {
-      router.push(item.href);
+      setLoginState("sending");
     }
-    closeSearch();
-  }
+    setLoginError(null);
 
-  function handlePlayerSearch() {
-    if (playerTag) {
-      router.push(`/player/${encodeURIComponent(playerTag)}`);
-      closeSearch();
-    }
-  }
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: loginEmail, password: loginPassword }),
+      });
 
-  function handleSearchKeyDown(e: ReactKeyboardEvent<HTMLInputElement>) {
-    if (e.key === "ArrowDown" && actionCount > 0) {
-      e.preventDefault();
-      setActiveIndex(index => (index + 1) % actionCount);
-      return;
-    }
-
-    if (e.key === "ArrowUp" && actionCount > 0) {
-      e.preventDefault();
-      setActiveIndex(index => (index - 1 + actionCount) % actionCount);
-      return;
-    }
-
-    if (e.key === "Enter") {
-      e.preventDefault();
-      if (hasPlayerLookup && activeIndex === 0) {
-        handlePlayerSearch();
+      if (!response.ok) {
+        setLoginState("error");
+        const payload = await response.json().catch(() => null) as { error?: string } | null;
+        setLoginError(payload?.error === "weak_password"
+          ? "Password needs at least 8 characters and one number."
+          : "Account setup is not available right now.");
         return;
       }
-      const item = visibleItems[activeIndex - (hasPlayerLookup ? 1 : 0)];
-      if (item) openCommand(item);
-      return;
-    }
 
-    if (e.key === "Escape") {
-      closeSearch();
+      setLoginState("sent");
+    } catch {
+      setLoginState("error");
+      setLoginError("Account setup is not available right now.");
+    } finally {
+      setLoginResending(false);
     }
   }
 
-  function isActive(href: string) {
-    if (href === "/") return pathname === "/";
-    return pathname.startsWith(href);
+  function submitLogin(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    void sendSetupEmail();
   }
 
+  function openAssistantFromNav() {
+    closeMenu();
+    setDesktopPanel(null);
+    setHoverDesktopPanel(null);
+    setSuppressedDesktopPanel(null);
+    setIsAssistantOpen(true);
+  }
+
+  const accountLabel = isSignedIn ? "Account" : "Get started";
+  const browseActive = browseItems.some(item => item.href && isDesktopItemActive(pathname, activeHash, item.href));
+  const aboutActive = aboutItems.some(item => item.href && isDesktopItemActive(pathname, activeHash, item.href));
   const menuVisible = isMenuOpen || menuClosing;
-  let commandIndex = hasPlayerLookup ? 1 : 0;
+  const visibleDesktopPanel = desktopPanel ?? hoverDesktopPanel;
+  const renderedDesktopPanel = visibleDesktopPanel ?? lastDesktopPanel;
+  const desktopPanelIndex = renderedDesktopPanel === "about" ? 1 : 0;
+  const mobileItemStyle = (index: number) => ({
+    animationDelay: menuClosing ? "0ms" : `${30 + index * 42}ms`,
+  });
+  const navTextClass = (active: boolean) =>
+    `inline-flex min-h-9 items-center rounded-lg border-0 bg-transparent px-3 text-[14px] leading-none text-[var(--ink)] no-underline transition-opacity duration-200 ${active ? "opacity-100 hover:opacity-90" : "opacity-100 hover:opacity-[0.88]"}`;
+
+  useEffect(() => {
+    if (visibleDesktopPanel) setLastDesktopPanel(visibleDesktopPanel);
+  }, [visibleDesktopPanel]);
 
   return (
     <>
-      <nav className="fixed top-0 left-0 z-[100] grid min-h-16 w-full grid-cols-[auto_1fr_auto] items-center gap-[18px] bg-[color-mix(in_srgb,var(--bg)_92%,transparent)] px-[max(16px,calc((100vw-1200px)/2))] backdrop-blur-[18px] backdrop-saturate-[145%] max-lg:grid-cols-[1fr_auto]">
-        <Link href="/" className="inline-flex items-center gap-[9px] whitespace-nowrap text-[14px] font-semibold text-[var(--ink)] no-underline" aria-label="BrawlLens home">
-          <span className="relative inline-block size-[22px] rounded-[7px] bg-[conic-gradient(from_var(--logo-angle),#f97316,#ec4899,#8b5cf6,#3b82f6,#14b8d6,#f97316)] animate-[logo-spin_8s_linear_infinite] after:absolute after:inset-[5px] after:rounded-[3px] after:bg-[#fcfbf8] after:content-['']" />
-          <span>BrawlLens</span>
+      <nav className="fixed top-0 left-0 z-[100] grid min-h-16 w-full grid-cols-[auto_1fr_auto] items-center gap-[18px] bg-[color-mix(in_srgb,var(--bg)_92%,transparent)] px-[max(16px,calc((100vw-1200px)/2))] backdrop-blur-[18px] backdrop-saturate-[145%] max-lg:pr-1.5 max-lg:pl-4 max-[430px]:gap-2 max-[430px]:pl-3">
+        <Link href="/" className="inline-flex items-center gap-1.5 whitespace-nowrap text-[20px] font-semibold leading-none text-[var(--ink)] no-underline" aria-label="BrawlLens home">
+          <LogoMark />
+          <span className="nav-wordmark max-[380px]:sr-only">BrawlLens</span>
         </Link>
-        <div className="flex min-w-0 items-center justify-center gap-0.5 max-lg:hidden">
-          {navItems.map(item => (
-            <Link
-              key={item.label}
-              href={item.href}
-              className={`inline-flex min-h-9 items-center whitespace-nowrap rounded-lg px-3 text-[14px] leading-none no-underline ${isActive(item.href) ? "bg-[var(--hover-bg)] text-[var(--ink)]" : "text-[var(--ink-3)] hover:bg-[var(--hover-bg)] hover:text-[var(--ink)]"}`}
+
+        <div ref={desktopNavRef} className="hidden min-w-0 items-center justify-center gap-1 lg:flex">
+          <Link href="/" className={navTextClass(isRouteActive(pathname, "/"))}>
+            Dashboard
+          </Link>
+          <div
+            className="nav-popover relative"
+            data-open={visibleDesktopPanel === "browse" ? "true" : undefined}
+            data-suppressed={suppressedDesktopPanel === "browse" ? "true" : undefined}
+            onMouseEnter={() => openHoverDesktopPanel("browse")}
+            onMouseLeave={() => {
+              clearSuppressedDesktopPanel("browse");
+              scheduleHoverDesktopClose("browse");
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => toggleDesktopPanel("browse")}
+              className={`${navTextClass(browseActive)} cursor-pointer gap-1.5`}
+              aria-haspopup="true"
+              aria-expanded={desktopPanel === "browse"}
             >
-              {item.label}
-            </Link>
-          ))}
+              Browse
+              <ChevronRight size={14} strokeWidth={1.9} className="nav-trigger-arrow transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]" />
+            </button>
+          </div>
+          <div
+            className="nav-popover relative"
+            data-open={visibleDesktopPanel === "about" ? "true" : undefined}
+            data-suppressed={suppressedDesktopPanel === "about" ? "true" : undefined}
+            onMouseEnter={() => openHoverDesktopPanel("about")}
+            onMouseLeave={() => {
+              clearSuppressedDesktopPanel("about");
+              scheduleHoverDesktopClose("about");
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => toggleDesktopPanel("about")}
+              className={`${navTextClass(aboutActive)} cursor-pointer gap-1.5`}
+              aria-haspopup="true"
+              aria-expanded={desktopPanel === "about"}
+            >
+              About
+              <ChevronRight size={14} strokeWidth={1.9} className="nav-trigger-arrow transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]" />
+            </button>
+          </div>
+          <div
+            className="nav-browse-panel fixed top-[58px] left-1/2 w-[460px]"
+            data-open={visibleDesktopPanel ? "true" : undefined}
+            onMouseEnter={clearDesktopHoverTimer}
+            onMouseLeave={() => {
+              if (visibleDesktopPanel) scheduleHoverDesktopClose(visibleDesktopPanel);
+            }}
+          >
+            <div className="h-[430px] overflow-hidden rounded-[14px] border border-[var(--line)] bg-[var(--bg)] p-2 shadow-[0_24px_60px_-34px_rgba(28,28,28,0.45),rgba(255,255,255,0.45)_0_0.5px_0_0_inset]">
+              <div
+                className="nav-panel-track flex h-full w-[200%]"
+                style={{ transform: `translateX(-${desktopPanelIndex * 50}%)` }}
+              >
+                <div className="h-full w-1/2 shrink-0 p-0">
+                  <div className="px-3 pt-2.5 pb-2">
+                    <p className="m-0 text-[12px] font-semibold text-[var(--ink)]">Browse</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-1.5 pt-1.5">
+                    {browseItems.map(item => {
+                      const active = visibleDesktopPanel === "browse" && item.href ? isRouteActive(pathname, item.href) : false;
+
+                      if (item.action === "assistant") {
+                        return (
+                          <button
+                            key={item.label}
+                            type="button"
+                            onClick={openAssistantFromNav}
+                            className="flex min-h-[66px] cursor-pointer items-start justify-between gap-3 rounded-[10px] border-0 bg-transparent px-3 py-2.5 text-left font-[inherit] text-[var(--ink)] transition-colors duration-200 hover:bg-[var(--hover-bg)]"
+                          >
+                            <span className="min-w-0">
+                              <span className="block truncate text-[14px] font-semibold leading-tight text-[var(--ink)]">{item.label}</span>
+                              <span className="mt-1 block text-[12px] leading-snug text-[var(--ink-3)]">{item.description}</span>
+                            </span>
+                            <span className="mt-0.5 grid size-6 shrink-0 place-items-center">
+                              <Image
+                                src="/ai-sparkle-512.png"
+                                alt=""
+                                width={14}
+                                height={14}
+                                className="size-3.5 object-contain"
+                                aria-hidden="true"
+                              />
+                            </span>
+                          </button>
+                        );
+                      }
+
+                      if (!item.href || item.disabled) {
+                        return (
+                          <div
+                            key={item.label}
+                            aria-disabled="true"
+                            className={`flex min-h-[66px] items-start justify-between gap-3 rounded-[10px] px-3 py-2.5 text-[var(--ink-4)] opacity-75 ${item.wide ? "col-span-2" : ""}`}
+                          >
+                            <span className="min-w-0">
+                              <span className="block truncate text-[14px] font-semibold leading-tight text-[var(--ink-3)]">{item.label}</span>
+                              <span className="mt-1 block text-[12px] leading-snug text-[var(--ink-4)]">{item.description}</span>
+                            </span>
+                            {item.badge && (
+                              <span className="mt-0.5 shrink-0 rounded-full border border-[var(--line)] px-2 py-0.5 text-[10px] font-medium leading-4 text-[var(--ink-4)]">
+                                {item.badge}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          onClick={() => {
+                            setDesktopPanel(null);
+                            setHoverDesktopPanel(null);
+                            setSuppressedDesktopPanel(null);
+                          }}
+                          className={`flex min-h-[66px] items-start gap-3 rounded-[10px] px-3 py-2.5 text-inherit no-underline transition-colors duration-200 ${active ? "bg-[var(--ink)] text-[#fcfbf8]" : "text-[var(--ink)] hover:bg-[var(--hover-bg)]"}`}
+                        >
+                          <span className="min-w-0">
+                            <span className={`block truncate text-[14px] font-semibold leading-tight ${active ? "text-[#fcfbf8]" : "text-[var(--ink)]"}`}>{item.label}</span>
+                            <span className={`mt-1 block text-[12px] leading-snug ${active ? "text-[#fcfbf8]/70" : "text-[var(--ink-3)]"}`}>{item.description}</span>
+                          </span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div className="h-full w-1/2 shrink-0 p-0">
+                  <div className="px-3 pt-2.5 pb-2">
+                    <p className="m-0 text-[12px] font-semibold text-[var(--ink)]">About</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-1.5 pt-1.5">
+                    {aboutItems.map(item => {
+                      if (!item.href) return null;
+                      const active = visibleDesktopPanel === "about" && isDesktopItemActive(pathname, activeHash, item.href);
+                      return (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          onClick={() => {
+                            setDesktopPanel(null);
+                            setHoverDesktopPanel(null);
+                            setSuppressedDesktopPanel(null);
+                          }}
+                          className={`flex min-h-[66px] min-w-0 items-start justify-between gap-3 rounded-[10px] px-3 py-2.5 text-inherit no-underline transition-colors duration-200 ${active ? "bg-[var(--ink)] text-[#fcfbf8]" : "text-[var(--ink)] hover:bg-[var(--hover-bg)]"}`}
+                        >
+                          <span className="min-w-0">
+                            <span className={`block truncate text-[14px] font-semibold leading-tight ${active ? "text-[#fcfbf8]" : "text-[var(--ink)]"}`}>{item.label}</span>
+                            <span className={`mt-1 block text-[12px] leading-snug ${active ? "text-[#fcfbf8]/70" : "text-[var(--ink-3)]"}`}>{item.description}</span>
+                          </span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        <div className="flex items-center justify-end gap-1">
-          <button className={navIconButtonClass} onClick={() => setIsSearchOpen(true)} aria-label="Search">
-            <Search size={16} strokeWidth={1.8} />
-          </button>
+
+        <div className="flex items-center justify-end gap-2">
           <button
             type="button"
             onClick={() => setIsAssistantOpen(o => !o)}
-            className={`flex h-[34px] cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-md border-0 bg-[#1c1c1c] px-3.5 text-[13px] font-normal text-[#fcfbf8] shadow-[var(--shadow-lift)] transition-opacity duration-150 hover:opacity-85 max-[380px]:px-2.5 max-[380px]:text-[12px] ${isAssistantOpen ? "opacity-70" : ""}`}
+            className={`hidden size-[34px] cursor-pointer place-items-center rounded-md border-0 bg-transparent p-0 transition-[opacity,transform] duration-150 hover:opacity-80 active:scale-95 lg:grid ${isAssistantOpen ? "opacity-100" : "opacity-90"}`}
             aria-label="Ask AI assistant"
             aria-expanded={isAssistantOpen}
+            title="Brawl AI"
           >
-            <span>Brawl AI</span>
+            <Image
+              src="/ai-sparkle-512.png"
+              alt=""
+              width={20}
+              height={20}
+              className="size-5 object-contain"
+              aria-hidden="true"
+            />
           </button>
-          <button className={`${navIconButtonClass} p-0 lg:hidden`} onClick={toggleMenu} aria-label="Menu" aria-expanded={isMenuOpen}>
-            {isMenuOpen ? <X size={15} strokeWidth={1.9} /> : <Menu size={17} strokeWidth={1.8} />}
+          {isSignedIn ? (
+            <Link
+              href="/account"
+              className="inline-flex h-[34px] items-center whitespace-nowrap rounded-md bg-[var(--ink)] px-3 text-[13px] leading-none text-[#fcfbf8] no-underline shadow-[var(--shadow-lift)] transition-opacity duration-150 hover:opacity-85 max-[420px]:px-2.5"
+            >
+              <span>{accountLabel}</span>
+            </Link>
+          ) : (
+            <button
+              type="button"
+              onClick={openLogin}
+              className="inline-flex h-[34px] cursor-pointer items-center whitespace-nowrap rounded-md border-0 bg-[var(--ink)] px-3.5 text-[13px] leading-none text-[#fcfbf8] shadow-[var(--shadow-lift)] transition-opacity duration-150 hover:opacity-85 max-[420px]:px-3"
+            >
+              <span>{accountLabel}</span>
+            </button>
+          )}
+          <button
+            type="button"
+            className="grid h-9 w-6 cursor-pointer place-items-center border-0 bg-transparent p-0 text-[var(--ink-3)] hover:text-[var(--ink)] lg:hidden"
+            onClick={toggleMenu}
+            aria-label={isMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+            aria-expanded={isMenuOpen}
+          >
+            {isMenuOpen ? <X size={19} strokeWidth={1.8} /> : <Menu size={20} strokeWidth={1.8} />}
           </button>
         </div>
       </nav>
       <div style={{ height: 64 }} />
+
       {menuVisible && (
         <div
-          className="fixed inset-0 z-[90] bg-[color-mix(in_srgb,var(--bg)_72%,transparent)] px-3 pt-[76px] pb-4 backdrop-blur-[14px] backdrop-saturate-[140%]"
+          className="fixed inset-x-0 top-16 bottom-0 z-[90] flex flex-col bg-[var(--bg)] px-4 pt-0 pb-5 text-[var(--ink)] lg:hidden"
           style={{
             animation: menuClosing
-              ? "menuOverlayOut 0.38s cubic-bezier(0.4,0,1,1) forwards"
-              : "menuOverlayIn 0.32s cubic-bezier(0,0,0.2,1) forwards",
+              ? "mobileMenuOut 0.34s cubic-bezier(0.4,0,1,1) forwards"
+              : "mobileMenuIn 0.42s cubic-bezier(0.16,1,0.3,1) forwards",
           }}
         >
-          <div className="mx-auto flex max-h-[calc(100vh-92px)] max-w-[520px] flex-col overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--panel)] p-2 shadow-[0_28px_70px_rgba(0,0,0,0.18)]">
-            <div className="min-h-0 overflow-y-auto p-2">
-              {navItems.map((item, i) => (
+          {menuPanel === "root" ? (
+            <div className="mobile-menu-list flex flex-1 flex-col">
+              <button
+                type="button"
+                onClick={() => setMenuPanel("browse")}
+                className={`mobile-menu-item flex min-h-[48px] w-full cursor-pointer items-center justify-between border-0 bg-transparent px-0 text-left text-[18px] text-[var(--ink)] ${browseActive ? "font-semibold" : ""}`}
+                style={mobileItemStyle(0)}
+              >
+                <span>Browse</span>
+                <ChevronRight size={20} strokeWidth={1.8} />
+              </button>
+              {rootMenuLinks.map((item, index) => (
                 <Link
-                  key={item.href}
+                  key={item.label}
                   href={item.href}
                   onClick={closeMenu}
-                  className={`flex items-center justify-between gap-4 rounded-xl px-3 py-3 text-inherit no-underline transition-colors ${isActive(item.href) ? "bg-[var(--ink)] text-[#fcfbf8]" : "text-[var(--ink)] hover:bg-[var(--panel-2)]"}`}
-                  style={{
-                    animation: menuClosing
-                      ? "menuItemOut 0.28s cubic-bezier(0.4,0,1,1) forwards"
-                      : `menuItemIn 0.4s cubic-bezier(0,0,0.2,1) ${i * 45}ms both`,
-                  }}
+                  className={`mobile-menu-item flex min-h-[48px] items-center justify-between text-[18px] text-[var(--ink)] no-underline ${item.href && isRouteActive(pathname, item.href) ? "font-semibold" : ""}`}
+                  style={mobileItemStyle(index + 1)}
                 >
-                  <span className="min-w-0">
-                    <span className={`block truncate text-[17px] font-semibold ${isActive(item.href) ? "text-[#fcfbf8]" : "text-[var(--ink)]"}`}>{item.label}</span>
-                    <span className={`mt-0.5 block truncate text-[12px] ${isActive(item.href) ? "text-[#fcfbf8]/70" : "text-[var(--ink-4)]"}`}>{navMenuCopy[item.label]}</span>
-                  </span>
-                  <span className={`grid size-7 shrink-0 place-items-center rounded-full text-[15px] ${isActive(item.href) ? "bg-[#fcfbf8]/14" : "bg-[var(--panel-2)] text-[var(--ink-3)]"}`}>&rarr;</span>
+                  <span>{item.label}</span>
+                  {item.href && isRouteActive(pathname, item.href) && <span className="text-[13px] font-normal text-[var(--ink-4)]">Current</span>}
                 </Link>
               ))}
+              <button
+                type="button"
+                onClick={() => setMenuPanel("about")}
+                className={`mobile-menu-item flex min-h-[48px] w-full cursor-pointer items-center justify-between border-0 bg-transparent px-0 text-left text-[18px] text-[var(--ink)] ${aboutActive ? "font-semibold" : ""}`}
+                style={mobileItemStyle(rootMenuLinks.length + 1)}
+              >
+                <span>About</span>
+                <ChevronRight size={20} strokeWidth={1.8} />
+              </button>
             </div>
-          </div>
+          ) : (
+            <div className="mobile-menu-list flex flex-1 flex-col overflow-y-auto">
+              <button
+                type="button"
+                onClick={() => setMenuPanel("root")}
+                className="mobile-menu-item mb-5 inline-flex h-10 w-fit cursor-pointer items-center gap-2 rounded-none border border-[var(--line-2)] bg-transparent px-3 text-[16px] text-[var(--ink)]"
+                style={mobileItemStyle(0)}
+              >
+                <ChevronLeft size={18} strokeWidth={1.8} />
+                Back
+              </button>
+
+              <p className="mobile-menu-item m-0 mb-4 text-[14px] text-[var(--ink-3)]" style={mobileItemStyle(1)}>{menuPanel === "browse" ? "Browse" : "About"}</p>
+              {(menuPanel === "browse" ? browseItems : aboutItems).map((item, index) => {
+                if (item.action === "assistant") {
+                  return (
+                    <button
+                      key={item.label}
+                      type="button"
+                      onClick={openAssistantFromNav}
+                      className="mobile-menu-item mb-6 block cursor-pointer border-0 bg-transparent p-0 text-left font-[inherit] text-[var(--ink)]"
+                      style={mobileItemStyle(index + 2)}
+                    >
+                      <span className="flex items-center justify-between gap-3 text-[18px] font-semibold leading-tight text-[var(--ink)]">
+                        <span>{item.label}</span>
+                        <span className="grid size-7 shrink-0 place-items-center rounded-full bg-[var(--panel-2)]">
+                          <Image
+                            src="/ai-sparkle-512.png"
+                            alt=""
+                            width={15}
+                            height={15}
+                            className="size-[15px] object-contain"
+                            aria-hidden="true"
+                          />
+                        </span>
+                      </span>
+                      <span className="mt-1 block text-[14px] leading-snug text-[var(--ink-3)]">{item.description}</span>
+                    </button>
+                  );
+                }
+
+                if (!item.href || item.disabled) {
+                  return (
+                    <div
+                      key={item.label}
+                      aria-disabled="true"
+                      className="mobile-menu-item mb-6 block text-[var(--ink-4)] opacity-75"
+                      style={mobileItemStyle(index + 2)}
+                    >
+                      <span className="flex items-center justify-between gap-3 text-[18px] font-semibold leading-tight text-[var(--ink-3)]">
+                        <span>{item.label}</span>
+                        {item.badge && <span className="rounded-full border border-[var(--line)] px-2 py-0.5 text-[11px] font-medium leading-4 text-[var(--ink-4)]">{item.badge}</span>}
+                      </span>
+                      <span className="mt-1 block text-[14px] leading-snug text-[var(--ink-4)]">{item.description}</span>
+                    </div>
+                  );
+                }
+
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={closeMenu}
+                    className="mobile-menu-item mb-6 block text-[var(--ink)] no-underline"
+                    style={mobileItemStyle(index + 2)}
+                  >
+                    <span className="block text-[18px] font-semibold leading-tight text-[var(--ink)]">{item.label}</span>
+                    <span className="mt-1 block text-[14px] leading-snug text-[var(--ink-3)]">{item.description}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
-      {isSearchOpen && (
+
+      {isLoginOpen && (
         <div
-          className="fixed inset-0 z-[200] flex items-start justify-center bg-[color-mix(in_srgb,var(--bg)_55%,transparent)] px-4 pt-[12vh] pb-4 backdrop-blur-[10px] backdrop-saturate-[140%] animate-[searchFadeIn_0.18s_cubic-bezier(0.2,0,0,1)] max-[520px]:px-3 max-[520px]:pt-[8vh] max-[520px]:pb-3"
-          onClick={closeSearch}
+          className="fixed inset-0 z-[220] flex items-center justify-center bg-black/55 px-4 py-6 animate-[modalOverlayIn_0.18s_ease-out_both]"
+          onClick={() => setIsLoginOpen(false)}
         >
-          <div
-            className="w-full max-w-[560px] overflow-hidden rounded-[14px] border border-[var(--line)] bg-[var(--bg)] shadow-[0_32px_64px_-24px_rgba(28,28,28,0.22),0_8px_20px_-8px_rgba(28,28,28,0.08),rgba(255,255,255,0.4)_0_0.5px_0_0_inset] animate-[searchPanelIn_0.22s_cubic-bezier(0.2,0,0,1)] max-[520px]:rounded-xl"
-            onClick={e => e.stopPropagation()}
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="login-modal-title"
+            className="w-full max-w-[420px] rounded-[16px] border border-[var(--line)] bg-[#fcfbf8] px-6 py-6 text-[var(--ink)] shadow-[0_28px_76px_-44px_rgba(28,28,28,0.58)] animate-[modalSheetIn_0.24s_cubic-bezier(0.16,1,0.3,1)_both] max-[460px]:px-5 max-[460px]:py-5"
+            onClick={event => event.stopPropagation()}
           >
-            <div className="flex items-center gap-3 border-b border-[var(--line)] px-4">
-              <Search size={15} strokeWidth={1.8} className="shrink-0 text-[var(--ink-3)]" />
-              <input
-                ref={inputRef}
-                value={query}
-                onChange={e => setQuery(e.target.value)}
-                onKeyDown={handleSearchKeyDown}
-                placeholder="Search pages, docs, or paste a #PlayerTag"
-                className="min-w-0 flex-1 border-0 bg-transparent py-4 font-inherit text-[15px] tracking-[-0.005em] text-[var(--ink)] outline-none placeholder:text-[var(--ink-4)]"
-              />
-              <button onClick={closeSearch} className="shrink-0 cursor-pointer rounded-md border border-[var(--line)] bg-transparent px-[7px] py-[3px] font-mono text-[10px] font-semibold tracking-[0.02em] text-[var(--ink-4)] transition-colors duration-150 hover:border-[var(--line-2)] hover:text-[var(--ink)]">Esc</button>
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <LogoMark size="lg" />
+                <h2 id="login-modal-title" className="mt-5 mb-0 text-[26px] leading-[1.04] font-semibold text-[var(--ink)] max-[460px]:text-[24px]">
+                  <span className="block text-[var(--ink-4)]">Start tracking.</span>
+                  <span className="block text-[var(--ink)]">Create free account</span>
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsLoginOpen(false)}
+                className="grid size-9 shrink-0 cursor-pointer place-items-center rounded-full border-0 bg-transparent text-[var(--ink-3)] transition-colors hover:bg-[var(--hover-bg)] hover:text-[var(--ink)]"
+                aria-label="Close login"
+              >
+                <X size={23} strokeWidth={1.8} />
+              </button>
             </div>
 
-            <div className="max-h-[min(60vh,480px)] overflow-y-auto p-2">
-              {hasPlayerLookup && (
-                <div>
-                  <div className="px-3 pt-2 pb-1 text-[10px] font-semibold tracking-[0.06em] text-[var(--ink-4)] uppercase">Player Lookup</div>
-                  <button
-                    type="button"
-                    onClick={handlePlayerSearch}
-                    onMouseEnter={() => setActiveIndex(0)}
-                    className={`${searchRowBaseClass} ${activeIndex === 0 ? "bg-[var(--hover-bg)]" : ""}`}
-                  >
-                    <span className="flex min-w-0 flex-1 flex-col gap-px">
-                      <span className="block truncate text-[13.5px] font-medium tracking-[-0.005em] text-[var(--ink)]">
-                        Open player <span style={{ fontWeight: 600 }}>#{playerTag}</span>
-                      </span>
-                      <span className="block truncate text-[11.5px] font-normal text-[var(--ink-3)] max-[520px]:hidden">Public profile lookup by tag.</span>
-                    </span>
-                  </button>
+            {loginState === "sent" ? (
+              <div className="mt-6">
+                <div className="rounded-[12px] border border-[var(--line)] bg-[var(--panel-2)] px-4 py-4">
+                  <p className="m-0 text-[15px] font-semibold text-[var(--ink)]">Check your inbox</p>
+                  <p className="mt-1 mb-0 text-[13px] leading-relaxed text-[var(--ink-3)]">
+                    We sent a setup link to <strong className="font-semibold text-[var(--ink)]">{loginEmail}</strong>. It opens BrawlLens setup.
+                  </p>
                 </div>
-              )}
+                <button
+                  type="button"
+                  onClick={() => void sendSetupEmail({ resend: true })}
+                  disabled={loginResending}
+                  className="mt-3 inline-flex h-11 w-full cursor-pointer items-center justify-center rounded-[9px] border border-[var(--line-2)] bg-transparent px-4 text-[14px] font-semibold text-[var(--ink)] transition-colors hover:bg-[var(--hover-bg)] disabled:cursor-wait disabled:opacity-60"
+                >
+                  {loginResending ? "Sending again..." : "Didn't receive an email? Resend"}
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={submitLogin} className="mt-6">
+                <label className="block">
+                  <span className="mb-2 block text-[13px] font-semibold text-[var(--ink)]">Email</span>
+                  <input
+                    ref={loginInputRef}
+                    type="email"
+                    required
+                    value={loginEmail}
+                    onChange={event => {
+                      setLoginEmail(event.target.value);
+                      if (loginState !== "sending") {
+                        setLoginState("idle");
+                        setLoginError(null);
+                      }
+                    }}
+                    className="h-11 w-full rounded-[9px] border border-[var(--line-2)] bg-transparent px-3.5 text-[14px] text-[var(--ink)] outline-none transition-colors placeholder:text-[var(--ink-4)] focus:border-[var(--ink)]"
+                    placeholder="you@example.com"
+                  />
+                </label>
+                <label className="mt-3 block">
+                  <span className="mb-2 block text-[13px] font-semibold text-[var(--ink)]">Password</span>
+                  <input
+                    type="password"
+                    required
+                    minLength={8}
+                    pattern="(?=.*[0-9]).{8,}"
+                    value={loginPassword}
+                    onChange={event => {
+                      setLoginPassword(event.target.value);
+                      if (loginState !== "sending") {
+                        setLoginState("idle");
+                        setLoginError(null);
+                      }
+                    }}
+                    className="h-11 w-full rounded-[9px] border border-[var(--line-2)] bg-transparent px-3.5 text-[14px] text-[var(--ink)] outline-none transition-colors placeholder:text-[var(--ink-4)] focus:border-[var(--ink)]"
+                    placeholder="8+ characters, include a number"
+                  />
+                  <span className="mt-1.5 block text-[11px] leading-relaxed text-[var(--ink-4)]">At least 8 characters and one number.</span>
+                </label>
 
-              {Object.entries(groupedItems).map(([group, items]) => (
-                <div key={group}>
-                  {items.map(item => {
-                    const itemIndex = commandIndex++;
-                    const isActiveRow = activeIndex === itemIndex;
-                    return (
-                      <button
-                        key={item.href}
-                        type="button"
-                        onClick={() => openCommand(item)}
-                        onMouseEnter={() => setActiveIndex(itemIndex)}
-                        className={`${searchRowBaseClass} ${isActiveRow ? "bg-[var(--hover-bg)]" : ""}`}
-                      >
-                        <span className="flex min-w-0 flex-1 flex-col gap-px">
-                          <span className="block truncate text-[13.5px] font-medium tracking-[-0.005em] text-[var(--ink)]">{item.label}</span>
-                          <span className="block truncate text-[11.5px] font-normal text-[var(--ink-3)] max-[520px]:hidden">{item.description}</span>
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              ))}
+                <button
+                  type="submit"
+                  disabled={loginState === "sending"}
+                  className="mt-3 inline-flex h-11 w-full cursor-pointer items-center justify-center rounded-[9px] border-0 bg-[var(--ink)] px-4 text-[14px] font-semibold text-[#fcfbf8] shadow-[var(--shadow-lift)] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {loginState === "sending" ? "Sending..." : "Create account"}
+                </button>
+              </form>
+            )}
 
-              {visibleItems.length === 0 && !hasPlayerLookup && (
-                <p className="m-0 px-3 py-7 text-center text-[12px] text-[var(--ink-4)]">
-                  No results for &ldquo;{query}&rdquo;
-                </p>
-              )}
-            </div>
-          </div>
+            {loginState === "error" && (
+              <p className="mt-4 mb-0 rounded-[10px] border border-[var(--line)] bg-[var(--panel-2)] px-3.5 py-3 text-[13px] leading-relaxed text-[var(--ink-2)]">
+                {loginError}
+              </p>
+            )}
+
+            <p className="mt-5 mb-0 text-[12px] leading-relaxed text-[var(--ink-3)]">
+              By continuing, you agree to the <Link href="/privacy" onClick={() => setIsLoginOpen(false)} className="text-[var(--ink)] underline underline-offset-4">Privacy Policy</Link>.
+            </p>
+          </section>
         </div>
       )}
 

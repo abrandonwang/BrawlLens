@@ -390,6 +390,63 @@ html.landing-bg .bl-caption {
   to   { opacity: 0; transform: translateY(8px); }
 }
 
+@keyframes lovableMenuIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes lovableMenuOut {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-8px); }
+}
+
+.nav-browse-panel {
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -8px) scale(0.985);
+  transform-origin: top center;
+  filter: blur(2px);
+  transition:
+    opacity 0.46s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.52s cubic-bezier(0.16, 1, 0.3, 1),
+    filter 0.46s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.nav-browse-panel[data-open="true"] {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(-50%, 0) scale(1);
+  filter: blur(0);
+}
+
+.nav-panel-track {
+  will-change: transform;
+  transition: transform 0.58s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.nav-popover:not([data-suppressed="true"]):hover .nav-trigger-arrow,
+.nav-popover[data-open="true"] .nav-trigger-arrow {
+  transform: translateX(2px);
+}
+
+@keyframes mobileMenuIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes mobileMenuOut {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-8px); }
+}
+
+.mobile-menu-item {
+  animation: mobileMenuItemIn 0.44s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes mobileMenuItemIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 @keyframes modalOverlayIn {
   from { opacity: 0; }
   to   { opacity: 1; }
@@ -441,6 +498,16 @@ html:not(.landing-bg) textarea,
 html:not(.landing-bg) select,
 html:not(.landing-bg) div {
   letter-spacing: 0 !important;
+}
+
+html.landing-bg .nav-wordmark,
+html:not(.landing-bg) .nav-wordmark {
+  display: inline-block;
+  font-family: "Inter Tight", "Inter", "SF Pro Display", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+  font-weight: 700;
+  line-height: 20px;
+  letter-spacing: -0.035em !important;
+  font-feature-settings: "cv11", "ss01";
 }
 
 html:not(.landing-bg) h1,

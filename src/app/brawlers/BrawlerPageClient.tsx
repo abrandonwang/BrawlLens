@@ -510,10 +510,6 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
           return (
             <>
               <div className="sticky top-0 z-10 shrink-0 bg-[var(--panel)] px-6 pt-5 shadow-[0_1px_0_var(--line)] max-[600px]:px-4 max-[600px]:pt-4">
-                <div className="mb-3 flex items-center justify-end gap-2">
-                  <ModalCloseButton onClick={close} label="Close brawler details" />
-                </div>
-
                 <div className="mb-4">
                   <div className="flex items-start gap-4 max-[520px]:gap-3">
                     <div className="grid size-16 shrink-0 place-items-center overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--panel-2)]">
@@ -521,11 +517,14 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
                     </div>
 
                     <div className="min-w-0 flex-1">
-                      <h2 id="brawler-modal-title" className="m-0 flex max-w-full flex-wrap items-baseline gap-x-2.5 gap-y-0.5 text-[31px] leading-[1.08] font-semibold break-words text-[var(--ink)] max-[600px]:text-[25px]">
-                        <span>{selected.name}</span>
-                        <span aria-hidden="true" className="font-normal text-[var(--ink-5)]">|</span>
-                        <span className="font-normal text-[var(--ink-2)]">{selected.rarity.name}</span>
-                      </h2>
+                      <div className="flex items-start justify-between gap-3">
+                        <h2 id="brawler-modal-title" className="m-0 flex max-w-full flex-wrap items-baseline gap-x-2.5 gap-y-0.5 text-[31px] leading-[1.08] font-semibold break-words text-[var(--ink)] max-[600px]:text-[25px]">
+                          <span>{selected.name}</span>
+                          <span aria-hidden="true" className="font-normal text-[var(--ink-5)]">|</span>
+                          <span className="font-normal text-[var(--ink-2)]">{selected.rarity.name}</span>
+                        </h2>
+                        <ModalCloseButton onClick={close} label="Close brawler details" />
+                      </div>
                       <div className="mt-3 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5 text-[12px] text-[var(--ink-4)]">
                         <span className="whitespace-nowrap">
                           {selected.class.name !== "Unknown" ? selected.class.name : "Unclassified"}

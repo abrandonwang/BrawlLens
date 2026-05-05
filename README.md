@@ -23,6 +23,20 @@ npm install
 npm run dev
 ```
 
+## Auth Email
+
+BrawlLens uses Supabase Auth for sessions. To send magic links from a BrawlLens-owned sender instead of Supabase's default email service, configure:
+
+```bash
+SUPABASE_URL=...
+SUPABASE_SERVICE_KEY=...
+RESEND_API_KEY=...
+AUTH_EMAIL_FROM="BrawlLens <login@yourdomain.com>"
+AUTH_EMAIL_REPLY_TO="support@yourdomain.com"
+```
+
+If those email variables are missing, the app falls back to Supabase's built-in magic-link email.
+
 ## Disclaimer
 
 Not affiliated with or endorsed by Supercell.

@@ -10,9 +10,12 @@ export type PremiumFeature =
 export interface PremiumUser {
   id: string
   email?: string | null
+  displayName?: string | null
   role?: string | null
   subscriptionTier: SubscriptionTier
   subscriptionStatus: SubscriptionStatus
+  subscriptionProvider?: string | null
+  currentPeriodEnd?: string | null
   entitlements?: string[]
 }
 
