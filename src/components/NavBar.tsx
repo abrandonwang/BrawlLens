@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
-import { ChevronLeft, ChevronRight, LogOut, Menu, Palette, Settings, UserRound, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Menu, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -43,9 +43,9 @@ const aboutItems: NavPanelItem[] = [
 ];
 
 const accountMenuItems = [
-  { label: "Profile", href: "/account?tab=profile", Icon: UserRound },
-  { label: "Settings", href: "/account?tab=settings", Icon: Settings },
-  { label: "Appearance", href: "/account?tab=appearance", Icon: Palette },
+  { label: "Profile", href: "/account?tab=profile" },
+  { label: "Settings", href: "/account?tab=settings" },
+  { label: "Appearance", href: "/account?tab=appearance" },
 ] as const;
 
 const rootMenuLinks = [
@@ -761,19 +761,15 @@ export default function NavBar() {
                     {accountEmail && <p className="mt-1 mb-0 truncate text-[12px] leading-tight text-[var(--ink-3)]">{accountEmail}</p>}
                   </div>
                   <div className="my-1 h-px bg-[var(--line)]" />
-                  {accountMenuItems.map(({ label, href, Icon }) => (
+                  {accountMenuItems.map(({ label, href }) => (
                     <Link
                       key={href}
                       href={href}
                       role="menuitem"
                       onClick={() => setIsAccountMenuOpen(false)}
-                      className="group flex min-h-9 items-center justify-between gap-3 rounded-[8px] px-2.5 py-2 text-[13px] font-medium text-[var(--ink-2)] no-underline transition-colors duration-150 hover:bg-[var(--hover-bg)] hover:text-[var(--ink)]"
+                      className="flex min-h-9 items-center rounded-[8px] px-2.5 py-2 text-[13px] font-medium text-[var(--ink-2)] no-underline transition-colors duration-150 hover:bg-[var(--hover-bg)] hover:text-[var(--ink)]"
                     >
-                      <span className="inline-flex min-w-0 items-center gap-2">
-                        <Icon size={14} strokeWidth={1.8} className="shrink-0 text-[var(--ink-4)] transition-colors duration-150 group-hover:text-[var(--ink-2)]" />
-                        <span className="truncate">{label}</span>
-                      </span>
-                      <ChevronRight size={13} strokeWidth={1.8} className="shrink-0 text-[var(--ink-4)] opacity-0 transition-[opacity,transform] duration-150 group-hover:translate-x-0.5 group-hover:opacity-100" />
+                      <span className="truncate">{label}</span>
                     </Link>
                   ))}
                   <div className="my-1 h-px bg-[var(--line)]" />
@@ -781,9 +777,8 @@ export default function NavBar() {
                     type="button"
                     role="menuitem"
                     onClick={signOut}
-                    className="flex min-h-9 w-full cursor-pointer items-center gap-2 rounded-[8px] border-0 bg-transparent px-2.5 py-2 text-left text-[13px] font-medium text-[var(--ink-2)] transition-colors duration-150 hover:bg-[var(--hover-bg)] hover:text-[var(--ink)]"
+                    className="flex min-h-9 w-full cursor-pointer items-center rounded-[8px] border-0 bg-transparent px-2.5 py-2 text-left text-[13px] font-medium text-[var(--ink-2)] transition-colors duration-150 hover:bg-[var(--hover-bg)] hover:text-[var(--ink)]"
                   >
-                    <LogOut size={14} strokeWidth={1.8} className="shrink-0 text-[var(--ink-4)]" />
                     Sign out
                   </button>
                 </div>

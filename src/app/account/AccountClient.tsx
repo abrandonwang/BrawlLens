@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { ChevronLeft, LogOut } from "lucide-react"
 import { authHeaders, clearAuthSession, clearServerSession } from "@/lib/clientAuth"
 import type { PremiumUser } from "@/lib/premium"
+import { sanitizePlayerTag } from "@/lib/validation"
 
 type LoadState = "loading" | "ready" | "signed-out" | "error"
 type AccountTab = "profile" | "settings" | "appearance"
@@ -128,6 +129,9 @@ export default function AccountClient() {
   const searchParams = useSearchParams()
   const [state, setState] = useState<LoadState>("loading")
   const [user, setUser] = useState<PremiumUser | null>(null)
+  const [playerTagInput, setPlayerTagInput] = useState("")
+  const [playerTagSaveState, setPlayerTagSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle")
+  const [playerTagMessage, setPlayerTagMessage] = useState("")
 
   useEffect(() => {
     let active = true
@@ -162,6 +166,103 @@ export default function AccountClient() {
       active = false
     }
   }, [])
+
+  useEffect(() => {
+    const tag = user?.accountSetup?.playerTag
+    setPlayerTagInput(tag ? `#${tag}` : "")
+  }, [user?.accountSetup?.playerTag])
+
+  useEffect(() => {
+    setPlayerTagSaveState("idle")
+    setPlayerTagMessage("")
+  }, [user?.id])
+
+  const cleanPlayerTag = useMemo(() => sanitizePlayerTag(playerTagInput), [playerTagInput])
+  const savedPlayerTag = user?.accountSetup?.playerTag ?? ""
+  const playerTagDirty = Boolean(cleanPlayerTag && cleanPlayerTag !== savedPlayerTag)
+  const canSavePlayerTag = Boolean(cleanPlayerTag && playerTagDirty && playerTagSaveState !== "saving")
+  const playerTagHint =
+    playerTagMessage ||
+    (playerTagInput.trim() && !cleanPlayerTag ? "Use a valid tag like #YP90U0YL." : "Tags work with or without #.")
+  const playerTagHintClass =
+    playerTagSaveState === "error"
+      ? "text-[#a43c33]"
+      : playerTagSaveState === "saved"
+        ? "text-[var(--ink-2)]"
+        : "text-[var(--ink-3)]"
+
+  async function savePlayerTag() {
+    if (!user) return
+    if (!cleanPlayerTag) {
+      setPlayerTagSaveState("error")
+      setPlayerTagMessage("Use a valid tag like #YP90U0YL.")
+      return
+    }
+    if (!playerTagDirty) {
+      setPlayerTagSaveState("saved")
+      setPlayerTagMessage("Saved")
+      return
+    }
+
+    setPlayerTagSaveState("saving")
+    setPlayerTagMessage("")
+
+    const response = await fetch("/api/account/setup", {
+      method: "POST",
+      headers: {
+        ...authHeaders(),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        playerTag: cleanPlayerTag,
+        playerName: user.accountSetup?.playerName ?? user.displayName ?? null,
+        region: user.accountSetup?.region ?? "Global",
+        goals: user.accountSetup?.goals ?? [],
+      }),
+    }).catch(() => null)
+
+    if (!response) {
+      setPlayerTagSaveState("error")
+      setPlayerTagMessage("Could not save right now.")
+      return
+    }
+
+    if (response.status === 401) {
+      clearAuthSession()
+      setState("signed-out")
+      return
+    }
+
+    const payload = await response.json().catch(() => null) as {
+      setup?: PremiumUser["accountSetup"]
+      displayName?: string | null
+      error?: string
+    } | null
+
+    if (!response.ok) {
+      setPlayerTagSaveState("error")
+      setPlayerTagMessage(payload?.error === "invalid_player_tag" ? "Use a valid tag like #YP90U0YL." : "Could not save right now.")
+      return
+    }
+
+    const nextTag = payload?.setup?.playerTag ?? cleanPlayerTag
+    setUser(current => {
+      if (!current) return current
+      return {
+        ...current,
+        displayName: payload?.displayName ?? current.displayName,
+        accountSetup: payload?.setup ?? {
+          ...(current.accountSetup ?? {}),
+          playerTag: nextTag,
+          region: current.accountSetup?.region ?? "Global",
+          goals: current.accountSetup?.goals ?? [],
+        },
+      }
+    })
+    setPlayerTagInput(`#${nextTag}`)
+    setPlayerTagSaveState("saved")
+    setPlayerTagMessage("Saved")
+  }
 
   function signOut() {
     clearAuthSession()
@@ -277,7 +378,41 @@ export default function AccountClient() {
                     <ValueBox>{user.email ?? "Unknown"}</ValueBox>
                   </SettingsRow>
                   <SettingsRow title="Player tag" description="Primary Brawl Stars account for account context.">
-                    <ValueBox muted={!user.accountSetup?.playerTag}>{user.accountSetup?.playerTag ? `#${user.accountSetup.playerTag}` : "Not set"}</ValueBox>
+                    <div className="grid gap-2">
+                      <div className="flex gap-2 max-sm:flex-col">
+                        <input
+                          value={playerTagInput}
+                          onChange={event => {
+                            setPlayerTagInput(event.target.value.toUpperCase())
+                            setPlayerTagSaveState("idle")
+                            setPlayerTagMessage("")
+                          }}
+                          onKeyDown={event => {
+                            if (event.key === "Enter" && canSavePlayerTag) {
+                              event.preventDefault()
+                              void savePlayerTag()
+                            }
+                          }}
+                          placeholder="#YP90U0YL"
+                          autoCapitalize="characters"
+                          spellCheck={false}
+                          className="h-10 min-w-0 flex-1 rounded-md border border-[var(--line)] bg-[var(--bg)] px-3 text-[13px] font-medium text-[var(--ink)] outline-none transition-colors placeholder:text-[var(--ink-4)] focus:border-[var(--line-2)]"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => void savePlayerTag()}
+                          disabled={!canSavePlayerTag}
+                          className={`inline-flex h-10 min-w-[82px] items-center justify-center rounded-md px-3 text-[13px] font-medium transition-colors ${
+                            canSavePlayerTag
+                              ? "cursor-pointer border border-[var(--ink)] bg-[var(--ink)] text-[#fcfbf8] hover:bg-[var(--ink-2)]"
+                              : "cursor-not-allowed border border-[var(--line)] bg-[var(--bg)] text-[var(--ink-4)]"
+                          }`}
+                        >
+                          {playerTagSaveState === "saving" ? "Saving..." : "Save"}
+                        </button>
+                      </div>
+                      <p className={`m-0 min-h-4 text-[12px] leading-snug ${playerTagHintClass}`}>{playerTagHint}</p>
+                    </div>
                   </SettingsRow>
                   <SettingsRow title="Region" description="Used for account defaults and future filters.">
                     <ValueBox>{user.accountSetup?.region ?? "Global"}</ValueBox>

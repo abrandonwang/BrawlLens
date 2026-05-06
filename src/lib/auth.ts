@@ -149,6 +149,30 @@ export async function getRequestUser(request: Request): Promise<PremiumUser | nu
 }
 
 export function authRedirectUrl(request: Request, path = "/auth/callback") {
+  const publicBaseUrl = publicAppUrl()
+  if (publicBaseUrl) return `${publicBaseUrl}${path}`
+
   const url = new URL(request.url)
   return `${url.origin}${path}`
+}
+
+function normalizeBaseUrl(value: string | undefined) {
+  const trimmed = value?.trim()
+  if (!trimmed) return null
+
+  const candidate = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`
+  try {
+    return new URL(candidate).origin
+  } catch {
+    return null
+  }
+}
+
+function publicAppUrl() {
+  return (
+    normalizeBaseUrl(process.env.NEXT_PUBLIC_BASE_URL)
+    ?? normalizeBaseUrl(process.env.APP_URL)
+    ?? normalizeBaseUrl(process.env.VERCEL_PROJECT_PRODUCTION_URL)
+    ?? normalizeBaseUrl(process.env.VERCEL_URL)
+  )
 }
