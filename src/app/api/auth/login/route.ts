@@ -63,6 +63,16 @@ function setupLinkEmail(email: string, actionLink: string) {
   return { subject, text, html }
 }
 
+function forceActionLinkRedirect(actionLink: string, redirectTo: string) {
+  try {
+    const url = new URL(actionLink)
+    url.searchParams.set("redirect_to", redirectTo)
+    return url.toString()
+  } catch {
+    return actionLink
+  }
+}
+
 async function sendCustomSetupLink(request: Request, email: string, password: string, supabaseUrl: string) {
   const serviceKey = process.env.SUPABASE_SERVICE_KEY
   const resendKey = process.env.RESEND_API_KEY ?? process.env.RESEND_API
@@ -74,12 +84,13 @@ async function sendCustomSetupLink(request: Request, email: string, password: st
     auth: { persistSession: false, autoRefreshToken: false },
   })
 
+  const redirectTo = authRedirectUrl(request, "/auth/setup")
   let link = await admin.auth.admin.generateLink({
     type: "signup",
     email,
     password,
     options: {
-      redirectTo: authRedirectUrl(request, "/auth/setup"),
+      redirectTo,
     },
   })
 
@@ -88,7 +99,7 @@ async function sendCustomSetupLink(request: Request, email: string, password: st
       type: "magiclink",
       email,
       options: {
-        redirectTo: authRedirectUrl(request, "/auth/setup"),
+        redirectTo,
       },
     })
   }
@@ -98,7 +109,8 @@ async function sendCustomSetupLink(request: Request, email: string, password: st
     throw new AuthSetupError("setup_link_generation_failed")
   }
 
-  const emailContent = setupLinkEmail(email, link.data.properties.action_link)
+  const actionLink = forceActionLinkRedirect(link.data.properties.action_link, redirectTo)
+  const emailContent = setupLinkEmail(email, actionLink)
   const resend = new Resend(resendKey)
   const { error: emailError } = await resend.emails.send({
     from,

@@ -33,12 +33,19 @@ SUPABASE_SERVICE_KEY=...
 RESEND_API_KEY=...
 AUTH_EMAIL_FROM="BrawlLens <login@yourdomain.com>"
 AUTH_EMAIL_REPLY_TO="support@yourdomain.com"
+AUTH_REDIRECT_BASE_URL="https://yourdomain.com"
 NEXT_PUBLIC_BASE_URL="https://yourdomain.com"
 ```
 
 If those email variables are missing, account creation returns `custom_email_not_configured` instead of falling back to Supabase's built-in confirmation email.
 
-`NEXT_PUBLIC_BASE_URL` is used for auth/setup links in BrawlLens-owned emails. Without it, local development emails fall back to `http://localhost:3000`.
+`AUTH_REDIRECT_BASE_URL` is used first for auth/setup links in BrawlLens-owned emails. `NEXT_PUBLIC_BASE_URL` is a client-safe fallback for public URLs. If none of the base URL environment variables are configured, auth emails default to `https://brawllens.com` instead of local origin.
+
+In Supabase, also add the same production setup URL under Authentication -> URL Configuration -> Redirect URLs:
+
+```txt
+https://yourdomain.com/auth/setup
+```
 
 Restart the Next.js dev server after changing `.env.local` so the new sender config is loaded.
 

@@ -170,9 +170,13 @@ function normalizeBaseUrl(value: string | undefined) {
 
 function publicAppUrl() {
   return (
-    normalizeBaseUrl(process.env.NEXT_PUBLIC_BASE_URL)
+    normalizeBaseUrl(process.env.AUTH_REDIRECT_BASE_URL)
+    ?? normalizeBaseUrl(process.env.NEXT_PUBLIC_BASE_URL)
+    ?? normalizeBaseUrl(process.env.NEXT_PUBLIC_SITE_URL)
+    ?? normalizeBaseUrl(process.env.PUBLIC_APP_URL)
     ?? normalizeBaseUrl(process.env.APP_URL)
     ?? normalizeBaseUrl(process.env.VERCEL_PROJECT_PRODUCTION_URL)
     ?? normalizeBaseUrl(process.env.VERCEL_URL)
+    ?? normalizeBaseUrl("https://brawllens.com")
   )
 }
