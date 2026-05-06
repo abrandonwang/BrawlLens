@@ -135,7 +135,8 @@ function WidgetFrame({
   onDragStart?: (panel: LensboardPanel, event: ReactPointerEvent<HTMLElement>) => void
 }) {
   const info = widgetInfo[panel.type]
-  const tiny = panel.w === 1 || panel.h === 1
+  const short = panel.h === 1
+  const tiny = panel.w === 1 || short
   const hideContentOnSmallBoard = editable && !preview && !metricPanelIds.has(panel.type)
   const panelStyle = {
     "--panel-grid-column": `${panel.x + 1} / span ${panel.w}`,
@@ -145,12 +146,12 @@ function WidgetFrame({
   return (
     <article
       onPointerDown={editable ? event => onDragStart?.(panel, event) : undefined}
-      className={`group relative min-w-0 rounded-lg border border-[var(--line)] bg-[var(--panel)] [grid-column:var(--panel-grid-column)] [grid-row:var(--panel-grid-row)] transition-[border-color,background-color,box-shadow,opacity] hover:border-[var(--line-2)] max-md:rounded-md ${preview ? "overflow-hidden" : "overflow-visible"} ${editable ? "cursor-grab touch-none select-none active:cursor-grabbing" : ""} ${dragging ? "z-30 cursor-grabbing border-[var(--line-2)] shadow-[0_18px_44px_-32px_rgba(28,28,28,0.55)]" : ""} ${dragInvalid ? "border-[var(--loss-line)] bg-[color-mix(in_srgb,var(--loss)_8%,var(--panel))]" : ""} ${dragDeleting ? "opacity-70 ring-1 ring-[rgba(185,28,28,0.28)]" : ""} ${!editable ? "max-md:[grid-column:auto] max-md:[grid-row:auto]" : ""}`}
+      className={`group relative min-w-0 rounded-[10px] border border-[var(--line)] bg-[var(--panel)] [grid-column:var(--panel-grid-column)] [grid-row:var(--panel-grid-row)] transition-[border-color,background-color,box-shadow,opacity] hover:border-[var(--line-2)] max-md:rounded-md ${preview ? "overflow-hidden bg-[color-mix(in_srgb,var(--panel)_88%,var(--panel-2))]" : "overflow-visible"} ${editable ? "cursor-grab touch-none select-none active:cursor-grabbing" : ""} ${dragging ? "z-30 cursor-grabbing border-[var(--line-2)] bg-[var(--panel)] shadow-[0_18px_44px_-32px_rgba(28,28,28,0.55)]" : ""} ${dragInvalid ? "border-[var(--loss-line)] bg-[color-mix(in_srgb,var(--loss)_8%,var(--panel))]" : ""} ${dragDeleting ? "opacity-70 ring-1 ring-[rgba(185,28,28,0.28)]" : ""} ${!editable ? "max-md:[grid-column:auto] max-md:[grid-row:auto]" : ""}`}
       style={panelStyle}
     >
-      <div className={`flex h-full min-h-0 flex-col ${tiny ? "p-3" : "p-4"} ${preview ? "max-md:p-1.5" : ""}`}>
-        <div className={`${tiny ? "mb-2" : "mb-4"} min-w-0 max-md:mb-1`}>
-          <h2 className={`m-0 truncate font-semibold tracking-[-0.018em] text-[var(--ink)] ${preview ? "max-md:text-[9px] max-md:leading-none" : ""} ${tiny ? "text-[13px]" : "text-[17px]"}`}>{info.title}</h2>
+      <div className={`flex h-full min-h-0 flex-col ${preview ? "p-3 max-md:p-1.5" : short ? "p-3" : tiny ? "p-3.5" : "p-4"}`}>
+        <div className={`${short ? "mb-1.5" : tiny ? "mb-2" : "mb-4"} min-w-0 max-md:mb-1`}>
+          <h2 className={`m-0 truncate font-semibold tracking-[-0.018em] text-[var(--ink)] ${preview ? "text-[12px] max-md:text-[9px] max-md:leading-none" : short ? "text-[12.5px]" : tiny ? "text-[13px]" : "text-[17px]"}`}>{info.title}</h2>
           {!tiny && <p className={`mt-0.5 mb-0 truncate text-[12px] text-[var(--ink-4)] ${preview ? "max-md:hidden" : ""}`}>{info.description}</p>}
         </div>
         <div className={`min-h-0 flex-1 ${preview ? "overflow-hidden" : "overflow-visible"} ${hideContentOnSmallBoard ? "max-md:hidden" : ""}`}>
@@ -503,15 +504,16 @@ export default function DashboardClient({ setupMode = false, editable = false, s
   function renderMetricPanel(panel: LensboardPanel) {
     const metric = metricValues[panel.type]
     const compact = panel.w === 1 || panel.h === 1
+    const short = panel.h === 1
     const content = (
-      <div className="flex h-full min-h-0 flex-col justify-end">
+      <div className={`flex h-full min-h-0 ${short ? "items-end" : "flex-col justify-end"}`}>
         {metric.value === null ? (
-          <SkeletonBlock className="h-8 w-full" />
+          <SkeletonBlock className={`${short ? "h-6" : "h-8"} w-full`} />
         ) : (
-          <>
-            <div className={`truncate font-semibold tracking-[-0.03em] text-[var(--ink)] ${compact ? "text-[22px]" : "text-[clamp(24px,4vw,34px)]"}`}>{metric.value}</div>
-            <div className="mt-1 truncate text-[12px] text-[var(--ink-4)] max-md:hidden">{metric.detail}</div>
-          </>
+          <div className="min-w-0">
+            <div className={`truncate font-semibold tracking-[-0.03em] text-[var(--ink)] ${short ? "text-[clamp(20px,2.4vw,25px)] leading-none" : compact ? "text-[22px] leading-tight" : "text-[clamp(24px,4vw,34px)] leading-none"}`}>{metric.value}</div>
+            {!short && <div className="mt-1 truncate text-[12px] text-[var(--ink-4)] max-md:hidden">{metric.detail}</div>}
+          </div>
         )}
       </div>
     )
@@ -700,8 +702,14 @@ export default function DashboardClient({ setupMode = false, editable = false, s
       return (
         <div className="grid h-full min-h-0 content-start gap-2 overflow-hidden">
           {prompts.slice(0, limit).map(prompt => (
-            <button key={prompt} type="button" onClick={() => openAssistant(prompt)} className="flex min-h-9 cursor-pointer items-center justify-between gap-3 rounded-md border border-[var(--line)] bg-[var(--bg)] px-3 text-left text-[12.5px] text-[var(--ink-2)] transition-colors hover:border-[var(--line-2)] hover:text-[var(--ink)]">
-              <span className="min-w-0 truncate">{compact ? "Ask AI" : prompt}</span>
+            <button
+              key={prompt}
+              type="button"
+              onClick={() => openAssistant(prompt)}
+              title={compact ? "Ask AI" : prompt}
+              className="flex min-h-9 w-full min-w-0 cursor-pointer items-center overflow-hidden rounded-md border border-[var(--line)] bg-[var(--bg)] px-3 text-left text-[12.5px] text-[var(--ink-2)] transition-colors hover:border-[var(--line-2)] hover:text-[var(--ink)]"
+            >
+              <span className="block min-w-0 flex-1 truncate">{compact ? "Ask AI" : prompt}</span>
             </button>
           ))}
         </div>
@@ -727,9 +735,10 @@ export default function DashboardClient({ setupMode = false, editable = false, s
 
   function renderEditPanelPreview(panel: LensboardPanel) {
     const info = widgetInfo[panel.type]
+    if (panel.h === 1) return null
+
     return (
-      <div className="flex h-full min-h-0 flex-col justify-between gap-2">
-        <p className="m-0 line-clamp-2 text-[12px] leading-snug text-[var(--ink-4)] max-md:hidden">{info.description}</p>
+      <div className="flex h-full min-h-0 flex-col justify-end gap-2">
         <div className="mt-auto flex items-center justify-between gap-2">
           <span className="rounded-md border border-[var(--line)] bg-[var(--panel-2)] px-2 py-1 text-[11px] font-medium text-[var(--ink-3)] max-md:px-1.5 max-md:py-0.5 max-md:text-[8px]">
             {panel.w}x{panel.h}
@@ -749,7 +758,7 @@ export default function DashboardClient({ setupMode = false, editable = false, s
         {showIntro && (
           <div className="mb-5 flex items-center justify-between gap-4 max-sm:gap-2">
             <div className="min-w-0">
-              <h1 className="m-0 text-[clamp(30px,5vw,42px)] font-semibold leading-none tracking-[-0.03em] text-[var(--ink)]">Lensboard</h1>
+              <h1 className="m-0 text-[clamp(28px,4.4vw,38px)] font-semibold leading-none tracking-[-0.032em] text-[var(--ink)]">Lensboard</h1>
             </div>
             <div className="flex shrink-0 items-center gap-2">
               <button type="button" onClick={() => openAssistant("Give me the most important BrawlLens meta signals right now.")} className="inline-flex min-h-10 whitespace-nowrap items-center justify-center gap-2 rounded-md border border-[var(--line)] bg-[var(--panel)] px-4 text-[14px] font-medium text-[var(--ink-2)] shadow-[var(--shadow-lift)] transition-colors hover:border-[var(--line-2)] hover:text-[var(--ink)] max-sm:px-3">
@@ -766,7 +775,7 @@ export default function DashboardClient({ setupMode = false, editable = false, s
         <div className={`grid gap-4 ${editable ? "lg:grid-cols-[288px_minmax(0,1fr)]" : ""}`}>
           {editable && (
             <aside className="min-w-0 max-lg:order-2 lg:sticky lg:top-[80px] lg:max-h-[calc(100dvh-96px)] lg:self-start lg:overflow-y-auto">
-              <div className="border-y border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_72%,transparent)] lg:rounded-xl lg:border">
+              <div className="border-y border-[var(--line)] bg-transparent lg:rounded-xl lg:border">
                 <div className="border-b border-[var(--line)] p-3.5">
                   <div className="flex items-center justify-between gap-3">
                     <h2 className="m-0 text-[18px] font-semibold tracking-[-0.018em] text-[var(--ink)]">Presets</h2>
@@ -784,7 +793,7 @@ export default function DashboardClient({ setupMode = false, editable = false, s
                           const first = LENSBOARD_WIDGET_IDS.find(id => widgetInfo[id].category === group) ?? null
                           setOpenPreset(first)
                         }}
-                        className={`h-8 cursor-pointer rounded-md border text-[11px] font-medium transition-colors ${activePresetGroup === group ? "border-[var(--ink)] bg-[var(--ink)] text-[#fcfbf8]" : "border-[var(--line)] bg-transparent text-[var(--ink-3)] hover:border-[var(--line-2)] hover:text-[var(--ink)]"}`}
+                        className={`h-8 cursor-pointer rounded-md border text-[11px] font-medium transition-colors ${activePresetGroup === group ? "border-[var(--ink)] bg-[var(--ink)] text-[#fcfbf8] shadow-[var(--shadow-lift)]" : "border-[var(--line)] bg-transparent text-[var(--ink-3)] hover:border-[var(--line-2)] hover:text-[var(--ink)]"}`}
                       >
                         {group}
                       </button>
@@ -838,23 +847,23 @@ export default function DashboardClient({ setupMode = false, editable = false, s
 
           <section className="min-w-0 max-lg:order-1">
             {editable ? (
-              <div className={`overflow-x-auto rounded-xl border border-[var(--line)] bg-[var(--panel)] p-3 shadow-[var(--shadow-lift)] max-md:overflow-visible max-md:p-2 ${dragState ? "relative z-[90]" : ""} ${dragState && !dragState.overBoard ? "ring-1 ring-[rgba(185,28,28,0.24)]" : ""}`}>
+              <div className={`rounded-[14px] border border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_72%,transparent)] p-2.5 max-md:p-2 ${dragState ? "relative z-[90]" : ""} ${dragState && !dragState.overBoard ? "ring-1 ring-[rgba(185,28,28,0.24)]" : ""}`}>
                 <div
-                  className="relative grid min-w-[980px] gap-2 rounded-lg bg-[color-mix(in_srgb,var(--panel-2)_60%,transparent)] p-2 max-md:min-w-0 max-md:w-full max-md:gap-1 max-md:p-1"
+                  className="relative mx-auto grid aspect-square w-full max-w-[780px] gap-2 rounded-[10px] bg-[color-mix(in_srgb,var(--panel-2)_56%,transparent)] p-2 max-md:gap-1 max-md:p-1"
                   style={{
                     gridTemplateColumns: `repeat(${LENSBOARD_COLUMNS}, minmax(0, 1fr))`,
-                    gridTemplateRows: `repeat(${LENSBOARD_ROWS}, clamp(30px, calc((100vw - 72px) / 10), 82px))`,
+                    gridTemplateRows: `repeat(${LENSBOARD_ROWS}, minmax(0, 1fr))`,
                   }}
                 >
                   {Array.from({ length: LENSBOARD_COLUMNS * LENSBOARD_ROWS }).map((_, index) => (
-                    <div key={index} className="rounded-md border border-[color-mix(in_srgb,var(--line)_68%,transparent)] bg-[color-mix(in_srgb,var(--panel)_62%,transparent)]" />
+                    <div key={index} className="rounded-[7px] border border-[color-mix(in_srgb,var(--line)_54%,transparent)] bg-[color-mix(in_srgb,var(--panel)_46%,transparent)]" />
                   ))}
 
                   <div
                     className="pointer-events-none absolute inset-2 grid gap-2 max-md:inset-1 max-md:gap-1"
                     style={{
                       gridTemplateColumns: `repeat(${LENSBOARD_COLUMNS}, minmax(0, 1fr))`,
-                      gridTemplateRows: `repeat(${LENSBOARD_ROWS}, clamp(30px, calc((100vw - 72px) / 10), 82px))`,
+                      gridTemplateRows: `repeat(${LENSBOARD_ROWS}, minmax(0, 1fr))`,
                     }}
                   >
                     {layout.length === 0 && (
@@ -872,7 +881,7 @@ export default function DashboardClient({ setupMode = false, editable = false, s
                     className="absolute inset-2 grid gap-2 max-md:inset-1 max-md:gap-1"
                     style={{
                       gridTemplateColumns: `repeat(${LENSBOARD_COLUMNS}, minmax(0, 1fr))`,
-                      gridTemplateRows: `repeat(${LENSBOARD_ROWS}, clamp(30px, calc((100vw - 72px) / 10), 82px))`,
+                      gridTemplateRows: `repeat(${LENSBOARD_ROWS}, minmax(0, 1fr))`,
                     }}
                   >
                     {layout.map(panel => {
@@ -904,9 +913,9 @@ export default function DashboardClient({ setupMode = false, editable = false, s
               </div>
             ) : (
               <div
-                className="grid gap-3 [grid-template-columns:repeat(10,minmax(0,1fr))] max-md:grid-cols-1"
+                className="grid gap-3 [grid-template-columns:repeat(10,minmax(0,1fr))] max-md:grid-cols-1 max-md:gap-3"
                 style={{
-                  gridAutoRows: "minmax(92px, auto)",
+                  gridAutoRows: "minmax(104px, auto)",
                 }}
               >
                 {layout.length === 0 && (

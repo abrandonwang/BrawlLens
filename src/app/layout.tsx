@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import "./globals.css";
 import NavBar from "../components/NavBar";
 import Footer from "../components/Footer";
-import { MenuProvider } from "../context/MenuContext";
 import TopLoader from "../components/TopLoader";
 import { Analytics } from "@vercel/analytics/next";
 
@@ -28,14 +27,12 @@ export default function RootLayout({
         suppressHydrationWarning
         className="flex min-h-dvh flex-col overflow-x-hidden overflow-y-auto"
       >
-        <MenuProvider>
-          <TopLoader />
-          <NavBar />
-          <div className="flex-1 flex flex-col">
-            {children}
-          </div>
-          <Footer />
-        </MenuProvider>
+        <TopLoader />
+        <NavBar />
+        <div className="flex-1 flex flex-col">
+          {children}
+        </div>
+        <Footer />
         <Analytics />
       </body>
     </html>

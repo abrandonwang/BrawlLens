@@ -85,6 +85,7 @@ export const LENSBOARD_PRESET_VARIANTS: Record<LensboardWidgetId, LensboardSizeO
   ],
   "ai-reads": [
     { label: "Card", w: 2, h: 2 },
+    { label: "Wide", w: 3, h: 2 },
     { label: "Tall", w: 2, h: 3 },
   ],
   signals: [
@@ -92,19 +93,6 @@ export const LENSBOARD_PRESET_VARIANTS: Record<LensboardWidgetId, LensboardSizeO
     { label: "Wide", w: 3, h: 2 },
   ],
 }
-
-const DEFAULT_PANEL_SEEDS: Array<{ type: LensboardWidgetId; w: number; h: number }> = [
-  { type: "player-search", w: 3, h: 3 },
-  { type: "meta-tape", w: 3, h: 3 },
-  { type: "brawler-signal", w: 3, h: 2 },
-  { type: "tracked-battles", w: 2, h: 1 },
-  { type: "maps-indexed", w: 2, h: 1 },
-  { type: "top-mode", w: 2, h: 1 },
-  { type: "live-maps", w: 3, h: 3 },
-  { type: "mode-volume", w: 3, h: 2 },
-  { type: "ai-reads", w: 2, h: 2 },
-  { type: "signals", w: 2, h: 2 },
-]
 
 const allowedWidgetIds = new Set<string>(LENSBOARD_WIDGET_IDS)
 
@@ -179,7 +167,21 @@ function buildLayoutFromSeeds(seeds: Array<{ type: LensboardWidgetId; w: number;
   return layout
 }
 
-export const DEFAULT_LENSBOARD_LAYOUT = buildLayoutFromSeeds(DEFAULT_PANEL_SEEDS)
+export const DEFAULT_LENSBOARD_LAYOUT: LensboardPanel[] = [
+  { uid: "starter-tracked-battles", type: "tracked-battles", x: 0, y: 0, w: 2, h: 1 },
+  { uid: "starter-maps-indexed", type: "maps-indexed", x: 2, y: 0, w: 2, h: 1 },
+  { uid: "starter-top-mode", type: "top-mode", x: 4, y: 0, w: 2, h: 1 },
+  { uid: "starter-top-player", type: "top-player", x: 6, y: 0, w: 2, h: 1 },
+  { uid: "starter-top-club", type: "top-club", x: 8, y: 0, w: 2, h: 1 },
+  { uid: "starter-player-search", type: "player-search", x: 0, y: 1, w: 3, h: 3 },
+  { uid: "starter-meta-tape", type: "meta-tape", x: 3, y: 1, w: 3, h: 3 },
+  { uid: "starter-recent-profiles", type: "recent-profiles", x: 6, y: 1, w: 2, h: 3 },
+  { uid: "starter-ai-reads", type: "ai-reads", x: 8, y: 1, w: 2, h: 3 },
+  { uid: "starter-live-maps", type: "live-maps", x: 0, y: 4, w: 2, h: 2 },
+  { uid: "starter-mode-volume", type: "mode-volume", x: 2, y: 4, w: 3, h: 2 },
+  { uid: "starter-brawler-signal", type: "brawler-signal", x: 5, y: 4, w: 3, h: 2 },
+  { uid: "starter-signals", type: "signals", x: 8, y: 4, w: 2, h: 2 },
+]
 
 export const DEFAULT_LENSBOARD_WIDGETS: LensboardWidgetId[] = DEFAULT_LENSBOARD_LAYOUT.map(panel => panel.type)
 

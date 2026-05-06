@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, type ComponentType, type ReactNode } from "react"
 import { createPortal } from "react-dom"
 import { X, type LucideProps } from "lucide-react"
+import { lockBodyScroll } from "@/lib/bodyScrollLock"
 
 const FOCUSABLE = [
   "a[href]",
@@ -45,8 +46,7 @@ export default function Modal({
   useEffect(() => {
     if (!open) return
     previouslyFocused.current = document.activeElement as HTMLElement | null
-    const prevOverflow = document.body.style.overflow
-    document.body.style.overflow = "hidden"
+    const releaseBodyScroll = lockBodyScroll()
 
     const sheet = sheetRef.current
     if (sheet) {
@@ -85,7 +85,7 @@ export default function Modal({
     window.addEventListener("keydown", onKey)
     return () => {
       window.removeEventListener("keydown", onKey)
-      document.body.style.overflow = prevOverflow
+      releaseBodyScroll()
       previouslyFocused.current?.focus?.()
     }
   }, [open, onClose])

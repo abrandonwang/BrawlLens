@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import AssistantPopup from "./AssistantPopup";
+import { lockBodyScroll } from "@/lib/bodyScrollLock";
 import { authHeaders, clearAuthSession, clearServerSession, storeAuthSession } from "@/lib/clientAuth";
 import type { PremiumUser } from "@/lib/premium";
 import { isEmailFormatValid, useEmailCheck } from "@/lib/useEmailCheck";
@@ -79,6 +80,31 @@ function isDesktopItemActive(pathname: string, activeHash: string, href: string)
   return isRouteActive(pathname, href);
 }
 
+function authErrorMessage(error: string | undefined, mode: AuthMode) {
+  switch (error) {
+    case "weak_password":
+      return "Password needs at least 8 characters and one number.";
+    case "disposable_domain":
+      return "Use a permanent email address.";
+    case "invalid_email":
+      return "Enter a valid email address.";
+    case "email_unreachable":
+      return "Use a real email address with an active mail server.";
+    case "custom_email_not_configured":
+      return "BrawlLens email is not configured yet.";
+    case "setup_link_generation_failed":
+      return "Supabase could not generate the setup link.";
+    case "magic_link_email_failed":
+      return "Resend could not send from that email address.";
+    case "invalid_credentials":
+      return "Email or password did not match.";
+    case "auth_not_configured":
+      return "BrawlLens auth is not configured yet.";
+    default:
+      return mode === "login" ? "Login is not available right now." : "Account setup is not available right now.";
+  }
+}
+
 function LogoMark({ size = "sm" }: { size?: "sm" | "lg" }) {
   const outer = size === "lg" ? "size-[38px] rounded-[12px]" : "size-[18px] rounded-[5px]";
   const inner = size === "lg" ? "after:inset-[8px] after:rounded-[5px]" : "after:inset-[4px] after:rounded-[2.5px]";
@@ -127,8 +153,10 @@ export default function NavBar() {
   const previousPathnameRef = useRef(pathname);
   const desktopNavRef = useRef<HTMLDivElement>(null);
   const accountMenuRef = useRef<HTMLDivElement>(null);
+  const menuCloseTimerRef = useRef<number | null>(null);
   const desktopHoverTimerRef = useRef<number | null>(null);
   const loginInputRef = useRef<HTMLInputElement>(null);
+  const bodyScrollLocked = isMenuOpen || menuClosing || isLoginOpen;
 
   const applyAccountUser = useCallback((user: PremiumUser | null) => {
     const localSetup = localAccountSetup();
@@ -144,14 +172,18 @@ export default function NavBar() {
   }, []);
 
   const closeMenu = useCallback(() => {
-    if (!isMenuOpen) return;
+    if (!isMenuOpen || menuClosing) return;
+    if (menuCloseTimerRef.current !== null) {
+      window.clearTimeout(menuCloseTimerRef.current);
+    }
     setMenuClosing(true);
-    setTimeout(() => {
+    menuCloseTimerRef.current = window.setTimeout(() => {
       setIsMenuOpen(false);
       setMenuClosing(false);
       setMenuPanel("root");
+      menuCloseTimerRef.current = null;
     }, 260);
-  }, [isMenuOpen]);
+  }, [isMenuOpen, menuClosing]);
 
   const showLogin = useCallback((mode: AuthMode = "signup") => {
     closeMenu();
@@ -164,15 +196,9 @@ export default function NavBar() {
   }, [closeMenu]);
 
   useEffect(() => {
-    if (isMenuOpen || menuClosing || isLoginOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [isMenuOpen, menuClosing, isLoginOpen]);
+    if (!bodyScrollLocked) return;
+    return lockBodyScroll();
+  }, [bodyScrollLocked]);
 
   useEffect(() => {
     if (previousPathnameRef.current !== pathname) {
@@ -201,6 +227,9 @@ export default function NavBar() {
 
   useEffect(() => {
     return () => {
+      if (menuCloseTimerRef.current !== null) {
+        window.clearTimeout(menuCloseTimerRef.current);
+      }
       if (desktopHoverTimerRef.current !== null) {
         window.clearTimeout(desktopHoverTimerRef.current);
       }
@@ -396,29 +425,34 @@ export default function NavBar() {
   }
 
   async function refreshSignedInAccount() {
-    const response = await fetch("/api/auth/me", {
-      headers: authHeaders(),
-      cache: "no-store",
-    });
-    const payload = await response.json().catch(() => null) as { user?: PremiumUser | null } | null;
-    applyAccountUser(response.ok ? payload?.user ?? null : null);
+    try {
+      const response = await fetch("/api/auth/me", {
+        headers: authHeaders(),
+        cache: "no-store",
+      });
+      const payload = await response.json().catch(() => null) as { user?: PremiumUser | null } | null;
+      applyAccountUser(response.ok ? payload?.user ?? null : null);
+    } catch {
+      applyAccountUser(null);
+    }
   }
 
   async function sendAuthRequest(options?: { resend?: boolean }) {
+    const isResend = options?.resend === true;
     const emailReady = authMode === "signup" ? loginEmailCheck.isValid : isEmailFormatValid(loginEmail);
 
     if (!emailReady) {
-      setLoginState("error");
+      setLoginState(isResend && authMode === "signup" ? "sent" : "error");
       setLoginError(authMode === "signup" ? loginEmailCheck.message : "Enter a valid email address.");
       return;
     }
     if (!isValidAccountPassword(loginPassword)) {
-      setLoginState("error");
+      setLoginState(isResend && authMode === "signup" ? "sent" : "error");
       setLoginError("Password needs at least 8 characters and one number.");
       return;
     }
 
-    if (options?.resend) {
+    if (isResend) {
       setLoginResending(true);
     } else {
       setLoginState("sending");
@@ -433,27 +467,9 @@ export default function NavBar() {
       });
 
       if (!response.ok) {
-        setLoginState("error");
         const payload = await response.json().catch(() => null) as { error?: string } | null;
-        setLoginError(payload?.error === "weak_password"
-          ? "Password needs at least 8 characters and one number."
-          : payload?.error === "disposable_domain"
-            ? "Use a permanent email address."
-          : payload?.error === "invalid_email"
-            ? "Enter a valid email address."
-          : payload?.error === "email_unreachable"
-            ? "Use a real email address with an active mail server."
-          : payload?.error === "custom_email_not_configured"
-            ? "BrawlLens email is not configured yet."
-          : payload?.error === "setup_link_generation_failed"
-            ? "Supabase could not generate the setup link."
-          : payload?.error === "magic_link_email_failed"
-            ? "Resend could not send from that email address."
-          : payload?.error === "invalid_credentials"
-            ? "Email or password did not match."
-          : payload?.error === "auth_not_configured"
-            ? "BrawlLens auth is not configured yet."
-          : "Account setup is not available right now.");
+        setLoginState(isResend && authMode === "signup" ? "sent" : "error");
+        setLoginError(authErrorMessage(payload?.error, authMode));
         return;
       }
 
@@ -481,7 +497,7 @@ export default function NavBar() {
 
       setLoginState("sent");
     } catch {
-      setLoginState("error");
+      setLoginState(isResend && authMode === "signup" ? "sent" : "error");
       setLoginError(authMode === "login" ? "Login is not available right now." : "Account setup is not available right now.");
     } finally {
       setLoginResending(false);
@@ -549,7 +565,7 @@ export default function NavBar() {
 
   return (
     <>
-      <nav className="fixed top-0 left-0 z-[100] grid min-h-16 w-full grid-cols-[auto_1fr_auto] items-center gap-[18px] border-b border-[var(--line)] bg-[color-mix(in_srgb,var(--bg)_92%,transparent)] px-[max(16px,calc((100vw-1200px)/2))] backdrop-blur-[18px] backdrop-saturate-[145%] max-lg:pr-0 max-lg:pl-4 max-[430px]:gap-2 max-[430px]:pl-3">
+      <nav className="fixed top-0 left-0 z-[100] grid min-h-16 w-full grid-cols-[auto_1fr_auto] items-center gap-[18px] border-b border-[var(--line)] bg-[color-mix(in_srgb,var(--bg)_92%,transparent)] px-[max(16px,calc((100vw-1200px)/2))] backdrop-blur-[18px] backdrop-saturate-[145%] max-lg:px-4 max-[430px]:gap-2 max-[430px]:px-3">
         <Link href="/" className="inline-flex items-center gap-1.5 whitespace-nowrap text-[18px] font-semibold leading-none text-[var(--ink)] no-underline" aria-label="BrawlLens home">
           <LogoMark />
           <span className="nav-wordmark max-[380px]:sr-only">BrawlLens</span>
@@ -574,7 +590,7 @@ export default function NavBar() {
               onClick={() => toggleDesktopPanel("browse")}
               className={`${navTextClass(browseActive)} cursor-pointer gap-1.5`}
               aria-haspopup="true"
-              aria-expanded={desktopPanel === "browse"}
+              aria-expanded={visibleDesktopPanel === "browse"}
             >
               Browse
               <ChevronRight size={14} strokeWidth={1.9} className="nav-trigger-arrow transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]" />
@@ -595,7 +611,7 @@ export default function NavBar() {
               onClick={() => toggleDesktopPanel("about")}
               className={`${navTextClass(aboutActive)} cursor-pointer gap-1.5`}
               aria-haspopup="true"
-              aria-expanded={desktopPanel === "about"}
+              aria-expanded={visibleDesktopPanel === "about"}
             >
               About
               <ChevronRight size={14} strokeWidth={1.9} className="nav-trigger-arrow transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]" />
@@ -795,12 +811,23 @@ export default function NavBar() {
           )}
           <button
             type="button"
-            className="grid h-9 w-6 cursor-pointer place-items-center border-0 bg-transparent p-0 text-[var(--ink-3)] hover:text-[var(--ink)] max-lg:-mr-1 lg:hidden"
+            className="relative grid size-9 cursor-pointer place-items-center rounded-md border-0 bg-transparent p-0 text-[var(--ink-3)] outline-none hover:text-[var(--ink)] focus-visible:outline-none lg:hidden"
             onClick={toggleMenu}
             aria-label={isMenuOpen ? "Close navigation menu" : "Open navigation menu"}
             aria-expanded={isMenuOpen}
           >
-            {isMenuOpen ? <X size={19} strokeWidth={1.8} /> : <Menu size={20} strokeWidth={1.8} />}
+            <Menu
+              size={20}
+              strokeWidth={1.8}
+              className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transition-[opacity,transform] duration-150 ${isMenuOpen ? "scale-95 opacity-0" : "scale-100 opacity-100"}`}
+              aria-hidden="true"
+            />
+            <X
+              size={20}
+              strokeWidth={1.8}
+              className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transition-[opacity,transform] duration-150 ${isMenuOpen ? "scale-100 opacity-100" : "scale-95 opacity-0"}`}
+              aria-hidden="true"
+            />
           </button>
         </div>
       </nav>
@@ -1050,7 +1077,7 @@ export default function NavBar() {
               </form>
             )}
 
-            {loginState === "error" && (
+            {loginError && (loginState === "error" || loginState === "sent") && (
               <p className="mt-4 mb-0 rounded-[10px] border border-[var(--line)] bg-[var(--panel-2)] px-3.5 py-3 text-[13px] leading-relaxed text-[var(--ink-2)]">
                 {loginError}
               </p>
