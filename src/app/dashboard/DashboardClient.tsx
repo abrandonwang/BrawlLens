@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from "react"
-import { ChevronDown, RotateCcw } from "lucide-react"
+import { ArrowUpRight, ChevronDown, RotateCcw } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -506,14 +506,23 @@ export default function DashboardClient({ setupMode = false, editable = false, s
     const compact = panel.w === 1 || panel.h === 1
     const short = panel.h === 1
     const content = (
-      <div className={`flex h-full min-h-0 ${short ? "items-end" : "flex-col justify-end"}`}>
+      <div className={`group/metric relative flex h-full min-h-0 ${short ? "items-end justify-between gap-2" : "flex-col justify-end"}`}>
         {metric.value === null ? (
           <SkeletonBlock className={`${short ? "h-6" : "h-8"} w-full`} />
         ) : (
-          <div className="min-w-0">
-            <div className={`truncate font-semibold tracking-[-0.03em] text-[var(--ink)] ${short ? "text-[clamp(20px,2.4vw,25px)] leading-none" : compact ? "text-[22px] leading-tight" : "text-[clamp(24px,4vw,34px)] leading-none"}`}>{metric.value}</div>
-            {!short && <div className="mt-1 truncate text-[12px] text-[var(--ink-4)] max-md:hidden">{metric.detail}</div>}
-          </div>
+          <>
+            <div className="min-w-0">
+              <div className={`truncate font-semibold tracking-[-0.03em] text-[var(--ink)] ${short ? "text-[clamp(20px,2.4vw,26px)] leading-none" : compact ? "text-[22px] leading-tight" : "text-[clamp(24px,4vw,34px)] leading-none"}`}>{metric.value}</div>
+              {!short && <div className="mt-1 truncate text-[12px] text-[var(--ink-4)] max-md:hidden">{metric.detail}</div>}
+            </div>
+            {metric.href && (
+              <ArrowUpRight
+                size={short ? 14 : 16}
+                strokeWidth={1.8}
+                className={`shrink-0 text-[var(--ink-4)] transition-all duration-200 group-hover/metric:text-[var(--ink)] group-hover/metric:-translate-y-[1px] group-hover/metric:translate-x-[1px] ${short ? "self-end" : "absolute right-0 top-0"}`}
+              />
+            )}
+          </>
         )}
       </div>
     )
@@ -531,18 +540,25 @@ export default function DashboardClient({ setupMode = false, editable = false, s
       return (
         <div className="flex h-full min-h-0 flex-col justify-between gap-3">
           <div className="min-w-0">
-            {!compact && <h3 className="m-0 text-[clamp(22px,4vw,28px)] font-semibold leading-[1.05] tracking-[-0.024em] text-[var(--ink)]">Open a player profile.</h3>}
+            {!compact && (
+              <div className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-[var(--line)] bg-[var(--panel-2)] px-2 py-0.5 font-mono text-[10px] font-medium uppercase tracking-[0.08em] text-[var(--ink-3)]">
+                <span aria-hidden className="size-1.5 rounded-full bg-[var(--ink)]" />
+                Profile lookup
+              </div>
+            )}
+            {!compact && <h3 className="m-0 text-[clamp(22px,4vw,30px)] font-semibold leading-[1.02] tracking-[-0.028em] text-[var(--ink)]">Open a player profile.</h3>}
             {!compact && <p className="mt-2 mb-4 line-clamp-2 text-[13px] leading-[1.45] text-[var(--ink-3)]">Pull trophy context, brawler depth, readiness signals, and AI notes from a player tag.</p>}
-            <form onSubmit={submitLookup} className={`flex ${compact ? "h-10" : "h-12"} items-center gap-2 rounded-lg border bg-[var(--bg)] px-3 transition-colors ${invalidLookup ? "border-[var(--loss-line)]" : "border-[var(--line)] focus-within:border-[var(--line-2)]"}`}>
+            <form onSubmit={submitLookup} className={`flex ${compact ? "h-10" : "h-12"} items-center gap-2 rounded-lg border bg-[var(--bg)] px-3 transition-colors ${invalidLookup ? "border-[var(--loss-line)]" : "border-[var(--line)] focus-within:border-[var(--line-2)] focus-within:shadow-[var(--shadow-lift)]"}`}>
+              <span aria-hidden className="font-mono text-[12px] font-medium text-[var(--ink-4)]">#</span>
               <input
                 value={lookup}
                 onChange={e => setLookup(e.target.value)}
-                placeholder={compact ? "#YP90U0YL" : "Player tag"}
-                className="min-w-0 flex-1 border-0 bg-transparent text-[15px] font-medium tracking-[-0.015em] text-[var(--ink)] outline-none placeholder:text-[var(--ink-4)]"
+                placeholder={compact ? "YP90U0YL" : "Player tag"}
+                className="min-w-0 flex-1 border-0 bg-transparent font-mono text-[15px] font-medium tracking-[0] text-[var(--ink)] outline-none placeholder:font-sans placeholder:font-medium placeholder:tracking-[-0.015em] placeholder:text-[var(--ink-4)]"
                 autoComplete="off"
                 spellCheck={false}
               />
-              <button type="submit" disabled={!playerTag} className="grid size-8 shrink-0 cursor-pointer place-items-center rounded-md border-0 bg-[var(--ink)] text-[var(--bg)] shadow-[var(--shadow-lift)] transition-opacity hover:opacity-90 disabled:cursor-default disabled:opacity-35" aria-label="Open player">
+              <button type="submit" disabled={!playerTag} className="grid size-8 shrink-0 cursor-pointer place-items-center rounded-md border-0 bg-[var(--ink)] text-[var(--bg)] shadow-[var(--shadow-lift)] transition-all hover:opacity-90 active:scale-95 disabled:cursor-default disabled:opacity-35" aria-label="Open player">
                 <span className="text-[12px] font-semibold">{">"}</span>
               </button>
             </form>
@@ -555,21 +571,21 @@ export default function DashboardClient({ setupMode = false, editable = false, s
 
           {!compact && panel.h >= 3 && (
             <div className="grid grid-cols-2 gap-2">
-              <Link href={topPlayerHref} className="min-w-0 rounded-md border border-[var(--line)] bg-[var(--panel-2)] p-3 text-inherit no-underline transition-colors hover:border-[var(--line-2)]">
-                <div className="mb-2 text-[12px] text-[var(--ink-3)]">Global leader</div>
+              <Link href={topPlayerHref} className="group/leader min-w-0 rounded-md border border-[var(--line)] bg-[var(--panel-2)] p-3 text-inherit no-underline transition-colors hover:border-[var(--line-2)] hover:bg-[var(--hover-bg)]">
+                <div className="mb-2 truncate text-[10px] font-medium uppercase tracking-[0.06em] text-[var(--ink-4)]">Global leader</div>
                 {loading ? <SkeletonBlock className="h-[38px] w-full" /> : (
                   <>
-                    <div className="truncate text-[15px] font-semibold text-[var(--ink)]">{landing?.player?.name ?? "Open rankings"}</div>
-                    <div className="mt-1 text-[12px] text-[var(--ink-4)]">{landing?.player ? `${formatTrophies(landing.player.trophies)} trophies` : "Top players"}</div>
+                    <div className="truncate text-[15px] font-semibold tracking-[-0.01em] text-[var(--ink)]">{landing?.player?.name ?? "Open rankings"}</div>
+                    <div className="mt-1 font-mono text-[11.5px] tabular-nums text-[var(--ink-3)]">{landing?.player ? `${formatTrophies(landing.player.trophies)} trophies` : "Top players"}</div>
                   </>
                 )}
               </Link>
-              <Link href="/leaderboards/clubs" className="min-w-0 rounded-md border border-[var(--line)] bg-[var(--panel-2)] p-3 text-inherit no-underline transition-colors hover:border-[var(--line-2)]">
-                <div className="mb-2 text-[12px] text-[var(--ink-3)]">Top club</div>
+              <Link href="/leaderboards/clubs" className="group/leader min-w-0 rounded-md border border-[var(--line)] bg-[var(--panel-2)] p-3 text-inherit no-underline transition-colors hover:border-[var(--line-2)] hover:bg-[var(--hover-bg)]">
+                <div className="mb-2 truncate text-[10px] font-medium uppercase tracking-[0.06em] text-[var(--ink-4)]">Top club</div>
                 {loading ? <SkeletonBlock className="h-[38px] w-full" /> : (
                   <>
-                    <div className="truncate text-[15px] font-semibold text-[var(--ink)]">{landing?.club?.name ?? "Open clubs"}</div>
-                    <div className="mt-1 text-[12px] text-[var(--ink-4)]">{landing?.club ? `${formatTrophies(landing.club.trophies)} trophies` : "Club rankings"}</div>
+                    <div className="truncate text-[15px] font-semibold tracking-[-0.01em] text-[var(--ink)]">{landing?.club?.name ?? "Open clubs"}</div>
+                    <div className="mt-1 font-mono text-[11.5px] tabular-nums text-[var(--ink-3)]">{landing?.club ? `${formatTrophies(landing.club.trophies)} trophies` : "Club rankings"}</div>
                   </>
                 )}
               </Link>
@@ -581,18 +597,27 @@ export default function DashboardClient({ setupMode = false, editable = false, s
 
     if (panel.type === "meta-tape") {
       const limit = panel.h === 1 ? 2 : panel.h === 2 ? 4 : 6
+      const visible = topMaps.slice(0, limit)
+      const peakBattles = visible[0]?.battles ?? 0
       return (
-        <div className="grid h-full min-h-0 content-start gap-2 overflow-hidden">
+        <div className="grid h-full min-h-0 content-start gap-1.5 overflow-hidden">
           {loading ? (
-            Array.from({ length: limit }).map((_, index) => <SkeletonBlock key={index} className="h-[38px] w-full" />)
-          ) : topMaps.length > 0 ? (
-            topMaps.slice(0, limit).map((map, index) => (
-              <Link key={`${map.mode}-${map.name}`} href={`/meta?open=${encodeURIComponent(map.name)}`} className="grid min-h-[38px] grid-cols-[24px_minmax(0,1fr)_72px] items-center gap-2 rounded-md border border-[var(--line)] bg-[var(--panel-2)] px-2.5 text-inherit no-underline transition-colors hover:border-[var(--line-2)]">
-                <span className="text-[11px] text-[var(--ink-4)]">{index + 1}</span>
-                <span className="truncate text-[12.5px] font-semibold text-[var(--ink)]">{map.name}</span>
-                <span className="text-right text-[11.5px] font-medium text-[var(--ink-3)]">{formatNum(map.battles)}</span>
-              </Link>
-            ))
+            Array.from({ length: limit }).map((_, index) => <SkeletonBlock key={index} className="h-[40px] w-full" />)
+          ) : visible.length > 0 ? (
+            visible.map((map, index) => {
+              const share = peakBattles > 0 ? (map.battles / peakBattles) * 100 : 0
+              return (
+                <Link key={`${map.mode}-${map.name}`} href={`/meta?open=${encodeURIComponent(map.name)}`} className="group/row relative grid min-h-[40px] grid-cols-[20px_minmax(0,1fr)_auto] items-center gap-2.5 overflow-hidden rounded-md border border-[var(--line)] bg-[var(--panel-2)] px-2.5 py-1.5 text-inherit no-underline transition-colors hover:border-[var(--line-2)] hover:bg-[var(--hover-bg)]">
+                  <span aria-hidden className="absolute inset-y-0 left-0 origin-left bg-[var(--ink)]/[0.04] transition-[width] duration-300" style={{ width: `${share}%` }} />
+                  <span className="relative font-mono text-[10.5px] tabular-nums text-[var(--ink-4)]">{String(index + 1).padStart(2, "0")}</span>
+                  <span className="relative min-w-0">
+                    <span className="block truncate text-[12.5px] font-semibold tracking-[-0.005em] text-[var(--ink)]">{map.name}</span>
+                    <span className="mt-0.5 block truncate text-[10.5px] font-medium uppercase tracking-[0.04em] text-[var(--ink-4)]">{getModeName(map.mode)}</span>
+                  </span>
+                  <span className="relative font-mono text-[11.5px] tabular-nums font-medium text-[var(--ink-2)]">{formatNum(map.battles)}</span>
+                </Link>
+              )
+            })
           ) : (
             <p className="m-0 rounded-md border border-dashed border-[var(--line)] p-4 text-center text-[13px] text-[var(--ink-4)]">No map data.</p>
           )}
@@ -603,20 +628,25 @@ export default function DashboardClient({ setupMode = false, editable = false, s
     if (panel.type === "live-maps") {
       const count = panel.h === 1 ? 2 : panel.h === 2 ? 4 : 6
       return (
-        <Link href="/meta" className="block h-full min-h-0 text-inherit no-underline">
-          <div className={`grid h-full min-h-0 gap-2 overflow-hidden ${panel.w >= 3 ? "grid-cols-2" : "grid-cols-1"}`}>
-            {loading ? (
-              Array.from({ length: count }).map((_, index) => <SkeletonBlock key={index} className="h-full min-h-[48px] w-full" />)
-            ) : liveMaps.length > 0 ? liveMaps.slice(0, count).map((map, index) => (
-              <div key={`${map.mode}-${map.name}-${index}`} className="min-h-0 rounded-md border border-[var(--line)] bg-[var(--panel-2)] p-2.5">
-                <div className="mb-2 truncate text-[10.5px] font-medium text-[var(--ink-4)]">{getModeName(map.mode)}</div>
-                <div className="line-clamp-2 text-[12.5px] font-semibold leading-[1.15] text-[var(--ink)]">{map.name}</div>
+        <div className={`grid h-full min-h-0 gap-2 overflow-hidden ${panel.w >= 3 ? "grid-cols-2" : "grid-cols-1"}`}>
+          {loading ? (
+            Array.from({ length: count }).map((_, index) => <SkeletonBlock key={index} className="h-full min-h-[48px] w-full" />)
+          ) : liveMaps.length > 0 ? liveMaps.slice(0, count).map((map, index) => (
+            <Link
+              key={`${map.mode}-${map.name}-${index}`}
+              href={`/meta?open=${encodeURIComponent(map.name)}`}
+              className="group/cell flex min-h-0 flex-col justify-between gap-2 rounded-md border border-[var(--line)] bg-[var(--panel-2)] p-2.5 text-inherit no-underline transition-colors hover:border-[var(--line-2)] hover:bg-[var(--hover-bg)]"
+            >
+              <div className="flex items-center gap-1.5">
+                <span aria-hidden className="size-1.5 rounded-full bg-[var(--ink-3)] transition-colors group-hover/cell:bg-[var(--ink)]" />
+                <span className="truncate text-[10px] font-medium uppercase tracking-[0.06em] text-[var(--ink-4)]">{getModeName(map.mode)}</span>
               </div>
-            )) : (
-              <div className="col-span-full rounded-md border border-dashed border-[var(--line)] px-4 py-6 text-center text-[12.5px] leading-[1.45] text-[var(--ink-4)]">No live map data.</div>
-            )}
-          </div>
-        </Link>
+              <div className="line-clamp-2 text-[12.5px] font-semibold leading-[1.2] tracking-[-0.005em] text-[var(--ink)]">{map.name}</div>
+            </Link>
+          )) : (
+            <div className="col-span-full rounded-md border border-dashed border-[var(--line)] px-4 py-6 text-center text-[12.5px] leading-[1.45] text-[var(--ink-4)]">No live map data.</div>
+          )}
+        </div>
       )
     }
 
@@ -626,16 +656,20 @@ export default function DashboardClient({ setupMode = false, editable = false, s
         <div className="grid h-full min-h-0 content-start gap-3 overflow-hidden">
           {loading ? (
             Array.from({ length: count }).map((_, index) => <SkeletonBlock key={index} className="h-[30px] w-full" />)
-          ) : modes.length > 0 ? modes.slice(0, count).map(mode => {
+          ) : modes.length > 0 ? modes.slice(0, count).map((mode, index) => {
             const share = totalBattles > 0 ? (mode.totalBattles / totalBattles) * 100 : 0
+            const isLeader = index === 0
             return (
               <div key={mode.mode}>
-                <div className="mb-1.5 flex items-center justify-between gap-3">
-                  <span className="truncate text-[12.5px] font-medium text-[var(--ink)]">{getModeName(mode.mode)}</span>
-                  <span className="shrink-0 text-[11.5px] text-[var(--ink-4)]">{pct(mode.totalBattles, totalBattles)}</span>
+                <div className="mb-1 flex items-baseline justify-between gap-3">
+                  <span className={`truncate text-[12.5px] font-semibold tracking-[-0.005em] ${isLeader ? "text-[var(--ink)]" : "text-[var(--ink-2)]"}`}>{getModeName(mode.mode)}</span>
+                  <span className="shrink-0 font-mono text-[11px] tabular-nums font-medium text-[var(--ink-3)]">{pct(mode.totalBattles, totalBattles)}</span>
                 </div>
-                <div className="h-1.5 overflow-hidden rounded-full bg-[var(--line)]">
-                  <div className="h-full rounded-full bg-[var(--ink)]" style={{ width: `${share}%` }} />
+                <div className="relative h-1.5 overflow-hidden rounded-full bg-[var(--line)]">
+                  <div
+                    className={`h-full rounded-full transition-[width] duration-500 ease-out ${isLeader ? "bg-[var(--ink)]" : "bg-[var(--ink-2)]/55"}`}
+                    style={{ width: `${share}%` }}
+                  />
                 </div>
               </div>
             )
@@ -679,15 +713,20 @@ export default function DashboardClient({ setupMode = false, editable = false, s
     if (panel.type === "recent-profiles") {
       const limit = panel.h === 1 ? 2 : panel.h === 2 ? 4 : 5
       return recentPlayers.length > 0 ? (
-        <div className="h-full min-h-0 divide-y divide-[var(--line)] overflow-hidden">
+        <div className="grid h-full min-h-0 content-start gap-1.5 overflow-hidden">
           {recentPlayers.slice(0, limit).map(player => (
-            <Link key={player.tag} href={`/player/${encodeURIComponent(player.tag)}`} className="flex min-w-0 items-center justify-between gap-3 py-2.5 text-inherit no-underline">
-              <span className="min-w-0 truncate text-[13px] font-medium text-[var(--ink)]">#{player.tag}</span>
+            <Link
+              key={player.tag}
+              href={`/player/${encodeURIComponent(player.tag)}`}
+              className="group/profile flex min-w-0 items-center justify-between gap-2 rounded-md border border-[var(--line)] bg-[var(--panel-2)] px-2.5 py-2 text-inherit no-underline transition-colors hover:border-[var(--line-2)] hover:bg-[var(--hover-bg)]"
+            >
+              <span className="min-w-0 truncate font-mono text-[12px] font-semibold tracking-[-0.005em] text-[var(--ink)]">#{player.tag}</span>
+              <ArrowUpRight size={12} strokeWidth={1.8} className="shrink-0 text-[var(--ink-4)] transition-all duration-200 group-hover/profile:text-[var(--ink)] group-hover/profile:-translate-y-[1px] group-hover/profile:translate-x-[1px]" />
             </Link>
           ))}
         </div>
       ) : (
-        <div className="rounded-md border border-dashed border-[var(--line)] px-4 py-6 text-center text-[12.5px] leading-[1.45] text-[var(--ink-4)]">Opened profiles appear here.</div>
+        <div className="flex h-full min-h-0 items-center justify-center rounded-md border border-dashed border-[var(--line)] px-4 py-6 text-center text-[12.5px] leading-[1.45] text-[var(--ink-4)]">Opened profiles appear here.</div>
       )
     }
 
@@ -707,9 +746,10 @@ export default function DashboardClient({ setupMode = false, editable = false, s
               type="button"
               onClick={() => openAssistant(prompt)}
               title={compact ? "Ask AI" : prompt}
-              className="flex min-h-9 w-full min-w-0 cursor-pointer items-center overflow-hidden rounded-md border border-[var(--line)] bg-[var(--bg)] px-3 text-left text-[12.5px] text-[var(--ink-2)] transition-colors hover:border-[var(--line-2)] hover:text-[var(--ink)]"
+              className="group/ai flex min-h-9 w-full min-w-0 cursor-pointer items-center justify-between gap-2 overflow-hidden rounded-md border border-[var(--line)] bg-[var(--bg)] px-3 text-left text-[12.5px] text-[var(--ink-2)] transition-colors hover:border-[var(--line-2)] hover:bg-[var(--panel-2)] hover:text-[var(--ink)]"
             >
               <span className="block min-w-0 flex-1 truncate">{compact ? "Ask AI" : prompt}</span>
+              <span aria-hidden className="font-mono text-[11px] tabular-nums text-[var(--ink-4)] transition-transform duration-200 group-hover/ai:translate-x-[2px] group-hover/ai:text-[var(--ink)]">{">"}</span>
             </button>
           ))}
         </div>
@@ -722,9 +762,10 @@ export default function DashboardClient({ setupMode = false, editable = false, s
         {loading ? (
           Array.from({ length: limit }).map((_, index) => <SkeletonBlock key={index} className="h-[54px] w-full" />)
         ) : metaSignals.length > 0 ? metaSignals.slice(0, limit).map(signal => (
-          <Link key={signal.label} href={signal.href} className="min-w-0 rounded-md border border-[var(--line)] bg-[var(--panel-2)] p-3 text-inherit no-underline transition-colors hover:border-[var(--line-2)]">
-            <div className="mb-1 truncate text-[11.5px] text-[var(--ink-4)]">{signal.label}</div>
-            <div className="line-clamp-2 text-[13px] font-medium leading-[1.35] text-[var(--ink)]">{signal.value}</div>
+          <Link key={signal.label} href={signal.href} className="group/signal relative min-w-0 overflow-hidden rounded-md border border-[var(--line)] bg-[var(--panel-2)] p-3 text-inherit no-underline transition-colors hover:border-[var(--line-2)] hover:bg-[var(--hover-bg)]">
+            <span aria-hidden className="absolute inset-y-2 left-0 w-[2px] rounded-r-full bg-[var(--ink)] opacity-50 transition-opacity group-hover/signal:opacity-100" />
+            <div className="mb-1 truncate pl-2 text-[10.5px] font-medium uppercase tracking-[0.06em] text-[var(--ink-4)]">{signal.label}</div>
+            <div className="line-clamp-2 pl-2 text-[13px] font-semibold leading-[1.35] tracking-[-0.005em] text-[var(--ink)]">{signal.value}</div>
           </Link>
         )) : (
           <p className="m-0 rounded-md border border-dashed border-[var(--line)] p-5 text-center text-[13px] text-[var(--ink-4)]">No signals yet.</p>

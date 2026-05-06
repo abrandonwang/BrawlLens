@@ -50,6 +50,7 @@ export default function MapsPageClient() {
   const [brawlerSearch, setBrawlerSearch] = useState("")
   const [minPicks, setMinPicks] = useState(10)
   const [sortBy, setSortBy] = useState<SortKey>("winRate")
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc")
   const [spotlightTopBrawler, setSpotlightTopBrawler] = useState<{ id: number; name: string; picks: number; winRate: number } | null>(null)
   const [searchOpen, setSearchOpen] = useState(false)
   const [minPicksOpen, setMinPicksOpen] = useState(false)
@@ -144,8 +145,19 @@ export default function MapsPageClient() {
         if (brawlerSearch && !formatBrawlerName(b.name).toLowerCase().includes(brawlerSearch.toLowerCase())) return false
         return true
       })
-      .sort((a, b) => b[sortBy] - a[sortBy])
-  }, [mapBrawlers, brawlerSearch, minPicks, sortBy])
+      .sort((a, b) => sortDir === "desc" ? b[sortBy] - a[sortBy] : a[sortBy] - b[sortBy])
+  }, [mapBrawlers, brawlerSearch, minPicks, sortBy, sortDir])
+
+  function setBrawlerHeaderSort(key: SortKey) {
+    setSortBy(current => {
+      if (current === key) {
+        setSortDir(dir => dir === "desc" ? "asc" : "desc")
+        return current
+      }
+      setSortDir("desc")
+      return key
+    })
+  }
   const modalBestWinRate = useMemo(() => {
     return [...mapBrawlers].filter(b => b.picks >= minPicks).sort((a, b) => b.winRate - a.winRate)[0] ?? null
   }, [mapBrawlers, minPicks])
@@ -406,17 +418,6 @@ export default function MapsPageClient() {
                   <input className="w-full border-0 bg-transparent text-[16px] font-[inherit] text-inherit outline-none placeholder:text-[var(--ink-4)]" placeholder="Search brawler…" value={brawlerSearch} onChange={e => setBrawlerSearch(e.target.value)} />
                 </div>
                 <div className={`flex min-w-0 items-center gap-2 ${mapExpanded ? "w-full" : "flex-none max-[720px]:w-full"} max-[420px]:flex-wrap`}>
-                  <div className="inline-flex w-fit max-w-full flex-none gap-0.5 overflow-x-auto rounded-lg border border-[var(--line)] bg-[var(--panel)] p-[3px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                    {([["picks", "Picks"], ["winRate", "Win Rate"], ["wins", "Wins"]] as [SortKey, string][]).map(([key, label]) => (
-                      <button
-                        key={key}
-                        onClick={() => setSortBy(key)}
-                        className={`relative shrink-0 cursor-pointer rounded-md border-0 px-[15px] py-[7px] text-[14px] font-normal transition-all ${sortBy === key ? "bg-[var(--ink)] text-[#fcfbf8] shadow-[var(--shadow-lift)]" : "bg-transparent text-[var(--ink-3)] hover:bg-[color-mix(in_srgb,var(--panel-2)_70%,transparent)] hover:text-[var(--ink)]"}`}
-                      >
-                        {label}
-                      </button>
-                    ))}
-                  </div>
                   <div ref={minPicksRef} className="relative shrink-0">
                     <button
                       type="button"
@@ -503,9 +504,20 @@ export default function MapsPageClient() {
                       >
                         <span />
                         <span className="text-[12px] font-normal text-[var(--ink-4)]">Brawler</span>
-                        <span className="text-[12px] font-normal text-[var(--ink-4)]">Win rate</span>
-                        <span className="text-right text-[12px] font-normal text-[var(--ink-4)]">Wins</span>
-                        <span className="text-right text-[12px] font-normal text-[var(--ink-4)]">Picks</span>
+                        {([
+                          ["Win rate", "winRate", "left"],
+                          ["Wins", "wins", "right"],
+                          ["Picks", "picks", "right"],
+                        ] as [string, SortKey, "left" | "right"][]).map(([label, key, align]) => (
+                          <button
+                            key={key}
+                            type="button"
+                            onClick={() => setBrawlerHeaderSort(key)}
+                            className={`cursor-pointer border-0 bg-transparent p-0 text-[12px] font-normal transition-colors ${sortBy === key ? "text-[var(--ink)]" : "text-[var(--ink-4)] hover:text-[var(--ink-3)]"} ${align === "right" ? "text-right" : "text-left"}`}
+                          >
+                            {label}{sortBy === key ? (sortDir === "asc" ? " ↑" : " ↓") : ""}
+                          </button>
+                        ))}
                         <span className="text-center text-[12px] font-normal text-[var(--ink-4)]">Tier</span>
                       </div>
 
