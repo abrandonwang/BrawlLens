@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, type ReactNode } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import {
   AlertCircle,
   Bell,
@@ -30,10 +30,6 @@ const premiumFeatures = [
   "Deep player insights",
   "CSV exports",
 ]
-
-function formatStatus(value: string) {
-  return value.replace(/_/g, " ")
-}
 
 function formatDate(value?: string | null) {
   if (!value) return null
@@ -130,8 +126,7 @@ function SignedOutState() {
   return (
     <main className="mx-auto w-full max-w-[760px] flex-1 px-4 py-14">
       <div className="rounded-[14px] border border-[var(--line)] bg-[var(--panel)] p-6 shadow-[var(--shadow-lift)]">
-        <p className="m-0 text-[12px] font-semibold uppercase text-[var(--ink-4)]">Protected route</p>
-        <h1 className="mt-2 mb-2 text-[32px] leading-none font-semibold text-[var(--ink)]">Sign in required</h1>
+        <h1 className="m-0 mb-2 text-[32px] leading-none font-semibold text-[var(--ink)]">Sign in required</h1>
         <p className="m-0 text-[14px] text-[var(--ink-3)]">Sign in to manage account, premium, billing, and data settings.</p>
         <Link href="/login" className="mt-5 inline-flex h-10 items-center rounded-lg bg-[var(--ink)] px-4 text-[14px] text-[#fcfbf8] no-underline">
           Sign in
@@ -143,6 +138,7 @@ function SignedOutState() {
 
 export default function AccountClient() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [state, setState] = useState<LoadState>("loading")
   const [user, setUser] = useState<PremiumUser | null>(null)
 
@@ -219,6 +215,15 @@ export default function AccountClient() {
     )
   }
 
+  const tab = searchParams.get("tab")
+  const activeTab = tab === "settings" || tab === "appearance" ? tab : "profile"
+  const accountTitle = user.displayName ?? user.accountSetup?.playerName ?? user.email ?? "Account"
+  const tabs = [
+    { id: "profile", label: "Profile", description: "Identity and player" },
+    { id: "settings", label: "Settings", description: "Plan and account" },
+    { id: "appearance", label: "Appearance", description: "Interface defaults" },
+  ] as const
+
   return (
     <main className="mx-auto w-full max-w-[1120px] flex-1 px-4 py-10">
       <div className="mb-7 flex flex-wrap items-start justify-between gap-4">
@@ -227,9 +232,8 @@ export default function AccountClient() {
             {userInitial(user)}
           </div>
           <div className="min-w-0">
-            <p className="m-0 text-[12px] font-semibold uppercase text-[var(--ink-4)]">Settings</p>
-            <h1 className="mt-1 mb-1 text-[38px] leading-none font-semibold tracking-[-0.02em] text-[var(--ink)] max-[560px]:text-[31px]">
-              Account settings
+            <h1 className="m-0 mb-1 text-[38px] leading-none font-semibold tracking-[-0.02em] text-[var(--ink)] max-[560px]:text-[31px]">
+              {accountTitle}
             </h1>
             <p className="m-0 truncate text-[14px] text-[var(--ink-3)]">{user.email ?? "Signed in"}</p>
           </div>
@@ -244,142 +248,149 @@ export default function AccountClient() {
         </button>
       </div>
 
-      <div className="mb-5 grid grid-cols-3 gap-3 max-[760px]:grid-cols-1">
-        <div className="rounded-[14px] border border-[var(--line)] bg-[var(--panel)] p-4 shadow-[var(--shadow-lift)]">
-          <span className="text-[12px] text-[var(--ink-4)]">Plan</span>
-          <strong className="mt-1 block text-[24px] capitalize text-[var(--ink)]">{planDetails.planName}</strong>
-        </div>
-        <div className="rounded-[14px] border border-[var(--line)] bg-[var(--panel)] p-4 shadow-[var(--shadow-lift)]">
-          <span className="text-[12px] text-[var(--ink-4)]">Subscription</span>
-          <strong className="mt-1 block text-[24px] capitalize text-[var(--ink)]">{formatStatus(user.subscriptionStatus)}</strong>
-        </div>
-        <div className="rounded-[14px] border border-[var(--line)] bg-[var(--panel)] p-4 shadow-[var(--shadow-lift)]">
-          <span className="text-[12px] text-[var(--ink-4)]">Sign-in</span>
-          <strong className="mt-1 block text-[24px] text-[var(--ink)]">Magic link</strong>
-        </div>
-      </div>
-
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1.05fr)_minmax(330px,0.95fr)]">
-        <div className="grid gap-5">
-          <SettingsCard
-            icon={<Crown size={16} strokeWidth={1.9} />}
-            title="Upgrade"
-            description="Premium is staged for launch behind account gates."
-            action={<DisabledAction>{planDetails.isPaid ? "Current plan" : "Upgrade soon"}</DisabledAction>}
-          >
-            <div className="rounded-[12px] border border-[var(--line)] bg-[var(--panel-2)] p-4">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <p className="m-0 text-[12px] font-semibold uppercase text-[var(--ink-4)]">BrawlLens Pro</p>
-                  <h3 className="mt-1 mb-0 text-[24px] leading-tight font-semibold text-[var(--ink)]">Launch pricing soon</h3>
-                </div>
-                <span className="rounded-full border border-[var(--line)] bg-[var(--panel)] px-3 py-1 text-[12px] text-[var(--ink-3)]">Premium beta</span>
-              </div>
-              <div className="mt-4 grid gap-2 sm:grid-cols-2">
-                {premiumFeatures.map(feature => (
-                  <div key={feature} className="flex items-center gap-2 text-[13px] text-[var(--ink-2)]">
-                    <Check size={14} strokeWidth={2.2} className="text-[var(--ink)]" />
-                    {feature}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </SettingsCard>
-
-          <SettingsCard
-            icon={<CreditCard size={16} strokeWidth={1.9} />}
-            title="Billing and cancellation"
-            description="Manage renewal, receipts, and plan changes from one place."
-          >
-            <div className="grid gap-3 sm:grid-cols-2">
-              <DisabledAction>Manage billing</DisabledAction>
-              <DisabledAction danger>{planDetails.isPaid ? "Cancel renewal" : "Nothing to cancel"}</DisabledAction>
-            </div>
-            <div className="mt-5 rounded-[12px] border border-[var(--line)] bg-[var(--panel-2)] p-4">
-              <p className="m-0 text-[13px] font-semibold text-[var(--ink)]">Cancellation details</p>
-              <p className="mt-1 mb-0 text-[13px] leading-relaxed text-[var(--ink-3)]">{planDetails.cancellation}</p>
-              <p className="mt-3 mb-0 text-[12px] leading-relaxed text-[var(--ink-4)]">
-                When billing is connected, cancellation will stop renewal without deleting your account, saved settings, or free access.
-              </p>
-            </div>
-          </SettingsCard>
-
-          <SettingsCard
-            icon={<Bell size={16} strokeWidth={1.9} />}
-            title="Email preferences"
-            description="Choose what should reach your inbox."
-          >
-            <div>
-              <SettingRow label="Product updates" value="Important only" />
-              <SettingRow label="Meta reports" value="Off until premium launch" tone="muted" />
-              <SettingRow label="Billing notices" value="Always on" />
-            </div>
-          </SettingsCard>
-        </div>
+      <div className="grid gap-5 lg:grid-cols-[230px_minmax(0,1fr)]">
+        <aside className="h-fit rounded-[14px] border border-[var(--line)] bg-[var(--panel)] p-2 shadow-[var(--shadow-lift)] lg:sticky lg:top-24">
+          {tabs.map(item => {
+            const active = item.id === activeTab
+            return (
+              <Link
+                key={item.id}
+                href={`/account?tab=${item.id}`}
+                className={`block rounded-[10px] px-3 py-2.5 text-inherit no-underline transition-colors ${active ? "bg-[var(--ink)] text-[#fcfbf8]" : "hover:bg-[var(--hover-bg)]"}`}
+              >
+                <span className={`block text-[13px] font-semibold ${active ? "text-[#fcfbf8]" : "text-[var(--ink)]"}`}>{item.label}</span>
+                <span className={`mt-0.5 block text-[12px] leading-snug ${active ? "text-[#fcfbf8]/70" : "text-[var(--ink-3)]"}`}>{item.description}</span>
+              </Link>
+            )
+          })}
+        </aside>
 
         <div className="grid gap-5 content-start">
-          <SettingsCard
-            icon={<UserRound size={16} strokeWidth={1.9} />}
-            title="Profile"
-            description="Account identity and access role."
-          >
-            <SettingRow label="Email" value={user.email ?? "Unknown"} />
-            <SettingRow label="Display name" value={user.displayName ?? "Not set"} tone={user.displayName ? "normal" : "muted"} />
-            <SettingRow label="Role" value={user.role ?? "user"} />
-            <SettingRow label="Account ID" value={<span className="font-mono text-[11px]">{user.id.slice(0, 8)}...</span>} />
-          </SettingsCard>
+          {activeTab === "profile" && (
+            <>
+              <div className="grid grid-cols-3 gap-3 max-[760px]:grid-cols-1">
+                <div className="rounded-[14px] border border-[var(--line)] bg-[var(--panel)] p-4 shadow-[var(--shadow-lift)]">
+                  <span className="text-[12px] text-[var(--ink-4)]">Player</span>
+                  <strong className="mt-1 block truncate text-[24px] text-[var(--ink)]">{user.accountSetup?.playerName ?? user.accountSetup?.playerTag ?? "Not set"}</strong>
+                </div>
+                <div className="rounded-[14px] border border-[var(--line)] bg-[var(--panel)] p-4 shadow-[var(--shadow-lift)]">
+                  <span className="text-[12px] text-[var(--ink-4)]">Plan</span>
+                  <strong className="mt-1 block text-[24px] capitalize text-[var(--ink)]">{planDetails.planName}</strong>
+                </div>
+                <div className="rounded-[14px] border border-[var(--line)] bg-[var(--panel)] p-4 shadow-[var(--shadow-lift)]">
+                  <span className="text-[12px] text-[var(--ink-4)]">Sign-in</span>
+                  <strong className="mt-1 block text-[24px] text-[var(--ink)]">Password</strong>
+                </div>
+              </div>
 
-          <SettingsCard
-            icon={<KeyRound size={16} strokeWidth={1.9} />}
-            title="Security"
-            description="Passwordless login keeps account access simple."
-          >
-            <SettingRow label="Method" value="Magic link" />
-            <SettingRow label="Sender" value="BrawlLens email" />
-            <SettingRow label="Provider" value="Supabase session core" />
-          </SettingsCard>
+              <SettingsCard icon={<UserRound size={16} strokeWidth={1.9} />} title="Profile" description="Account identity and Brawl Stars context.">
+                <SettingRow label="Email" value={user.email ?? "Unknown"} />
+                <SettingRow label="Display name" value={user.displayName ?? "Not set"} tone={user.displayName ? "normal" : "muted"} />
+                <SettingRow label="Player tag" value={user.accountSetup?.playerTag ? `#${user.accountSetup.playerTag}` : "Not set"} tone={user.accountSetup?.playerTag ? "normal" : "muted"} />
+                <SettingRow label="Region" value={user.accountSetup?.region ?? "Global"} />
+                <SettingRow label="Goals" value={user.accountSetup?.goals?.join(", ") || "Not set"} tone={user.accountSetup?.goals?.length ? "normal" : "muted"} />
+                <SettingRow label="Role" value={user.role ?? "user"} />
+                <SettingRow label="Account ID" value={<span className="font-mono text-[11px]">{user.id.slice(0, 8)}...</span>} />
+              </SettingsCard>
 
-          <SettingsCard
-            icon={<Sparkles size={16} strokeWidth={1.9} />}
-            title="Premium status"
-            description="Feature access for gated surfaces."
-          >
-            <SettingRow label="AI premium chat" value={planDetails.isPaid ? "Unlocked" : "Upgrade required"} tone={planDetails.isPaid ? "normal" : "muted"} />
-            <SettingRow label="Advanced filters" value={planDetails.isPaid ? "Unlocked" : "Upgrade required"} tone={planDetails.isPaid ? "normal" : "muted"} />
-            <SettingRow label="Exports" value={planDetails.isPaid ? "Unlocked" : "Upgrade required"} tone={planDetails.isPaid ? "normal" : "muted"} />
-          </SettingsCard>
+              <SettingsCard icon={<KeyRound size={16} strokeWidth={1.9} />} title="Security" description="BrawlLens sends setup mail from the configured branded sender.">
+                <SettingRow label="Method" value="Email + password" />
+                <SettingRow label="Sender" value="BrawlLens email" />
+                <SettingRow label="Session core" value="Supabase Auth" />
+              </SettingsCard>
+            </>
+          )}
 
-          <SettingsCard
-            icon={<Shield size={16} strokeWidth={1.9} />}
-            title="Privacy and data"
-            description="Control account data when tools are wired."
-          >
-            <div className="grid gap-2">
-              <DisabledAction>
-                <span className="inline-flex items-center gap-2"><Download size={14} /> Export data</span>
-              </DisabledAction>
-              <DisabledAction>
-                <span className="inline-flex items-center gap-2"><RefreshCcw size={14} /> Reset preferences</span>
-              </DisabledAction>
-              <Link href="/contact" className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-[var(--line)] bg-transparent px-4 text-[13px] font-semibold text-[var(--ink-2)] no-underline transition-colors hover:border-[var(--line-2)] hover:text-[var(--ink)]">
-                <AlertCircle size={14} />
-                Request help
-              </Link>
-            </div>
-          </SettingsCard>
+          {activeTab === "settings" && (
+            <>
+              <SettingsCard icon={<Crown size={16} strokeWidth={1.9} />} title="Upgrade" description="Premium is staged for launch behind account gates." action={<DisabledAction>{planDetails.isPaid ? "Current plan" : "Upgrade soon"}</DisabledAction>}>
+                <div className="rounded-[12px] border border-[var(--line)] bg-[var(--panel-2)] p-4">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="m-0 text-[12px] font-semibold uppercase text-[var(--ink-4)]">BrawlLens Pro</p>
+                      <h3 className="mt-1 mb-0 text-[24px] leading-tight font-semibold text-[var(--ink)]">Launch pricing soon</h3>
+                    </div>
+                    <span className="rounded-full border border-[var(--line)] bg-[var(--panel)] px-3 py-1 text-[12px] text-[var(--ink-3)]">Premium beta</span>
+                  </div>
+                  <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                    {premiumFeatures.map(feature => (
+                      <div key={feature} className="flex items-center gap-2 text-[13px] text-[var(--ink-2)]">
+                        <Check size={14} strokeWidth={2.2} className="text-[var(--ink)]" />
+                        {feature}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </SettingsCard>
 
-          <SettingsCard
-            icon={<Trash2 size={16} strokeWidth={1.9} />}
-            title="Danger zone"
-            description="Permanent account actions require confirmation."
-          >
-            <div className="flex flex-wrap items-center gap-3">
-              <DisabledAction danger>
-                <span className="inline-flex items-center gap-2"><XCircle size={14} /> Delete account</span>
-              </DisabledAction>
-              <span className="text-[12px] text-[var(--ink-4)]">Manual review until deletion API is live.</span>
-            </div>
-          </SettingsCard>
+              <SettingsCard icon={<CreditCard size={16} strokeWidth={1.9} />} title="Billing and cancellation" description="Manage renewal, receipts, and plan changes from one place.">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <DisabledAction>Manage billing</DisabledAction>
+                  <DisabledAction danger>{planDetails.isPaid ? "Cancel renewal" : "Nothing to cancel"}</DisabledAction>
+                </div>
+                <div className="mt-5 rounded-[12px] border border-[var(--line)] bg-[var(--panel-2)] p-4">
+                  <p className="m-0 text-[13px] font-semibold text-[var(--ink)]">Cancellation details</p>
+                  <p className="mt-1 mb-0 text-[13px] leading-relaxed text-[var(--ink-3)]">{planDetails.cancellation}</p>
+                  <p className="mt-3 mb-0 text-[12px] leading-relaxed text-[var(--ink-4)]">Cancellation will stop renewal without deleting your account, saved Lensboard, or free access.</p>
+                </div>
+              </SettingsCard>
+
+              <SettingsCard icon={<Sparkles size={16} strokeWidth={1.9} />} title="Premium status" description="Feature access for gated surfaces.">
+                <SettingRow label="AI premium chat" value={planDetails.isPaid ? "Unlocked" : "Upgrade required"} tone={planDetails.isPaid ? "normal" : "muted"} />
+                <SettingRow label="Advanced filters" value={planDetails.isPaid ? "Unlocked" : "Upgrade required"} tone={planDetails.isPaid ? "normal" : "muted"} />
+                <SettingRow label="Exports" value={planDetails.isPaid ? "Unlocked" : "Upgrade required"} tone={planDetails.isPaid ? "normal" : "muted"} />
+              </SettingsCard>
+
+              <SettingsCard icon={<Bell size={16} strokeWidth={1.9} />} title="Email preferences" description="Choose what should reach your inbox.">
+                <SettingRow label="Product updates" value="Important only" />
+                <SettingRow label="Meta reports" value="Off until premium launch" tone="muted" />
+                <SettingRow label="Billing notices" value="Always on" />
+              </SettingsCard>
+            </>
+          )}
+
+          {activeTab === "appearance" && (
+            <>
+              <SettingsCard icon={<Sparkles size={16} strokeWidth={1.9} />} title="Appearance" description="Visual defaults for the BrawlLens interface.">
+                <SettingRow label="Theme" value="Light" />
+                <SettingRow label="Density" value="Comfortable" />
+                <SettingRow label="Motion" value="Enabled" />
+                <SettingRow label="Modal background" value="Dim only" />
+              </SettingsCard>
+
+              <SettingsCard icon={<RefreshCcw size={16} strokeWidth={1.9} />} title="Lensboard defaults" description="Saved panel layout and workspace behavior.">
+                <SettingRow label="Saved panels" value={user.dashboardWidgets?.length ? `${user.dashboardWidgets.length} panels` : "Local defaults"} />
+                <SettingRow label="Layout" value="Editable grid" />
+                <SettingRow label="Persistence" value="Account metadata" />
+                <div className="mt-5">
+                  <DisabledAction>
+                    <span className="inline-flex items-center gap-2"><RefreshCcw size={14} /> Reset Lensboard</span>
+                  </DisabledAction>
+                </div>
+              </SettingsCard>
+
+              <SettingsCard icon={<Shield size={16} strokeWidth={1.9} />} title="Privacy and data" description="Control account data when tools are wired.">
+                <div className="grid gap-2">
+                  <DisabledAction>
+                    <span className="inline-flex items-center gap-2"><Download size={14} /> Export data</span>
+                  </DisabledAction>
+                  <Link href="/contact" className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-[var(--line)] bg-transparent px-4 text-[13px] font-semibold text-[var(--ink-2)] no-underline transition-colors hover:border-[var(--line-2)] hover:text-[var(--ink)]">
+                    <AlertCircle size={14} />
+                    Request help
+                  </Link>
+                </div>
+              </SettingsCard>
+
+              <SettingsCard icon={<Trash2 size={16} strokeWidth={1.9} />} title="Danger zone" description="Permanent account actions require confirmation.">
+                <div className="flex flex-wrap items-center gap-3">
+                  <DisabledAction danger>
+                    <span className="inline-flex items-center gap-2"><XCircle size={14} /> Delete account</span>
+                  </DisabledAction>
+                  <span className="text-[12px] text-[var(--ink-4)]">Manual review until deletion API is live.</span>
+                </div>
+              </SettingsCard>
+            </>
+          )}
         </div>
       </div>
     </main>

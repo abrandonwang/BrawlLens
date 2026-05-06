@@ -2,9 +2,19 @@ import { NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { Resend } from "resend"
 import { authRedirectUrl } from "@/lib/auth"
+import { checkEmailLegitimacy, isEmailSyntax, normalizeEmail } from "@/lib/emailValidation"
 
-function isEmail(value: unknown): value is string {
-  return typeof value === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+export const runtime = "nodejs"
+
+type AuthSetupErrorCode = "setup_link_generation_failed" | "magic_link_email_failed"
+
+class AuthSetupError extends Error {
+  code: AuthSetupErrorCode
+
+  constructor(code: AuthSetupErrorCode) {
+    super(code)
+    this.code = code
+  }
 }
 
 function isStrongPassword(value: unknown): value is string {
@@ -58,7 +68,7 @@ async function sendCustomSetupLink(request: Request, email: string, password: st
     auth: { persistSession: false, autoRefreshToken: false },
   })
 
-  const { data, error } = await admin.auth.admin.generateLink({
+  let link = await admin.auth.admin.generateLink({
     type: "signup",
     email,
     password,
@@ -67,11 +77,22 @@ async function sendCustomSetupLink(request: Request, email: string, password: st
     },
   })
 
-  if (error || !data.properties?.action_link) {
-    throw new Error("setup_link_generation_failed")
+  if (link.error) {
+    link = await admin.auth.admin.generateLink({
+      type: "magiclink",
+      email,
+      options: {
+        redirectTo: authRedirectUrl(request, "/auth/setup"),
+      },
+    })
   }
 
-  const emailContent = setupLinkEmail(email, data.properties.action_link)
+  if (link.error || !link.data.properties?.action_link) {
+    console.error("BrawlLens setup link generation failed", link.error?.message ?? "Missing action link")
+    throw new AuthSetupError("setup_link_generation_failed")
+  }
+
+  const emailContent = setupLinkEmail(email, link.data.properties.action_link)
   const resend = new Resend(resendKey)
   const { error: emailError } = await resend.emails.send({
     from,
@@ -82,7 +103,10 @@ async function sendCustomSetupLink(request: Request, email: string, password: st
     replyTo: process.env.AUTH_EMAIL_REPLY_TO || undefined,
   })
 
-  if (emailError) throw new Error("magic_link_email_failed")
+  if (emailError) {
+    console.error("BrawlLens setup email failed", emailError.message)
+    throw new AuthSetupError("magic_link_email_failed")
+  }
   return true
 }
 
@@ -91,41 +115,35 @@ export async function POST(request: Request) {
   const email = body && typeof body === "object" ? (body as Record<string, unknown>).email : null
   const password = body && typeof body === "object" ? (body as Record<string, unknown>).password : null
 
-  if (!isEmail(email)) {
+  if (!isEmailSyntax(email)) {
     return NextResponse.json({ error: "invalid_email" }, { status: 400 })
   }
   if (!isStrongPassword(password)) {
     return NextResponse.json({ error: "weak_password" }, { status: 400 })
   }
 
+  const normalizedEmail = normalizeEmail(email)
+  const emailCheck = await checkEmailLegitimacy(normalizedEmail)
+  if (!emailCheck.ok) {
+    return NextResponse.json({ error: emailCheck.reason }, { status: 400 })
+  }
+
   const url = process.env.SUPABASE_URL
-  const key = process.env.SUPABASE_ANON_KEY ?? process.env.SUPABASE_SERVICE_KEY
-  if (!url || !key) {
+  if (!url) {
     return NextResponse.json({ error: "auth_not_configured" }, { status: 503 })
   }
 
   try {
-    const sentByBrawllens = await sendCustomSetupLink(request, email, password, url)
-    if (sentByBrawllens) return NextResponse.json({ ok: true, sender: "brawllens" })
-  } catch {
+    const sentByBrawllens = await sendCustomSetupLink(request, normalizedEmail, password, url)
+    if (!sentByBrawllens) {
+      return NextResponse.json({ error: "custom_email_not_configured" }, { status: 503 })
+    }
+    return NextResponse.json({ ok: true, sender: "brawllens" })
+  } catch (error) {
+    if (error instanceof AuthSetupError) {
+      return NextResponse.json({ error: error.code }, { status: 502 })
+    }
+    console.error("BrawlLens account setup failed", error)
     return NextResponse.json({ error: "login_failed" }, { status: 502 })
   }
-
-  const supabase = createClient(url, key, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  })
-
-  const { error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      emailRedirectTo: authRedirectUrl(request, "/auth/setup"),
-    },
-  })
-
-  if (error) {
-    return NextResponse.json({ error: "login_failed" }, { status: 502 })
-  }
-
-  return NextResponse.json({ ok: true })
 }

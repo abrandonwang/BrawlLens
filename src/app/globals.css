@@ -505,7 +505,7 @@ html:not(.landing-bg) .nav-wordmark {
   display: inline-block;
   font-family: "Inter Tight", "Inter", "SF Pro Display", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
   font-weight: 700;
-  line-height: 20px;
+  line-height: 18px;
   letter-spacing: -0.035em !important;
   font-feature-settings: "cv11", "ss01";
 }

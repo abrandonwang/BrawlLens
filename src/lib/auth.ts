@@ -30,6 +30,10 @@ function bearerToken(request: Request): string | null {
   return token
 }
 
+export function requestAuthToken(request: Request): string | null {
+  return bearerToken(request) ?? cookieValue(request, AUTH_ACCESS_COOKIE)
+}
+
 function cookieValue(request: Request, name: string): string | null {
   const cookie = request.headers.get("cookie")
   if (!cookie) return null
@@ -54,8 +58,27 @@ function metadataEntitlements(metadata: Metadata): string[] {
   return value.filter((entry): entry is string => typeof entry === "string")
 }
 
+function metadataStringArray(metadata: Metadata, key: string): string[] | undefined {
+  const value = metadata[key]
+  if (!Array.isArray(value)) return undefined
+  return value.filter((entry): entry is string => typeof entry === "string")
+}
+
+function metadataSetup(metadata: Metadata): PremiumUser["accountSetup"] {
+  const value = metadata.brawllens_setup
+  if (typeof value !== "object" || value === null || Array.isArray(value)) return null
+  const setup = value as Metadata
+  return {
+    playerTag: typeof setup.playerTag === "string" ? setup.playerTag : undefined,
+    playerName: typeof setup.playerName === "string" ? setup.playerName : null,
+    region: typeof setup.region === "string" ? setup.region : undefined,
+    goals: Array.isArray(setup.goals) ? setup.goals.filter((entry): entry is string => typeof entry === "string") : undefined,
+    completedAt: typeof setup.completedAt === "string" ? setup.completedAt : undefined,
+  }
+}
+
 export async function getRequestUser(request: Request): Promise<PremiumUser | null> {
-  const token = bearerToken(request) ?? cookieValue(request, AUTH_ACCESS_COOKIE)
+  const token = requestAuthToken(request)
   if (!token) return null
 
   const url = process.env.SUPABASE_URL
@@ -75,7 +98,8 @@ export async function getRequestUser(request: Request): Promise<PremiumUser | nu
   }
 
   let role = metadataString(metadata, ["role", "account_role"])
-  let displayName = metadataString(metadata, ["name", "full_name", "display_name"])
+  const accountSetup = metadataSetup(metadata)
+  let displayName = metadataString(metadata, ["name", "full_name", "display_name"]) ?? accountSetup?.playerName ?? null
   let subscriptionTier: SubscriptionTier = normalizeSubscriptionTier(metadataString(metadata, ["subscription_tier", "plan", "tier"]))
   let subscriptionStatus: SubscriptionStatus = normalizeSubscriptionStatus(metadataString(metadata, ["subscription_status", "plan_status"]))
   let subscriptionProvider: string | null = null
@@ -111,6 +135,8 @@ export async function getRequestUser(request: Request): Promise<PremiumUser | nu
     id: data.user.id,
     email: data.user.email,
     displayName,
+    accountSetup,
+    dashboardWidgets: metadataStringArray(metadata, "lensboard_widgets"),
     role,
     subscriptionTier,
     subscriptionStatus,

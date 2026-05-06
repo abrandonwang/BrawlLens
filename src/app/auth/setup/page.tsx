@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import AuthSetupClient from "./AuthSetupClient"
+import DashboardClient from "@/app/dashboard/DashboardClient"
 
 export const metadata: Metadata = {
   title: "Set Up Account | BrawlLens",
@@ -7,5 +8,10 @@ export const metadata: Metadata = {
 }
 
 export default function AuthSetupPage() {
-  return <AuthSetupClient />
+  return (
+    <>
+      <DashboardClient setupMode />
+      <AuthSetupClient />
+    </>
+  )
 }

@@ -2,11 +2,15 @@
 
 import { useState, type FormEvent } from "react"
 import Link from "next/link"
+import { useEmailCheck } from "@/lib/useEmailCheck"
 
 type LoginState = "idle" | "sending" | "sent" | "error"
 
-function validPassword(password: string) {
-  return password.length >= 8 && /\d/.test(password)
+function passwordRules(password: string) {
+  return [
+    { label: "8+ characters", passed: password.length >= 8 },
+    { label: "Contains a number", passed: /\d/.test(password) },
+  ]
 }
 
 export default function LoginClient() {
@@ -15,9 +19,18 @@ export default function LoginClient() {
   const [state, setState] = useState<LoginState>("idle")
   const [resending, setResending] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const emailCheck = useEmailCheck(email)
+  const rules = passwordRules(password)
+  const passwordValid = rules.every(rule => rule.passed)
+  const canSubmit = emailCheck.isValid && passwordValid && state !== "sending"
 
   async function sendSetupLink(options?: { resend?: boolean }) {
-    if (!validPassword(password)) {
+    if (!emailCheck.isValid) {
+      setState("error")
+      setError(emailCheck.message)
+      return
+    }
+    if (!passwordValid) {
       setState("error")
       setError("Password needs at least 8 characters and one number.")
       return
@@ -41,6 +54,18 @@ export default function LoginClient() {
       setState("error")
       setError(payload?.error === "weak_password"
         ? "Password needs at least 8 characters and one number."
+        : payload?.error === "disposable_domain"
+          ? "Use a permanent email address."
+        : payload?.error === "invalid_email"
+          ? "Enter a valid email address."
+        : payload?.error === "email_unreachable"
+          ? "Use a real email address with an active mail server."
+        : payload?.error === "custom_email_not_configured"
+          ? "BrawlLens email is not configured yet."
+        : payload?.error === "setup_link_generation_failed"
+          ? "Supabase could not generate the setup link."
+        : payload?.error === "magic_link_email_failed"
+          ? "Resend could not send from that email address."
         : "Account setup is not available right now.")
       setResending(false)
       return
@@ -58,8 +83,7 @@ export default function LoginClient() {
   return (
     <main className="mx-auto flex w-full max-w-[480px] flex-1 flex-col justify-center px-4 py-14">
       <div className="rounded-[16px] border border-[var(--line)] bg-[var(--panel)] p-6 shadow-[var(--shadow-lift)]">
-        <p className="m-0 text-[12px] font-semibold uppercase text-[var(--ink-4)]">Account</p>
-        <h1 className="mt-2 mb-2 text-[32px] leading-none font-semibold text-[var(--ink)]">Create account</h1>
+        <h1 className="m-0 mb-2 text-[32px] leading-none font-semibold text-[var(--ink)]">Create account</h1>
         <p className="m-0 text-[14px] leading-relaxed text-[var(--ink-3)]">
           Set a password, then confirm your email to finish BrawlLens setup.
         </p>
@@ -99,6 +123,12 @@ export default function LoginClient() {
                 className="h-11 w-full rounded-lg border border-[var(--line)] bg-[var(--panel)] px-3 text-[15px] text-[var(--ink)] outline-none transition-colors placeholder:text-[var(--ink-4)] focus:border-[var(--line-2)]"
                 placeholder="you@example.com"
               />
+              <div className={`mt-2 flex items-center gap-2 text-[11px] leading-none ${emailCheck.status === "valid" ? "text-[var(--ink)]" : emailCheck.status === "idle" || emailCheck.status === "checking" ? "text-[var(--ink-4)]" : "text-[var(--ink-2)]"}`}>
+                <span className={`grid size-3.5 place-items-center rounded-full border text-[9px] ${emailCheck.status === "valid" ? "border-[var(--ink)] bg-[var(--ink)] text-[#fcfbf8]" : emailCheck.status === "checking" ? "animate-pulse border-[var(--line-2)] bg-[var(--line)] text-transparent" : emailCheck.status === "idle" ? "border-[var(--line-2)] text-transparent" : "border-[var(--ink-2)] text-[var(--ink-2)]"}`}>
+                  {emailCheck.status === "valid" ? "✓" : emailCheck.status === "invalid" || emailCheck.status === "format" ? "!" : ""}
+                </span>
+                {emailCheck.message}
+              </div>
             </label>
             <label className="block">
               <span className="mb-1.5 block text-[12px] text-[var(--ink-4)]">Password</span>
@@ -118,11 +148,18 @@ export default function LoginClient() {
                 className="h-11 w-full rounded-lg border border-[var(--line)] bg-[var(--panel)] px-3 text-[15px] text-[var(--ink)] outline-none transition-colors placeholder:text-[var(--ink-4)] focus:border-[var(--line-2)]"
                 placeholder="8+ characters, include a number"
               />
-              <span className="mt-1.5 block text-[11px] leading-relaxed text-[var(--ink-4)]">At least 8 characters and one number.</span>
+              <div className="mt-2 grid gap-1">
+                {rules.map(rule => (
+                  <div key={rule.label} className={`flex items-center gap-2 text-[11px] leading-none ${rule.passed ? "text-[var(--ink)]" : "text-[var(--ink-4)]"}`}>
+                    <span className={`grid size-3.5 place-items-center rounded-full border text-[9px] ${rule.passed ? "border-[var(--ink)] bg-[var(--ink)] text-[#fcfbf8]" : "border-[var(--line-2)] text-transparent"}`}>✓</span>
+                    {rule.label}
+                  </div>
+                ))}
+              </div>
             </label>
             <button
               type="submit"
-              disabled={state === "sending"}
+              disabled={!canSubmit}
               className="inline-flex h-11 w-full cursor-pointer items-center justify-center rounded-lg border-0 bg-[var(--ink)] px-4 text-[14px] font-semibold text-[#fcfbf8] shadow-[var(--shadow-lift)] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {state === "sending" ? "Sending..." : "Create account"}
@@ -137,7 +174,7 @@ export default function LoginClient() {
         )}
 
         <Link href="/" className="mt-5 inline-flex text-[13px] text-[var(--ink-3)] no-underline hover:text-[var(--ink)]">
-          Back to dashboard
+          Back to Lensboard
         </Link>
       </div>
     </main>

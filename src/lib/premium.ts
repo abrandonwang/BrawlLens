@@ -11,6 +11,14 @@ export interface PremiumUser {
   id: string
   email?: string | null
   displayName?: string | null
+  accountSetup?: {
+    playerTag?: string
+    playerName?: string | null
+    region?: string
+    goals?: string[]
+    completedAt?: string
+  } | null
+  dashboardWidgets?: string[]
   role?: string | null
   subscriptionTier: SubscriptionTier
   subscriptionStatus: SubscriptionStatus

@@ -4,9 +4,11 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from "react"
 import { ChevronLeft, ChevronRight, Menu, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import AssistantPopup from "./AssistantPopup";
-import { authHeaders } from "@/lib/clientAuth";
+import { authHeaders, clearAuthSession, clearServerSession } from "@/lib/clientAuth";
+import type { PremiumUser } from "@/lib/premium";
+import { useEmailCheck } from "@/lib/useEmailCheck";
 
 type NavPanelItem = {
   label: string;
@@ -41,12 +43,19 @@ const aboutItems: NavPanelItem[] = [
 ];
 
 const rootMenuLinks = [
-  { label: "Dashboard", href: "/", description: "Daily signals and quick reads" },
+  { label: "Lensboard", href: "/", description: "Custom data workspace" },
 ];
 
 type MenuPanel = "root" | "browse" | "about";
 type DesktopPanel = "browse" | "about";
 type LoginState = "idle" | "sending" | "sent" | "error";
+
+function passwordRules(password: string) {
+  return [
+    { label: "8+ characters", passed: password.length >= 8 },
+    { label: "Contains a number", passed: /\d/.test(password) },
+  ];
+}
 
 function isRouteActive(pathname: string, href: string) {
   if (href === "/") return pathname === "/";
@@ -64,8 +73,8 @@ function isDesktopItemActive(pathname: string, activeHash: string, href: string)
 }
 
 function LogoMark({ size = "sm" }: { size?: "sm" | "lg" }) {
-  const outer = size === "lg" ? "size-[38px] rounded-[12px]" : "size-[20px] rounded-[6px]";
-  const inner = size === "lg" ? "after:inset-[8px] after:rounded-[5px]" : "after:inset-[4.5px] after:rounded-[3px]";
+  const outer = size === "lg" ? "size-[38px] rounded-[12px]" : "size-[18px] rounded-[5px]";
+  const inner = size === "lg" ? "after:inset-[8px] after:rounded-[5px]" : "after:inset-[4px] after:rounded-[2.5px]";
   return (
     <span className={`relative inline-block ${outer} bg-[conic-gradient(from_var(--logo-angle),#f97316,#ec4899,#8b5cf6,#3b82f6,#14b8d6,#f97316)] animate-[logo-spin_8s_linear_infinite] after:absolute ${inner} after:bg-[#fcfbf8] after:content-['']`} />
   );
@@ -73,6 +82,7 @@ function LogoMark({ size = "sm" }: { size?: "sm" | "lg" }) {
 
 export default function NavBar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
   const [pendingAssistantQuery, setPendingAssistantQuery] = useState<string | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -84,6 +94,8 @@ export default function NavBar() {
   const [lastDesktopPanel, setLastDesktopPanel] = useState<DesktopPanel>("browse");
   const [activeHash, setActiveHash] = useState("");
   const [isSignedIn, setIsSignedIn] = useState(false);
+  const [accountName, setAccountName] = useState<string | null>(null);
+  const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
@@ -92,6 +104,7 @@ export default function NavBar() {
   const [loginError, setLoginError] = useState<string | null>(null);
   const previousPathnameRef = useRef(pathname);
   const desktopNavRef = useRef<HTMLDivElement>(null);
+  const accountMenuRef = useRef<HTMLDivElement>(null);
   const desktopHoverTimerRef = useRef<number | null>(null);
   const loginInputRef = useRef<HTMLInputElement>(null);
 
@@ -134,6 +147,7 @@ export default function NavBar() {
         setHoverDesktopPanel(null);
         setSuppressedDesktopPanel(null);
         setIsLoginOpen(false);
+        setIsAccountMenuOpen(false);
       }
     }
     window.addEventListener("keydown", onKey);
@@ -213,6 +227,19 @@ export default function NavBar() {
   }, [desktopPanel]);
 
   useEffect(() => {
+    if (!isAccountMenuOpen) return;
+
+    function onPointerDown(event: PointerEvent) {
+      if (!accountMenuRef.current?.contains(event.target as Node)) {
+        setIsAccountMenuOpen(false);
+      }
+    }
+
+    window.addEventListener("pointerdown", onPointerDown);
+    return () => window.removeEventListener("pointerdown", onPointerDown);
+  }, [isAccountMenuOpen]);
+
+  useEffect(() => {
     function onOpenAssistant(e: Event) {
       const detail = (e as CustomEvent<{ query?: string }>).detail;
       setIsAssistantOpen(true);
@@ -231,9 +258,24 @@ export default function NavBar() {
           headers: authHeaders(),
           cache: "no-store",
         });
-        if (active) setIsSignedIn(response.ok);
+        const payload = await response.json().catch(() => null) as { user?: PremiumUser | null } | null;
+        if (active) {
+          setIsSignedIn(response.ok);
+          const user = payload?.user;
+          const localSetup = localAccountSetup();
+          setAccountName(
+            user?.accountSetup?.playerName
+              ?? user?.displayName
+              ?? localSetup?.playerName
+              ?? (user?.accountSetup?.playerTag ? `#${user.accountSetup.playerTag}` : null)
+              ?? (localSetup?.playerTag ? `#${localSetup.playerTag}` : null),
+          );
+        }
       } catch {
-        if (active) setIsSignedIn(false);
+        if (active) {
+          setIsSignedIn(false);
+          setAccountName(null);
+        }
       }
     }
 
@@ -243,12 +285,26 @@ export default function NavBar() {
     };
   }, [pathname]);
 
+  function localAccountSetup() {
+    try {
+      const parsed = JSON.parse(window.localStorage.getItem("brawllens_setup") ?? "null") as { playerName?: unknown; playerTag?: unknown } | null;
+      if (!parsed || typeof parsed !== "object") return null;
+      return {
+        playerName: typeof parsed.playerName === "string" && parsed.playerName.trim() ? parsed.playerName.trim() : null,
+        playerTag: typeof parsed.playerTag === "string" && parsed.playerTag.trim() ? parsed.playerTag.trim() : null,
+      };
+    } catch {
+      return null;
+    }
+  }
+
   function toggleMenu() {
     if (isMenuOpen) {
       closeMenu();
       return;
     }
     setMenuPanel("root");
+    setIsAccountMenuOpen(false);
     setIsMenuOpen(true);
   }
 
@@ -257,6 +313,7 @@ export default function NavBar() {
     setDesktopPanel(null);
     setHoverDesktopPanel(null);
     setSuppressedDesktopPanel(null);
+    setIsAccountMenuOpen(false);
     setIsLoginOpen(true);
   }
 
@@ -301,10 +358,15 @@ export default function NavBar() {
   }
 
   function isValidAccountPassword(password: string) {
-    return password.length >= 8 && /\d/.test(password);
+    return passwordRules(password).every(rule => rule.passed);
   }
 
   async function sendSetupEmail(options?: { resend?: boolean }) {
+    if (!loginEmailCheck.isValid) {
+      setLoginState("error");
+      setLoginError(loginEmailCheck.message);
+      return;
+    }
     if (!isValidAccountPassword(loginPassword)) {
       setLoginState("error");
       setLoginError("Password needs at least 8 characters and one number.");
@@ -330,6 +392,18 @@ export default function NavBar() {
         const payload = await response.json().catch(() => null) as { error?: string } | null;
         setLoginError(payload?.error === "weak_password"
           ? "Password needs at least 8 characters and one number."
+          : payload?.error === "disposable_domain"
+            ? "Use a permanent email address."
+          : payload?.error === "invalid_email"
+            ? "Enter a valid email address."
+          : payload?.error === "email_unreachable"
+            ? "Use a real email address with an active mail server."
+          : payload?.error === "custom_email_not_configured"
+            ? "BrawlLens email is not configured yet."
+          : payload?.error === "setup_link_generation_failed"
+            ? "Supabase could not generate the setup link."
+          : payload?.error === "magic_link_email_failed"
+            ? "Resend could not send from that email address."
           : "Account setup is not available right now.");
         return;
       }
@@ -356,9 +430,21 @@ export default function NavBar() {
     setIsAssistantOpen(true);
   }
 
-  const accountLabel = isSignedIn ? "Account" : "Get started";
+  function signOut() {
+    setIsAccountMenuOpen(false);
+    setIsSignedIn(false);
+    setAccountName(null);
+    clearAuthSession();
+    clearServerSession().finally(() => router.replace("/login"));
+  }
+
+  const accountLabel = isSignedIn ? accountName ?? "Account" : "Get started";
   const browseActive = browseItems.some(item => item.href && isDesktopItemActive(pathname, activeHash, item.href));
   const aboutActive = aboutItems.some(item => item.href && isDesktopItemActive(pathname, activeHash, item.href));
+  const loginEmailCheck = useEmailCheck(loginEmail, isLoginOpen);
+  const loginPasswordRules = passwordRules(loginPassword);
+  const loginPasswordValid = loginPasswordRules.every(rule => rule.passed);
+  const canSubmitLogin = loginEmailCheck.isValid && loginPasswordValid && loginState !== "sending";
   const menuVisible = isMenuOpen || menuClosing;
   const visibleDesktopPanel = desktopPanel ?? hoverDesktopPanel;
   const renderedDesktopPanel = visibleDesktopPanel ?? lastDesktopPanel;
@@ -376,14 +462,14 @@ export default function NavBar() {
   return (
     <>
       <nav className="fixed top-0 left-0 z-[100] grid min-h-16 w-full grid-cols-[auto_1fr_auto] items-center gap-[18px] bg-[color-mix(in_srgb,var(--bg)_92%,transparent)] px-[max(16px,calc((100vw-1200px)/2))] backdrop-blur-[18px] backdrop-saturate-[145%] max-lg:pr-1.5 max-lg:pl-4 max-[430px]:gap-2 max-[430px]:pl-3">
-        <Link href="/" className="inline-flex items-center gap-1.5 whitespace-nowrap text-[20px] font-semibold leading-none text-[var(--ink)] no-underline" aria-label="BrawlLens home">
+        <Link href="/" className="inline-flex items-center gap-1.5 whitespace-nowrap text-[18px] font-semibold leading-none text-[var(--ink)] no-underline" aria-label="BrawlLens home">
           <LogoMark />
           <span className="nav-wordmark max-[380px]:sr-only">BrawlLens</span>
         </Link>
 
         <div ref={desktopNavRef} className="hidden min-w-0 items-center justify-center gap-1 lg:flex">
           <Link href="/" className={navTextClass(isRouteActive(pathname, "/"))}>
-            Dashboard
+            Lensboard
           </Link>
           <div
             className="nav-popover relative"
@@ -457,18 +543,18 @@ export default function NavBar() {
                             className="flex min-h-[66px] cursor-pointer items-start justify-between gap-3 rounded-[10px] border-0 bg-transparent px-3 py-2.5 text-left font-[inherit] text-[var(--ink)] transition-colors duration-200 hover:bg-[var(--hover-bg)]"
                           >
                             <span className="min-w-0">
-                              <span className="block truncate text-[14px] font-semibold leading-tight text-[var(--ink)]">{item.label}</span>
+                              <span className="inline-flex items-center gap-1.5 text-[14px] font-semibold leading-tight text-[var(--ink)]">
+                                <span className="truncate">{item.label}</span>
+                                <Image
+                                  src="/ai-sparkle-512.png"
+                                  alt=""
+                                  width={14}
+                                  height={14}
+                                  className="size-3.5 shrink-0 object-contain"
+                                  aria-hidden="true"
+                                />
+                              </span>
                               <span className="mt-1 block text-[12px] leading-snug text-[var(--ink-3)]">{item.description}</span>
-                            </span>
-                            <span className="mt-0.5 grid size-6 shrink-0 place-items-center">
-                              <Image
-                                src="/ai-sparkle-512.png"
-                                alt=""
-                                width={14}
-                                height={14}
-                                className="size-3.5 object-contain"
-                                aria-hidden="true"
-                              />
                             </span>
                           </button>
                         );
@@ -566,12 +652,53 @@ export default function NavBar() {
             />
           </button>
           {isSignedIn ? (
-            <Link
-              href="/account"
-              className="inline-flex h-[34px] items-center whitespace-nowrap rounded-md bg-[var(--ink)] px-3 text-[13px] leading-none text-[#fcfbf8] no-underline shadow-[var(--shadow-lift)] transition-opacity duration-150 hover:opacity-85 max-[420px]:px-2.5"
-            >
-              <span>{accountLabel}</span>
-            </Link>
+            <div ref={accountMenuRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setIsAccountMenuOpen(open => !open)}
+                className="inline-flex h-[34px] max-w-[150px] cursor-pointer items-center whitespace-nowrap rounded-md border-0 bg-[var(--ink)] px-3 text-[13px] leading-none text-[#fcfbf8] shadow-[var(--shadow-lift)] transition-opacity duration-150 hover:opacity-85 max-[420px]:max-w-[128px] max-[420px]:px-2.5"
+                aria-haspopup="menu"
+                aria-expanded={isAccountMenuOpen}
+              >
+                <span className="min-w-0 truncate">{accountLabel}</span>
+              </button>
+              {isAccountMenuOpen && (
+                <div
+                  role="menu"
+                  className="absolute right-0 top-[calc(100%+9px)] z-[140] w-[230px] rounded-[14px] border border-[var(--line)] bg-[var(--bg)] p-2 text-[var(--ink)] shadow-[0_24px_60px_-34px_rgba(28,28,28,0.45)]"
+                >
+                  <div className="px-2.5 py-2">
+                    <p className="m-0 truncate text-[13px] font-semibold text-[var(--ink)]">{accountLabel}</p>
+                    <p className="mt-0.5 mb-0 text-[11px] text-[var(--ink-4)]">BrawlLens account</p>
+                  </div>
+                  <div className="my-1 h-px bg-[var(--line)]" />
+                  {[
+                    ["Profile", "/account?tab=profile"],
+                    ["Settings", "/account?tab=settings"],
+                    ["Appearance", "/account?tab=appearance"],
+                  ].map(([label, href]) => (
+                    <Link
+                      key={href}
+                      href={href}
+                      role="menuitem"
+                      onClick={() => setIsAccountMenuOpen(false)}
+                      className="block rounded-[9px] px-2.5 py-2 text-[13px] font-medium text-[var(--ink-2)] no-underline transition-colors hover:bg-[var(--hover-bg)] hover:text-[var(--ink)]"
+                    >
+                      {label}
+                    </Link>
+                  ))}
+                  <div className="my-1 h-px bg-[var(--line)]" />
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={signOut}
+                    className="block w-full cursor-pointer rounded-[9px] border-0 bg-transparent px-2.5 py-2 text-left text-[13px] font-medium text-[var(--ink-2)] transition-colors hover:bg-[var(--hover-bg)] hover:text-[var(--ink)]"
+                  >
+                    Sign out
+                  </button>
+                </div>
+              )}
+            </div>
           ) : (
             <button
               type="button"
@@ -659,18 +786,16 @@ export default function NavBar() {
                       className="mobile-menu-item mb-6 block cursor-pointer border-0 bg-transparent p-0 text-left font-[inherit] text-[var(--ink)]"
                       style={mobileItemStyle(index + 2)}
                     >
-                      <span className="flex items-center justify-between gap-3 text-[18px] font-semibold leading-tight text-[var(--ink)]">
+                      <span className="inline-flex items-center gap-2 text-[18px] font-semibold leading-tight text-[var(--ink)]">
                         <span>{item.label}</span>
-                        <span className="grid size-7 shrink-0 place-items-center rounded-full bg-[var(--panel-2)]">
-                          <Image
-                            src="/ai-sparkle-512.png"
-                            alt=""
-                            width={15}
-                            height={15}
-                            className="size-[15px] object-contain"
-                            aria-hidden="true"
-                          />
-                        </span>
+                        <Image
+                          src="/ai-sparkle-512.png"
+                          alt=""
+                          width={15}
+                          height={15}
+                          className="size-[15px] shrink-0 object-contain"
+                          aria-hidden="true"
+                        />
                       </span>
                       <span className="mt-1 block text-[14px] leading-snug text-[var(--ink-3)]">{item.description}</span>
                     </button>
@@ -728,7 +853,6 @@ export default function NavBar() {
               <div className="min-w-0">
                 <LogoMark size="lg" />
                 <h2 id="login-modal-title" className="mt-5 mb-0 text-[26px] leading-[1.04] font-semibold text-[var(--ink)] max-[460px]:text-[24px]">
-                  <span className="block text-[var(--ink-4)]">Start tracking.</span>
                   <span className="block text-[var(--ink)]">Create free account</span>
                 </h2>
               </div>
@@ -778,6 +902,12 @@ export default function NavBar() {
                     className="h-11 w-full rounded-[9px] border border-[var(--line-2)] bg-transparent px-3.5 text-[14px] text-[var(--ink)] outline-none transition-colors placeholder:text-[var(--ink-4)] focus:border-[var(--ink)]"
                     placeholder="you@example.com"
                   />
+                  <div className={`mt-2 flex items-center gap-2 text-[11px] leading-none ${loginEmailCheck.status === "valid" ? "text-[var(--ink)]" : loginEmailCheck.status === "idle" || loginEmailCheck.status === "checking" ? "text-[var(--ink-4)]" : "text-[var(--ink-2)]"}`}>
+                    <span className={`grid size-3.5 place-items-center rounded-full border text-[9px] ${loginEmailCheck.status === "valid" ? "border-[var(--ink)] bg-[var(--ink)] text-[#fcfbf8]" : loginEmailCheck.status === "checking" ? "animate-pulse border-[var(--line-2)] bg-[var(--line)] text-transparent" : loginEmailCheck.status === "idle" ? "border-[var(--line-2)] text-transparent" : "border-[var(--ink-2)] text-[var(--ink-2)]"}`}>
+                      {loginEmailCheck.status === "valid" ? "✓" : loginEmailCheck.status === "invalid" || loginEmailCheck.status === "format" ? "!" : ""}
+                    </span>
+                    {loginEmailCheck.message}
+                  </div>
                 </label>
                 <label className="mt-3 block">
                   <span className="mb-2 block text-[13px] font-semibold text-[var(--ink)]">Password</span>
@@ -797,12 +927,19 @@ export default function NavBar() {
                     className="h-11 w-full rounded-[9px] border border-[var(--line-2)] bg-transparent px-3.5 text-[14px] text-[var(--ink)] outline-none transition-colors placeholder:text-[var(--ink-4)] focus:border-[var(--ink)]"
                     placeholder="8+ characters, include a number"
                   />
-                  <span className="mt-1.5 block text-[11px] leading-relaxed text-[var(--ink-4)]">At least 8 characters and one number.</span>
+                  <div className="mt-2 grid gap-1">
+                    {loginPasswordRules.map(rule => (
+                      <div key={rule.label} className={`flex items-center gap-2 text-[11px] leading-none ${rule.passed ? "text-[var(--ink)]" : "text-[var(--ink-4)]"}`}>
+                        <span className={`grid size-3.5 place-items-center rounded-full border text-[9px] ${rule.passed ? "border-[var(--ink)] bg-[var(--ink)] text-[#fcfbf8]" : "border-[var(--line-2)] text-transparent"}`}>✓</span>
+                        {rule.label}
+                      </div>
+                    ))}
+                  </div>
                 </label>
 
                 <button
                   type="submit"
-                  disabled={loginState === "sending"}
+                  disabled={!canSubmitLogin}
                   className="mt-3 inline-flex h-11 w-full cursor-pointer items-center justify-center rounded-[9px] border-0 bg-[var(--ink)] px-4 text-[14px] font-semibold text-[#fcfbf8] shadow-[var(--shadow-lift)] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {loginState === "sending" ? "Sending..." : "Create account"}

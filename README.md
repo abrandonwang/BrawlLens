@@ -25,7 +25,7 @@ npm run dev
 
 ## Auth Email
 
-BrawlLens uses Supabase Auth for sessions. To send magic links from a BrawlLens-owned sender instead of Supabase's default email service, configure:
+BrawlLens uses Supabase Auth for sessions and password storage, but account setup emails must be sent through the BrawlLens-owned sender. Configure:
 
 ```bash
 SUPABASE_URL=...
@@ -35,7 +35,11 @@ AUTH_EMAIL_FROM="BrawlLens <login@yourdomain.com>"
 AUTH_EMAIL_REPLY_TO="support@yourdomain.com"
 ```
 
-If those email variables are missing, the app falls back to Supabase's built-in magic-link email.
+If those email variables are missing, account creation returns `custom_email_not_configured` instead of falling back to Supabase's built-in confirmation email.
+
+Restart the Next.js dev server after changing `.env.local` so the new sender config is loaded.
+
+Signup also rejects disposable email domains and domains without mail DNS records before creating an account.
 
 ## Disclaimer
 
