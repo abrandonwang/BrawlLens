@@ -18,7 +18,7 @@ export interface PremiumUser {
     goals?: string[]
     completedAt?: string
   } | null
-  dashboardWidgets?: string[]
+  dashboardWidgets?: unknown[]
   role?: string | null
   subscriptionTier: SubscriptionTier
   subscriptionStatus: SubscriptionStatus

@@ -58,10 +58,12 @@ function metadataEntitlements(metadata: Metadata): string[] {
   return value.filter((entry): entry is string => typeof entry === "string")
 }
 
-function metadataStringArray(metadata: Metadata, key: string): string[] | undefined {
-  const value = metadata[key]
-  if (!Array.isArray(value)) return undefined
-  return value.filter((entry): entry is string => typeof entry === "string")
+function metadataArray(metadata: Metadata, keys: string[]): unknown[] | undefined {
+  for (const key of keys) {
+    const value = metadata[key]
+    if (Array.isArray(value)) return value
+  }
+  return undefined
 }
 
 function metadataSetup(metadata: Metadata): PremiumUser["accountSetup"] {
@@ -136,7 +138,7 @@ export async function getRequestUser(request: Request): Promise<PremiumUser | nu
     email: data.user.email,
     displayName,
     accountSetup,
-    dashboardWidgets: metadataStringArray(metadata, "lensboard_widgets"),
+    dashboardWidgets: metadataArray(metadata, ["lensboard_layout", "lensboard_widgets"]),
     role,
     subscriptionTier,
     subscriptionStatus,

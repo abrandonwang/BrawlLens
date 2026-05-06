@@ -4,10 +4,10 @@ import Link from "next/link"
 
 export default function Footer() {
   const pathname = usePathname()
-  if (pathname === "/") return null
+  if (pathname === "/" || pathname.startsWith("/account")) return null
 
   return (
-    <footer className="w-full bg-[color-mix(in_srgb,var(--bg)_92%,transparent)] px-6 backdrop-blur-[18px] max-md:px-4 max-[360px]:px-3">
+    <footer className="w-full border-t border-[var(--line)] bg-[color-mix(in_srgb,var(--bg)_92%,transparent)] px-6 backdrop-blur-[18px] max-md:px-4 max-[360px]:px-3">
       <div className="mx-auto flex min-h-16 w-full max-w-[1200px] flex-nowrap items-center justify-between gap-4 py-4">
         <div className="flex min-w-0 flex-nowrap items-baseline gap-3">
           <p className="m-0 shrink-0 text-[14px] leading-none font-semibold tracking-normal text-[var(--ink)]">BrawlLens</p>

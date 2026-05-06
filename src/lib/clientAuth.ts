@@ -43,6 +43,10 @@ export function clearAuthSession() {
   window.localStorage.removeItem(AUTH_KEY)
 }
 
+export function storeAuthSession(session: StoredAuthSession) {
+  window.localStorage.setItem(AUTH_KEY, JSON.stringify(session))
+}
+
 export async function clearServerSession() {
   await fetch("/api/auth/logout", {
     method: "POST",

@@ -1,14 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
-import { ChevronLeft, ChevronRight, Menu, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, LogOut, Menu, Palette, Settings, UserRound, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import AssistantPopup from "./AssistantPopup";
-import { authHeaders, clearAuthSession, clearServerSession } from "@/lib/clientAuth";
+import { authHeaders, clearAuthSession, clearServerSession, storeAuthSession } from "@/lib/clientAuth";
 import type { PremiumUser } from "@/lib/premium";
-import { useEmailCheck } from "@/lib/useEmailCheck";
+import { isEmailFormatValid, useEmailCheck } from "@/lib/useEmailCheck";
 
 type NavPanelItem = {
   label: string;
@@ -42,6 +42,12 @@ const aboutItems: NavPanelItem[] = [
   { label: "Privacy", href: "/privacy", description: "Account data notes" },
 ];
 
+const accountMenuItems = [
+  { label: "Profile", href: "/account?tab=profile", Icon: UserRound },
+  { label: "Settings", href: "/account?tab=settings", Icon: Settings },
+  { label: "Appearance", href: "/account?tab=appearance", Icon: Palette },
+] as const;
+
 const rootMenuLinks = [
   { label: "Lensboard", href: "/", description: "Custom data workspace" },
 ];
@@ -49,6 +55,7 @@ const rootMenuLinks = [
 type MenuPanel = "root" | "browse" | "about";
 type DesktopPanel = "browse" | "about";
 type LoginState = "idle" | "sending" | "sent" | "error";
+type AuthMode = "signup" | "login";
 
 function passwordRules(password: string) {
   return [
@@ -80,6 +87,19 @@ function LogoMark({ size = "sm" }: { size?: "sm" | "lg" }) {
   );
 }
 
+function localAccountSetup() {
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem("brawllens_setup") ?? "null") as { playerName?: unknown; playerTag?: unknown } | null;
+    if (!parsed || typeof parsed !== "object") return null;
+    return {
+      playerName: typeof parsed.playerName === "string" && parsed.playerName.trim() ? parsed.playerName.trim() : null,
+      playerTag: typeof parsed.playerTag === "string" && parsed.playerTag.trim() ? parsed.playerTag.trim() : null,
+    };
+  } catch {
+    return null;
+  }
+}
+
 export default function NavBar() {
   const pathname = usePathname();
   const router = useRouter();
@@ -95,8 +115,10 @@ export default function NavBar() {
   const [activeHash, setActiveHash] = useState("");
   const [isSignedIn, setIsSignedIn] = useState(false);
   const [accountName, setAccountName] = useState<string | null>(null);
+  const [accountEmail, setAccountEmail] = useState<string | null>(null);
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<AuthMode>("signup");
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [loginState, setLoginState] = useState<LoginState>("idle");
@@ -108,6 +130,19 @@ export default function NavBar() {
   const desktopHoverTimerRef = useRef<number | null>(null);
   const loginInputRef = useRef<HTMLInputElement>(null);
 
+  const applyAccountUser = useCallback((user: PremiumUser | null) => {
+    const localSetup = localAccountSetup();
+    setIsSignedIn(Boolean(user));
+    setAccountEmail(user?.email ?? null);
+    setAccountName(
+      user?.accountSetup?.playerName
+        ?? user?.displayName
+        ?? localSetup?.playerName
+        ?? (user?.accountSetup?.playerTag ? `#${user.accountSetup.playerTag}` : null)
+        ?? (localSetup?.playerTag ? `#${localSetup.playerTag}` : null),
+    );
+  }, []);
+
   const closeMenu = useCallback(() => {
     if (!isMenuOpen) return;
     setMenuClosing(true);
@@ -117,6 +152,16 @@ export default function NavBar() {
       setMenuPanel("root");
     }, 260);
   }, [isMenuOpen]);
+
+  const showLogin = useCallback((mode: AuthMode = "signup") => {
+    closeMenu();
+    setDesktopPanel(null);
+    setHoverDesktopPanel(null);
+    setSuppressedDesktopPanel(null);
+    setIsAccountMenuOpen(false);
+    setAuthMode(mode);
+    setIsLoginOpen(true);
+  }, [closeMenu]);
 
   useEffect(() => {
     if (isMenuOpen || menuClosing || isLoginOpen) {
@@ -169,6 +214,13 @@ export default function NavBar() {
     setLoginError(null);
     setLoginPassword("");
   }, [isLoginOpen]);
+
+  useEffect(() => {
+    if (!isLoginOpen) return;
+    setLoginState("idle");
+    setLoginResending(false);
+    setLoginError(null);
+  }, [authMode, isLoginOpen]);
 
   useEffect(() => {
     if (!isLoginOpen) return;
@@ -250,6 +302,16 @@ export default function NavBar() {
   }, []);
 
   useEffect(() => {
+    function onOpenLogin(e: Event) {
+      const detail = (e as CustomEvent<{ mode?: AuthMode }>).detail;
+      showLogin(detail?.mode === "login" ? "login" : "signup");
+    }
+
+    window.addEventListener("brawllens:open-login", onOpenLogin);
+    return () => window.removeEventListener("brawllens:open-login", onOpenLogin);
+  }, [showLogin]);
+
+  useEffect(() => {
     let active = true;
 
     async function loadAccountState() {
@@ -260,21 +322,11 @@ export default function NavBar() {
         });
         const payload = await response.json().catch(() => null) as { user?: PremiumUser | null } | null;
         if (active) {
-          setIsSignedIn(response.ok);
-          const user = payload?.user;
-          const localSetup = localAccountSetup();
-          setAccountName(
-            user?.accountSetup?.playerName
-              ?? user?.displayName
-              ?? localSetup?.playerName
-              ?? (user?.accountSetup?.playerTag ? `#${user.accountSetup.playerTag}` : null)
-              ?? (localSetup?.playerTag ? `#${localSetup.playerTag}` : null),
-          );
+          applyAccountUser(response.ok ? payload?.user ?? null : null);
         }
       } catch {
         if (active) {
-          setIsSignedIn(false);
-          setAccountName(null);
+          applyAccountUser(null);
         }
       }
     }
@@ -283,20 +335,7 @@ export default function NavBar() {
     return () => {
       active = false;
     };
-  }, [pathname]);
-
-  function localAccountSetup() {
-    try {
-      const parsed = JSON.parse(window.localStorage.getItem("brawllens_setup") ?? "null") as { playerName?: unknown; playerTag?: unknown } | null;
-      if (!parsed || typeof parsed !== "object") return null;
-      return {
-        playerName: typeof parsed.playerName === "string" && parsed.playerName.trim() ? parsed.playerName.trim() : null,
-        playerTag: typeof parsed.playerTag === "string" && parsed.playerTag.trim() ? parsed.playerTag.trim() : null,
-      };
-    } catch {
-      return null;
-    }
-  }
+  }, [applyAccountUser, pathname]);
 
   function toggleMenu() {
     if (isMenuOpen) {
@@ -309,12 +348,7 @@ export default function NavBar() {
   }
 
   function openLogin() {
-    closeMenu();
-    setDesktopPanel(null);
-    setHoverDesktopPanel(null);
-    setSuppressedDesktopPanel(null);
-    setIsAccountMenuOpen(false);
-    setIsLoginOpen(true);
+    showLogin("signup");
   }
 
   function clearDesktopHoverTimer() {
@@ -361,10 +395,21 @@ export default function NavBar() {
     return passwordRules(password).every(rule => rule.passed);
   }
 
-  async function sendSetupEmail(options?: { resend?: boolean }) {
-    if (!loginEmailCheck.isValid) {
+  async function refreshSignedInAccount() {
+    const response = await fetch("/api/auth/me", {
+      headers: authHeaders(),
+      cache: "no-store",
+    });
+    const payload = await response.json().catch(() => null) as { user?: PremiumUser | null } | null;
+    applyAccountUser(response.ok ? payload?.user ?? null : null);
+  }
+
+  async function sendAuthRequest(options?: { resend?: boolean }) {
+    const emailReady = authMode === "signup" ? loginEmailCheck.isValid : isEmailFormatValid(loginEmail);
+
+    if (!emailReady) {
       setLoginState("error");
-      setLoginError(loginEmailCheck.message);
+      setLoginError(authMode === "signup" ? loginEmailCheck.message : "Enter a valid email address.");
       return;
     }
     if (!isValidAccountPassword(loginPassword)) {
@@ -384,7 +429,7 @@ export default function NavBar() {
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: loginEmail, password: loginPassword }),
+        body: JSON.stringify({ email: loginEmail, password: loginPassword, mode: authMode }),
       });
 
       if (!response.ok) {
@@ -404,14 +449,40 @@ export default function NavBar() {
             ? "Supabase could not generate the setup link."
           : payload?.error === "magic_link_email_failed"
             ? "Resend could not send from that email address."
+          : payload?.error === "invalid_credentials"
+            ? "Email or password did not match."
+          : payload?.error === "auth_not_configured"
+            ? "BrawlLens auth is not configured yet."
           : "Account setup is not available right now.");
+        return;
+      }
+
+      const payload = await response.json().catch(() => null) as {
+        session?: { accessToken?: string; refreshToken?: string; expiresAt?: number }
+      } | null;
+
+      if (authMode === "login") {
+        if (!payload?.session?.accessToken) {
+          setLoginState("error");
+          setLoginError("BrawlLens could not start your session.");
+          return;
+        }
+        storeAuthSession({
+          accessToken: payload.session.accessToken,
+          refreshToken: payload.session.refreshToken,
+          expiresAt: payload.session.expiresAt,
+        });
+        await refreshSignedInAccount();
+        setIsLoginOpen(false);
+        setLoginPassword("");
+        router.refresh();
         return;
       }
 
       setLoginState("sent");
     } catch {
       setLoginState("error");
-      setLoginError("Account setup is not available right now.");
+      setLoginError(authMode === "login" ? "Login is not available right now." : "Account setup is not available right now.");
     } finally {
       setLoginResending(false);
     }
@@ -419,7 +490,7 @@ export default function NavBar() {
 
   function submitLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    void sendSetupEmail();
+    void sendAuthRequest();
   }
 
   function openAssistantFromNav() {
@@ -434,6 +505,7 @@ export default function NavBar() {
     setIsAccountMenuOpen(false);
     setIsSignedIn(false);
     setAccountName(null);
+    setAccountEmail(null);
     clearAuthSession();
     clearServerSession().finally(() => router.replace("/login"));
   }
@@ -441,10 +513,26 @@ export default function NavBar() {
   const accountLabel = isSignedIn ? accountName ?? "Account" : "Get started";
   const browseActive = browseItems.some(item => item.href && isDesktopItemActive(pathname, activeHash, item.href));
   const aboutActive = aboutItems.some(item => item.href && isDesktopItemActive(pathname, activeHash, item.href));
-  const loginEmailCheck = useEmailCheck(loginEmail, isLoginOpen);
+  const loginEmailCheck = useEmailCheck(loginEmail, isLoginOpen && authMode === "signup");
+  const loginEmailFormatValid = isEmailFormatValid(loginEmail);
+  const loginEmailReady = authMode === "signup" ? loginEmailCheck.isValid : loginEmailFormatValid;
+  const loginEmailStatus = authMode === "signup"
+    ? loginEmailCheck.status
+    : loginEmail.trim().length === 0
+      ? "idle"
+      : loginEmailFormatValid
+        ? "valid"
+        : "format";
+  const loginEmailMessage = authMode === "signup"
+    ? loginEmailCheck.message
+    : loginEmail.trim().length === 0
+      ? "Enter your account email."
+      : loginEmailFormatValid
+        ? "Ready to log in."
+        : "Enter a valid email format.";
   const loginPasswordRules = passwordRules(loginPassword);
   const loginPasswordValid = loginPasswordRules.every(rule => rule.passed);
-  const canSubmitLogin = loginEmailCheck.isValid && loginPasswordValid && loginState !== "sending";
+  const canSubmitLogin = loginEmailReady && loginPasswordValid && loginState !== "sending";
   const menuVisible = isMenuOpen || menuClosing;
   const visibleDesktopPanel = desktopPanel ?? hoverDesktopPanel;
   const renderedDesktopPanel = visibleDesktopPanel ?? lastDesktopPanel;
@@ -461,7 +549,7 @@ export default function NavBar() {
 
   return (
     <>
-      <nav className="fixed top-0 left-0 z-[100] grid min-h-16 w-full grid-cols-[auto_1fr_auto] items-center gap-[18px] bg-[color-mix(in_srgb,var(--bg)_92%,transparent)] px-[max(16px,calc((100vw-1200px)/2))] backdrop-blur-[18px] backdrop-saturate-[145%] max-lg:pr-1.5 max-lg:pl-4 max-[430px]:gap-2 max-[430px]:pl-3">
+      <nav className="fixed top-0 left-0 z-[100] grid min-h-16 w-full grid-cols-[auto_1fr_auto] items-center gap-[18px] border-b border-[var(--line)] bg-[color-mix(in_srgb,var(--bg)_92%,transparent)] px-[max(16px,calc((100vw-1200px)/2))] backdrop-blur-[18px] backdrop-saturate-[145%] max-lg:pr-0 max-lg:pl-4 max-[430px]:gap-2 max-[430px]:pl-3">
         <Link href="/" className="inline-flex items-center gap-1.5 whitespace-nowrap text-[18px] font-semibold leading-none text-[var(--ink)] no-underline" aria-label="BrawlLens home">
           <LogoMark />
           <span className="nav-wordmark max-[380px]:sr-only">BrawlLens</span>
@@ -633,7 +721,7 @@ export default function NavBar() {
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-2">
+        <div className="flex min-w-0 shrink-0 items-center justify-end gap-1.5 max-[430px]:gap-1">
           <button
             type="button"
             onClick={() => setIsAssistantOpen(o => !o)}
@@ -652,39 +740,40 @@ export default function NavBar() {
             />
           </button>
           {isSignedIn ? (
-            <div ref={accountMenuRef} className="relative">
+            <div ref={accountMenuRef} className="relative shrink-0">
               <button
                 type="button"
                 onClick={() => setIsAccountMenuOpen(open => !open)}
-                className="inline-flex h-[34px] max-w-[150px] cursor-pointer items-center whitespace-nowrap rounded-md border-0 bg-[var(--ink)] px-3 text-[13px] leading-none text-[#fcfbf8] shadow-[var(--shadow-lift)] transition-opacity duration-150 hover:opacity-85 max-[420px]:max-w-[128px] max-[420px]:px-2.5"
+                className="inline-flex h-[34px] min-w-[76px] max-w-[220px] shrink-0 cursor-pointer items-center justify-center whitespace-nowrap rounded-md border-0 bg-[var(--ink)] px-3.5 text-[13px] leading-[1.35] text-[#fcfbf8] shadow-[var(--shadow-lift)] transition-opacity duration-150 hover:opacity-85 max-[540px]:max-w-[180px] max-[430px]:max-w-[132px] max-[420px]:px-3"
                 aria-haspopup="menu"
                 aria-expanded={isAccountMenuOpen}
+                title={accountLabel}
               >
-                <span className="min-w-0 truncate">{accountLabel}</span>
+                <span className="block min-w-0 truncate leading-[1.35]">{accountLabel}</span>
               </button>
               {isAccountMenuOpen && (
                 <div
                   role="menu"
-                  className="absolute right-0 top-[calc(100%+9px)] z-[140] w-[230px] rounded-[14px] border border-[var(--line)] bg-[var(--bg)] p-2 text-[var(--ink)] shadow-[0_24px_60px_-34px_rgba(28,28,28,0.45)]"
+                  className="absolute right-0 top-[calc(100%+9px)] z-[140] w-[278px] origin-top-right rounded-[12px] border border-[var(--line)] bg-[var(--panel)] p-1.5 text-[var(--ink)] shadow-[0_22px_58px_-38px_rgba(28,28,28,0.55),rgba(255,255,255,0.48)_0_0.5px_0_0_inset] animate-[accountMenuIn_0.16s_cubic-bezier(0.16,1,0.3,1)_both]"
                 >
-                  <div className="px-2.5 py-2">
-                    <p className="m-0 truncate text-[13px] font-semibold text-[var(--ink)]">{accountLabel}</p>
-                    <p className="mt-0.5 mb-0 text-[11px] text-[var(--ink-4)]">BrawlLens account</p>
+                  <div className="px-2.5 py-2.5">
+                    <p className="m-0 truncate text-[14px] font-semibold leading-tight text-[var(--ink)]">{accountLabel}</p>
+                    {accountEmail && <p className="mt-1 mb-0 truncate text-[12px] leading-tight text-[var(--ink-3)]">{accountEmail}</p>}
                   </div>
                   <div className="my-1 h-px bg-[var(--line)]" />
-                  {[
-                    ["Profile", "/account?tab=profile"],
-                    ["Settings", "/account?tab=settings"],
-                    ["Appearance", "/account?tab=appearance"],
-                  ].map(([label, href]) => (
+                  {accountMenuItems.map(({ label, href, Icon }) => (
                     <Link
                       key={href}
                       href={href}
                       role="menuitem"
                       onClick={() => setIsAccountMenuOpen(false)}
-                      className="block rounded-[9px] px-2.5 py-2 text-[13px] font-medium text-[var(--ink-2)] no-underline transition-colors hover:bg-[var(--hover-bg)] hover:text-[var(--ink)]"
+                      className="group flex min-h-9 items-center justify-between gap-3 rounded-[8px] px-2.5 py-2 text-[13px] font-medium text-[var(--ink-2)] no-underline transition-colors duration-150 hover:bg-[var(--hover-bg)] hover:text-[var(--ink)]"
                     >
-                      {label}
+                      <span className="inline-flex min-w-0 items-center gap-2">
+                        <Icon size={14} strokeWidth={1.8} className="shrink-0 text-[var(--ink-4)] transition-colors duration-150 group-hover:text-[var(--ink-2)]" />
+                        <span className="truncate">{label}</span>
+                      </span>
+                      <ChevronRight size={13} strokeWidth={1.8} className="shrink-0 text-[var(--ink-4)] opacity-0 transition-[opacity,transform] duration-150 group-hover:translate-x-0.5 group-hover:opacity-100" />
                     </Link>
                   ))}
                   <div className="my-1 h-px bg-[var(--line)]" />
@@ -692,8 +781,9 @@ export default function NavBar() {
                     type="button"
                     role="menuitem"
                     onClick={signOut}
-                    className="block w-full cursor-pointer rounded-[9px] border-0 bg-transparent px-2.5 py-2 text-left text-[13px] font-medium text-[var(--ink-2)] transition-colors hover:bg-[var(--hover-bg)] hover:text-[var(--ink)]"
+                    className="flex min-h-9 w-full cursor-pointer items-center gap-2 rounded-[8px] border-0 bg-transparent px-2.5 py-2 text-left text-[13px] font-medium text-[var(--ink-2)] transition-colors duration-150 hover:bg-[var(--hover-bg)] hover:text-[var(--ink)]"
                   >
+                    <LogOut size={14} strokeWidth={1.8} className="shrink-0 text-[var(--ink-4)]" />
                     Sign out
                   </button>
                 </div>
@@ -703,14 +793,14 @@ export default function NavBar() {
             <button
               type="button"
               onClick={openLogin}
-              className="inline-flex h-[34px] cursor-pointer items-center whitespace-nowrap rounded-md border-0 bg-[var(--ink)] px-3.5 text-[13px] leading-none text-[#fcfbf8] shadow-[var(--shadow-lift)] transition-opacity duration-150 hover:opacity-85 max-[420px]:px-3"
+              className="inline-flex h-[34px] cursor-pointer items-center whitespace-nowrap rounded-md border-0 bg-[var(--ink)] px-3.5 text-[13px] leading-[1.35] text-[#fcfbf8] shadow-[var(--shadow-lift)] transition-opacity duration-150 hover:opacity-85 max-[420px]:px-3"
             >
               <span>{accountLabel}</span>
             </button>
           )}
           <button
             type="button"
-            className="grid h-9 w-6 cursor-pointer place-items-center border-0 bg-transparent p-0 text-[var(--ink-3)] hover:text-[var(--ink)] lg:hidden"
+            className="grid h-9 w-6 cursor-pointer place-items-center border-0 bg-transparent p-0 text-[var(--ink-3)] hover:text-[var(--ink)] max-lg:-mr-1 lg:hidden"
             onClick={toggleMenu}
             aria-label={isMenuOpen ? "Close navigation menu" : "Open navigation menu"}
             aria-expanded={isMenuOpen}
@@ -764,18 +854,18 @@ export default function NavBar() {
               </button>
             </div>
           ) : (
-            <div className="mobile-menu-list flex flex-1 flex-col overflow-y-auto">
+            <div className="mobile-menu-list flex flex-1 flex-col overflow-y-auto pt-5">
               <button
                 type="button"
                 onClick={() => setMenuPanel("root")}
-                className="mobile-menu-item mb-5 inline-flex h-10 w-fit cursor-pointer items-center gap-2 rounded-none border border-[var(--line-2)] bg-transparent px-3 text-[16px] text-[var(--ink)]"
+                className="mobile-menu-item mb-7 inline-flex h-8 w-fit cursor-pointer appearance-none items-center gap-2 rounded-none border-0 bg-transparent p-0 text-[14px] font-medium text-[var(--ink-3)] shadow-none outline-none transition-colors hover:text-[var(--ink)] focus:text-[var(--ink)] focus:outline-none focus-visible:outline-none"
                 style={mobileItemStyle(0)}
               >
-                <ChevronLeft size={18} strokeWidth={1.8} />
+                <ChevronLeft size={17} strokeWidth={1.9} />
                 Back
               </button>
 
-              <p className="mobile-menu-item m-0 mb-4 text-[14px] text-[var(--ink-3)]" style={mobileItemStyle(1)}>{menuPanel === "browse" ? "Browse" : "About"}</p>
+              <p className="mobile-menu-item m-0 mb-5 text-[14px] text-[var(--ink-3)]" style={mobileItemStyle(1)}>{menuPanel === "browse" ? "Browse" : "About"}</p>
               {(menuPanel === "browse" ? browseItems : aboutItems).map((item, index) => {
                 if (item.action === "assistant") {
                   return (
@@ -852,9 +942,7 @@ export default function NavBar() {
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
                 <LogoMark size="lg" />
-                <h2 id="login-modal-title" className="mt-5 mb-0 text-[26px] leading-[1.04] font-semibold text-[var(--ink)] max-[460px]:text-[24px]">
-                  <span className="block text-[var(--ink)]">Create free account</span>
-                </h2>
+                <h2 id="login-modal-title" className="sr-only">{authMode === "signup" ? "Create free account" : "Log in"}</h2>
               </div>
               <button
                 type="button"
@@ -866,7 +954,23 @@ export default function NavBar() {
               </button>
             </div>
 
-            {loginState === "sent" ? (
+            <div className="mt-5 grid grid-cols-2 rounded-[9px] border border-[var(--line)] bg-[var(--panel-2)] p-1">
+              {[
+                { id: "signup" as const, label: "Create" },
+                { id: "login" as const, label: "Log in" },
+              ].map(item => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => setAuthMode(item.id)}
+                  className={`h-9 cursor-pointer rounded-md border-0 text-[13px] font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[rgba(28,28,28,0.16)] ${authMode === item.id ? "bg-[var(--ink)] text-[#fcfbf8]" : "bg-transparent text-[var(--ink-3)] hover:text-[var(--ink)]"}`}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+
+            {loginState === "sent" && authMode === "signup" ? (
               <div className="mt-6">
                 <div className="rounded-[12px] border border-[var(--line)] bg-[var(--panel-2)] px-4 py-4">
                   <p className="m-0 text-[15px] font-semibold text-[var(--ink)]">Check your inbox</p>
@@ -876,7 +980,7 @@ export default function NavBar() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => void sendSetupEmail({ resend: true })}
+                  onClick={() => void sendAuthRequest({ resend: true })}
                   disabled={loginResending}
                   className="mt-3 inline-flex h-11 w-full cursor-pointer items-center justify-center rounded-[9px] border border-[var(--line-2)] bg-transparent px-4 text-[14px] font-semibold text-[var(--ink)] transition-colors hover:bg-[var(--hover-bg)] disabled:cursor-wait disabled:opacity-60"
                 >
@@ -902,12 +1006,14 @@ export default function NavBar() {
                     className="h-11 w-full rounded-[9px] border border-[var(--line-2)] bg-transparent px-3.5 text-[14px] text-[var(--ink)] outline-none transition-colors placeholder:text-[var(--ink-4)] focus:border-[var(--ink)]"
                     placeholder="you@example.com"
                   />
-                  <div className={`mt-2 flex items-center gap-2 text-[11px] leading-none ${loginEmailCheck.status === "valid" ? "text-[var(--ink)]" : loginEmailCheck.status === "idle" || loginEmailCheck.status === "checking" ? "text-[var(--ink-4)]" : "text-[var(--ink-2)]"}`}>
-                    <span className={`grid size-3.5 place-items-center rounded-full border text-[9px] ${loginEmailCheck.status === "valid" ? "border-[var(--ink)] bg-[var(--ink)] text-[#fcfbf8]" : loginEmailCheck.status === "checking" ? "animate-pulse border-[var(--line-2)] bg-[var(--line)] text-transparent" : loginEmailCheck.status === "idle" ? "border-[var(--line-2)] text-transparent" : "border-[var(--ink-2)] text-[var(--ink-2)]"}`}>
-                      {loginEmailCheck.status === "valid" ? "✓" : loginEmailCheck.status === "invalid" || loginEmailCheck.status === "format" ? "!" : ""}
-                    </span>
-                    {loginEmailCheck.message}
-                  </div>
+                  {authMode === "signup" && (
+                    <div className={`mt-2 flex items-center gap-2 text-[11px] leading-none ${loginEmailStatus === "valid" ? "text-[var(--ink)]" : loginEmailStatus === "idle" || loginEmailStatus === "checking" ? "text-[var(--ink-4)]" : "text-[var(--ink-2)]"}`}>
+                      <span className={`grid size-3.5 place-items-center rounded-full border text-[9px] ${loginEmailStatus === "valid" ? "border-[var(--ink)] bg-[var(--ink)] text-[#fcfbf8]" : loginEmailStatus === "checking" ? "animate-pulse border-[var(--line-2)] bg-[var(--line)] text-transparent" : loginEmailStatus === "idle" ? "border-[var(--line-2)] text-transparent" : "border-[var(--ink-2)] text-[var(--ink-2)]"}`}>
+                        {loginEmailStatus === "valid" ? "✓" : loginEmailStatus === "invalid" || loginEmailStatus === "format" ? "!" : ""}
+                      </span>
+                      {loginEmailMessage}
+                    </div>
+                  )}
                 </label>
                 <label className="mt-3 block">
                   <span className="mb-2 block text-[13px] font-semibold text-[var(--ink)]">Password</span>
@@ -927,14 +1033,16 @@ export default function NavBar() {
                     className="h-11 w-full rounded-[9px] border border-[var(--line-2)] bg-transparent px-3.5 text-[14px] text-[var(--ink)] outline-none transition-colors placeholder:text-[var(--ink-4)] focus:border-[var(--ink)]"
                     placeholder="8+ characters, include a number"
                   />
-                  <div className="mt-2 grid gap-1">
-                    {loginPasswordRules.map(rule => (
-                      <div key={rule.label} className={`flex items-center gap-2 text-[11px] leading-none ${rule.passed ? "text-[var(--ink)]" : "text-[var(--ink-4)]"}`}>
-                        <span className={`grid size-3.5 place-items-center rounded-full border text-[9px] ${rule.passed ? "border-[var(--ink)] bg-[var(--ink)] text-[#fcfbf8]" : "border-[var(--line-2)] text-transparent"}`}>✓</span>
-                        {rule.label}
-                      </div>
-                    ))}
-                  </div>
+                  {authMode === "signup" && (
+                    <div className="mt-2 grid gap-1">
+                      {loginPasswordRules.map(rule => (
+                        <div key={rule.label} className={`flex items-center gap-2 text-[11px] leading-none ${rule.passed ? "text-[var(--ink)]" : "text-[var(--ink-4)]"}`}>
+                          <span className={`grid size-3.5 place-items-center rounded-full border text-[9px] ${rule.passed ? "border-[var(--ink)] bg-[var(--ink)] text-[#fcfbf8]" : "border-[var(--line-2)] text-transparent"}`}>✓</span>
+                          {rule.label}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </label>
 
                 <button
@@ -942,7 +1050,7 @@ export default function NavBar() {
                   disabled={!canSubmitLogin}
                   className="mt-3 inline-flex h-11 w-full cursor-pointer items-center justify-center rounded-[9px] border-0 bg-[var(--ink)] px-4 text-[14px] font-semibold text-[#fcfbf8] shadow-[var(--shadow-lift)] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {loginState === "sending" ? "Sending..." : "Create account"}
+                  {loginState === "sending" ? (authMode === "login" ? "Logging in..." : "Sending...") : authMode === "login" ? "Log in" : "Create account"}
                 </button>
               </form>
             )}

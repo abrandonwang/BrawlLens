@@ -1,11 +1,16 @@
 import type { Metadata } from "next"
+import { Suspense } from "react"
 import LoginClient from "./LoginClient"
 
 export const metadata: Metadata = {
-  title: "Create Account | BrawlLens",
-  description: "Create a BrawlLens account and finish setup through email.",
+  title: "Account | BrawlLens",
+  description: "Create or log in to a BrawlLens account.",
 }
 
 export default function LoginPage() {
-  return <LoginClient />
+  return (
+    <Suspense>
+      <LoginClient />
+    </Suspense>
+  )
 }

@@ -2,11 +2,13 @@ import { NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { Resend } from "resend"
 import { authRedirectUrl } from "@/lib/auth"
+import { AUTH_ACCESS_COOKIE, AUTH_REFRESH_COOKIE } from "@/lib/authCookies"
 import { checkEmailLegitimacy, isEmailSyntax, normalizeEmail } from "@/lib/emailValidation"
 
 export const runtime = "nodejs"
 
 type AuthSetupErrorCode = "setup_link_generation_failed" | "magic_link_email_failed"
+type AuthMode = "signup" | "login"
 
 class AuthSetupError extends Error {
   code: AuthSetupErrorCode
@@ -19,6 +21,10 @@ class AuthSetupError extends Error {
 
 function isStrongPassword(value: unknown): value is string {
   return typeof value === "string" && value.length >= 8 && /\d/.test(value)
+}
+
+function authMode(value: unknown): AuthMode {
+  return value === "login" ? "login" : "signup"
 }
 
 function escapeHtml(value: string) {
@@ -114,6 +120,7 @@ export async function POST(request: Request) {
   const body: unknown = await request.json().catch(() => null)
   const email = body && typeof body === "object" ? (body as Record<string, unknown>).email : null
   const password = body && typeof body === "object" ? (body as Record<string, unknown>).password : null
+  const mode = authMode(body && typeof body === "object" ? (body as Record<string, unknown>).mode : null)
 
   if (!isEmailSyntax(email)) {
     return NextResponse.json({ error: "invalid_email" }, { status: 400 })
@@ -123,14 +130,64 @@ export async function POST(request: Request) {
   }
 
   const normalizedEmail = normalizeEmail(email)
-  const emailCheck = await checkEmailLegitimacy(normalizedEmail)
-  if (!emailCheck.ok) {
-    return NextResponse.json({ error: emailCheck.reason }, { status: 400 })
-  }
 
   const url = process.env.SUPABASE_URL
   if (!url) {
     return NextResponse.json({ error: "auth_not_configured" }, { status: 503 })
+  }
+
+  if (mode === "login") {
+    const key = process.env.SUPABASE_ANON_KEY ?? process.env.SUPABASE_SERVICE_KEY
+    if (!key) {
+      return NextResponse.json({ error: "auth_not_configured" }, { status: 503 })
+    }
+
+    const supabase = createClient(url, key, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    })
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: normalizedEmail,
+      password,
+    })
+
+    if (error || !data.session) {
+      return NextResponse.json({ error: "invalid_credentials" }, { status: 401 })
+    }
+
+    const response = NextResponse.json({
+      ok: true,
+      mode,
+      session: {
+        accessToken: data.session.access_token,
+        refreshToken: data.session.refresh_token,
+        expiresAt: data.session.expires_at,
+      },
+    })
+    const maxAge = data.session.expires_at
+      ? Math.max(0, data.session.expires_at - Math.floor(Date.now() / 1000))
+      : 60 * 60 * 24 * 7
+
+    response.cookies.set(AUTH_ACCESS_COOKIE, data.session.access_token, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge,
+    })
+    response.cookies.set(AUTH_REFRESH_COOKIE, data.session.refresh_token, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 30,
+    })
+
+    return response
+  }
+
+  const emailCheck = await checkEmailLegitimacy(normalizedEmail)
+  if (!emailCheck.ok) {
+    return NextResponse.json({ error: emailCheck.reason }, { status: 400 })
   }
 
   try {

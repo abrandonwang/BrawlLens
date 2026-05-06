@@ -2,9 +2,12 @@
 
 import { useState, type FormEvent } from "react"
 import Link from "next/link"
-import { useEmailCheck } from "@/lib/useEmailCheck"
+import { useRouter, useSearchParams } from "next/navigation"
+import { storeAuthSession } from "@/lib/clientAuth"
+import { isEmailFormatValid, useEmailCheck } from "@/lib/useEmailCheck"
 
 type LoginState = "idle" | "sending" | "sent" | "error"
+type AuthMode = "signup" | "login"
 
 function passwordRules(password: string) {
   return [
@@ -14,20 +17,39 @@ function passwordRules(password: string) {
 }
 
 export default function LoginClient() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const [mode, setMode] = useState<AuthMode>(searchParams.get("mode") === "login" ? "login" : "signup")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [state, setState] = useState<LoginState>("idle")
   const [resending, setResending] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const emailCheck = useEmailCheck(email)
+  const emailCheck = useEmailCheck(email, mode === "signup")
+  const emailFormatValid = isEmailFormatValid(email)
+  const emailReady = mode === "signup" ? emailCheck.isValid : emailFormatValid
+  const emailStatus = mode === "signup"
+    ? emailCheck.status
+    : email.trim().length === 0
+      ? "idle"
+      : emailFormatValid
+        ? "valid"
+        : "format"
+  const emailMessage = mode === "signup"
+    ? emailCheck.message
+    : email.trim().length === 0
+      ? "Enter your account email."
+      : emailFormatValid
+        ? "Ready to log in."
+        : "Enter a valid email format."
   const rules = passwordRules(password)
   const passwordValid = rules.every(rule => rule.passed)
-  const canSubmit = emailCheck.isValid && passwordValid && state !== "sending"
+  const canSubmit = emailReady && passwordValid && state !== "sending"
 
-  async function sendSetupLink(options?: { resend?: boolean }) {
-    if (!emailCheck.isValid) {
+  async function sendAuthRequest(options?: { resend?: boolean }) {
+    if (!emailReady) {
       setState("error")
-      setError(emailCheck.message)
+      setError(mode === "signup" ? emailCheck.message : "Enter a valid email address.")
       return
     }
     if (!passwordValid) {
@@ -46,7 +68,7 @@ export default function LoginClient() {
     const response = await fetch("/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, mode }),
     }).catch(() => null)
 
     if (!response?.ok) {
@@ -66,8 +88,32 @@ export default function LoginClient() {
           ? "Supabase could not generate the setup link."
         : payload?.error === "magic_link_email_failed"
           ? "Resend could not send from that email address."
+        : payload?.error === "invalid_credentials"
+          ? "Email or password did not match."
+        : payload?.error === "auth_not_configured"
+          ? "BrawlLens auth is not configured yet."
         : "Account setup is not available right now.")
       setResending(false)
+      return
+    }
+
+    const payload = await response.json().catch(() => null) as {
+      session?: { accessToken?: string; refreshToken?: string; expiresAt?: number }
+    } | null
+
+    if (mode === "login") {
+      if (!payload?.session?.accessToken) {
+        setState("error")
+        setError("BrawlLens could not start your session.")
+        setResending(false)
+        return
+      }
+      storeAuthSession({
+        accessToken: payload.session.accessToken,
+        refreshToken: payload.session.refreshToken,
+        expiresAt: payload.session.expiresAt,
+      })
+      router.replace(searchParams.get("next") || "/")
       return
     }
 
@@ -77,18 +123,38 @@ export default function LoginClient() {
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    void sendSetupLink()
+    void sendAuthRequest()
+  }
+
+  function chooseMode(nextMode: AuthMode) {
+    setMode(nextMode)
+    setState("idle")
+    setError(null)
+    setResending(false)
   }
 
   return (
     <main className="mx-auto flex w-full max-w-[480px] flex-1 flex-col justify-center px-4 py-14">
       <div className="rounded-[16px] border border-[var(--line)] bg-[var(--panel)] p-6 shadow-[var(--shadow-lift)]">
-        <h1 className="m-0 mb-2 text-[32px] leading-none font-semibold text-[var(--ink)]">Create account</h1>
-        <p className="m-0 text-[14px] leading-relaxed text-[var(--ink-3)]">
-          Set a password, then confirm your email to finish BrawlLens setup.
-        </p>
+        <h1 className="sr-only">{mode === "signup" ? "Create account" : "Log in"}</h1>
 
-        {state === "sent" ? (
+        <div className="grid grid-cols-2 rounded-[9px] border border-[var(--line)] bg-[var(--panel-2)] p-1">
+          {[
+            { id: "signup" as const, label: "Create" },
+            { id: "login" as const, label: "Log in" },
+          ].map(item => (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => chooseMode(item.id)}
+              className={`h-9 cursor-pointer rounded-md border-0 text-[13px] font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[rgba(28,28,28,0.16)] ${mode === item.id ? "bg-[var(--ink)] text-[#fcfbf8]" : "bg-transparent text-[var(--ink-3)] hover:text-[var(--ink)]"}`}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+
+        {state === "sent" && mode === "signup" ? (
           <div className="mt-6">
             <div className="rounded-[12px] border border-[var(--line)] bg-[var(--panel-2)] px-4 py-4">
               <p className="m-0 text-[15px] font-semibold text-[var(--ink)]">Check your inbox</p>
@@ -98,7 +164,7 @@ export default function LoginClient() {
             </div>
             <button
               type="button"
-              onClick={() => void sendSetupLink({ resend: true })}
+              onClick={() => void sendAuthRequest({ resend: true })}
               disabled={resending}
               className="mt-3 inline-flex h-11 w-full cursor-pointer items-center justify-center rounded-lg border border-[var(--line)] bg-transparent px-4 text-[14px] font-semibold text-[var(--ink)] transition-colors hover:bg-[var(--hover-bg)] disabled:cursor-wait disabled:opacity-60"
             >
@@ -123,12 +189,14 @@ export default function LoginClient() {
                 className="h-11 w-full rounded-lg border border-[var(--line)] bg-[var(--panel)] px-3 text-[15px] text-[var(--ink)] outline-none transition-colors placeholder:text-[var(--ink-4)] focus:border-[var(--line-2)]"
                 placeholder="you@example.com"
               />
-              <div className={`mt-2 flex items-center gap-2 text-[11px] leading-none ${emailCheck.status === "valid" ? "text-[var(--ink)]" : emailCheck.status === "idle" || emailCheck.status === "checking" ? "text-[var(--ink-4)]" : "text-[var(--ink-2)]"}`}>
-                <span className={`grid size-3.5 place-items-center rounded-full border text-[9px] ${emailCheck.status === "valid" ? "border-[var(--ink)] bg-[var(--ink)] text-[#fcfbf8]" : emailCheck.status === "checking" ? "animate-pulse border-[var(--line-2)] bg-[var(--line)] text-transparent" : emailCheck.status === "idle" ? "border-[var(--line-2)] text-transparent" : "border-[var(--ink-2)] text-[var(--ink-2)]"}`}>
-                  {emailCheck.status === "valid" ? "✓" : emailCheck.status === "invalid" || emailCheck.status === "format" ? "!" : ""}
-                </span>
-                {emailCheck.message}
-              </div>
+              {mode === "signup" && (
+                <div className={`mt-2 flex items-center gap-2 text-[11px] leading-none ${emailStatus === "valid" ? "text-[var(--ink)]" : emailStatus === "idle" || emailStatus === "checking" ? "text-[var(--ink-4)]" : "text-[var(--ink-2)]"}`}>
+                  <span className={`grid size-3.5 place-items-center rounded-full border text-[9px] ${emailStatus === "valid" ? "border-[var(--ink)] bg-[var(--ink)] text-[#fcfbf8]" : emailStatus === "checking" ? "animate-pulse border-[var(--line-2)] bg-[var(--line)] text-transparent" : emailStatus === "idle" ? "border-[var(--line-2)] text-transparent" : "border-[var(--ink-2)] text-[var(--ink-2)]"}`}>
+                    {emailStatus === "valid" ? "✓" : emailStatus === "invalid" || emailStatus === "format" ? "!" : ""}
+                  </span>
+                  {emailMessage}
+                </div>
+              )}
             </label>
             <label className="block">
               <span className="mb-1.5 block text-[12px] text-[var(--ink-4)]">Password</span>
@@ -148,21 +216,23 @@ export default function LoginClient() {
                 className="h-11 w-full rounded-lg border border-[var(--line)] bg-[var(--panel)] px-3 text-[15px] text-[var(--ink)] outline-none transition-colors placeholder:text-[var(--ink-4)] focus:border-[var(--line-2)]"
                 placeholder="8+ characters, include a number"
               />
-              <div className="mt-2 grid gap-1">
-                {rules.map(rule => (
-                  <div key={rule.label} className={`flex items-center gap-2 text-[11px] leading-none ${rule.passed ? "text-[var(--ink)]" : "text-[var(--ink-4)]"}`}>
-                    <span className={`grid size-3.5 place-items-center rounded-full border text-[9px] ${rule.passed ? "border-[var(--ink)] bg-[var(--ink)] text-[#fcfbf8]" : "border-[var(--line-2)] text-transparent"}`}>✓</span>
-                    {rule.label}
-                  </div>
-                ))}
-              </div>
+              {mode === "signup" && (
+                <div className="mt-2 grid gap-1">
+                  {rules.map(rule => (
+                    <div key={rule.label} className={`flex items-center gap-2 text-[11px] leading-none ${rule.passed ? "text-[var(--ink)]" : "text-[var(--ink-4)]"}`}>
+                      <span className={`grid size-3.5 place-items-center rounded-full border text-[9px] ${rule.passed ? "border-[var(--ink)] bg-[var(--ink)] text-[#fcfbf8]" : "border-[var(--line-2)] text-transparent"}`}>✓</span>
+                      {rule.label}
+                    </div>
+                  ))}
+                </div>
+              )}
             </label>
             <button
               type="submit"
               disabled={!canSubmit}
               className="inline-flex h-11 w-full cursor-pointer items-center justify-center rounded-lg border-0 bg-[var(--ink)] px-4 text-[14px] font-semibold text-[#fcfbf8] shadow-[var(--shadow-lift)] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {state === "sending" ? "Sending..." : "Create account"}
+              {state === "sending" ? (mode === "login" ? "Logging in..." : "Sending...") : mode === "login" ? "Log in" : "Create account"}
             </button>
           </form>
         )}
