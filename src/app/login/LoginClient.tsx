@@ -147,7 +147,7 @@ export default function LoginClient() {
               key={item.id}
               type="button"
               onClick={() => chooseMode(item.id)}
-              className={`h-9 cursor-pointer rounded-md border-0 text-[13px] font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[rgba(28,28,28,0.16)] ${mode === item.id ? "bg-[var(--ink)] text-[#fcfbf8]" : "bg-transparent text-[var(--ink-3)] hover:text-[var(--ink)]"}`}
+              className={`h-9 cursor-pointer rounded-md border-0 text-[13px] font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[rgba(133,141,255,0.22)] ${mode === item.id ? "bg-[var(--ink)] text-[var(--ink-on)]" : "bg-transparent text-[var(--ink-3)] hover:text-[var(--ink)]"}`}
             >
               {item.label}
             </button>
@@ -191,7 +191,7 @@ export default function LoginClient() {
               />
               {mode === "signup" && (
                 <div className={`mt-2 flex items-center gap-2 text-[11px] leading-none ${emailStatus === "valid" ? "text-[var(--ink)]" : emailStatus === "idle" || emailStatus === "checking" ? "text-[var(--ink-4)]" : "text-[var(--ink-2)]"}`}>
-                  <span className={`grid size-3.5 place-items-center rounded-full border text-[9px] ${emailStatus === "valid" ? "border-[var(--ink)] bg-[var(--ink)] text-[#fcfbf8]" : emailStatus === "checking" ? "animate-pulse border-[var(--line-2)] bg-[var(--line)] text-transparent" : emailStatus === "idle" ? "border-[var(--line-2)] text-transparent" : "border-[var(--ink-2)] text-[var(--ink-2)]"}`}>
+                  <span className={`grid size-3.5 place-items-center rounded-full border text-[9px] ${emailStatus === "valid" ? "border-[var(--ink)] bg-[var(--ink)] text-[var(--ink-on)]" : emailStatus === "checking" ? "animate-pulse border-[var(--line-2)] bg-[var(--line)] text-transparent" : emailStatus === "idle" ? "border-[var(--line-2)] text-transparent" : "border-[var(--ink-2)] text-[var(--ink-2)]"}`}>
                     {emailStatus === "valid" ? "✓" : emailStatus === "invalid" || emailStatus === "format" ? "!" : ""}
                   </span>
                   {emailMessage}
@@ -220,7 +220,7 @@ export default function LoginClient() {
                 <div className="mt-2 grid gap-1">
                   {rules.map(rule => (
                     <div key={rule.label} className={`flex items-center gap-2 text-[11px] leading-none ${rule.passed ? "text-[var(--ink)]" : "text-[var(--ink-4)]"}`}>
-                      <span className={`grid size-3.5 place-items-center rounded-full border text-[9px] ${rule.passed ? "border-[var(--ink)] bg-[var(--ink)] text-[#fcfbf8]" : "border-[var(--line-2)] text-transparent"}`}>✓</span>
+                      <span className={`grid size-3.5 place-items-center rounded-full border text-[9px] ${rule.passed ? "border-[var(--ink)] bg-[var(--ink)] text-[var(--ink-on)]" : "border-[var(--line-2)] text-transparent"}`}>✓</span>
                       {rule.label}
                     </div>
                   ))}
@@ -230,7 +230,7 @@ export default function LoginClient() {
             <button
               type="submit"
               disabled={!canSubmit}
-              className="inline-flex h-11 w-full cursor-pointer items-center justify-center rounded-lg border-0 bg-[var(--ink)] px-4 text-[14px] font-semibold text-[#fcfbf8] shadow-[var(--shadow-lift)] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex h-11 w-full cursor-pointer items-center justify-center rounded-lg border-0 bg-[var(--ink)] px-4 text-[14px] font-semibold text-[var(--ink-on)] shadow-[var(--shadow-lift)] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {state === "sending" ? (mode === "login" ? "Logging in..." : "Sending...") : mode === "login" ? "Log in" : "Create account"}
             </button>

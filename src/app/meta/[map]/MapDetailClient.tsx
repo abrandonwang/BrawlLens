@@ -112,7 +112,7 @@ export default function MapDetailClient({ mapName, imageUrl, totalBattles, brawl
             <button
               key={opt.key}
               onClick={() => setSortBy(opt.key)}
-              className={`relative cursor-pointer rounded-md border-0 px-[15px] py-[7px] text-[14px] font-normal transition-all ${sortBy === opt.key ? "bg-[var(--ink)] text-[#fcfbf8] shadow-[var(--shadow-lift)]" : "bg-transparent text-[var(--ink-3)] hover:bg-[color-mix(in_srgb,var(--panel-2)_70%,transparent)] hover:text-[var(--ink)]"}`}
+              className={`relative cursor-pointer rounded-md border-0 px-[15px] py-[7px] text-[14px] font-normal transition-all ${sortBy === opt.key ? "bg-[var(--ink)] text-[var(--ink-on)] shadow-[var(--shadow-lift)]" : "bg-transparent text-[var(--ink-3)] hover:bg-[color-mix(in_srgb,var(--panel-2)_70%,transparent)] hover:text-[var(--ink)]"}`}
             >
               {opt.label}
             </button>

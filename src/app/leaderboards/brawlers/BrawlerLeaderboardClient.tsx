@@ -1,11 +1,26 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
-import { Search, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react"
+import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react"
+import { ChevronDown, Search } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { BrawlImage, brawlerIconUrl } from "@/components/BrawlImage"
-import { EmptyState, StateButton, StateLink } from "@/components/PolishStates"
+import { formatBrawlerName, formatTrophies } from "@/lib/format"
+import { useClickOutside } from "@/lib/useClickOutside"
+import {
+  EmptyLeaderboardState,
+  FeatureCardRail,
+  LeaderboardBoard,
+  LeaderboardHero,
+  LeaderboardPageShell,
+  LeaderboardPanel,
+  LeaderboardToolbar,
+  Pager,
+  RankCell,
+  SearchBox,
+  TableHead,
+  professionalTeamCards,
+} from "../LeaderboardDpmShell"
 
 interface Brawler {
   id: number
@@ -21,33 +36,18 @@ interface Player {
   trophies: number
   club_name: string | null
   brawler_name: string
+  world_rank: number | null
+  total_trophies: number | null
 }
 
-const PAGE_SIZE = 20
-
-const CATEGORIES = [
-  { label: "Players",  href: "/leaderboards/players" },
-  { label: "Clubs",    href: "/leaderboards/clubs" },
-  { label: "Brawlers", href: "/leaderboards/brawlers" },
-]
-
-function getPageItems(current: number, total: number): (number | "...")[] {
-  const pages: (number | "...")[] = []
-  for (let i = 0; i < total; i++) {
-    if (i === 0 || i === total - 1 || Math.abs(i - current) <= 1) {
-      pages.push(i)
-    } else if (pages[pages.length - 1] !== "...") {
-      pages.push("...")
-    }
-  }
-  return pages
+interface PlayerEnrichment {
+  iconId: number | null
+  totalTrophies?: number | null
+  clubBadgeId?: number | null
 }
 
-function formatNum(n: number) {
-  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + "M"
-  if (n >= 1_000) return (n / 1_000).toFixed(1) + "K"
-  return n.toString()
-}
+const PAGE_SIZE = 50
+const brawlerTableGrid = "grid grid-cols-[34px_minmax(160px,1.18fr)_72px_72px_minmax(90px,0.72fr)_40px] items-center gap-1.5"
 
 export default function BrawlerLeaderboardClient({
   brawlers,
@@ -59,250 +59,377 @@ export default function BrawlerLeaderboardClient({
   activeBrawler: Brawler | null
 }) {
   const router = useRouter()
-  const [search, setSearch] = useState(activeBrawler?.name ?? "")
+  const [brawlerSearch, setBrawlerSearch] = useState("")
+  const [playerSearch, setPlayerSearch] = useState("")
   const [open, setOpen] = useState(false)
   const [page, setPage] = useState(0)
-  const inputRef = useRef<HTMLInputElement>(null)
+  const [apiEnrichments, setApiEnrichments] = useState<Record<string, PlayerEnrichment>>({})
+  const triggerRef = useRef<HTMLButtonElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
-  const filtered = search.trim()
-    ? brawlers.filter(b => b.name.toLowerCase().includes(search.toLowerCase()))
-    : brawlers
-
-  const totalPages = Math.ceil(data.length / PAGE_SIZE)
-  const paginated = data.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
-
-  function select(b: Brawler) {
-    setSearch(b.name)
-    setOpen(false)
-    setPage(0)
-    router.push(`/leaderboards/brawlers?b=${b.id}`)
-  }
   useEffect(() => {
-    function onDown(e: MouseEvent) {
-      if (
-        dropdownRef.current && !dropdownRef.current.contains(e.target as Node) &&
-        inputRef.current && !inputRef.current.contains(e.target as Node)
-      ) {
-        setOpen(false)
-      }
-    }
-    document.addEventListener("mousedown", onDown)
-    return () => document.removeEventListener("mousedown", onDown)
+    document.documentElement.classList.add("landing-bg")
+    return () => document.documentElement.classList.remove("landing-bg")
   }, [])
 
+  useClickOutside([triggerRef, dropdownRef], () => setOpen(false), open)
+  useEffect(() => { setPage(0) }, [activeBrawler?.id, playerSearch])
+
+  const filteredBrawlers = useMemo(() => {
+    const q = brawlerSearch.trim().toLowerCase()
+    if (!q) return brawlers
+    return brawlers.filter(b => b.name.toLowerCase().includes(q))
+  }, [brawlers, brawlerSearch])
+
+  const filteredPlayers = useMemo(() => {
+    const q = playerSearch.trim().toLowerCase()
+    if (!q) return data
+    return data.filter(player =>
+      player.player_name.toLowerCase().includes(q) ||
+      player.player_tag.toLowerCase().includes(q) ||
+      (player.club_name ?? "").toLowerCase().includes(q)
+    )
+  }, [data, playerSearch])
+
+  const tablePlayers = filteredPlayers.slice(3)
+  const totalPages = Math.max(1, Math.ceil(tablePlayers.length / PAGE_SIZE))
+  const paginated = tablePlayers.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
+  const visiblePlayers = useMemo(() => [...filteredPlayers.slice(0, 3), ...paginated], [filteredPlayers, paginated])
+  const visibleTags = useMemo(() => visiblePlayers.map(player => playerKey(player.player_tag)), [visiblePlayers])
+  const visibleTagKey = visibleTags.join(",")
+  const selectedName = activeBrawler ? formatBrawlerName(activeBrawler.name) : "Brawler"
+
+  useEffect(() => {
+    const tags = visibleTags.filter(tag => !apiEnrichments[tag])
+    if (!tags.length) return
+
+    const controller = new AbortController()
+    async function loadEnrichments() {
+      try {
+        const response = await fetch("/api/leaderboards/player-enrichment", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tags }),
+          signal: controller.signal,
+        })
+        if (!response.ok) return
+
+        const data = await response.json() as { players?: Record<string, PlayerEnrichment> }
+        if (data.players) {
+          setApiEnrichments(prev => ({ ...prev, ...data.players }))
+        }
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          console.error("Brawler leaderboard enrichment request failed:", error)
+        }
+      }
+    }
+
+    void loadEnrichments()
+    return () => controller.abort()
+  }, [visibleTagKey, visibleTags, apiEnrichments])
+
+  function select(brawler: Brawler) {
+    setOpen(false)
+    setBrawlerSearch("")
+    setPage(0)
+    router.push(`/leaderboards/brawlers?b=${brawler.id}`)
+  }
+
   return (
-    <div className="mx-auto w-full max-w-[1080px] px-6 pt-12 pb-24 max-md:px-4 max-md:pt-8 max-md:pb-[64px] max-[480px]:pt-6 max-[480px]:pb-12">
-      <div className="mb-8 flex items-end justify-between gap-8 max-md:flex-col max-md:items-start">
-        <div className="min-w-0">
-          <h1 className="m-0 text-[clamp(28px,4.1vw,46px)] leading-[1.07] font-semibold tracking-[-0.01em] text-[var(--ink)]">Brawler Leaderboards</h1>
-          <p className="mt-3 mb-0 max-w-[640px] text-[17px] leading-[1.47] tracking-[-0.022em] text-[var(--ink-3)]">Pick a brawler to see the highest-ranked players using that brawler worldwide.</p>
-        </div>
-        <div className="flex flex-wrap justify-end gap-2 max-md:justify-start">
-          <span className="inline-flex min-h-9 items-center whitespace-nowrap rounded-full border border-[var(--line)] bg-[var(--panel)] px-4 text-[14px] font-normal tracking-[-0.016em] text-[var(--ink-2)]">{activeBrawler?.name ?? "Select brawler"}</span>
-          <span className="inline-flex min-h-9 items-center whitespace-nowrap rounded-full border border-[var(--line)] bg-[var(--panel)] px-4 text-[14px] font-normal tracking-[-0.016em] text-[var(--ink-2)]">{data.length.toLocaleString()} players</span>
-        </div>
-      </div>
+    <LeaderboardPageShell active="brawlers">
+      <FeatureCardRail cards={professionalTeamCards} />
 
-      <div className="relative z-30 mb-8 flex items-center justify-between gap-3 rounded-[18px] border border-[var(--line)] bg-[var(--panel)] p-4 max-md:flex-col max-md:items-stretch">
-        <div className="inline-flex gap-0.5 overflow-x-auto rounded-full border border-[var(--line)] bg-[var(--panel)] p-[3px] [scrollbar-width:none] max-md:w-full [&::-webkit-scrollbar]:hidden">
-          {CATEGORIES.map(c => (
-            <Link
-              key={c.href}
-              href={c.href}
-              className={`shrink-0 rounded-full px-4 py-2 text-[14px] font-normal tracking-[-0.016em] no-underline transition-all max-md:flex-1 max-md:text-center ${c.href === "/leaderboards/brawlers" ? "bg-[var(--accent)] text-white" : "text-[var(--ink-3)] hover:bg-[var(--panel-2)] hover:text-[var(--ink)]"}`}
-            >
-              {c.label}
-            </Link>
-          ))}
-        </div>
-        <div className="flex items-center gap-3 max-md:w-full max-md:flex-col max-md:items-stretch">
-          <div className="relative w-60 shrink-0 max-md:w-full">
-            <div className="flex h-11 w-full items-center gap-2.5 rounded-full border border-[var(--line)] bg-[var(--panel)] px-4 text-[var(--ink)] transition-colors focus-within:border-[var(--accent)]">
-              <Search size={13} className="shrink-0 text-[var(--ink-4)]" />
-              <input
-                ref={inputRef}
-                value={search}
-                onChange={e => { setSearch(e.target.value); setOpen(true) }}
-                onFocus={() => setOpen(true)}
-                placeholder="Search brawler…"
-                className="w-full border-0 bg-transparent text-[17px] tracking-[-0.022em] text-[var(--ink)] outline-none placeholder:text-[var(--ink-4)]"
-              />
-              {activeBrawler && (
-                <BrawlImage
-                  src={brawlerIconUrl(activeBrawler.id)}
-                  alt=""
-                  width={20}
-                  height={20}
-                  className="size-5 shrink-0 object-contain"
-                  sizes="20px"
+      <LeaderboardHero
+        title={`${selectedName} Leaderboard`}
+        description={`Open a brawler-specific ladder for ${selectedName} and scan the leading accounts without leaving the compact leaderboard flow. The primary rank is for this brawler, while the smaller rank tracks each player's overall trophy position.`}
+      />
+
+      <LeaderboardBoard>
+        <LeaderboardToolbar>
+          <SearchBox value={playerSearch} onChange={setPlayerSearch} placeholder="Search player, tag, or club" name="brawler-leaderboard-player-search" />
+          <div className="bl-lb-toolbar-actions">
+            <BrawlerSelector
+              activeBrawler={activeBrawler}
+              brawlers={filteredBrawlers}
+              search={brawlerSearch}
+              setSearch={setBrawlerSearch}
+              open={open}
+              setOpen={setOpen}
+              select={select}
+              triggerRef={triggerRef}
+              dropdownRef={dropdownRef}
+            />
+          </div>
+        </LeaderboardToolbar>
+
+        {!activeBrawler ? (
+          <EmptyLeaderboardState
+            title="Pick a brawler"
+            description="Choose a brawler to see the top tracked players for it."
+          />
+        ) : filteredPlayers.length === 0 ? (
+          <EmptyLeaderboardState
+            title={playerSearch ? "No players match" : "No leaderboard data"}
+            description={playerSearch ? "Your search filtered out every player for this brawler." : `No top players are tracked for ${selectedName} right now.`}
+            action={playerSearch ? <button type="button" onClick={() => setPlayerSearch("")} className="bl-lb-action">Clear search</button> : <DpmLink href="/leaderboards/players">Open player leaderboard</DpmLink>}
+          />
+        ) : (
+          <>
+            <section aria-label="Top brawler players" className="bl-lb-podium-grid">
+              {filteredPlayers.slice(0, 3).map(player => (
+                <BrawlerPodiumCard
+                  key={player.player_tag}
+                  player={player}
+                  enrichment={apiEnrichments[playerKey(player.player_tag)]}
                 />
-              )}
-            </div>
+              ))}
+            </section>
 
-            {open && filtered.length > 0 && (
-              <div
-                ref={dropdownRef}
-                className="absolute top-[calc(100%+6px)] right-0 left-0 z-[80] max-h-[280px] overflow-y-auto rounded-[18px] border border-[var(--line-2)] bg-[var(--panel)]"
-              >
-                {filtered.map(b => (
-                  <button
-                    key={b.id}
-                    onMouseDown={() => select(b)}
-                    className="row-hover flex w-full cursor-pointer items-center gap-2.5 border-0 border-b border-[var(--line)] bg-transparent px-3 py-[9px] text-left"
-                  >
-                    <BrawlImage
-                      src={brawlerIconUrl(b.id)}
-                      alt={b.name}
-                      width={26}
-                      height={26}
-                      className="size-[26px] shrink-0 object-contain"
-                      sizes="26px"
-                    />
-                    <div className="min-w-0">
-                      <div className="truncate text-[12.5px] font-semibold text-[var(--ink)]">{b.name}</div>
-                      <div className="text-[10.5px] leading-snug tracking-[0.01em]" style={{ color: b.rarity.color }}>{b.rarity.name}</div>
-                    </div>
-                  </button>
+            <LeaderboardPanel>
+              <TableHead className={brawlerTableGrid}>
+                <span />
+                <span>Player</span>
+                <span>Brawler trophies</span>
+                <span>Total trophies</span>
+                <span>Club</span>
+                <span>World</span>
+              </TableHead>
+
+              <div className="bl-lb-table-list">
+                {paginated.map(player => (
+                  <BrawlerRankRow
+                    key={`${activeBrawler.id}-${player.player_tag}`}
+                    player={player}
+                    enrichment={apiEnrichments[playerKey(player.player_tag)]}
+                  />
                 ))}
               </div>
+            </LeaderboardPanel>
+
+            <Pager page={page} totalPages={totalPages} onChange={setPage} />
+          </>
+        )}
+      </LeaderboardBoard>
+    </LeaderboardPageShell>
+  )
+}
+
+function BrawlerSelector({
+  activeBrawler,
+  brawlers,
+  search,
+  setSearch,
+  open,
+  setOpen,
+  select,
+  triggerRef,
+  dropdownRef,
+}: {
+  activeBrawler: Brawler | null
+  brawlers: Brawler[]
+  search: string
+  setSearch: (value: string) => void
+  open: boolean
+  setOpen: (open: boolean) => void
+  select: (brawler: Brawler) => void
+  triggerRef: RefObject<HTMLButtonElement | null>
+  dropdownRef: RefObject<HTMLDivElement | null>
+}) {
+  return (
+    <div className="bl-lb-selector">
+      <button
+        ref={triggerRef}
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="bl-lb-selector-trigger"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+      >
+        {activeBrawler ? (
+          <>
+            <BrawlImage src={brawlerIconUrl(activeBrawler.id)} alt={activeBrawler.name} width={28} height={28} className="bl-lb-selector-icon" sizes="28px" />
+            <span>{formatBrawlerName(activeBrawler.name)}</span>
+          </>
+        ) : (
+          <>
+            <Search size={15} strokeWidth={2.2} />
+            <span>Brawler</span>
+          </>
+        )}
+        <ChevronDown size={14} strokeWidth={2.4} className={`shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <div ref={dropdownRef} className="bl-lb-dropdown" role="listbox">
+          <div className="bl-lb-dropdown-search">
+            <Search size={15} strokeWidth={2} />
+            <input
+              name="brawler-selector-search"
+              autoFocus
+              value={search}
+              onChange={event => setSearch(event.target.value)}
+              placeholder="Search brawler..."
+            />
+          </div>
+          <div className="bl-lb-dropdown-scroll">
+            {brawlers.length === 0 ? (
+              <div className="bl-lb-dropdown-empty">No brawler matches.</div>
+            ) : (
+              brawlers.map(brawler => (
+                <button
+                  key={brawler.id}
+                  type="button"
+                  onClick={() => select(brawler)}
+                  className={`bl-lb-dropdown-item ${activeBrawler?.id === brawler.id ? "bl-lb-dropdown-item-active" : ""}`}
+                >
+                  <BrawlImage src={brawlerIconUrl(brawler.id)} alt={brawler.name} width={30} height={30} className="bl-lb-selector-icon" sizes="30px" />
+                  <span>{formatBrawlerName(brawler.name)}</span>
+                  <strong style={{ color: brawler.rarity.color }}>{brawler.rarity.name}</strong>
+                </button>
+              ))
             )}
           </div>
         </div>
-      </div>
-
-      {data.length === 0 ? (
-        <EmptyState
-          title={activeBrawler ? "No rankings for this brawler" : "Choose a brawler"}
-          description={activeBrawler ? `${activeBrawler.name} does not have tracked leaderboard rows yet.` : "Search for a brawler to load their top global players."}
-          action={activeBrawler ? <StateButton onClick={() => { setSearch(""); router.push("/leaderboards/brawlers") }}>Pick another brawler</StateButton> : <StateLink href="/brawlers">Browse brawlers</StateLink>}
-        />
-      ) : (
-        <>
-          <div className="relative mb-6 flex items-stretch justify-between gap-6 overflow-hidden rounded-2xl border border-[var(--line-2)] p-8 max-md:flex-col max-sm:p-6" style={{ background: "linear-gradient(135deg, #EC4899 0%, #14B8A6 100%)" }}>
-            <div className="relative z-10 flex min-w-0 items-center gap-3">
-              {activeBrawler && (
-                <BrawlImage
-                  src={brawlerIconUrl(activeBrawler.id)}
-                  alt=""
-                  width={42}
-                  height={42}
-                  className="size-[42px] shrink-0 object-contain"
-                  sizes="42px"
-                />
-              )}
-              <div className="min-w-0">
-                <p className="mb-1 text-[12px] leading-none tracking-[0.08em] text-white/70 uppercase">
-                  Brawler Rankings
-                </p>
-                <h2 className="m-0 truncate text-[28px] leading-[1.15] font-semibold tracking-[-0.01em] text-white">{activeBrawler?.name ?? "Select a brawler"}</h2>
-              </div>
-            </div>
-            <div className="relative z-10 grid min-w-[min(420px,48%)] grid-cols-3 gap-2 max-md:min-w-0 max-[420px]:grid-cols-1">
-              <div className="min-w-0 rounded-[10px] border border-white/20 bg-black/30 px-3 py-2.5 backdrop-blur-xl">
-                <span className="text-[10.5px] text-white/70">Players</span>
-                <strong className="mt-0.5 block truncate text-[13px] font-semibold text-white">{data.length.toLocaleString()}</strong>
-              </div>
-              <div className="min-w-0 rounded-[10px] border border-white/20 bg-black/30 px-3 py-2.5 backdrop-blur-xl">
-                <span className="text-[10.5px] text-white/70">Leader</span>
-                <strong className="mt-0.5 block truncate text-[13px] font-semibold text-white">{data[0]?.player_name ?? "-"}</strong>
-              </div>
-              <div className="min-w-0 rounded-[10px] border border-white/20 bg-black/30 px-3 py-2.5 backdrop-blur-xl">
-                <span className="text-[10.5px] text-white/70">Page</span>
-                <strong className="mt-0.5 block truncate text-[13px] font-semibold text-white">{page + 1}/{Math.max(totalPages, 1)}</strong>
-              </div>
-            </div>
-          </div>
-
-          {activeBrawler && (
-            <div className="mb-3.5 grid grid-cols-3 gap-2.5 max-md:grid-cols-1">
-              {data.slice(0, 3).map((player, index) => (
-                <Link key={player.player_tag} href={`/player/${encodeURIComponent(player.player_tag.replace(/^#/, ""))}`} className={`interactive-card top-rank-card top-rank-card-rank-${index + 1} grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2.5 border bg-[var(--panel)] p-3 text-inherit no-underline`}>
-                  <span className="grid h-7 min-w-[34px] place-items-center rounded-lg border border-[var(--line)] bg-[var(--panel-2)] text-xs font-extrabold tabular-nums text-[var(--ink)]">#{player.rank}</span>
-                  <div className="min-w-0">
-                    <div className="truncate text-[13px] font-bold text-[var(--ink)]">{player.player_name}</div>
-                    <div className="text-[10.5px] leading-snug tracking-[0.01em] tabular-nums text-[var(--ink-3)]">{player.player_tag}</div>
-                  </div>
-                  <div className="flex items-center justify-end whitespace-nowrap text-xs font-bold tabular-nums text-[var(--ink)]">
-                    {formatNum(player.trophies)}
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
-
-          <div className="overflow-hidden rounded-[18px] border border-[var(--line)] bg-[var(--panel)] max-md:grid max-md:gap-2 max-md:border-0 max-md:bg-transparent">
-            <div className="grid grid-cols-[48px_1fr_180px_100px_24px] gap-3 border-b border-[var(--line)] bg-[var(--panel-2)] px-5 py-2.5 max-md:hidden">
-              <span className="text-[10.5px] leading-snug tracking-[0.01em] text-[var(--ink-3)]">#</span>
-              <span className="text-[10.5px] leading-snug tracking-[0.01em] text-[var(--ink-3)]">Player</span>
-              <span className="text-[10.5px] leading-snug tracking-[0.01em] text-[var(--ink-3)] max-md:hidden">Club</span>
-              <span className="text-right text-[10.5px] leading-snug tracking-[0.01em] text-[var(--ink-3)]">Trophies</span>
-              <span />
-            </div>
-
-            {paginated.map((p) => (
-              <Link
-                key={p.player_tag}
-                href={`/player/${encodeURIComponent(p.player_tag.replace(/^#/, ""))}`}
-                className={`interactive-row group grid min-h-[58px] grid-cols-[48px_1fr_180px_100px_24px] items-center gap-3 border-b border-[var(--line)] bg-[var(--panel)] px-5 py-3 text-inherit no-underline transition-colors last:border-b-0 hover:bg-[var(--hover-bg)] max-md:grid-cols-[40px_minmax(0,1fr)_90px] max-md:gap-2.5 max-md:rounded-xl max-md:border max-md:border-[var(--line)] max-md:p-3 max-md:shadow-[var(--shadow-lift)] ${p.rank <= 3 ? "border-l-2 border-l-[var(--line-2)]" : ""}`}
-              >
-                <span className="text-[13px] font-normal tabular-nums text-[var(--ink-3)] max-md:grid max-md:h-[34px] max-md:min-w-[34px] max-md:place-items-center max-md:rounded-lg max-md:border max-md:border-[var(--line)] max-md:bg-[var(--panel-2)] max-md:text-[12px] max-md:font-semibold max-md:text-[var(--ink)]">
-                  {String(p.rank).padStart(2, "0")}
-                </span>
-
-                <div className="min-w-0">
-                  <div className="truncate text-[14px] font-normal text-[var(--ink)]">{p.player_name}</div>
-                  <div className="text-[10.5px] leading-snug tabular-nums text-[var(--ink-4)]">{p.player_tag}</div>
-                </div>
-
-                <span className="truncate text-xs text-[var(--ink-3)] max-md:hidden">
-                  {p.club_name ?? "-"}
-                </span>
-
-                <div className="flex items-center justify-end max-md:whitespace-nowrap">
-                  <span className="text-[13px] font-normal tabular-nums text-[var(--ink)]">
-                    {formatNum(p.trophies)}
-                  </span>
-                </div>
-
-                <ArrowRight size={13} className="text-[var(--ink-4)] transition-transform group-hover:translate-x-0.5 group-hover:text-[var(--ink-2)] max-md:hidden" />
-              </Link>
-            ))}
-          </div>
-
-          {totalPages > 1 && (
-            <div className="mt-5 flex items-center justify-center gap-1">
-              <button
-                onClick={() => setPage(p => p - 1)}
-                disabled={page === 0}
-                className="grid size-[30px] cursor-pointer place-items-center rounded-lg border border-[var(--line)] bg-transparent text-[var(--ink-3)] disabled:cursor-default disabled:opacity-30"
-              >
-                <ChevronLeft size={13} />
-              </button>
-
-              {getPageItems(page, totalPages).map((idx, i) => idx === "..." ? (
-                <span key={`ellipsis-${i}`} className="grid size-[30px] place-items-center text-xs text-[var(--ink-4)]">…</span>
-              ) : (
-                <button
-                  key={idx}
-                  onClick={() => setPage(idx)}
-                  className={`grid size-[30px] cursor-pointer place-items-center rounded-lg text-xs font-semibold ${idx === page ? "border border-transparent bg-[var(--accent)] text-[#fcfbf8]" : "border border-[var(--line)] bg-transparent text-[var(--ink-3)]"}`}
-                >
-                  {idx + 1}
-                </button>
-              ))}
-
-              <button
-                onClick={() => setPage(p => p + 1)}
-                disabled={page === totalPages - 1}
-                className="grid size-[30px] cursor-pointer place-items-center rounded-lg border border-[var(--line)] bg-transparent text-[var(--ink-3)] disabled:cursor-default disabled:opacity-30"
-              >
-                <ChevronRight size={13} />
-              </button>
-            </div>
-          )}
-        </>
       )}
     </div>
+  )
+}
+
+function BrawlerRankRow({
+  player,
+  enrichment,
+}: {
+  player: Player
+  enrichment?: PlayerEnrichment
+}) {
+  const playerHref = `/player/${encodeURIComponent(player.player_tag.replace(/^#/, ""))}`
+  const totalTrophies = getTotalTrophies(player, enrichment)
+
+  return (
+    <div className={`bl-lb-row ${brawlerTableGrid}`}>
+      <div className="bl-lb-rank-stack">
+        <RankCell rank={player.rank} />
+        <span>{formatWorldRank(player.world_rank)}</span>
+      </div>
+      <Link href={playerHref} className="bl-lb-identity bl-lb-player-link">
+        <PlayerAvatar name={player.player_name} rank={player.rank} iconId={enrichment?.iconId ?? null} />
+        <div className="bl-lb-row-main">
+          <div className="bl-lb-name">{player.player_name}</div>
+          <div className="bl-lb-subline">{player.player_tag}</div>
+        </div>
+      </Link>
+      <span className="bl-lb-row-stat">
+        {formatTrophies(player.trophies)}
+      </span>
+      <span className="bl-lb-row-mono">{formatNullableTrophies(totalTrophies)}</span>
+      <ClubCell name={player.club_name} badgeId={enrichment?.clubBadgeId ?? null} />
+      <span className="bl-lb-row-mono">{formatWorldRank(player.world_rank)}</span>
+    </div>
+  )
+}
+
+function BrawlerPodiumCard({
+  player,
+  enrichment,
+}: {
+  player: Player
+  enrichment?: PlayerEnrichment
+}) {
+  const playerHref = `/player/${encodeURIComponent(player.player_tag.replace(/^#/, ""))}`
+  const totalTrophies = getTotalTrophies(player, enrichment)
+
+  return (
+    <div className="bl-lb-podium-card">
+      <div className="bl-lb-podium-top">
+        <span className="bl-lb-podium-rank">{player.rank}</span>
+        <Link href={playerHref} className="bl-lb-identity bl-lb-podium-identity bl-lb-player-link">
+          <PlayerAvatar name={player.player_name} rank={player.rank} iconId={enrichment?.iconId ?? null} />
+          <div className="bl-lb-row-main">
+            <div className="bl-lb-name">{player.player_name}</div>
+            <div className="bl-lb-subline">{player.club_name ?? "No club"}</div>
+          </div>
+        </Link>
+        <div className="bl-lb-podium-rate">
+          <strong>{formatNullableTrophies(totalTrophies)}</strong>
+          <span>total trophies</span>
+        </div>
+      </div>
+      <div className="bl-lb-podium-score">{formatTrophies(player.trophies)}</div>
+      <div className="bl-lb-podium-foot">
+        <div className="bl-lb-mini-stat">
+          <strong>{formatWorldRank(player.world_rank)}</strong>
+          <span>world trophy rank</span>
+        </div>
+        <div className="bl-lb-mini-stat bl-lb-mini-stat-center">
+          <strong>{formatTrophies(player.trophies)}</strong>
+          <span>brawler trophies</span>
+        </div>
+        <div className="bl-lb-mini-stat bl-lb-mini-stat-right">
+          <strong>{player.club_name ?? "No club"}</strong>
+          <span>club</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function PlayerAvatar({ name, rank, iconId }: { name: string; rank: number; iconId?: number | null }) {
+  const color = rank === 1 ? "#f2cf63" : rank === 2 ? "#d6dbe4" : rank === 3 ? "#c88b5a" : "#7d86ff"
+  return (
+    <span className="bl-lb-avatar" style={{ color }}>
+      {iconId ? (
+        <BrawlImage src={profileIconUrl(iconId)} alt="" width={44} height={44} sizes="44px" />
+      ) : firstGlyph(name)}
+    </span>
+  )
+}
+
+function ClubCell({ name, badgeId }: { name: string | null; badgeId?: number | null }) {
+  return (
+    <span className="bl-lb-club-cell">
+      {badgeId && (
+        <BrawlImage src={clubBadgeUrl(badgeId)} alt="" width={24} height={24} sizes="24px" />
+      )}
+      <span>{name ?? "No club"}</span>
+    </span>
+  )
+}
+
+function profileIconUrl(id: number) {
+  return `https://cdn.brawlify.com/profile-icons/regular/${id}.png`
+}
+
+function clubBadgeUrl(id: number) {
+  return `https://cdn.brawlify.com/club-badges/regular/${id}.png`
+}
+
+function formatWorldRank(value: number | null | undefined) {
+  return typeof value === "number" ? `#${value}` : "--"
+}
+
+function formatNullableTrophies(value: number | null | undefined) {
+  return typeof value === "number" ? formatTrophies(value) : "--"
+}
+
+function getTotalTrophies(player: Player, enrichment: PlayerEnrichment | undefined) {
+  return enrichment?.totalTrophies ?? player.total_trophies
+}
+
+function playerKey(tag: string) {
+  return tag.replace(/^#/, "").toUpperCase()
+}
+
+function firstGlyph(value: string) {
+  return Array.from(value.trim())[0]?.toUpperCase() || "?"
+}
+
+function DpmLink({ href, children }: { href: string; children: ReactNode }) {
+  return (
+    <Link
+      href={href}
+      className="bl-lb-action"
+    >
+      {children}
+    </Link>
   )
 }

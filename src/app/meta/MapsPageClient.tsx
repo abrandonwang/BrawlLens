@@ -224,8 +224,8 @@ export default function MapsPageClient() {
 
   return (
     <>
-      <div className="mx-auto w-full max-w-[1080px] px-6 pt-12 pb-24 max-md:px-4 max-md:pt-8 max-md:pb-[64px] max-[480px]:pt-6 max-[480px]:pb-12">
-        <div className="mb-8 grid grid-cols-[minmax(0,1fr)_auto] items-end gap-8 max-md:grid-cols-1 max-md:items-start">
+      <div className="dpm-page-shell">
+        <div className="dpm-hero-panel mb-6 grid grid-cols-[minmax(0,1fr)_auto] items-end gap-8 p-6 max-md:grid-cols-1 max-md:items-start max-sm:p-5">
           <div className="min-w-0">
             <h1 className="m-0 text-[clamp(28px,4.1vw,46px)] leading-[1.07] font-semibold tracking-[-0.01em] text-[var(--ink)]">Maps</h1>
             <p className="mt-3 mb-0 max-w-none whitespace-nowrap text-[17px] leading-[1.47] tracking-[-0.022em] text-[var(--ink-3)] max-xl:whitespace-normal">Scan live maps and open matchup data for the brawlers performing best on each layout.</p>
@@ -236,7 +236,7 @@ export default function MapsPageClient() {
           </div>
         </div>
 
-        <div className="page-summary mb-6 flex items-center justify-between gap-6 p-8 max-md:flex-col max-md:items-stretch max-sm:p-6" style={{ "--summary-gradient": "linear-gradient(135deg, #3B82F6 0%, #7C3AED 52%, #F97316 100%)" } as CSSProperties}>
+        <div className="page-summary mb-6 flex items-center justify-between gap-6 p-8 max-md:flex-col max-md:items-stretch max-sm:p-6" style={{ "--summary-gradient": "linear-gradient(135deg, rgba(59,130,246,0.34) 0%, rgba(124,58,237,0.28) 52%, rgba(240,211,115,0.16) 100%)" } as CSSProperties}>
           <div className="flex min-w-0 items-center gap-3">
             <div className="min-w-0">
               <p className="mb-1 text-[12px] leading-none tracking-[0.08em] text-white/70 uppercase">Most Popular Map</p>
@@ -263,7 +263,7 @@ export default function MapsPageClient() {
           </div>
         </div>
 
-        <div className="relative z-30 mb-8 grid grid-cols-[minmax(240px,320px)_minmax(0,1fr)] gap-x-4 gap-y-3 rounded-[18px] border border-[var(--line)] bg-[var(--panel)] p-4 max-md:grid-cols-1">
+        <div className="dpm-control-bar relative z-30 mb-8 grid grid-cols-[minmax(240px,320px)_minmax(0,1fr)] gap-x-4 gap-y-3 p-4 max-md:grid-cols-1">
           <div className="relative max-md:w-full">
             <div className="flex h-11 items-center gap-2 rounded-full border border-[var(--line)] bg-[var(--panel)] px-4 text-[var(--ink)] transition-colors focus-within:border-[var(--accent)]">
               <Search size={13} className="shrink-0 text-[var(--ink-4)]" />
@@ -458,7 +458,7 @@ export default function MapsPageClient() {
                               setMinPicks(option)
                               setMinPicksOpen(false)
                             }}
-                            className={`flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg px-3 py-1.5 text-left text-[13px] leading-5 transition-colors ${active ? "bg-[var(--ink)] font-semibold text-[#fcfbf8]" : "text-[var(--ink-2)] hover:bg-[var(--panel-2)] hover:text-[var(--ink)]"}`}
+                            className={`flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg px-3 py-1.5 text-left text-[13px] leading-5 transition-colors ${active ? "bg-[var(--ink)] font-semibold text-[var(--ink-on)]" : "text-[var(--ink-2)] hover:bg-[var(--panel-2)] hover:text-[var(--ink)]"}`}
                           >
                             <span>{option}+ picks</span>
                             <Check size={12} strokeWidth={2.5} className={active ? "opacity-100" : "opacity-0"} />

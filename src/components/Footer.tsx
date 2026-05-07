@@ -1,43 +1,44 @@
 "use client"
+
 import { usePathname } from "next/navigation"
 import Link from "next/link"
 
-const navLinks: { label: string; href: string }[] = [
-  { label: "Lensboard", href: "/" },
-  { label: "Brawlers", href: "/brawlers" },
-  { label: "Maps", href: "/meta" },
-  { label: "Leaderboards", href: "/leaderboards/players" },
-  { label: "About", href: "/about" },
+const footerLinks: { label: string; href: string }[] = [
+  { label: "Roadmap", href: "/about#data-status" },
+  { label: "Contact", href: "/contact" },
+  { label: "Privacy", href: "/privacy" },
+  { label: "ToS", href: "/privacy" },
+  { label: "Legal", href: "/about#data-sources" },
+  { label: "FAQ", href: "/about#search-help" },
 ]
 
 export default function Footer() {
   const pathname = usePathname()
-  if (pathname === "/" || pathname.startsWith("/account")) return null
+  if (pathname.startsWith("/account")) return null
 
   return (
-    <footer className="w-full border-t border-[var(--line)] bg-[color-mix(in_srgb,var(--bg)_92%,transparent)] px-6 backdrop-blur-[18px] max-md:px-4 max-[360px]:px-3">
-      <div className="mx-auto flex w-full max-w-[1200px] flex-wrap items-center justify-between gap-x-6 gap-y-3 py-5">
-        <div className="flex min-w-0 items-baseline gap-2.5">
-          <p className="m-0 shrink-0 text-[13px] font-semibold leading-none tracking-[-0.005em] text-[var(--ink)]">BrawlLens</p>
-          <span aria-hidden className="text-[var(--ink-4)]">·</span>
-          <p className="m-0 min-w-0 truncate text-[11.5px] leading-none text-[var(--ink-3)] max-sm:hidden">
-            Battle data, leaderboards, and brawler insight.
+    <footer className="w-full border-t border-white/[0.04] bg-[#0a0d11] px-[30px] text-[#a3a6ad] max-lg:px-5 max-sm:px-4">
+      <div className="flex min-h-[50px] w-full items-center gap-8 max-lg:min-h-[86px] max-lg:flex-wrap max-lg:items-start max-lg:gap-x-5 max-lg:gap-y-3 max-lg:py-4">
+        <div className="flex min-w-0 flex-1 items-center gap-3 max-lg:min-w-full">
+          <span className="shrink-0 text-[12px] font-bold leading-none tracking-[-0.025em] text-[#e7e9ee]">BrawlLens</span>
+          <span aria-hidden className="hidden h-3 w-px bg-white/[0.08] sm:block" />
+          <p className="m-0 max-w-[760px] text-[11.5px] font-medium leading-[1.4] tracking-[-0.005em] text-[#7d8392]">
+            Not endorsed by Supercell. Supercell and associated properties are trademarks or registered trademarks of Supercell Oy.
           </p>
         </div>
 
-        <nav className="flex shrink-0 flex-wrap items-center justify-end gap-x-1 gap-y-1 text-[12px] leading-none">
-          {navLinks.map(link => (
+        <nav className="flex shrink-0 items-center gap-[22px] text-[11.5px] font-semibold leading-none text-[#6f737a] max-md:flex-wrap max-md:gap-x-4 max-md:gap-y-2" aria-label="Footer links">
+          {footerLinks.map(link => (
             <Link
-              key={link.href}
+              key={`${link.label}-${link.href}`}
               href={link.href}
-              className="inline-flex min-h-8 items-center rounded-md px-2.5 text-[var(--ink-3)] no-underline transition-colors hover:bg-[var(--hover-bg)] hover:text-[var(--ink)]"
+              className="whitespace-nowrap text-[#6f737a] no-underline transition-colors duration-150 hover:text-[#e7e9ee]"
             >
               {link.label}
             </Link>
           ))}
-          <span aria-hidden className="mx-1 hidden h-3 w-px bg-[var(--line-2)]/40 sm:block" />
-          <span className="px-1 font-mono text-[11px] tabular-nums text-[var(--ink-4)]">© 2026</span>
         </nav>
+
       </div>
     </footer>
   )

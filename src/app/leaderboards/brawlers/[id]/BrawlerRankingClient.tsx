@@ -38,14 +38,14 @@ export default function BrawlerRankingClient({ data, brawlerName }: { data: Play
         <ArrowLeft size={12} /> Brawler Rankings
       </Link>
       <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-zinc-900 dark:text-white mb-2">{brawlerName}</h1>
-      <p className="text-sm text-zinc-500 dark:text-white/40 mb-10">Top 200 global players ranked by {brawlerName} trophies.</p>
+      <p className="text-sm text-zinc-500 dark:text-white/40 mb-10">Top 200 global players ranked for {brawlerName}.</p>
 
       <div className="space-y-1">
         <div className="grid grid-cols-[52px_1fr_auto_auto_24px] gap-4 px-5 py-2 text-[10px] font-semibold tracking-[0.08em] text-zinc-400 uppercase dark:text-white/50 max-md:hidden">
           <span>#</span>
           <span>Player</span>
           <span className="hidden sm:block">Club</span>
-          <span>Trophies</span>
+          <span>Score</span>
           <span />
         </div>
 
@@ -116,7 +116,7 @@ export default function BrawlerRankingClient({ data, brawlerName }: { data: Play
       <div className="mt-16 border border-black/[0.08] dark:border-white/[0.08] bg-black/[0.02] dark:bg-white/[0.02] p-8 max-w-2xl mx-auto text-center">
         <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 dark:text-white/50 mb-4">About Brawler Rankings</p>
         <p className="text-sm text-zinc-500 dark:text-white/40 leading-relaxed">
-          Brawler rankings show the top 200 global players for {brawlerName}, ranked by trophies earned with that brawler. Rankings are updated every 30 minutes using real-time data. Click any player to view their full profile.
+          Brawler rankings show the top 200 global players for {brawlerName}. Rankings are updated every 30 minutes using real-time data. Click any player to view their full profile.
         </p>
       </div>
     </main>

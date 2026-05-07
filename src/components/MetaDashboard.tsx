@@ -204,7 +204,7 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch,
               onClick={() => onSelect({ name: map.name, imageUrl, mode, isLive })}
               className="map-card group relative block w-full cursor-pointer overflow-hidden border border-[var(--line)] bg-[var(--panel)] p-0 text-left transition-[transform,border-color,background] duration-200 hover:-translate-y-px hover:border-[var(--line-2)] active:-translate-y-px"
             >
-              <div className="relative z-[1] overflow-hidden rounded-t-lg bg-[radial-gradient(circle_at_50%_46%,color-mix(in_srgb,var(--line-2)_42%,transparent),transparent_70%),var(--panel-2)]">
+              <div className="relative z-[1] overflow-hidden rounded-t-lg bg-[var(--panel-2)]">
                 <MapPreview imageUrl={imageUrl} name={map.name} mode={mode} modeColor={modeColor} />
                 {modeColor && (
                   <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, ${modeColor}, transparent)`, opacity: 0.6 }} />
@@ -255,7 +255,7 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch,
                 <button
                   key={p}
                   onClick={() => setMapPage(p as number)}
-                  className={`grid size-[30px] cursor-pointer place-items-center rounded-lg text-[12px] font-semibold transition ${p === mapPage ? "border border-transparent bg-[var(--accent)] text-[#fcfbf8]" : "border border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_72%,transparent)] text-[var(--ink-3)] hover:-translate-y-px hover:border-[var(--line-2)] hover:bg-[var(--hover-bg)] hover:text-[var(--ink)]"}`}
+                  className={`grid size-[30px] cursor-pointer place-items-center rounded-lg text-[12px] font-semibold transition ${p === mapPage ? "border border-transparent bg-[var(--accent)] text-[var(--ink-on)]" : "border border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_72%,transparent)] text-[var(--ink-3)] hover:-translate-y-px hover:border-[var(--line-2)] hover:bg-[var(--hover-bg)] hover:text-[var(--ink)]"}`}
                 >
                   {(p as number) + 1}
                 </button>

@@ -244,8 +244,8 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
 
   return (
     <>
-      <div className="mx-auto w-full max-w-[1080px] px-6 pt-12 pb-24 max-md:px-4 max-md:pt-8 max-md:pb-[64px] max-[360px]:px-3 max-[360px]:pt-6 max-[360px]:pb-12">
-        <div className="mb-8 flex items-end justify-between gap-8 max-md:flex-col max-md:items-start">
+      <div className="dpm-page-shell max-[360px]:px-3">
+        <div className="dpm-hero-panel mb-6 flex items-end justify-between gap-8 p-6 max-md:flex-col max-md:items-start max-sm:p-5">
           <div className="min-w-0">
             <h1 className="m-0 text-[clamp(28px,4.1vw,46px)] leading-[1.07] font-semibold tracking-[-0.01em] text-[var(--ink)]">Brawlers</h1>
             <p className="mt-3 mb-0 max-w-[640px] text-[17px] leading-[1.47] tracking-[-0.022em] text-[var(--ink-3)]">Browse every brawler, filter by rarity, and open quick ability and meta details.</p>
@@ -256,7 +256,7 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
           </div>
         </div>
 
-        <div className="page-summary mb-6 flex items-center justify-between gap-6 p-8 max-md:flex-col max-md:items-stretch max-sm:p-6" style={{ "--summary-gradient": "linear-gradient(135deg, #7C3AED 0%, #EC4899 46%, #14B8D6 100%)" } as CSSProperties}>
+        <div className="page-summary mb-6 flex items-center justify-between gap-6 p-8 max-md:flex-col max-md:items-stretch max-sm:p-6" style={{ "--summary-gradient": "linear-gradient(135deg, rgba(133,141,255,0.42) 0%, rgba(236,72,153,0.18) 46%, rgba(20,184,166,0.20) 100%)" } as CSSProperties}>
           <div className="flex min-w-0 items-center gap-3">
             <div className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-xl border border-white/20 bg-white/10">
               {topBrawler && (
@@ -292,7 +292,7 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
           </div>
         </div>
 
-        <div className="relative z-30 mb-8 grid grid-cols-[minmax(240px,320px)_minmax(0,1fr)_minmax(150px,190px)] gap-x-4 gap-y-3 rounded-[18px] border border-[var(--line)] bg-[var(--panel)] p-4 max-lg:grid-cols-[minmax(220px,280px)_minmax(150px,190px)] max-md:grid-cols-1">
+        <div className="dpm-control-bar relative z-30 mb-8 grid grid-cols-[minmax(240px,320px)_minmax(0,1fr)_minmax(150px,190px)] gap-x-4 gap-y-3 p-4 max-lg:grid-cols-[minmax(220px,280px)_minmax(150px,190px)] max-md:grid-cols-1">
           <div className="relative max-md:w-full">
             <div className="flex h-11 items-center gap-2 rounded-full border border-[var(--line)] bg-[var(--panel)] px-4 text-[var(--ink)] transition-colors focus-within:border-[var(--accent)]">
               <Search size={13} className="shrink-0 text-[var(--ink-4)]" />
@@ -418,11 +418,11 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
                       setCatalogSort(option.value)
                       setSortOpen(false)
                     }}
-                    className={`flex w-full cursor-pointer items-center justify-between gap-3 rounded-lg px-3 py-2 text-left transition-colors ${active ? "bg-[var(--ink)] text-[#fcfbf8]" : "text-[var(--ink-2)] hover:bg-[var(--panel-2)] hover:text-[var(--ink)]"}`}
+                    className={`flex w-full cursor-pointer items-center justify-between gap-3 rounded-lg px-3 py-2 text-left transition-colors ${active ? "bg-[var(--ink)] text-[var(--ink-on)]" : "text-[var(--ink-2)] hover:bg-[var(--panel-2)] hover:text-[var(--ink)]"}`}
                   >
                     <span className="min-w-0">
                       <span className="block truncate text-[13px] font-semibold">{option.label}</span>
-                      <span className={`block truncate text-[11px] ${active ? "text-[#fcfbf8]/70" : "text-[var(--ink-4)]"}`}>{option.description}</span>
+                      <span className={`block truncate text-[11px] ${active ? "text-[var(--ink-on)]/70" : "text-[var(--ink-4)]"}`}>{option.description}</span>
                     </span>
                     <Check size={12} strokeWidth={2.5} className={active ? "opacity-100" : "opacity-0"} />
                   </button>
@@ -558,7 +558,7 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
                         onClick={() => setTab(t)}
                         className={`relative cursor-pointer rounded-md border-0 px-[15px] py-[7px] text-[14px] font-normal whitespace-nowrap transition-all ${
                           tab === t
-                            ? "bg-[var(--ink)] text-[#fcfbf8] shadow-[var(--shadow-lift)]"
+                            ? "bg-[var(--ink)] text-[var(--ink-on)] shadow-[var(--shadow-lift)]"
                             : "bg-transparent text-[var(--ink-3)] hover:bg-[color-mix(in_srgb,var(--panel-2)_70%,transparent)] hover:text-[var(--ink)]"
                         }`}
                       >

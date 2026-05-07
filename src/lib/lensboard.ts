@@ -168,19 +168,17 @@ function buildLayoutFromSeeds(seeds: Array<{ type: LensboardWidgetId; w: number;
 }
 
 export const DEFAULT_LENSBOARD_LAYOUT: LensboardPanel[] = [
-  { uid: "starter-tracked-battles", type: "tracked-battles", x: 0, y: 0, w: 2, h: 1 },
-  { uid: "starter-maps-indexed", type: "maps-indexed", x: 2, y: 0, w: 2, h: 1 },
-  { uid: "starter-top-mode", type: "top-mode", x: 4, y: 0, w: 2, h: 1 },
-  { uid: "starter-top-player", type: "top-player", x: 6, y: 0, w: 2, h: 1 },
-  { uid: "starter-top-club", type: "top-club", x: 8, y: 0, w: 2, h: 1 },
-  { uid: "starter-player-search", type: "player-search", x: 0, y: 1, w: 3, h: 3 },
-  { uid: "starter-meta-tape", type: "meta-tape", x: 3, y: 1, w: 3, h: 3 },
-  { uid: "starter-recent-profiles", type: "recent-profiles", x: 6, y: 1, w: 2, h: 3 },
-  { uid: "starter-ai-reads", type: "ai-reads", x: 8, y: 1, w: 2, h: 3 },
-  { uid: "starter-live-maps", type: "live-maps", x: 0, y: 4, w: 2, h: 2 },
-  { uid: "starter-mode-volume", type: "mode-volume", x: 2, y: 4, w: 3, h: 2 },
-  { uid: "starter-brawler-signal", type: "brawler-signal", x: 5, y: 4, w: 3, h: 2 },
-  { uid: "starter-signals", type: "signals", x: 8, y: 4, w: 2, h: 2 },
+  { uid: "starter-player-search", type: "player-search", x: 0, y: 0, w: 3, h: 3 },
+  { uid: "starter-meta-tape", type: "meta-tape", x: 3, y: 0, w: 3, h: 3 },
+  { uid: "starter-brawler-signal", type: "brawler-signal", x: 6, y: 0, w: 2, h: 2 },
+  { uid: "starter-tracked-battles", type: "tracked-battles", x: 8, y: 0, w: 2, h: 1 },
+  { uid: "starter-maps-indexed", type: "maps-indexed", x: 8, y: 1, w: 2, h: 1 },
+  { uid: "starter-top-mode", type: "top-mode", x: 6, y: 2, w: 2, h: 1 },
+  { uid: "starter-top-player", type: "top-player", x: 8, y: 2, w: 2, h: 1 },
+  { uid: "starter-live-maps", type: "live-maps", x: 0, y: 3, w: 3, h: 3 },
+  { uid: "starter-mode-volume", type: "mode-volume", x: 3, y: 3, w: 3, h: 2 },
+  { uid: "starter-ai-reads", type: "ai-reads", x: 6, y: 3, w: 3, h: 2 },
+  { uid: "starter-signals", type: "signals", x: 3, y: 5, w: 3, h: 2 },
 ]
 
 export const DEFAULT_LENSBOARD_WIDGETS: LensboardWidgetId[] = DEFAULT_LENSBOARD_LAYOUT.map(panel => panel.type)

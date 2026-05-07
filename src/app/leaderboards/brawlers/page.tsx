@@ -22,6 +22,40 @@ interface Brawler {
 }
 
 const SHELLY_ID = 16000000
+const FALLBACK_RARITY = { name: "Starting Brawler", color: "#9ee5ff" }
+
+interface BrawlerLeaderboardRow {
+  rank: number
+  player_tag: string
+  player_name: string
+  trophies: number
+  club_name: string | null
+  brawler_name: string
+  world_rank: number | null
+  total_trophies: number | null
+}
+
+interface TrophyLeaderboardRow {
+  rank: number
+  player_tag: string
+  trophies: number
+}
+
+async function fetchBrawlers(): Promise<Brawler[]> {
+  try {
+    const response = await fetch("https://api.brawlify.com/v1/brawlers", { next: { revalidate: 3600 } })
+    if (!response.ok) return []
+    const data = await response.json() as { list?: Brawler[] }
+    return data.list ?? []
+  } catch (error) {
+    console.error("Brawler list fetch failed:", error)
+    return []
+  }
+}
+
+function playerKey(tag: string) {
+  return tag.replace(/^#/, "").toUpperCase()
+}
 
 export default async function BrawlerLeaderboardsPage({
   searchParams,
@@ -36,8 +70,8 @@ export default async function BrawlerLeaderboardsPage({
     process.env.SUPABASE_SERVICE_KEY!
   )
 
-  const [brawlerRes, leaderboardRes] = await Promise.all([
-    fetch("https://api.brawlify.com/v1/brawlers", { next: { revalidate: 3600 } }),
+  const [brawlers, leaderboardRes] = await Promise.all([
+    fetchBrawlers(),
     supabase
       .from("brawler_leaderboards")
       .select("rank, player_tag, player_name, trophies, club_name, brawler_name")
@@ -46,14 +80,39 @@ export default async function BrawlerLeaderboardsPage({
       .limit(200),
   ])
 
-  const brawlerData = await brawlerRes.json()
-  const brawlers: Brawler[] = brawlerData.list ?? []
-  const activeBrawler = brawlers.find(b => b.id === brawlerId) ?? null
+  const leaderboardRows = leaderboardRes.data ?? []
+  const tags = leaderboardRows.map(row => row.player_tag).filter(Boolean)
+  const trophyRankRes = tags.length
+    ? await supabase
+        .from("leaderboards")
+        .select("rank, player_tag, trophies")
+        .eq("region", "global")
+        .in("player_tag", tags)
+    : { data: [] as TrophyLeaderboardRow[] | null }
+  const trophyRanks = new Map((trophyRankRes.data ?? []).map(row => [
+    playerKey(row.player_tag),
+    { rank: row.rank, trophies: row.trophies },
+  ]))
+  const data = leaderboardRows.map(row => {
+    const trophyRank = trophyRanks.get(playerKey(row.player_tag))
+    return {
+      ...row,
+      world_rank: trophyRank?.rank ?? null,
+      total_trophies: trophyRank?.trophies ?? null,
+    } as BrawlerLeaderboardRow
+  })
+  const fallbackName = data[0]?.brawler_name ?? "Shelly"
+  const activeBrawler = brawlers.find(b => b.id === brawlerId) ?? {
+    id: brawlerId,
+    name: fallbackName,
+    imageUrl2: "",
+    rarity: FALLBACK_RARITY,
+  }
 
   return (
     <BrawlerLeaderboardClient
       brawlers={brawlers}
-      data={leaderboardRes.data ?? []}
+      data={data}
       activeBrawler={activeBrawler}
     />
   )

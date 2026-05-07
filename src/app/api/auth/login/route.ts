@@ -49,13 +49,13 @@ function setupLinkEmail(email: string, actionLink: string) {
     "If you did not request this, you can ignore this email.",
   ].join("\n")
   const html = `
-    <div style="margin:0;background:#fcfbf8;padding:32px 18px;font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#1c1c1c;">
-      <div style="margin:0 auto;max-width:440px;border:1px solid #e7e3dc;border-radius:16px;background:#fffefa;padding:28px;box-shadow:0 20px 60px rgba(28,28,28,0.08);">
+    <div style="margin:0;background:#080b10;padding:32px 18px;font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#f4f6fb;">
+      <div style="margin:0 auto;max-width:440px;border:1px solid rgba(255,255,255,0.1);border-radius:16px;background:#101419;padding:28px;box-shadow:0 28px 72px rgba(0,0,0,0.42);">
         <div style="height:34px;width:34px;border-radius:10px;background:conic-gradient(from 120deg,#f97316,#ec4899,#8b5cf6,#3b82f6,#14b8d6,#f97316);"></div>
-        <h1 style="margin:24px 0 8px;font-size:28px;line-height:1.05;font-weight:700;letter-spacing:-0.03em;">Set up BrawlLens</h1>
-        <p style="margin:0 0 22px;color:#6f6a62;font-size:14px;line-height:1.55;">Confirm ${safeEmail}, connect your Brawl Stars account, and take the quick site walkthrough.</p>
-        <a href="${safeLink}" style="display:block;border-radius:10px;background:#1c1c1c;color:#fcfbf8;text-align:center;text-decoration:none;padding:13px 16px;font-size:14px;font-weight:650;">Finish setup</a>
-        <p style="margin:22px 0 0;color:#8f8980;font-size:12px;line-height:1.55;">If you did not request this, you can safely ignore this email.</p>
+        <h1 style="margin:24px 0 8px;font-size:28px;line-height:1.05;font-weight:700;letter-spacing:-0.03em;color:#f4f6fb;">Set up BrawlLens</h1>
+        <p style="margin:0 0 22px;color:#a7adba;font-size:14px;line-height:1.55;">Confirm ${safeEmail}, connect your Brawl Stars account, and take the quick site walkthrough.</p>
+        <a href="${safeLink}" style="display:block;border-radius:10px;background:#202632;color:#f7f8ff;text-align:center;text-decoration:none;padding:13px 16px;font-size:14px;font-weight:650;">Finish setup</a>
+        <p style="margin:22px 0 0;color:rgba(244,246,251,0.48);font-size:12px;line-height:1.55;">If you did not request this, you can safely ignore this email.</p>
       </div>
     </div>
   `

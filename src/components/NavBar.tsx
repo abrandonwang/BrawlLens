@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
-import { ChevronLeft, ChevronRight, Menu, X } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, Menu, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -18,17 +18,20 @@ type NavPanelItem = {
   action?: "assistant";
   disabled?: boolean;
   badge?: string;
-  wide?: boolean;
 };
 
 const browseItems: NavPanelItem[] = [
   { label: "Brawlers", href: "/brawlers", description: "Stats and abilities" },
   { label: "Maps", href: "/meta", description: "Modes and matchups" },
-  { label: "Player Leaderboard", href: "/leaderboards/players", description: "Top player trophies" },
-  { label: "Club Leaderboard", href: "/leaderboards/clubs", description: "Top club trophies" },
-  { label: "Brawler Leaderboard", href: "/leaderboards/brawlers", description: "Brawler trophy ranks" },
   { label: "Ask AI", description: "Ask data questions", action: "assistant" },
-  { label: "Guide", description: "Coming soon", disabled: true, badge: "Coming soon", wide: true },
+  { label: "Guide", description: "Coming soon", disabled: true },
+];
+
+const leaderboardItems: NavPanelItem[] = [
+  { label: "Players", href: "/leaderboards/players", description: "Top player trophies" },
+  { label: "Clubs", href: "/leaderboards/clubs", description: "Top club trophies" },
+  { label: "Brawlers", href: "/leaderboards/brawlers", description: "Brawler trophy ranks" },
+  { label: "Community", description: "Coming soon", disabled: true },
 ];
 
 const aboutItems: NavPanelItem[] = [
@@ -51,10 +54,11 @@ const accountMenuItems = [
 
 const rootMenuLinks = [
   { label: "Lensboard", href: "/", description: "Custom data workspace" },
+  { label: "Leaderboards", href: "/leaderboards/players", description: "Rankings" },
 ];
 
 type MenuPanel = "root" | "browse" | "about";
-type DesktopPanel = "browse" | "about";
+type DesktopPanel = "browse" | "leaderboards";
 type LoginState = "idle" | "sending" | "sent" | "error";
 type AuthMode = "signup" | "login";
 
@@ -106,24 +110,11 @@ function authErrorMessage(error: string | undefined, mode: AuthMode) {
 }
 
 function LogoMark({ size = "sm" }: { size?: "sm" | "lg" }) {
-  const outer = size === "lg" ? "size-[38px] rounded-[12px]" : "size-[18px] rounded-[5px]";
+  const outer = size === "lg" ? "size-[38px] rounded-[12px]" : "size-[21px] rounded-[6px]";
   const inner = size === "lg" ? "after:inset-[8px] after:rounded-[5px]" : "after:inset-[4px] after:rounded-[2.5px]";
   return (
-    <span className={`relative inline-block ${outer} bg-[conic-gradient(from_var(--logo-angle),#f97316,#ec4899,#8b5cf6,#3b82f6,#14b8d6,#f97316)] animate-[logo-spin_8s_linear_infinite] after:absolute ${inner} after:bg-[#fcfbf8] after:content-['']`} />
+    <span className={`relative inline-block ${outer} bg-[conic-gradient(from_var(--logo-angle),#f97316,#ec4899,#8b5cf6,#3b82f6,#14b8d6,#f97316)] animate-[logo-spin_8s_linear_infinite] after:absolute ${inner} after:bg-black after:content-['']`} />
   );
-}
-
-function localAccountSetup() {
-  try {
-    const parsed = JSON.parse(window.localStorage.getItem("brawllens_setup") ?? "null") as { playerName?: unknown; playerTag?: unknown } | null;
-    if (!parsed || typeof parsed !== "object") return null;
-    return {
-      playerName: typeof parsed.playerName === "string" && parsed.playerName.trim() ? parsed.playerName.trim() : null,
-      playerTag: typeof parsed.playerTag === "string" && parsed.playerTag.trim() ? parsed.playerTag.trim() : null,
-    };
-  } catch {
-    return null;
-  }
 }
 
 export default function NavBar() {
@@ -152,22 +143,21 @@ export default function NavBar() {
   const [loginError, setLoginError] = useState<string | null>(null);
   const previousPathnameRef = useRef(pathname);
   const desktopNavRef = useRef<HTMLDivElement>(null);
+  const browseTriggerRef = useRef<HTMLDivElement>(null);
   const accountMenuRef = useRef<HTMLDivElement>(null);
   const menuCloseTimerRef = useRef<number | null>(null);
   const desktopHoverTimerRef = useRef<number | null>(null);
   const loginInputRef = useRef<HTMLInputElement>(null);
+  const [desktopPanelLeft, setDesktopPanelLeft] = useState(190);
   const bodyScrollLocked = isMenuOpen || menuClosing || isLoginOpen;
 
   const applyAccountUser = useCallback((user: PremiumUser | null) => {
-    const localSetup = localAccountSetup();
     setIsSignedIn(Boolean(user));
     setAccountEmail(user?.email ?? null);
     setAccountName(
       user?.accountSetup?.playerName
         ?? user?.displayName
-        ?? localSetup?.playerName
         ?? (user?.accountSetup?.playerTag ? `#${user.accountSetup.playerTag}` : null)
-        ?? (localSetup?.playerTag ? `#${localSetup.playerTag}` : null),
     );
   }, []);
 
@@ -219,6 +209,7 @@ export default function NavBar() {
         setSuppressedDesktopPanel(null);
         setIsLoginOpen(false);
         setIsAccountMenuOpen(false);
+        return;
       }
     }
     window.addEventListener("keydown", onKey);
@@ -387,9 +378,19 @@ export default function NavBar() {
     }
   }
 
+  function updateDesktopPanelLeft() {
+    const trigger = browseTriggerRef.current;
+    if (!trigger) return;
+    const panelWidth = window.innerWidth < 1280 ? 500 : 540;
+    const triggerRect = trigger.getBoundingClientRect();
+    const nextLeft = Math.max(16, Math.min(triggerRect.left - 18, window.innerWidth - panelWidth - 16));
+    setDesktopPanelLeft(Math.round(nextLeft));
+  }
+
   function openHoverDesktopPanel(panel: DesktopPanel) {
     if (suppressedDesktopPanel === panel) return;
     clearDesktopHoverTimer();
+    updateDesktopPanelLeft();
     setHoverDesktopPanel(panel);
   }
 
@@ -411,6 +412,7 @@ export default function NavBar() {
       return;
     }
 
+    updateDesktopPanelLeft();
     setDesktopPanel(panel);
     setHoverDesktopPanel(null);
     setSuppressedDesktopPanel(null);
@@ -528,6 +530,8 @@ export default function NavBar() {
 
   const accountLabel = isSignedIn ? accountName ?? "Account" : "Get started";
   const browseActive = browseItems.some(item => item.href && isDesktopItemActive(pathname, activeHash, item.href));
+  const leaderboardsActive = leaderboardItems.some(item => item.href && isDesktopItemActive(pathname, activeHash, item.href));
+  const isLeaderboardsRoute = pathname.startsWith("/leaderboards");
   const aboutActive = aboutItems.some(item => item.href && isDesktopItemActive(pathname, activeHash, item.href));
   const loginEmailCheck = useEmailCheck(loginEmail, isLoginOpen && authMode === "signup");
   const loginEmailFormatValid = isEmailFormatValid(loginEmail);
@@ -552,30 +556,48 @@ export default function NavBar() {
   const menuVisible = isMenuOpen || menuClosing;
   const visibleDesktopPanel = desktopPanel ?? hoverDesktopPanel;
   const renderedDesktopPanel = visibleDesktopPanel ?? lastDesktopPanel;
-  const desktopPanelIndex = renderedDesktopPanel === "about" ? 1 : 0;
+  const desktopPanelIndex = renderedDesktopPanel === "leaderboards" ? 1 : 0;
+  const navPositionClass = isLeaderboardsRoute
+    ? "relative z-[100]"
+    : "fixed top-0 left-0 z-[100]";
   const mobileItemStyle = (index: number) => ({
     animationDelay: menuClosing ? "0ms" : `${30 + index * 42}ms`,
   });
   const navTextClass = (active: boolean) =>
-    `inline-flex min-h-9 items-center rounded-lg border-0 bg-transparent px-3 text-[14px] leading-none text-[var(--ink)] no-underline transition-opacity duration-200 ${active ? "opacity-100 hover:opacity-90" : "opacity-100 hover:opacity-[0.88]"}`;
+    `relative inline-flex h-[60px] items-center rounded-none border-0 bg-transparent px-0 text-[14px] font-semibold leading-none tracking-[-0.005em] no-underline outline-none transition-colors duration-150 focus-visible:text-white ${active ? "text-white hover:text-white" : "text-[#cfd2d8] hover:text-white"} ${isLeaderboardsRoute && active ? "after:absolute after:right-0 after:bottom-[10px] after:left-0 after:h-[3px] after:rounded-full after:bg-[#ead672] after:content-['']" : ""}`;
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("leaderboards-nav-flow", isLeaderboardsRoute);
+    return () => document.documentElement.classList.remove("leaderboards-nav-flow");
+  }, [isLeaderboardsRoute]);
 
   useEffect(() => {
     if (visibleDesktopPanel) setLastDesktopPanel(visibleDesktopPanel);
   }, [visibleDesktopPanel]);
 
+  useEffect(() => {
+    if (!visibleDesktopPanel) return;
+    updateDesktopPanelLeft();
+
+    function onResize() {
+      updateDesktopPanelLeft();
+    }
+
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [visibleDesktopPanel]);
+
   return (
     <>
-      <nav className="fixed top-0 left-0 z-[100] grid min-h-16 w-full grid-cols-[auto_1fr_auto] items-center gap-[18px] border-b border-[var(--line)] bg-[color-mix(in_srgb,var(--bg)_92%,transparent)] px-[max(16px,calc((100vw-1200px)/2))] backdrop-blur-[18px] backdrop-saturate-[145%] max-lg:px-4 max-[430px]:gap-2 max-[430px]:px-3">
-        <Link href="/" className="inline-flex items-center gap-1.5 whitespace-nowrap text-[18px] font-semibold leading-none text-[var(--ink)] no-underline" aria-label="BrawlLens home">
+      <nav className={`${navPositionClass} flex h-[60px] w-full items-center border-b border-black bg-black px-6 text-[#f4f5f7] max-lg:px-4 max-[430px]:px-3`}>
+        <Link href="/" className="relative z-10 inline-flex h-[60px] shrink-0 items-center gap-[7px] whitespace-nowrap text-[19px] font-extrabold leading-none tracking-[-0.045em] text-white no-underline max-[380px]:text-[18px]" aria-label="BrawlLens home">
           <LogoMark />
-          <span className="nav-wordmark max-[380px]:sr-only">BrawlLens</span>
+          <span className={isLeaderboardsRoute ? "sr-only" : "nav-wordmark max-[380px]:sr-only"}>BrawlLens</span>
         </Link>
 
-        <div ref={desktopNavRef} className="hidden min-w-0 items-center justify-center gap-1 lg:flex">
-          <Link href="/" className={navTextClass(isRouteActive(pathname, "/"))}>
-            Lensboard
-          </Link>
+        <div ref={desktopNavRef} className="relative z-10 ml-[40px] hidden h-[60px] min-w-0 items-center gap-[26px] lg:flex">
           <div
+            ref={browseTriggerRef}
             className="nav-popover relative"
             data-open={visibleDesktopPanel === "browse" ? "true" : undefined}
             data-suppressed={suppressedDesktopPanel === "browse" ? "true" : undefined}
@@ -592,47 +614,48 @@ export default function NavBar() {
               aria-haspopup="true"
               aria-expanded={visibleDesktopPanel === "browse"}
             >
-              Browse
-              <ChevronRight size={14} strokeWidth={1.9} className="nav-trigger-arrow transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]" />
+              Tierlist &amp; Brawlers
+              <ChevronDown size={13} strokeWidth={2.25} className="nav-trigger-arrow ml-0.5 transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]" />
             </button>
           </div>
           <div
             className="nav-popover relative"
-            data-open={visibleDesktopPanel === "about" ? "true" : undefined}
-            data-suppressed={suppressedDesktopPanel === "about" ? "true" : undefined}
-            onMouseEnter={() => openHoverDesktopPanel("about")}
+            data-open={visibleDesktopPanel === "leaderboards" ? "true" : undefined}
+            data-suppressed={suppressedDesktopPanel === "leaderboards" ? "true" : undefined}
+            onMouseEnter={() => openHoverDesktopPanel("leaderboards")}
             onMouseLeave={() => {
-              clearSuppressedDesktopPanel("about");
-              scheduleHoverDesktopClose("about");
+              clearSuppressedDesktopPanel("leaderboards");
+              scheduleHoverDesktopClose("leaderboards");
             }}
           >
             <button
               type="button"
-              onClick={() => toggleDesktopPanel("about")}
-              className={`${navTextClass(aboutActive)} cursor-pointer gap-1.5`}
+              onClick={() => toggleDesktopPanel("leaderboards")}
+              className={`${navTextClass(leaderboardsActive)} cursor-pointer gap-1.5`}
               aria-haspopup="true"
-              aria-expanded={visibleDesktopPanel === "about"}
+              aria-expanded={visibleDesktopPanel === "leaderboards"}
             >
-              About
-              <ChevronRight size={14} strokeWidth={1.9} className="nav-trigger-arrow transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]" />
+              Leaderboards
+              <ChevronDown size={13} strokeWidth={2.25} className="nav-trigger-arrow ml-0.5 transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]" />
             </button>
           </div>
           <div
-            className="nav-browse-panel fixed top-[58px] left-1/2 w-[460px]"
+            className="nav-browse-panel fixed top-[58px] w-[540px] max-xl:w-[500px]"
             data-open={visibleDesktopPanel ? "true" : undefined}
+            style={{ left: desktopPanelLeft }}
             onMouseEnter={clearDesktopHoverTimer}
             onMouseLeave={() => {
               if (visibleDesktopPanel) scheduleHoverDesktopClose(visibleDesktopPanel);
             }}
           >
-            <div className="h-[430px] overflow-hidden rounded-[14px] border border-[var(--line)] bg-[var(--bg)] p-2 shadow-[0_24px_60px_-34px_rgba(28,28,28,0.45),rgba(255,255,255,0.45)_0_0.5px_0_0_inset]">
+            <div className="h-[206px] overflow-hidden rounded-[14px] border border-white/[0.08] bg-[#0b0f12] p-2 text-[#f4f5f7] shadow-[0_28px_70px_-38px_rgba(0,0,0,0.95),rgba(255,255,255,0.08)_0_0.5px_0_0_inset]">
               <div
                 className="nav-panel-track flex h-full w-[200%]"
                 style={{ transform: `translateX(-${desktopPanelIndex * 50}%)` }}
               >
                 <div className="h-full w-1/2 shrink-0 p-0">
                   <div className="px-3 pt-2.5 pb-2">
-                    <p className="m-0 text-[12px] font-semibold text-[var(--ink)]">Browse</p>
+                    <p className="m-0 text-[12px] font-semibold text-[#f4f5f7]">Browse</p>
                   </div>
                   <div className="grid grid-cols-2 gap-1.5 pt-1.5">
                     {browseItems.map(item => {
@@ -644,21 +667,21 @@ export default function NavBar() {
                             key={item.label}
                             type="button"
                             onClick={openAssistantFromNav}
-                            className="flex min-h-[66px] cursor-pointer items-start justify-between gap-3 rounded-[10px] border-0 bg-transparent px-3 py-2.5 text-left font-[inherit] text-[var(--ink)] transition-colors duration-200 hover:bg-[var(--hover-bg)]"
+                            className="flex min-h-[58px] cursor-pointer items-start justify-between gap-3 rounded-[10px] border-0 bg-transparent px-3 py-2.5 text-left font-[inherit] text-[#f4f5f7] transition-colors duration-200 hover:bg-white/[0.06]"
                           >
                             <span className="min-w-0">
-                              <span className="inline-flex items-center gap-1.5 text-[14px] font-semibold leading-tight text-[var(--ink)]">
+                              <span className="inline-flex items-center gap-1.5 text-[14px] font-semibold leading-tight text-[#f4f5f7]">
                                 <span className="truncate">{item.label}</span>
                                 <Image
                                   src="/ai-sparkle-512.png"
                                   alt=""
                                   width={14}
                                   height={14}
-                                  className="size-3.5 shrink-0 object-contain"
+                                  className="size-3.5 shrink-0 object-contain brightness-0 invert opacity-85"
                                   aria-hidden="true"
                                 />
                               </span>
-                              <span className="mt-1 block text-[12px] leading-snug text-[var(--ink-3)]">{item.description}</span>
+                              <span className="mt-1 block text-[12px] leading-snug text-[#8f96a1]">{item.description}</span>
                             </span>
                           </button>
                         );
@@ -669,14 +692,14 @@ export default function NavBar() {
                           <div
                             key={item.label}
                             aria-disabled="true"
-                            className={`flex min-h-[66px] items-start justify-between gap-3 rounded-[10px] px-3 py-2.5 text-[var(--ink-4)] opacity-75 ${item.wide ? "col-span-2" : ""}`}
+                            className="flex min-h-[58px] items-start justify-between gap-3 rounded-[10px] px-3 py-2.5 text-[#68707b] opacity-75"
                           >
                             <span className="min-w-0">
-                              <span className="block truncate text-[14px] font-semibold leading-tight text-[var(--ink-3)]">{item.label}</span>
-                              <span className="mt-1 block text-[12px] leading-snug text-[var(--ink-4)]">{item.description}</span>
+                              <span className="block truncate text-[14px] font-semibold leading-tight text-[#8f96a1]">{item.label}</span>
+                              <span className="mt-1 block text-[12px] leading-snug text-[#68707b]">{item.description}</span>
                             </span>
                             {item.badge && (
-                              <span className="mt-0.5 shrink-0 rounded-full border border-[var(--line)] px-2 py-0.5 text-[10px] font-medium leading-4 text-[var(--ink-4)]">
+                              <span className="mt-0.5 shrink-0 rounded-full border border-white/[0.08] px-2 py-0.5 text-[10px] font-medium leading-4 text-[#8f96a1]">
                                 {item.badge}
                               </span>
                             )}
@@ -693,11 +716,11 @@ export default function NavBar() {
                             setHoverDesktopPanel(null);
                             setSuppressedDesktopPanel(null);
                           }}
-                          className={`flex min-h-[66px] items-start gap-3 rounded-[10px] px-3 py-2.5 text-inherit no-underline transition-colors duration-200 ${active ? "bg-[var(--ink)] text-[#fcfbf8]" : "text-[var(--ink)] hover:bg-[var(--hover-bg)]"}`}
+                          className={`flex min-h-[58px] items-start gap-3 rounded-[10px] px-3 py-2.5 text-inherit no-underline transition-colors duration-200 ${active ? "bg-[#f4f5f7] text-[#080a0c]" : "text-[#f4f5f7] hover:bg-white/[0.06]"}`}
                         >
                           <span className="min-w-0">
-                            <span className={`block truncate text-[14px] font-semibold leading-tight ${active ? "text-[#fcfbf8]" : "text-[var(--ink)]"}`}>{item.label}</span>
-                            <span className={`mt-1 block text-[12px] leading-snug ${active ? "text-[#fcfbf8]/70" : "text-[var(--ink-3)]"}`}>{item.description}</span>
+                            <span className={`block truncate text-[14px] font-semibold leading-tight ${active ? "text-[#080a0c]" : "text-[#f4f5f7]"}`}>{item.label}</span>
+                            <span className={`mt-1 block text-[12px] leading-snug ${active ? "text-[#080a0c]/65" : "text-[#8f96a1]"}`}>{item.description}</span>
                           </span>
                         </Link>
                       );
@@ -706,12 +729,25 @@ export default function NavBar() {
                 </div>
                 <div className="h-full w-1/2 shrink-0 p-0">
                   <div className="px-3 pt-2.5 pb-2">
-                    <p className="m-0 text-[12px] font-semibold text-[var(--ink)]">About</p>
+                    <p className="m-0 text-[12px] font-semibold text-[#f4f5f7]">Leaderboards</p>
                   </div>
                   <div className="grid grid-cols-2 gap-1.5 pt-1.5">
-                    {aboutItems.map(item => {
-                      if (!item.href) return null;
-                      const active = visibleDesktopPanel === "about" && isDesktopItemActive(pathname, activeHash, item.href);
+                    {leaderboardItems.map(item => {
+                      if (!item.href || item.disabled) {
+                        return (
+                          <div
+                            key={item.label}
+                            aria-disabled="true"
+                            className="flex min-h-[58px] min-w-0 items-start justify-between gap-3 rounded-[10px] px-3 py-2.5 text-[#68707b] opacity-75"
+                          >
+                            <span className="min-w-0">
+                              <span className="block truncate text-[14px] font-semibold leading-tight text-[#8f96a1]">{item.label}</span>
+                              <span className="mt-1 block text-[12px] leading-snug text-[#68707b]">{item.description}</span>
+                            </span>
+                          </div>
+                        );
+                      }
+                      const active = visibleDesktopPanel === "leaderboards" && isDesktopItemActive(pathname, activeHash, item.href);
                       return (
                         <Link
                           key={item.href}
@@ -721,11 +757,11 @@ export default function NavBar() {
                             setHoverDesktopPanel(null);
                             setSuppressedDesktopPanel(null);
                           }}
-                          className={`flex min-h-[66px] min-w-0 items-start justify-between gap-3 rounded-[10px] px-3 py-2.5 text-inherit no-underline transition-colors duration-200 ${active ? "bg-[var(--ink)] text-[#fcfbf8]" : "text-[var(--ink)] hover:bg-[var(--hover-bg)]"}`}
+                          className={`flex min-h-[58px] min-w-0 items-start justify-between gap-3 rounded-[10px] px-3 py-2.5 text-inherit no-underline transition-colors duration-200 ${active ? "bg-[#f4f5f7] text-[#080a0c]" : "text-[#f4f5f7] hover:bg-white/[0.06]"}`}
                         >
                           <span className="min-w-0">
-                            <span className={`block truncate text-[14px] font-semibold leading-tight ${active ? "text-[#fcfbf8]" : "text-[var(--ink)]"}`}>{item.label}</span>
-                            <span className={`mt-1 block text-[12px] leading-snug ${active ? "text-[#fcfbf8]/70" : "text-[var(--ink-3)]"}`}>{item.description}</span>
+                            <span className={`block truncate text-[14px] font-semibold leading-tight ${active ? "text-[#080a0c]" : "text-[#f4f5f7]"}`}>{item.label}</span>
+                            <span className={`mt-1 block text-[12px] leading-snug ${active ? "text-[#080a0c]/65" : "text-[#8f96a1]"}`}>{item.description}</span>
                           </span>
                         </Link>
                       );
@@ -737,63 +773,74 @@ export default function NavBar() {
           </div>
         </div>
 
-        <div className="flex min-w-0 shrink-0 items-center justify-end gap-1.5 max-[430px]:gap-1">
+        <div className="relative z-10 ml-auto flex min-w-0 shrink-0 items-center justify-end gap-2 max-[430px]:gap-1.5">
           <button
             type="button"
             onClick={() => setIsAssistantOpen(o => !o)}
-            className={`hidden size-[34px] cursor-pointer place-items-center rounded-md border-0 bg-transparent p-0 transition-[opacity,transform] duration-150 hover:opacity-80 active:scale-95 lg:grid ${isAssistantOpen ? "opacity-100" : "opacity-90"}`}
-            aria-label="Ask AI assistant"
+            className={`hidden h-[34px] cursor-pointer items-center gap-1.5 rounded-[7px] px-2.5 text-left text-[10px] font-extrabold uppercase leading-[1.05] tracking-[0.01em] text-[#1a1408] shadow-[rgba(255,255,255,0.45)_0_0.5px_0_0_inset,rgba(0,0,0,0.25)_0_1px_2px] transition-[filter,transform] duration-150 hover:brightness-105 active:scale-[0.98] md:inline-flex ${isLeaderboardsRoute ? "bg-[#e8c86c]" : "bg-gradient-to-b from-[#f5d573] to-[#e6b94a]"}`}
+            aria-label="Get BrawlLens Pro"
             aria-expanded={isAssistantOpen}
-            title="Brawl AI"
+            title="BrawlLens Pro Beta"
           >
             <Image
               src="/ai-sparkle-512.png"
               alt=""
               width={20}
               height={20}
-              className="size-5 object-contain"
+              className="size-5 shrink-0 object-contain"
               aria-hidden="true"
             />
+            <span className="hidden whitespace-nowrap sm:block">Get BrawlLens<br />Pro Beta</span>
           </button>
-          {isSignedIn ? (
+          {isLeaderboardsRoute ? (
+            <button
+              type="button"
+              onClick={openLogin}
+              className="inline-flex h-[34px] cursor-pointer items-center gap-2 whitespace-nowrap rounded-full border border-white/[0.14] bg-[#171a20] px-3.5 text-[14px] font-bold leading-none text-[#d9dbe1] outline-none shadow-[rgba(255,255,255,0.07)_0_0.5px_0_0_inset] transition-colors duration-150 hover:border-white/[0.22] hover:bg-[#1f232b] hover:text-white focus-visible:ring-1 focus-visible:ring-white/[0.18] max-[420px]:px-3"
+            >
+              <span>Get started</span>
+              <ChevronDown size={14} strokeWidth={2} className="text-[#9ca1aa] max-[430px]:hidden" />
+            </button>
+          ) : isSignedIn ? (
             <div ref={accountMenuRef} className="relative shrink-0">
               <button
                 type="button"
                 onClick={() => setIsAccountMenuOpen(open => !open)}
-                className="inline-flex h-[34px] min-w-[76px] max-w-[220px] shrink-0 cursor-pointer items-center justify-center whitespace-nowrap rounded-md border-0 bg-[var(--ink)] px-3.5 text-[13px] leading-[1.35] text-[#fcfbf8] shadow-[var(--shadow-lift)] transition-opacity duration-150 hover:opacity-85 max-[540px]:max-w-[180px] max-[430px]:max-w-[132px] max-[420px]:px-3"
+                className="inline-flex h-[34px] min-w-[76px] max-w-[220px] shrink-0 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-full border border-white/[0.14] bg-[#171a20] px-3.5 text-[14px] font-bold leading-none text-[#d9dbe1] outline-none shadow-[rgba(255,255,255,0.07)_0_0.5px_0_0_inset] transition-colors duration-150 hover:border-white/[0.22] hover:bg-[#1f232b] hover:text-white focus-visible:ring-1 focus-visible:ring-white/[0.18] max-[540px]:max-w-[180px] max-[430px]:max-w-[132px] max-[420px]:px-3"
                 aria-haspopup="menu"
                 aria-expanded={isAccountMenuOpen}
                 title={accountLabel}
               >
                 <span className="block min-w-0 truncate leading-[1.35]">{accountLabel}</span>
+                <ChevronDown size={14} strokeWidth={2} className="shrink-0 text-[#9ca1aa] max-[430px]:hidden" />
               </button>
               {isAccountMenuOpen && (
                 <div
                   role="menu"
-                  className="absolute right-0 top-[calc(100%+9px)] z-[140] w-[278px] origin-top-right rounded-[12px] border border-[var(--line)] bg-[var(--panel)] p-1.5 text-[var(--ink)] shadow-[0_22px_58px_-38px_rgba(28,28,28,0.55),rgba(255,255,255,0.48)_0_0.5px_0_0_inset] animate-[accountMenuIn_0.16s_cubic-bezier(0.16,1,0.3,1)_both]"
+                  className="absolute right-0 top-[calc(100%+9px)] z-[140] w-[278px] origin-top-right rounded-[12px] border border-white/[0.08] bg-[#0b0f12] p-1.5 text-[#f4f5f7] shadow-[0_24px_64px_-36px_rgba(0,0,0,0.95),rgba(255,255,255,0.08)_0_0.5px_0_0_inset] animate-[accountMenuIn_0.16s_cubic-bezier(0.16,1,0.3,1)_both]"
                 >
                   <div className="px-2.5 py-2.5">
-                    <p className="m-0 truncate text-[14px] font-semibold leading-tight text-[var(--ink)]">{accountLabel}</p>
-                    {accountEmail && <p className="mt-1 mb-0 truncate text-[12px] leading-tight text-[var(--ink-3)]">{accountEmail}</p>}
+                    <p className="m-0 truncate text-[14px] font-semibold leading-tight text-[#f4f5f7]">{accountLabel}</p>
+                    {accountEmail && <p className="mt-1 mb-0 truncate text-[12px] leading-tight text-[#8f96a1]">{accountEmail}</p>}
                   </div>
-                  <div className="my-1 h-px bg-[var(--line)]" />
+                  <div className="my-1 h-px bg-white/[0.08]" />
                   {accountMenuItems.map(({ label, href }) => (
                     <Link
                       key={href}
                       href={href}
                       role="menuitem"
                       onClick={() => setIsAccountMenuOpen(false)}
-                      className="flex min-h-9 items-center rounded-[8px] px-2.5 py-2 text-[13px] font-medium text-[var(--ink-2)] no-underline transition-colors duration-150 hover:bg-[var(--hover-bg)] hover:text-[var(--ink)]"
+                      className="flex min-h-9 items-center rounded-[8px] px-2.5 py-2 text-[13px] font-medium text-[#c9cdd3] no-underline transition-colors duration-150 hover:bg-white/[0.06] hover:text-[#f4f5f7]"
                     >
                       <span className="truncate">{label}</span>
                     </Link>
                   ))}
-                  <div className="my-1 h-px bg-[var(--line)]" />
+                  <div className="my-1 h-px bg-white/[0.08]" />
                   <button
                     type="button"
                     role="menuitem"
                     onClick={signOut}
-                    className="flex min-h-9 w-full cursor-pointer items-center rounded-[8px] border-0 bg-transparent px-2.5 py-2 text-left text-[13px] font-medium text-[var(--ink-2)] transition-colors duration-150 hover:bg-[var(--hover-bg)] hover:text-[var(--ink)]"
+                    className="flex min-h-9 w-full cursor-pointer items-center rounded-[8px] border-0 bg-transparent px-2.5 py-2 text-left text-[13px] font-medium text-[#c9cdd3] transition-colors duration-150 hover:bg-white/[0.06] hover:text-[#f4f5f7]"
                   >
                     Sign out
                   </button>
@@ -804,14 +851,15 @@ export default function NavBar() {
             <button
               type="button"
               onClick={openLogin}
-              className="inline-flex h-[34px] cursor-pointer items-center whitespace-nowrap rounded-md border-0 bg-[var(--ink)] px-3.5 text-[13px] leading-[1.35] text-[#fcfbf8] shadow-[var(--shadow-lift)] transition-opacity duration-150 hover:opacity-85 max-[420px]:px-3"
+              className="inline-flex h-[34px] cursor-pointer items-center gap-2 whitespace-nowrap rounded-full border border-white/[0.14] bg-[#171a20] px-3.5 text-[14px] font-bold leading-none text-[#d9dbe1] outline-none shadow-[rgba(255,255,255,0.07)_0_0.5px_0_0_inset] transition-colors duration-150 hover:border-white/[0.22] hover:bg-[#1f232b] hover:text-white focus-visible:ring-1 focus-visible:ring-white/[0.18] max-[420px]:px-3"
             >
               <span>{accountLabel}</span>
+              <ChevronDown size={14} strokeWidth={2} className="text-[#9ca1aa] max-[430px]:hidden" />
             </button>
           )}
           <button
             type="button"
-            className="relative grid size-9 cursor-pointer place-items-center rounded-md border-0 bg-transparent p-0 text-[var(--ink-3)] outline-none hover:text-[var(--ink)] focus-visible:outline-none lg:hidden"
+            className="relative grid size-9 cursor-pointer place-items-center rounded-md border-0 bg-transparent p-0 text-[#9ca1aa] outline-none hover:text-white focus-visible:outline-none lg:hidden"
             onClick={toggleMenu}
             aria-label={isMenuOpen ? "Close navigation menu" : "Open navigation menu"}
             aria-expanded={isMenuOpen}
@@ -831,11 +879,10 @@ export default function NavBar() {
           </button>
         </div>
       </nav>
-      <div style={{ height: 64 }} />
 
       {menuVisible && (
         <div
-          className="fixed inset-x-0 top-16 bottom-0 z-[90] flex flex-col bg-[var(--bg)] px-4 pt-0 pb-5 text-[var(--ink)] lg:hidden"
+          className="fixed inset-x-0 top-[60px] bottom-0 z-[90] flex flex-col bg-[#07090a] px-4 pt-0 pb-5 text-[#f4f5f7] lg:hidden"
           style={{
             animation: menuClosing
               ? "mobileMenuOut 0.34s cubic-bezier(0.4,0,1,1) forwards"
@@ -847,7 +894,7 @@ export default function NavBar() {
               <button
                 type="button"
                 onClick={() => setMenuPanel("browse")}
-                className={`mobile-menu-item flex min-h-[48px] w-full cursor-pointer items-center justify-between border-0 bg-transparent px-0 text-left text-[18px] text-[var(--ink)] ${browseActive ? "font-semibold" : ""}`}
+                className={`mobile-menu-item flex min-h-[48px] w-full cursor-pointer items-center justify-between border-0 bg-transparent px-0 text-left text-[18px] text-[#f4f5f7] ${browseActive ? "font-semibold" : ""}`}
                 style={mobileItemStyle(0)}
               >
                 <span>Browse</span>
@@ -858,17 +905,17 @@ export default function NavBar() {
                   key={item.label}
                   href={item.href}
                   onClick={closeMenu}
-                  className={`mobile-menu-item flex min-h-[48px] items-center justify-between text-[18px] text-[var(--ink)] no-underline ${item.href && isRouteActive(pathname, item.href) ? "font-semibold" : ""}`}
+                  className={`mobile-menu-item flex min-h-[48px] items-center justify-between text-[18px] text-[#f4f5f7] no-underline ${item.href && isRouteActive(pathname, item.href) ? "font-semibold" : ""}`}
                   style={mobileItemStyle(index + 1)}
                 >
                   <span>{item.label}</span>
-                  {item.href && isRouteActive(pathname, item.href) && <span className="text-[13px] font-normal text-[var(--ink-4)]">Current</span>}
+                  {item.href && isRouteActive(pathname, item.href) && <span className="text-[13px] font-normal text-[#68707b]">Current</span>}
                 </Link>
               ))}
               <button
                 type="button"
                 onClick={() => setMenuPanel("about")}
-                className={`mobile-menu-item flex min-h-[48px] w-full cursor-pointer items-center justify-between border-0 bg-transparent px-0 text-left text-[18px] text-[var(--ink)] ${aboutActive ? "font-semibold" : ""}`}
+                className={`mobile-menu-item flex min-h-[48px] w-full cursor-pointer items-center justify-between border-0 bg-transparent px-0 text-left text-[18px] text-[#f4f5f7] ${aboutActive ? "font-semibold" : ""}`}
                 style={mobileItemStyle(rootMenuLinks.length + 1)}
               >
                 <span>About</span>
@@ -880,14 +927,14 @@ export default function NavBar() {
               <button
                 type="button"
                 onClick={() => setMenuPanel("root")}
-                className="mobile-menu-item mb-7 inline-flex h-8 w-fit cursor-pointer appearance-none items-center gap-2 rounded-none border-0 bg-transparent p-0 text-[14px] font-medium text-[var(--ink-3)] shadow-none outline-none transition-colors hover:text-[var(--ink)] focus:text-[var(--ink)] focus:outline-none focus-visible:outline-none"
+                className="mobile-menu-item mb-7 inline-flex h-8 w-fit cursor-pointer appearance-none items-center gap-2 rounded-none border-0 bg-transparent p-0 text-[14px] font-medium text-[#8f96a1] shadow-none outline-none transition-colors hover:text-[#f4f5f7] focus:text-[#f4f5f7] focus:outline-none focus-visible:outline-none"
                 style={mobileItemStyle(0)}
               >
                 <ChevronLeft size={17} strokeWidth={1.9} />
                 Back
               </button>
 
-              <p className="mobile-menu-item m-0 mb-5 text-[14px] text-[var(--ink-3)]" style={mobileItemStyle(1)}>{menuPanel === "browse" ? "Browse" : "About"}</p>
+              <p className="mobile-menu-item m-0 mb-5 text-[14px] text-[#8f96a1]" style={mobileItemStyle(1)}>{menuPanel === "browse" ? "Browse" : "About"}</p>
               {(menuPanel === "browse" ? browseItems : aboutItems).map((item, index) => {
                 if (item.action === "assistant") {
                   return (
@@ -895,21 +942,21 @@ export default function NavBar() {
                       key={item.label}
                       type="button"
                       onClick={openAssistantFromNav}
-                      className="mobile-menu-item mb-6 block cursor-pointer border-0 bg-transparent p-0 text-left font-[inherit] text-[var(--ink)]"
+                      className="mobile-menu-item mb-6 block cursor-pointer border-0 bg-transparent p-0 text-left font-[inherit] text-[#f4f5f7]"
                       style={mobileItemStyle(index + 2)}
                     >
-                      <span className="inline-flex items-center gap-2 text-[18px] font-semibold leading-tight text-[var(--ink)]">
+                      <span className="inline-flex items-center gap-2 text-[18px] font-semibold leading-tight text-[#f4f5f7]">
                         <span>{item.label}</span>
                         <Image
                           src="/ai-sparkle-512.png"
                           alt=""
                           width={15}
                           height={15}
-                          className="size-[15px] shrink-0 object-contain"
+                          className="size-[15px] shrink-0 object-contain brightness-0 invert opacity-85"
                           aria-hidden="true"
                         />
                       </span>
-                      <span className="mt-1 block text-[14px] leading-snug text-[var(--ink-3)]">{item.description}</span>
+                      <span className="mt-1 block text-[14px] leading-snug text-[#8f96a1]">{item.description}</span>
                     </button>
                   );
                 }
@@ -919,14 +966,14 @@ export default function NavBar() {
                     <div
                       key={item.label}
                       aria-disabled="true"
-                      className="mobile-menu-item mb-6 block text-[var(--ink-4)] opacity-75"
+                      className="mobile-menu-item mb-6 block text-[#68707b] opacity-75"
                       style={mobileItemStyle(index + 2)}
                     >
-                      <span className="flex items-center justify-between gap-3 text-[18px] font-semibold leading-tight text-[var(--ink-3)]">
+                      <span className="flex items-center justify-between gap-3 text-[18px] font-semibold leading-tight text-[#8f96a1]">
                         <span>{item.label}</span>
-                        {item.badge && <span className="rounded-full border border-[var(--line)] px-2 py-0.5 text-[11px] font-medium leading-4 text-[var(--ink-4)]">{item.badge}</span>}
+                        {item.badge && <span className="rounded-full border border-white/[0.08] px-2 py-0.5 text-[11px] font-medium leading-4 text-[#8f96a1]">{item.badge}</span>}
                       </span>
-                      <span className="mt-1 block text-[14px] leading-snug text-[var(--ink-4)]">{item.description}</span>
+                      <span className="mt-1 block text-[14px] leading-snug text-[#68707b]">{item.description}</span>
                     </div>
                   );
                 }
@@ -936,11 +983,11 @@ export default function NavBar() {
                     key={item.href}
                     href={item.href}
                     onClick={closeMenu}
-                    className="mobile-menu-item mb-6 block text-[var(--ink)] no-underline"
+                    className="mobile-menu-item mb-6 block text-[#f4f5f7] no-underline"
                     style={mobileItemStyle(index + 2)}
                   >
-                    <span className="block text-[18px] font-semibold leading-tight text-[var(--ink)]">{item.label}</span>
-                    <span className="mt-1 block text-[14px] leading-snug text-[var(--ink-3)]">{item.description}</span>
+                    <span className="block text-[18px] font-semibold leading-tight text-[#f4f5f7]">{item.label}</span>
+                    <span className="mt-1 block text-[14px] leading-snug text-[#8f96a1]">{item.description}</span>
                   </Link>
                 );
               })}
@@ -958,7 +1005,7 @@ export default function NavBar() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="login-modal-title"
-            className="w-full max-w-[420px] rounded-[16px] border border-[var(--line)] bg-[#fcfbf8] px-6 py-6 text-[var(--ink)] shadow-[0_28px_76px_-44px_rgba(28,28,28,0.58)] animate-[modalSheetIn_0.24s_cubic-bezier(0.16,1,0.3,1)_both] max-[460px]:px-5 max-[460px]:py-5"
+            className="w-full max-w-[420px] rounded-[16px] border border-white/[0.10] bg-[#101419] px-6 py-6 text-[var(--ink)] shadow-[0_34px_92px_-44px_rgba(0,0,0,0.95),rgba(255,255,255,0.08)_0_0.5px_0_0_inset] animate-[modalSheetIn_0.24s_cubic-bezier(0.16,1,0.3,1)_both] max-[460px]:px-5 max-[460px]:py-5"
             onClick={event => event.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-4">
@@ -985,7 +1032,7 @@ export default function NavBar() {
                   key={item.id}
                   type="button"
                   onClick={() => setAuthMode(item.id)}
-                  className={`h-9 cursor-pointer rounded-md border-0 text-[13px] font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[rgba(28,28,28,0.16)] ${authMode === item.id ? "bg-[var(--ink)] text-[#fcfbf8]" : "bg-transparent text-[var(--ink-3)] hover:text-[var(--ink)]"}`}
+                  className={`h-9 cursor-pointer rounded-md border-0 text-[13px] font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[rgba(133,141,255,0.22)] ${authMode === item.id ? "bg-[var(--ink)] text-[var(--ink-on)]" : "bg-transparent text-[var(--ink-3)] hover:text-[var(--ink)]"}`}
                 >
                   {item.label}
                 </button>
@@ -1030,7 +1077,7 @@ export default function NavBar() {
                   />
                   {authMode === "signup" && (
                     <div className={`mt-2 flex items-center gap-2 text-[11px] leading-none ${loginEmailStatus === "valid" ? "text-[var(--ink)]" : loginEmailStatus === "idle" || loginEmailStatus === "checking" ? "text-[var(--ink-4)]" : "text-[var(--ink-2)]"}`}>
-                      <span className={`grid size-3.5 place-items-center rounded-full border text-[9px] ${loginEmailStatus === "valid" ? "border-[var(--ink)] bg-[var(--ink)] text-[#fcfbf8]" : loginEmailStatus === "checking" ? "animate-pulse border-[var(--line-2)] bg-[var(--line)] text-transparent" : loginEmailStatus === "idle" ? "border-[var(--line-2)] text-transparent" : "border-[var(--ink-2)] text-[var(--ink-2)]"}`}>
+                      <span className={`grid size-3.5 place-items-center rounded-full border text-[9px] ${loginEmailStatus === "valid" ? "border-[var(--ink)] bg-[var(--ink)] text-[var(--ink-on)]" : loginEmailStatus === "checking" ? "animate-pulse border-[var(--line-2)] bg-[var(--line)] text-transparent" : loginEmailStatus === "idle" ? "border-[var(--line-2)] text-transparent" : "border-[var(--ink-2)] text-[var(--ink-2)]"}`}>
                         {loginEmailStatus === "valid" ? "✓" : loginEmailStatus === "invalid" || loginEmailStatus === "format" ? "!" : ""}
                       </span>
                       {loginEmailMessage}
@@ -1059,7 +1106,7 @@ export default function NavBar() {
                     <div className="mt-2 grid gap-1">
                       {loginPasswordRules.map(rule => (
                         <div key={rule.label} className={`flex items-center gap-2 text-[11px] leading-none ${rule.passed ? "text-[var(--ink)]" : "text-[var(--ink-4)]"}`}>
-                          <span className={`grid size-3.5 place-items-center rounded-full border text-[9px] ${rule.passed ? "border-[var(--ink)] bg-[var(--ink)] text-[#fcfbf8]" : "border-[var(--line-2)] text-transparent"}`}>✓</span>
+                          <span className={`grid size-3.5 place-items-center rounded-full border text-[9px] ${rule.passed ? "border-[var(--ink)] bg-[var(--ink)] text-[var(--ink-on)]" : "border-[var(--line-2)] text-transparent"}`}>✓</span>
                           {rule.label}
                         </div>
                       ))}
@@ -1070,7 +1117,7 @@ export default function NavBar() {
                 <button
                   type="submit"
                   disabled={!canSubmitLogin}
-                  className="mt-3 inline-flex h-11 w-full cursor-pointer items-center justify-center rounded-[9px] border-0 bg-[var(--ink)] px-4 text-[14px] font-semibold text-[#fcfbf8] shadow-[var(--shadow-lift)] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="mt-3 inline-flex h-11 w-full cursor-pointer items-center justify-center rounded-[9px] border-0 bg-[var(--ink)] px-4 text-[14px] font-semibold text-[var(--ink-on)] shadow-[var(--shadow-lift)] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {loginState === "sending" ? (authMode === "login" ? "Logging in..." : "Sending...") : authMode === "login" ? "Log in" : "Create account"}
                 </button>

@@ -78,7 +78,6 @@ export default function AuthSetupClient() {
       completedAt: new Date().toISOString(),
     }
 
-    window.localStorage.setItem("brawllens_setup", JSON.stringify(setup))
     await fetch("/api/account/setup", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -94,7 +93,7 @@ export default function AuthSetupClient() {
         role="dialog"
         aria-modal="true"
         aria-labelledby="setup-title"
-        className="w-full max-w-[500px] rounded-[16px] border border-[var(--line)] bg-[#fcfbf8] p-5 text-[var(--ink)] shadow-[0_28px_76px_-44px_rgba(28,28,28,0.58)] animate-[modalSheetIn_0.24s_cubic-bezier(0.16,1,0.3,1)_both] max-[460px]:p-4"
+        className="w-full max-w-[500px] rounded-[16px] border border-white/[0.10] bg-[#101419] p-5 text-[var(--ink)] shadow-[0_34px_92px_-44px_rgba(0,0,0,0.95),rgba(255,255,255,0.08)_0_0.5px_0_0_inset] animate-[modalSheetIn_0.24s_cubic-bezier(0.16,1,0.3,1)_both] max-[460px]:p-4"
       >
         <div className="mb-5 flex items-start justify-between gap-4">
           <div className="min-w-0">
@@ -123,7 +122,7 @@ export default function AuthSetupClient() {
             <button
               type="button"
               onClick={() => router.replace("/login")}
-              className="mt-4 inline-flex h-10 cursor-pointer items-center rounded-lg border-0 bg-[var(--ink)] px-4 text-[13px] font-semibold text-[#fcfbf8]"
+              className="mt-4 inline-flex h-10 cursor-pointer items-center rounded-lg border-0 bg-[var(--ink)] px-4 text-[13px] font-semibold text-[var(--ink-on)]"
             >
               Try again
             </button>
@@ -172,7 +171,7 @@ export default function AuthSetupClient() {
                       onClick={() => toggleGoal(goal)}
                       className={`min-h-10 cursor-pointer rounded-lg border px-3 text-left text-[13px] font-semibold transition-colors ${
                         selectedGoals.includes(goal)
-                          ? "border-[var(--ink)] bg-[var(--ink)] text-[#fcfbf8]"
+                          ? "border-[var(--ink)] bg-[var(--ink)] text-[var(--ink-on)]"
                           : "border-[var(--line)] bg-[var(--panel)] text-[var(--ink)] hover:bg-[var(--hover-bg)]"
                       }`}
                     >
@@ -202,7 +201,7 @@ export default function AuthSetupClient() {
                 type="button"
                 onClick={() => step === 2 ? void finishSetup() : setStep(current => current + 1)}
                 disabled={!canContinue || state === "saving"}
-                className="inline-flex h-10 cursor-pointer items-center rounded-lg border-0 bg-[var(--ink)] px-4 text-[13px] font-semibold text-[#fcfbf8] shadow-[var(--shadow-lift)] disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex h-10 cursor-pointer items-center rounded-lg border-0 bg-[var(--ink)] px-4 text-[13px] font-semibold text-[var(--ink-on)] shadow-[var(--shadow-lift)] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {state === "saving" ? "Saving..." : step === 2 ? "Open Lensboard" : "Continue"}
               </button>

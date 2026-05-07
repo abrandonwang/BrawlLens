@@ -88,11 +88,11 @@ export function AboutContent() {
   const activeGroup = groups.find(g => g.ids.includes(activeSection))?.title ?? "Getting Started"
 
   return (
-    <main className="mx-auto w-full max-w-[1200px] px-6 pb-24 pt-10 max-md:px-4">
-      <div className="grid gap-10 md:grid-cols-[210px_minmax(0,1fr)] lg:grid-cols-[210px_minmax(0,1fr)_220px] lg:gap-12">
+    <main className="dpm-page-shell">
+      <div className="grid gap-8 md:grid-cols-[210px_minmax(0,1fr)] lg:grid-cols-[210px_minmax(0,1fr)_220px] lg:gap-10">
 
         <aside className="hidden md:block">
-          <div className="sticky top-20 flex flex-col gap-6 pb-6">
+          <div className="dpm-section-card sticky top-20 flex flex-col gap-6 p-3">
             {groups.map(group => (
               <div key={group.title} className="flex flex-col gap-2">
                 <h4 className="text-[12px] font-medium tracking-normal text-[var(--ink-2)]">
@@ -106,7 +106,7 @@ export function AboutContent() {
                         <a
                           href={`#${id}`}
                           aria-current={active ? "true" : undefined}
-                          className={`block rounded-md px-2 py-1 text-[13px] no-underline transition-colors ${active ? "bg-[var(--hover-bg)] text-[var(--ink)] font-medium" : "text-[var(--ink-3)] hover:text-[var(--ink)]"}`}
+                          className={`block rounded-md px-2 py-1 text-[13px] no-underline transition-colors ${active ? "dpm-gold-active font-medium" : "text-[var(--ink-3)] hover:text-[var(--ink)]"}`}
                         >
                           {idLabel[id]}
                         </a>
@@ -119,19 +119,33 @@ export function AboutContent() {
           </div>
         </aside>
 
-        <article className="min-w-0 max-w-[680px]">
-          <nav aria-label="breadcrumb" className="mb-5 flex items-center gap-2 text-[12px] text-[var(--ink-4)]">
-            <span>Docs</span>
-            <ChevronRight size={12} />
-            <span className="text-[var(--ink)]">About</span>
-          </nav>
-
-          <h1 id="introduction" className="scroll-mt-20 text-[28px] font-semibold leading-[1.1] tracking-[-0.025em] text-[var(--ink)]">
-            About BrawlLens
-          </h1>
-          <p className="mt-2 text-[15px] leading-[1.55] text-[var(--ink-3)]">
-            Battle data, leaderboards, and brawler insight for players who want a precise read on what is performing right now.
-          </p>
+        <article className="min-w-0">
+          <div id="introduction" className="dpm-hero-panel scroll-mt-20 p-6 max-sm:p-5">
+            <h1 className="m-0 text-[clamp(30px,4.2vw,52px)] font-semibold leading-[1] tracking-[-0.01em] text-[var(--ink)]">
+              About BrawlLens
+            </h1>
+            <p className="mt-3 max-w-[640px] text-[15px] leading-[1.55] text-[var(--ink-3)]">
+              Battle data, leaderboards, and brawler insight for players who want a precise read on what is performing right now.
+            </p>
+            <div className="dpm-tile-grid mt-6">
+              <Link href="/meta" className="dpm-tile no-underline transition-colors hover:border-[var(--line-2)]">
+                <span className="dpm-tile-label">Meta</span>
+                <span className="dpm-tile-value">Maps</span>
+              </Link>
+              <Link href="/brawlers" className="dpm-tile no-underline transition-colors hover:border-[var(--line-2)]">
+                <span className="dpm-tile-label">Catalog</span>
+                <span className="dpm-tile-value">Brawlers</span>
+              </Link>
+              <Link href="/leaderboards/players" className="dpm-tile no-underline transition-colors hover:border-[var(--line-2)]">
+                <span className="dpm-tile-label">Ranks</span>
+                <span className="dpm-tile-value">Leaderboards</span>
+              </Link>
+              <Link href="/" className="dpm-tile no-underline transition-colors hover:border-[var(--line-2)]">
+                <span className="dpm-tile-label">Workspace</span>
+                <span className="dpm-tile-value">Lensboard</span>
+              </Link>
+            </div>
+          </div>
 
           <Section id="what-it-tracks" title="What It Tracks">
             <P>BrawlLens covers the surfaces a player typically asks about when they want to know the current state of the game.</P>
@@ -239,7 +253,7 @@ export function AboutContent() {
             <ContactForm />
           </Section>
 
-          <div className="mt-14 flex items-center justify-between border-t border-[var(--line)] pt-6">
+          <div className="mt-5 flex items-center justify-between border-t border-[var(--line)] pt-6">
             <a href="#introduction" className="flex items-center gap-2 text-[13px] text-[var(--ink-3)] no-underline hover:text-[var(--ink)]">
               <ChevronRight size={14} className="rotate-180" />
               <span>Back to top</span>
@@ -256,7 +270,7 @@ export function AboutContent() {
             <div className="text-[12px] font-medium tracking-normal text-[var(--ink-2)]">
               Reading
             </div>
-            <div className="rounded-md border border-[var(--line)] bg-[var(--panel-2)] p-3">
+            <div className="dpm-section-card p-3">
               <div className="text-[11px] text-[var(--ink-4)]">Current section</div>
               <div className="mt-1 text-[14px] font-semibold tracking-[-0.012em] text-[var(--ink)]">
                 {idLabel[activeSection] ?? "Introduction"}
@@ -280,8 +294,8 @@ export function AboutContent() {
 
 function Section({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
   return (
-    <section className="mt-12">
-      <h2 id={id} className="scroll-mt-20 text-[17px] font-semibold leading-[1.3] tracking-[-0.012em] text-[var(--ink)]">
+    <section id={id} className="dpm-section-card mt-4 scroll-mt-20 p-5 max-sm:p-4">
+      <h2 className="text-[19px] font-semibold leading-[1.3] tracking-[-0.012em] text-[var(--ink)]">
         {title}
       </h2>
       <div className="mt-3 flex flex-col gap-3 text-[14.5px] leading-[1.6] text-[var(--ink-2)]">
@@ -367,7 +381,7 @@ function ContactForm() {
           required
           maxLength={254}
           autoComplete="email"
-          className="h-9 w-full border-0 border-b border-[var(--line)] bg-transparent px-0 text-[13.5px] text-[var(--ink)] outline-none focus:border-[var(--line-2)]"
+          className="h-10 w-full rounded-md border border-[var(--line)] bg-[var(--panel-2)] px-3 text-[13.5px] text-[var(--ink)] outline-none transition-colors placeholder:text-[var(--ink-4)] focus:border-[var(--line-2)]"
         />
       </label>
       <label className="block">
@@ -377,7 +391,7 @@ function ContactForm() {
           rows={3}
           required
           maxLength={4000}
-          className="w-full resize-none border-0 border-b border-[var(--line)] bg-transparent px-0 py-2 text-[13.5px] text-[var(--ink)] outline-none focus:border-[var(--line-2)]"
+          className="w-full resize-none rounded-md border border-[var(--line)] bg-[var(--panel-2)] px-3 py-2 text-[13.5px] text-[var(--ink)] outline-none transition-colors placeholder:text-[var(--ink-4)] focus:border-[var(--line-2)]"
         />
       </label>
       <button

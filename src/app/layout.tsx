@@ -29,7 +29,7 @@ export default function RootLayout({
       >
         <TopLoader />
         <NavBar />
-        <div className="flex-1 flex flex-col">
+        <div className="app-main-shell flex-1 flex flex-col pt-[60px]">
           {children}
         </div>
         <Footer />

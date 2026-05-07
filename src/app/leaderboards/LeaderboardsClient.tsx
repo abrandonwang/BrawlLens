@@ -1,11 +1,25 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Search, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react"
+import { useEffect, useMemo, useState, type ReactNode } from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { EmptyState, StateButton, StateLink } from "@/components/PolishStates"
-import { formatNum, formatRelativeTime, getPageItems } from "@/lib/format"
+import { BrawlImage, brawlerIconUrl } from "@/components/BrawlImage"
+import { formatTrophies } from "@/lib/format"
+import {
+  EmptyLeaderboardState,
+  FeatureCardRail,
+  LeaderboardBoard,
+  LeaderboardHero,
+  LeaderboardPageShell,
+  LeaderboardPanel,
+  LeaderboardToolbar,
+  Pager,
+  RankCell,
+  RegionPills,
+  SearchBox,
+  TableHead,
+  professionalTeamCards,
+  regionCode,
+} from "./LeaderboardDpmShell"
 
 interface Player {
   rank: number
@@ -22,210 +36,351 @@ interface RegionData {
   players: Player[]
 }
 
-const PAGE_SIZE = 20
+interface TopPlayerEnrichment {
+  iconId: number | null
+  recentGames?: number | null
+  recentWinRate?: number | null
+  threeVsThreeWins?: number | null
+  soloWins?: number | null
+  clubTag?: string | null
+  clubBadgeId?: number | null
+  topBrawlers: { id: number; name: string }[]
+}
 
-const CATEGORIES = [
-  { label: "Players",    href: "/leaderboards/players" },
-  { label: "Clubs",      href: "/leaderboards/clubs" },
-  { label: "Brawlers",   href: "/leaderboards/brawlers" },
-]
+const PAGE_SIZE = 50
+const playerTableGrid = "grid grid-cols-[34px_minmax(150px,1.18fr)_58px_58px_72px_minmax(86px,0.72fr)_40px_92px] items-center gap-1.5"
 
-export default function LeaderboardsClient({ allData }: { allData: RegionData[]; updatedAt?: string | null }) {
-  const pathname = usePathname()
+export default function LeaderboardsClient({
+  allData,
+  topPlayerEnrichment = {},
+}: {
+  allData: RegionData[]
+  updatedAt?: string | null
+  topPlayerEnrichment?: Record<string, Record<string, TopPlayerEnrichment>>
+}) {
   const [activeRegion, setActiveRegion] = useState<string>("global")
   const [search, setSearch] = useState("")
-  const [pageByRegion, setPageByRegion] = useState<Record<string, number>>({})
+  const [page, setPage] = useState(0)
+  const [apiEnrichments, setApiEnrichments] = useState<Record<string, TopPlayerEnrichment>>({})
 
-  useEffect(() => { setPageByRegion({}) }, [search, activeRegion])
+  useEffect(() => {
+    document.documentElement.classList.add("landing-bg")
+    return () => document.documentElement.classList.remove("landing-bg")
+  }, [])
 
-  const regionData = allData.find(r => r.code === activeRegion)
-  const players = (regionData?.players ?? []).filter(
-    p =>
-      p.player_name.toLowerCase().includes(search.toLowerCase()) ||
-      p.player_tag.toLowerCase().includes(search.toLowerCase())
+  useEffect(() => { setPage(0) }, [search, activeRegion])
+
+  const regionData = useMemo(() => allData.find(r => r.code === activeRegion) ?? allData[0], [allData, activeRegion])
+  const globalRankByTag = useMemo(() => {
+    const globalPlayers = allData.find(r => r.code === "global")?.players ?? []
+    return new Map(globalPlayers.map(player => [playerKey(player.player_tag), player.rank]))
+  }, [allData])
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    const players = regionData?.players ?? []
+    if (!q) return players
+    return players.filter(p =>
+      p.player_name.toLowerCase().includes(q) ||
+      p.player_tag.toLowerCase().includes(q) ||
+      (p.club_name ?? "").toLowerCase().includes(q)
+    )
+  }, [regionData, search])
+
+  const tablePlayers = filtered.slice(3)
+  const tablePages = Math.max(1, Math.ceil(tablePlayers.length / PAGE_SIZE))
+  const paginated = tablePlayers.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
+  const visiblePlayers = useMemo(() => [...filtered.slice(0, 3), ...paginated], [filtered, paginated])
+  const visibleTags = useMemo(() => visiblePlayers.map(player => playerKey(player.player_tag)), [visiblePlayers])
+  const visibleTagKey = visibleTags.join(",")
+  const serverEnrichments = useMemo(
+    () => topPlayerEnrichment[activeRegion] ?? {},
+    [topPlayerEnrichment, activeRegion]
   )
-  const lastUpdated = (regionData?.players ?? []).reduce<string | null>((latest, p) => {
-    if (!p.updated_at) return latest
-    if (!latest || p.updated_at > latest) return p.updated_at
-    return latest
-  }, null)
+  const enrichments = useMemo(() => {
+    const merged = { ...apiEnrichments }
+    for (const [rawKey, serverData] of Object.entries(serverEnrichments)) {
+      const key = playerKey(rawKey)
+      const apiData = apiEnrichments[key]
+      merged[key] = {
+        ...serverData,
+        ...apiData,
+        recentGames: apiData?.recentGames ?? serverData.recentGames ?? null,
+        recentWinRate: apiData?.recentWinRate ?? serverData.recentWinRate ?? null,
+      }
+    }
+    return merged
+  }, [serverEnrichments, apiEnrichments])
 
-  const page = pageByRegion[activeRegion] ?? 0
-  const totalPages = Math.ceil(players.length / PAGE_SIZE)
-  const paginated = players.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
+  useEffect(() => {
+    const tags = visibleTags.filter(tag => !apiEnrichments[tag])
+    if (!tags.length) return
 
-  function setPage(p: number) {
-    setPageByRegion(prev => ({ ...prev, [activeRegion]: p }))
-  }
+    const controller = new AbortController()
+    async function loadEnrichments() {
+      try {
+        const response = await fetch("/api/leaderboards/player-enrichment", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tags }),
+          signal: controller.signal,
+        })
+        if (!response.ok) return
+
+        const data = await response.json() as { players?: Record<string, TopPlayerEnrichment> }
+        if (data.players) {
+          setApiEnrichments(prev => ({ ...prev, ...data.players }))
+        }
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          console.error("Leaderboard enrichment request failed:", error)
+        }
+      }
+    }
+
+    void loadEnrichments()
+    return () => controller.abort()
+  }, [visibleTagKey, visibleTags, apiEnrichments])
 
   return (
-    <div className="mx-auto w-full max-w-[1080px] px-6 pt-12 pb-24 max-md:px-4 max-md:pt-8 max-md:pb-[64px] max-[480px]:pt-6 max-[480px]:pb-12">
-      <div className="mb-8 flex items-end justify-between gap-8 max-md:flex-col max-md:items-start">
-        <div className="min-w-0">
-          <h1 className="m-0 text-[clamp(28px,4.1vw,46px)] leading-[1.07] font-semibold tracking-[-0.01em] text-[var(--ink)]">Player Leaderboards</h1>
-          <p className="mt-3 mb-0 max-w-[640px] text-[17px] leading-[1.47] tracking-[-0.022em] text-[var(--ink-3)]">Compare top players by region and jump into profile details from the table.</p>
-        </div>
-        <div className="flex flex-wrap justify-end gap-2 max-md:justify-start">
-          <span className="inline-flex min-h-9 items-center whitespace-nowrap rounded-full border border-[var(--line)] bg-[var(--panel)] px-4 text-[14px] font-normal tracking-[-0.016em] text-[var(--ink-2)]">{regionData?.label ?? activeRegion}</span>
-          <span className="inline-flex min-h-9 items-center whitespace-nowrap rounded-full border border-[var(--line)] bg-[var(--panel)] px-4 text-[14px] font-normal tracking-[-0.016em] text-[var(--ink-2)]">{players.length.toLocaleString()} players</span>
-          {lastUpdated && (
-            <span
-              title={new Date(lastUpdated).toLocaleString()}
-              className="inline-flex min-h-9 items-center gap-1.5 whitespace-nowrap rounded-full border border-[var(--line)] bg-[var(--panel)] px-4 text-[14px] font-normal tracking-[-0.016em] text-[var(--ink-3)]"
-            >
-              <span className="size-1.5 rounded-full bg-[var(--win)]" />
-              Updated {formatRelativeTime(lastUpdated)}
-            </span>
-          )}
-        </div>
-      </div>
+    <LeaderboardPageShell active="players">
+      <FeatureCardRail cards={professionalTeamCards} />
 
-      <div className="mb-8 flex items-center justify-between gap-3 rounded-[18px] border border-[var(--line)] bg-[var(--panel)] p-4 max-md:flex-col max-md:items-stretch">
-        <div className="inline-flex gap-0.5 overflow-x-auto rounded-full border border-[var(--line)] bg-[var(--panel)] p-[3px] [scrollbar-width:none] max-md:w-full [&::-webkit-scrollbar]:hidden">
-          {CATEGORIES.map(c => (
-            <Link
-              key={c.href}
-              href={c.href}
-              className={`shrink-0 rounded-full px-4 py-2 text-[14px] font-normal tracking-[-0.016em] no-underline transition-all max-md:flex-1 max-md:text-center ${pathname === c.href ? "bg-[var(--accent)] text-white" : "text-[var(--ink-3)] hover:bg-[var(--panel-2)] hover:text-[var(--ink)]"}`}
-            >
-              {c.label}
-            </Link>
-          ))}
-        </div>
-        <div className="flex items-center gap-3 max-md:w-full max-md:flex-col max-md:items-stretch">
-          <div className="flex h-11 w-[240px] items-center gap-2.5 rounded-full border border-[var(--line)] bg-[var(--panel)] px-4 text-[var(--ink)] transition-colors focus-within:border-[var(--accent)] max-md:w-full">
-            <Search size={13} className="shrink-0 text-[var(--ink-4)]" />
-            <input className="w-full border-0 bg-transparent text-[17px] tracking-[-0.022em] text-[var(--ink)] outline-none placeholder:text-[var(--ink-4)]" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search players…" />
+      <LeaderboardHero
+        title="Players Leaderboard"
+        description={`Track the highest-ranked accounts across ${regionData?.label ?? "Global"} with recent battle context, profile icons, and the brawlers carrying each top player's push. Rankings stay ordered by BrawlLens snapshots while the featured cards pull fresh profile and battle-log details from the Brawl Stars API.`}
+      />
+
+      <LeaderboardBoard>
+        <LeaderboardToolbar>
+          <SearchBox value={search} onChange={setSearch} placeholder="Search player, tag, or club" />
+          <div className="bl-lb-toolbar-actions">
+            <RegionPills regions={allData} activeRegion={activeRegion} onChange={setActiveRegion} />
           </div>
-          <div className="inline-flex shrink-0 gap-0.5 overflow-x-auto rounded-full border border-[var(--line)] bg-[var(--panel)] p-[3px] [scrollbar-width:none] max-md:w-full [&::-webkit-scrollbar]:hidden">
-            {allData.map((r) => (
-              <button key={r.code} onClick={() => setActiveRegion(r.code)} className={`shrink-0 cursor-pointer rounded-full border-0 px-4 py-2 text-[14px] font-normal tracking-[-0.016em] transition-all max-md:flex-1 ${activeRegion === r.code ? "bg-[var(--accent)] text-white" : "bg-transparent text-[var(--ink-3)] hover:bg-[var(--panel-2)] hover:text-[var(--ink)]"}`}>
-                {r.code === "global" ? "Global" : r.code}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
+        </LeaderboardToolbar>
 
-      {players.length === 0 ? (
-        <EmptyState
-          title={search ? "No players match" : "No leaderboard data"}
-          description={search ? "Your search filtered out every player in this region." : `No player rankings are available for ${regionData?.label ?? activeRegion} right now.`}
-          action={search ? <StateButton onClick={() => setSearch("")}>Clear search</StateButton> : activeRegion !== "global" ? <StateButton onClick={() => setActiveRegion("global")}>Switch to global</StateButton> : <StateLink href="/leaderboards/clubs">View clubs</StateLink>}
-        />
-      ) : (
-        <>
-          <div className="relative mb-6 flex items-stretch justify-between gap-6 overflow-hidden rounded-2xl border border-[var(--line-2)] p-8 max-md:flex-col max-sm:p-6" style={{ background: "linear-gradient(135deg, #EC4899 0%, #14B8A6 100%)" }}>
-            <div className="relative z-10 min-w-0">
-              <p className="mb-1 text-[12px] leading-none tracking-[0.08em] text-white/70 uppercase">
-                {regionData?.label ?? activeRegion} Players
-              </p>
-              <h2 className="m-0 truncate text-[28px] leading-[1.15] font-semibold tracking-[-0.01em] text-white">{players.length.toLocaleString()} ranked players</h2>
-            </div>
-            <div className="relative z-10 grid min-w-[min(420px,48%)] grid-cols-3 gap-2 max-md:min-w-0 max-[420px]:grid-cols-1">
-              <div className="min-w-0 rounded-[10px] border border-white/20 bg-black/30 px-3 py-2.5 backdrop-blur-xl">
-                <span className="text-[10.5px] text-white/70">Leader</span>
-                <strong className="mt-0.5 block truncate text-[13px] font-semibold text-white">{players[0]?.player_name ?? "-"}</strong>
-              </div>
-              <div className="min-w-0 rounded-[10px] border border-white/20 bg-black/30 px-3 py-2.5 backdrop-blur-xl">
-                <span className="text-[10.5px] text-white/70">Top trophies</span>
-                <strong className="mt-0.5 block truncate text-[13px] font-semibold text-white">{players[0] ? formatNum(players[0].trophies) : "-"}</strong>
-              </div>
-              <div className="min-w-0 rounded-[10px] border border-white/20 bg-black/30 px-3 py-2.5 backdrop-blur-xl">
-                <span className="text-[10.5px] text-white/70">Page</span>
-                <strong className="mt-0.5 block truncate text-[13px] font-semibold text-white">{page + 1}/{Math.max(totalPages, 1)}</strong>
-              </div>
-            </div>
-          </div>
-
-          <div className="mb-3.5 grid grid-cols-3 gap-2.5 max-md:grid-cols-1">
-            {players.slice(0, 3).map((player, index) => (
-              <Link key={player.player_tag} href={`/player/${encodeURIComponent(player.player_tag.replace(/^#/, ""))}`} className={`interactive-card top-rank-card top-rank-card-rank-${index + 1} grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2.5 border bg-[var(--panel)] p-3 text-inherit no-underline`}>
-                <span className="grid h-7 min-w-[34px] place-items-center rounded-lg border border-[var(--line)] bg-[var(--panel-2)] text-xs font-extrabold tabular-nums text-[var(--ink)]">#{player.rank}</span>
-                <div className="min-w-0">
-                  <div className="truncate text-[13px] font-bold text-[var(--ink)]">{player.player_name}</div>
-                  <div className="text-[10.5px] leading-snug tracking-[0.01em] tabular-nums text-[var(--ink-3)]">{player.player_tag}</div>
-                </div>
-                <div className="flex items-center justify-end whitespace-nowrap text-xs font-bold tabular-nums text-[var(--ink)]">
-                  {formatNum(player.trophies)}
-                </div>
-              </Link>
-            ))}
-          </div>
-
-          <div className="overflow-hidden rounded-[18px] border border-[var(--line)] bg-[var(--panel)] max-md:grid max-md:gap-2 max-md:border-0 max-md:bg-transparent">
-            <div className="grid grid-cols-[48px_1fr_180px_100px_24px] gap-3 border-b border-[var(--line)] bg-[var(--panel-2)] px-5 py-2.5 max-md:hidden">
-              <span className="text-[10.5px] leading-snug tracking-[0.01em] text-[var(--ink-3)]">#</span>
-              <span className="text-[10.5px] leading-snug tracking-[0.01em] text-[var(--ink-3)]">Player</span>
-              <span className="text-[10.5px] leading-snug tracking-[0.01em] text-[var(--ink-3)] max-md:hidden">Club</span>
-              <span className="text-right text-[10.5px] leading-snug tracking-[0.01em] text-[var(--ink-3)]">Trophies</span>
-              <span />
-            </div>
-
-            {paginated.map((p) => (
-              <Link
-                key={p.player_tag}
-                href={`/player/${encodeURIComponent(p.player_tag.replace(/^#/, ""))}`}
-                className={`interactive-row group grid min-h-[58px] grid-cols-[48px_1fr_180px_100px_24px] items-center gap-3 border-b border-[var(--line)] bg-[var(--panel)] px-5 py-3 text-inherit no-underline transition-colors last:border-b-0 hover:bg-[var(--hover-bg)] max-md:grid-cols-[40px_minmax(0,1fr)_90px] max-md:gap-2.5 max-md:rounded-xl max-md:border max-md:border-[var(--line)] max-md:p-3 max-md:shadow-[var(--shadow-lift)] ${p.rank <= 3 ? "border-l-2 border-l-[var(--line-2)]" : ""}`}
-              >
-                <span className="text-[13px] font-normal tabular-nums text-[var(--ink-3)] max-md:grid max-md:h-[34px] max-md:min-w-[34px] max-md:place-items-center max-md:rounded-lg max-md:border max-md:border-[var(--line)] max-md:bg-[var(--panel-2)] max-md:text-[12px] max-md:font-semibold max-md:text-[var(--ink)]">
-                  {String(p.rank).padStart(2, "0")}
-                </span>
-
-                <div className="min-w-0">
-                  <div className="truncate text-[14px] font-normal text-[var(--ink)]">{p.player_name}</div>
-                  <div className="text-[10.5px] leading-snug tabular-nums text-[var(--ink-4)]">{p.player_tag}</div>
-                </div>
-
-                <span className="truncate text-xs text-[var(--ink-3)] max-md:hidden">
-                  {p.club_name ?? "-"}
-                </span>
-
-                <div className="flex items-center justify-end max-md:whitespace-nowrap">
-                  <span className="text-[13px] font-normal tabular-nums text-[var(--ink)]">
-                    {formatNum(p.trophies)}
-                  </span>
-                </div>
-
-                <ArrowRight size={13} className="text-[var(--ink-4)] transition-transform group-hover:translate-x-0.5 group-hover:text-[var(--ink-2)] max-md:hidden" />
-              </Link>
-            ))}
-          </div>
-
-          {totalPages > 1 && (
-            <div className="mt-5 flex items-center justify-center gap-1">
-              <button
-                onClick={() => setPage(page - 1)}
-                disabled={page === 0}
-                className="grid size-[30px] cursor-pointer place-items-center rounded-lg border border-[var(--line)] bg-transparent text-[var(--ink-3)] disabled:cursor-default disabled:opacity-30"
-              >
-                <ChevronLeft size={13} />
-              </button>
-
-              {getPageItems(page, totalPages).map((idx, i) => idx === "..." ? (
-                <span key={`ellipsis-${i}`} className="grid size-[30px] place-items-center text-xs text-[var(--ink-4)]">…</span>
-              ) : (
-                <button
-                  key={idx}
-                  onClick={() => setPage(idx)}
-                  className={`grid size-[30px] cursor-pointer place-items-center rounded-lg text-xs font-semibold ${idx === page ? "border border-transparent bg-[var(--accent)] text-[#fcfbf8]" : "border border-[var(--line)] bg-transparent text-[var(--ink-3)]"}`}
-                >
-                  {idx + 1}
-                </button>
+        {filtered.length === 0 ? (
+          <EmptyLeaderboardState
+            title={search ? "No players match" : "No leaderboard data"}
+            description={search ? "Your search filtered out every player in this region." : `No player rankings are available for ${regionData?.label ?? activeRegion} right now.`}
+            action={search ? <DpmButton onClick={() => setSearch("")}>Clear search</DpmButton> : <DpmButton onClick={() => setActiveRegion("global")}>Switch to global</DpmButton>}
+          />
+        ) : (
+          <>
+            <section aria-label="Top players" className="bl-lb-podium-grid">
+              {filtered.slice(0, 3).map(player => (
+                <PlayerPodiumCard
+                  key={player.player_tag}
+                  player={player}
+                  region={activeRegion}
+                  enrichment={enrichments[playerKey(player.player_tag)]}
+                />
               ))}
+            </section>
 
-              <button
-                onClick={() => setPage(page + 1)}
-                disabled={page === totalPages - 1}
-                className="grid size-[30px] cursor-pointer place-items-center rounded-lg border border-[var(--line)] bg-transparent text-[var(--ink-3)] disabled:cursor-default disabled:opacity-30"
-              >
-                <ChevronRight size={13} />
-              </button>
-            </div>
-          )}
+            <LeaderboardPanel>
+              <TableHead className={playerTableGrid}>
+                <span />
+                <span>Player</span>
+                <span>3v3 wins</span>
+                <span>Solo wins</span>
+                <span>Trophies</span>
+                <span>Club</span>
+                <span>World</span>
+                <span>Best brawlers</span>
+              </TableHead>
 
-        </>
+              <div className="bl-lb-table-list">
+                {paginated.map(player => (
+                  <PlayerRankRow
+                    key={`${activeRegion}-${player.player_tag}`}
+                    player={player}
+                    worldRank={globalRankByTag.get(playerKey(player.player_tag)) ?? (activeRegion === "global" ? player.rank : null)}
+                    enrichment={enrichments[playerKey(player.player_tag)]}
+                  />
+                ))}
+              </div>
+            </LeaderboardPanel>
+
+            <Pager page={page} totalPages={tablePages} onChange={setPage} />
+          </>
+        )}
+      </LeaderboardBoard>
+    </LeaderboardPageShell>
+  )
+}
+
+function PlayerRankRow({
+  player,
+  worldRank,
+  enrichment,
+}: {
+  player: Player
+  worldRank: number | null
+  enrichment?: TopPlayerEnrichment
+}) {
+  const playerHref = `/player/${encodeURIComponent(player.player_tag.replace(/^#/, ""))}`
+
+  return (
+    <div className={`bl-lb-row ${playerTableGrid}`}>
+      <div className="bl-lb-rank-stack">
+        <RankCell rank={player.rank} />
+        <span>{formatWorldRank(worldRank)}</span>
+      </div>
+      <Link href={playerHref} className="bl-lb-identity bl-lb-player-link">
+        <PlayerAvatar name={player.player_name} rank={player.rank} iconId={enrichment?.iconId ?? null} />
+        <div className="bl-lb-row-main">
+          <div className="bl-lb-name">{player.player_name}</div>
+          <div className="bl-lb-subline">{player.player_tag}</div>
+        </div>
+      </Link>
+      <span className="bl-lb-row-mono">{formatStat(enrichment?.threeVsThreeWins)}</span>
+      <span className="bl-lb-row-mono">{formatStat(enrichment?.soloWins)}</span>
+      <span className="bl-lb-row-stat">
+        {formatTrophies(player.trophies)}
+      </span>
+      <ClubCell name={player.club_name} badgeId={enrichment?.clubBadgeId ?? null} />
+      <span className="bl-lb-row-mono">{formatWorldRank(worldRank)}</span>
+      <TopBrawlerIcons brawlers={enrichment?.topBrawlers ?? []} compact />
+    </div>
+  )
+}
+
+function PlayerPodiumCard({
+  player,
+  region,
+  enrichment,
+}: {
+  player: Player
+  region: string
+  enrichment?: TopPlayerEnrichment
+}) {
+  const totalWins = getTotalWins(enrichment)
+  const playerHref = `/player/${encodeURIComponent(player.player_tag.replace(/^#/, ""))}`
+
+  return (
+    <div className="bl-lb-podium-card">
+      <div className="bl-lb-podium-top">
+        <span className="bl-lb-podium-rank">{player.rank}</span>
+        <Link href={playerHref} className="bl-lb-identity bl-lb-podium-identity bl-lb-player-link">
+          <PlayerAvatar name={player.player_name} rank={player.rank} iconId={enrichment?.iconId ?? null} />
+          <div className="bl-lb-row-main">
+            <div className="bl-lb-name">{player.player_name}</div>
+            <div className="bl-lb-subline">{player.club_name ?? "No club"}</div>
+          </div>
+        </Link>
+        <div className="bl-lb-podium-rate">
+          <strong>{enrichment?.recentWinRate === null || enrichment?.recentWinRate === undefined ? "--" : `${enrichment.recentWinRate}%`}</strong>
+          <span>recent wr</span>
+        </div>
+      </div>
+      <div className="bl-lb-podium-score">{formatTrophies(player.trophies)}</div>
+      <div className="bl-lb-podium-foot">
+        <div className="bl-lb-mini-stat">
+          <strong>{formatStat(totalWins)}</strong>
+          <span>wins</span>
+        </div>
+        <TopBrawlerIcons brawlers={enrichment?.topBrawlers ?? []} />
+        <div className="bl-lb-mini-stat bl-lb-mini-stat-right">
+          <strong>{regionCode(region)}</strong>
+          <span>region</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function PlayerAvatar({ name, rank, iconId }: { name: string; rank: number; iconId?: number | null }) {
+  const color = rank === 1 ? "#f2cf63" : rank === 2 ? "#d6dbe4" : rank === 3 ? "#c88b5a" : "#7d86ff"
+  return (
+    <span className="bl-lb-avatar" style={{ color }}>
+      {iconId ? (
+        <BrawlImage src={profileIconUrl(iconId)} alt="" width={44} height={44} sizes="44px" />
+      ) : firstGlyph(name)}
+    </span>
+  )
+}
+
+function ClubCell({ name, badgeId }: { name: string | null; badgeId?: number | null }) {
+  return (
+    <span className="bl-lb-club-cell">
+      {badgeId && (
+        <BrawlImage src={clubBadgeUrl(badgeId)} alt="" width={24} height={24} sizes="24px" />
+      )}
+      <span>{name ?? "No club"}</span>
+    </span>
+  )
+}
+
+function TopBrawlerIcons({
+  brawlers,
+  compact = false,
+}: {
+  brawlers: { id: number; name: string }[]
+  compact?: boolean
+}) {
+  return (
+    <div className={`bl-lb-brawler-icons ${compact ? "bl-lb-brawler-icons-row" : ""}`} aria-label="Highest brawlers">
+      {brawlers.length ? brawlers.map(brawler => (
+        <BrawlImage
+          key={brawler.id}
+          src={brawlerIconUrl(brawler.id)}
+          alt={brawler.name}
+          width={30}
+          height={30}
+          sizes="30px"
+        />
+      )) : (
+        <span className="bl-lb-brawler-icons-empty">--</span>
       )}
     </div>
+  )
+}
+
+function profileIconUrl(id: number) {
+  return `https://cdn.brawlify.com/profile-icons/regular/${id}.png`
+}
+
+function clubBadgeUrl(id: number) {
+  return `https://cdn.brawlify.com/club-badges/regular/${id}.png`
+}
+
+function formatStat(value: number | null | undefined) {
+  return typeof value === "number" ? formatTrophies(value) : "--"
+}
+
+function formatWorldRank(value: number | null | undefined) {
+  return typeof value === "number" ? `#${value}` : "--"
+}
+
+function getTotalWins(enrichment: TopPlayerEnrichment | undefined) {
+  const threeVsThreeWins = enrichment?.threeVsThreeWins
+  const soloWins = enrichment?.soloWins
+  if (typeof threeVsThreeWins !== "number" && typeof soloWins !== "number") return null
+  return (threeVsThreeWins ?? 0) + (soloWins ?? 0)
+}
+
+function playerKey(tag: string) {
+  return tag.replace(/^#/, "").toUpperCase()
+}
+
+function firstGlyph(value: string) {
+  return Array.from(value.trim())[0]?.toUpperCase() || "?"
+}
+
+function DpmButton({
+  children,
+  onClick,
+}: {
+  children: ReactNode
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="bl-lb-action"
+    >
+      {children}
+    </button>
   )
 }

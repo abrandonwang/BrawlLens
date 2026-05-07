@@ -1,16 +1,16 @@
 import type { Metadata } from "next"
-import DashboardClient from "./dashboard/DashboardClient"
+import LandingClient from "./LandingClient"
 
 export const metadata: Metadata = {
-  title: "Lensboard | BrawlLens",
-  description: "A customizable BrawlLens workspace for player lookup, live maps, leaderboard context, and AI prompts.",
+  title: "BrawlLens - Clean Brawl Stars analytics",
+  description: "A quiet workspace for Brawl Stars leaderboards, player lookups, brawler trends, and map meta.",
   openGraph: {
-    title: "Lensboard | BrawlLens",
-    description: "Player lookup, meta context, live maps, and leaderboard shortcuts in one customizable BrawlLens surface.",
+    title: "BrawlLens - Clean Brawl Stars analytics",
+    description: "A quiet workspace for Brawl Stars leaderboards, player lookups, brawler trends, and map meta.",
     type: "website",
   },
 }
 
 export default function Home() {
-  return <DashboardClient />
+  return <LandingClient />
 }

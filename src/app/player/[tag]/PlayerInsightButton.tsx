@@ -15,7 +15,7 @@ export default function PlayerInsightButton({ playerName, tag }: { playerName: s
     <button
       type="button"
       onClick={askAssistant}
-      className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-[var(--line)] bg-[var(--panel-2)] px-3.5 text-[13px] font-medium text-[var(--ink-2)] shadow-[var(--shadow-lift)] transition-colors hover:border-[var(--line-2)] hover:text-[var(--ink)]"
+      className="bl-profile-ai-button"
     >
       <Image src="/ai-sparkle-512.png" alt="" width={18} height={18} className="size-[18px] shrink-0" />
       Ask AI

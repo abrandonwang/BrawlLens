@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-import { ChevronLeft, LogOut } from "lucide-react"
+import { ChevronLeft } from "lucide-react"
 import { authHeaders, clearAuthSession, clearServerSession } from "@/lib/clientAuth"
 import type { PremiumUser } from "@/lib/premium"
 import { sanitizePlayerTag } from "@/lib/validation"
@@ -24,7 +24,7 @@ function formatStatus(value: string) {
 
 function ValueBox({ children, muted = false }: { children: ReactNode; muted?: boolean }) {
   return (
-    <div className={`flex min-h-10 w-full items-center rounded-md border border-[var(--line)] bg-[var(--bg)] px-3 text-[13px] ${muted ? "text-[var(--ink-4)]" : "text-[var(--ink)]"}`}>
+    <div className={`flex min-h-10 w-full items-center rounded-md border border-[var(--line)] bg-[var(--panel-2)] px-3 text-[13px] ${muted ? "text-[var(--ink-4)]" : "text-[var(--ink)]"}`}>
       <span className="min-w-0 truncate">{children}</span>
     </div>
   )
@@ -40,7 +40,7 @@ function SettingsSection({
   children: ReactNode
 }) {
   return (
-    <section className="rounded-[16px] border border-[var(--line)] bg-[var(--panel)]">
+    <section className="dpm-section-card">
       <div className="border-b border-[var(--line)] px-6 py-5 max-sm:px-4">
         <h2 className="m-0 text-[20px] leading-tight font-semibold tracking-[-0.01em] text-[var(--ink)]">{title}</h2>
         {description && <p className="mt-1 mb-0 text-[13px] leading-relaxed text-[var(--ink-3)]">{description}</p>}
@@ -77,8 +77,8 @@ function ActionButton({ children, danger = false }: { children: ReactNode; dange
       disabled
       className={`inline-flex h-10 min-w-[92px] cursor-not-allowed items-center justify-center rounded-md border px-3 text-[13px] font-medium opacity-55 ${
         danger
-          ? "border-[color-mix(in_srgb,#ef4444_28%,var(--line))] bg-transparent text-[#b91c1c]"
-          : "border-[var(--line)] bg-[var(--bg)] text-[var(--ink-2)]"
+          ? "border-[color-mix(in_srgb,#ef4444_32%,var(--line))] bg-transparent text-[#f87171]"
+          : "border-[var(--line)] bg-[var(--panel-2)] text-[var(--ink-2)]"
       }`}
     >
       {children}
@@ -103,7 +103,7 @@ function RadioLine({ checked, title, description }: { checked?: boolean; title: 
 function LoadingState() {
   return (
     <main className="mx-auto w-full max-w-[860px] flex-1 px-4 py-14">
-      <div className="rounded-[16px] border border-[var(--line)] bg-[var(--panel)] p-6">
+      <div className="dpm-section-card p-6">
         <p className="m-0 text-[14px] text-[var(--ink-3)]">Loading account...</p>
       </div>
     </main>
@@ -113,10 +113,10 @@ function LoadingState() {
 function SignedOutState() {
   return (
     <main className="mx-auto w-full max-w-[760px] flex-1 px-4 py-14">
-      <div className="rounded-[16px] border border-[var(--line)] bg-[var(--panel)] p-6">
+      <div className="dpm-section-card p-6">
         <h1 className="m-0 mb-2 text-[32px] leading-none font-semibold text-[var(--ink)]">Sign in required</h1>
         <p className="m-0 text-[14px] text-[var(--ink-3)]">Sign in to manage account, premium, billing, and data settings.</p>
-        <Link href="/login?mode=login" className="mt-5 inline-flex h-10 items-center rounded-md bg-[var(--ink)] px-4 text-[14px] text-[#fcfbf8] no-underline">
+        <Link href="/login?mode=login" className="mt-5 inline-flex h-10 items-center rounded-md bg-[var(--button-bg)] px-4 text-[14px] text-[var(--ink-on)] no-underline hover:bg-[var(--button-bg-hover)]">
           Sign in
         </Link>
       </div>
@@ -295,7 +295,7 @@ export default function AccountClient() {
   if (state === "error" || !user || !planDetails) {
     return (
       <main className="mx-auto w-full max-w-[760px] flex-1 px-4 py-14">
-        <div className="rounded-[16px] border border-[var(--line)] bg-[var(--panel)] p-6">
+        <div className="dpm-section-card p-6">
           <p className="m-0 text-[15px] font-semibold text-[var(--ink)]">Account did not load</p>
           <p className="mt-2 mb-0 text-[13px] text-[var(--ink-3)]">Try signing in again.</p>
         </div>
@@ -315,7 +315,7 @@ export default function AccountClient() {
 
   return (
     <main className="grid min-h-[calc(100dvh-64px)] bg-[var(--bg)] lg:h-[calc(100dvh-64px)] lg:grid-cols-[280px_minmax(0,1fr)] lg:overflow-hidden">
-      <aside className="border-r border-[var(--line)] px-4 py-5 max-lg:border-r-0 max-lg:border-b lg:h-full lg:overflow-y-auto">
+      <aside className="bg-[rgba(5,7,10,0.42)] px-4 py-5 shadow-[1px_0_0_var(--line)] max-lg:border-b max-lg:border-[var(--line)] lg:h-full lg:overflow-y-auto">
         <Link href="/" className="inline-flex h-9 items-center gap-2 rounded-md px-2 text-[14px] font-medium text-[var(--ink-2)] no-underline transition-colors hover:bg-[var(--hover-bg)] hover:text-[var(--ink)]">
           <ChevronLeft size={16} strokeWidth={1.8} />
           Go back
@@ -337,7 +337,7 @@ export default function AccountClient() {
                 <Link
                   key={item.id}
                   href={`/account?tab=${item.id}`}
-                  className={`flex min-h-10 items-center rounded-md px-2 text-[14px] no-underline transition-colors ${active ? "bg-[var(--hover-bg)] font-semibold text-[var(--ink)]" : "text-[var(--ink-2)] hover:bg-[var(--hover-bg)] hover:text-[var(--ink)]"}`}
+                  className={`flex min-h-10 items-center rounded-md px-2 text-[14px] no-underline transition-colors ${active ? "dpm-gold-active font-semibold" : "text-[var(--ink-2)] hover:bg-[var(--hover-bg)] hover:text-[var(--ink)]"}`}
                 >
                   {item.label}
                 </Link>
@@ -348,8 +348,8 @@ export default function AccountClient() {
       </aside>
 
       <section className="min-w-0 px-8 py-8 max-lg:px-5 max-sm:px-4 lg:h-full lg:overflow-y-auto">
-        <div className="mx-auto max-w-[980px]">
-          <div className="mb-7 flex flex-wrap items-start justify-between gap-4">
+        <div className="mx-auto max-w-[1020px]">
+          <div className="dpm-hero-panel mb-5 flex flex-wrap items-start justify-between gap-4 p-6 max-sm:p-5">
             <div className="min-w-0">
               <h1 className="m-0 text-[28px] font-semibold leading-tight tracking-[-0.012em] text-[var(--ink)]">Account settings</h1>
               <p className="mt-1 mb-0 text-[14px] leading-relaxed text-[var(--ink-3)]">Manage profile, billing, and interface preferences.</p>
@@ -357,9 +357,8 @@ export default function AccountClient() {
             <button
               type="button"
               onClick={signOut}
-              className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border border-[var(--line)] bg-[var(--panel)] px-3 text-[13px] font-medium text-[var(--ink-2)] transition-colors hover:border-[var(--line-2)] hover:text-[var(--ink)]"
+              className="inline-flex h-10 cursor-pointer items-center rounded-md border border-[var(--line)] bg-[var(--panel-2)] px-3 text-[13px] font-medium text-[var(--ink-2)] transition-colors hover:border-[var(--line-2)] hover:text-[var(--ink)]"
             >
-              <LogOut size={15} strokeWidth={1.8} />
               Sign out
             </button>
           </div>
@@ -396,7 +395,7 @@ export default function AccountClient() {
                           placeholder="#YP90U0YL"
                           autoCapitalize="characters"
                           spellCheck={false}
-                          className="h-10 min-w-0 flex-1 rounded-md border border-[var(--line)] bg-[var(--bg)] px-3 text-[13px] font-medium text-[var(--ink)] outline-none transition-colors placeholder:text-[var(--ink-4)] focus:border-[var(--line-2)]"
+                          className="h-10 min-w-0 flex-1 rounded-md border border-[var(--line)] bg-[var(--panel-2)] px-3 text-[13px] font-medium text-[var(--ink)] outline-none transition-colors placeholder:text-[var(--ink-4)] focus:border-[var(--line-2)]"
                         />
                         <button
                           type="button"
@@ -404,8 +403,8 @@ export default function AccountClient() {
                           disabled={!canSavePlayerTag}
                           className={`inline-flex h-10 min-w-[82px] items-center justify-center rounded-md px-3 text-[13px] font-medium transition-colors ${
                             canSavePlayerTag
-                              ? "cursor-pointer border border-[var(--ink)] bg-[var(--ink)] text-[#fcfbf8] hover:bg-[var(--ink-2)]"
-                              : "cursor-not-allowed border border-[var(--line)] bg-[var(--bg)] text-[var(--ink-4)]"
+                              ? "cursor-pointer border border-[var(--ink)] bg-[var(--ink)] text-[var(--ink-on)] hover:bg-[var(--ink-2)]"
+                              : "cursor-not-allowed border border-[var(--line)] bg-[var(--panel-2)] text-[var(--ink-4)]"
                           }`}
                         >
                           {playerTagSaveState === "saving" ? "Saving..." : "Save"}
@@ -486,7 +485,7 @@ export default function AccountClient() {
               <>
                 <SettingsSection title="Appearance" description="Interface defaults for this account.">
                   <SettingsRow title="Theme" description="Current visual theme.">
-                    <ValueBox>Light</ValueBox>
+                    <ValueBox>DPM dark</ValueBox>
                   </SettingsRow>
                   <SettingsRow title="Density" description="Spacing for repeated data surfaces.">
                     <ValueBox>Comfortable</ValueBox>

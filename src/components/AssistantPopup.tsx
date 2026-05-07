@@ -273,7 +273,7 @@ export default function AssistantPopup({ open, onClose, pendingQuery, onPendingC
       <div className="pointer-events-none fixed inset-0 z-[195] bg-transparent" onClick={onClose} aria-hidden="true" />
       <div
         ref={panelRef}
-        className="fixed right-[22px] bottom-[22px] z-[196] flex max-h-[min(640px,calc(100dvh-100px))] w-96 origin-bottom-right flex-col overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--bg)] shadow-[0_32px_60px_-20px_rgba(28,28,28,0.28),0_12px_24px_-10px_rgba(28,28,28,0.10),rgba(255,255,255,0.4)_0_0.5px_0_0_inset] animate-[assistantPanelIn_0.24s_cubic-bezier(0.2,0,0,1)] max-[700px]:right-3 max-[700px]:bottom-3 max-[700px]:w-[calc(100vw-24px)] max-[700px]:max-w-[360px] max-[700px]:max-h-[min(560px,calc(100dvh-96px))] max-[700px]:rounded-[14px] max-[380px]:right-2 max-[380px]:bottom-2 max-[380px]:w-[calc(100vw-16px)] max-[380px]:max-h-[min(540px,calc(100dvh-80px))]"
+        className="fixed right-[22px] bottom-[22px] z-[196] flex max-h-[min(640px,calc(100dvh-100px))] w-96 origin-bottom-right flex-col overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--bg)] shadow-[0_34px_84px_-40px_rgba(0,0,0,0.95),rgba(255,255,255,0.08)_0_0.5px_0_0_inset] animate-[assistantPanelIn_0.24s_cubic-bezier(0.2,0,0,1)] max-[700px]:right-3 max-[700px]:bottom-3 max-[700px]:w-[calc(100vw-24px)] max-[700px]:max-w-[360px] max-[700px]:max-h-[min(560px,calc(100dvh-96px))] max-[700px]:rounded-[14px] max-[380px]:right-2 max-[380px]:bottom-2 max-[380px]:w-[calc(100vw-16px)] max-[380px]:max-h-[min(540px,calc(100dvh-80px))]"
         role="dialog"
         aria-label="BrawlLens assistant"
         aria-modal="false"

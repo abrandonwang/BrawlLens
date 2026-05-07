@@ -11,6 +11,7 @@ export function BrawlImage({ src, alt, sizes = "96px", ...props }: Props) {
       src={src}
       alt={alt}
       sizes={sizes}
+      unoptimized
       {...props}
     />
   )

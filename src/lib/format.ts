@@ -5,9 +5,22 @@ export function formatNum(n: number): string {
 }
 
 export function formatTrophies(n: number): string {
-  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M"
-  if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, "") + "K"
-  return n.toString()
+  const abs = Math.abs(n)
+  if (abs >= 1_000_000) return formatCompactSignificant(n, 1_000_000, "M")
+  if (abs >= 1000) return formatCompactSignificant(n, 1000, "K")
+  return Math.round(n).toString()
+}
+
+function formatCompactSignificant(
+  n: number,
+  unit: number,
+  suffix: string,
+  significantDigits = 4,
+): string {
+  const scaled = n / unit
+  const magnitude = Math.floor(Math.log10(Math.abs(scaled)))
+  const decimals = Math.max(0, significantDigits - magnitude - 1)
+  return `${scaled.toFixed(decimals).replace(/\.?0+$/, "")}${suffix}`
 }
 
 export function formatBrawlerName(name: string): string {

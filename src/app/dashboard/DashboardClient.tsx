@@ -146,7 +146,7 @@ function WidgetFrame({
   return (
     <article
       onPointerDown={editable ? event => onDragStart?.(panel, event) : undefined}
-      className={`group relative min-w-0 rounded-[10px] border border-[var(--line)] bg-[var(--panel)] [grid-column:var(--panel-grid-column)] [grid-row:var(--panel-grid-row)] transition-[border-color,background-color,box-shadow,opacity] hover:border-[var(--line-2)] max-md:rounded-md ${preview ? "overflow-hidden bg-[color-mix(in_srgb,var(--panel)_88%,var(--panel-2))]" : "overflow-visible"} ${editable ? "cursor-grab touch-none select-none active:cursor-grabbing" : ""} ${dragging ? "z-30 cursor-grabbing border-[var(--line-2)] bg-[var(--panel)] shadow-[0_18px_44px_-32px_rgba(28,28,28,0.55)]" : ""} ${dragInvalid ? "border-[var(--loss-line)] bg-[color-mix(in_srgb,var(--loss)_8%,var(--panel))]" : ""} ${dragDeleting ? "opacity-70 ring-1 ring-[rgba(185,28,28,0.28)]" : ""} ${!editable ? "max-md:[grid-column:auto] max-md:[grid-row:auto]" : ""}`}
+      className={`group relative min-w-0 overflow-hidden rounded-[10px] border border-[var(--line)] bg-[var(--panel)] [grid-column:var(--panel-grid-column)] [grid-row:var(--panel-grid-row)] transition-[border-color,background-color,box-shadow,opacity] hover:border-[var(--line-2)] max-md:rounded-md ${preview ? "bg-[color-mix(in_srgb,var(--panel)_88%,var(--panel-2))]" : ""} ${editable ? "cursor-grab touch-none select-none active:cursor-grabbing" : ""} ${dragging ? "z-30 cursor-grabbing border-[var(--line-2)] bg-[var(--panel)] shadow-[0_18px_44px_-32px_rgba(0,0,0,0.75)]" : ""} ${dragInvalid ? "border-[var(--loss-line)] bg-[color-mix(in_srgb,var(--loss)_8%,var(--panel))]" : ""} ${dragDeleting ? "opacity-70 ring-1 ring-[rgba(185,28,28,0.28)]" : ""} ${!editable ? "max-md:[grid-column:auto] max-md:[grid-row:auto]" : ""}`}
       style={panelStyle}
     >
       <div className={`flex h-full min-h-0 flex-col ${preview ? "p-3 max-md:p-1.5" : short ? "p-3" : tiny ? "p-3.5" : "p-4"}`}>
@@ -512,7 +512,7 @@ export default function DashboardClient({ setupMode = false, editable = false, s
         ) : (
           <>
             <div className="min-w-0">
-              <div className={`truncate font-semibold tracking-[-0.03em] text-[var(--ink)] ${short ? "text-[clamp(20px,2.4vw,26px)] leading-none" : compact ? "text-[22px] leading-tight" : "text-[clamp(24px,4vw,34px)] leading-none"}`}>{metric.value}</div>
+              <div className={`truncate font-semibold tracking-[-0.03em] text-[var(--ink)] ${short ? "text-[clamp(18px,2vw,24px)] leading-none" : compact ? "text-[22px] leading-tight" : "text-[clamp(24px,4vw,34px)] leading-none"}`}>{metric.value}</div>
               {!short && <div className="mt-1 truncate text-[12px] text-[var(--ink-4)] max-md:hidden">{metric.detail}</div>}
             </div>
             {metric.href && (
@@ -541,8 +541,8 @@ export default function DashboardClient({ setupMode = false, editable = false, s
         <div className="flex h-full min-h-0 flex-col justify-between gap-3">
           <div className="min-w-0">
             {!compact && (
-              <div className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-[var(--line)] bg-[var(--panel-2)] px-2 py-0.5 font-mono text-[10px] font-medium uppercase tracking-[0.08em] text-[var(--ink-3)]">
-                <span aria-hidden className="size-1.5 rounded-full bg-[var(--ink)]" />
+              <div className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-[var(--accent-line)] bg-[var(--accent-soft)] px-2 py-0.5 font-mono text-[10px] font-medium uppercase tracking-[0.08em] text-[var(--ink-2)]">
+                <span aria-hidden className="size-1.5 rounded-full bg-[var(--accent)] shadow-[0_0_6px_var(--accent)]" />
                 Profile lookup
               </div>
             )}
@@ -608,7 +608,7 @@ export default function DashboardClient({ setupMode = false, editable = false, s
               const share = peakBattles > 0 ? (map.battles / peakBattles) * 100 : 0
               return (
                 <Link key={`${map.mode}-${map.name}`} href={`/meta?open=${encodeURIComponent(map.name)}`} className="group/row relative grid min-h-[40px] grid-cols-[20px_minmax(0,1fr)_auto] items-center gap-2.5 overflow-hidden rounded-md border border-[var(--line)] bg-[var(--panel-2)] px-2.5 py-1.5 text-inherit no-underline transition-colors hover:border-[var(--line-2)] hover:bg-[var(--hover-bg)]">
-                  <span aria-hidden className="absolute inset-y-0 left-0 origin-left bg-[var(--ink)]/[0.04] transition-[width] duration-300" style={{ width: `${share}%` }} />
+                  <span aria-hidden className="absolute inset-y-0 left-0 origin-left bg-[var(--accent-soft)] transition-[width] duration-300" style={{ width: `${share}%` }} />
                   <span className="relative font-mono text-[10.5px] tabular-nums text-[var(--ink-4)]">{String(index + 1).padStart(2, "0")}</span>
                   <span className="relative min-w-0">
                     <span className="block truncate text-[12.5px] font-semibold tracking-[-0.005em] text-[var(--ink)]">{map.name}</span>
@@ -667,7 +667,7 @@ export default function DashboardClient({ setupMode = false, editable = false, s
                 </div>
                 <div className="relative h-1.5 overflow-hidden rounded-full bg-[var(--line)]">
                   <div
-                    className={`h-full rounded-full transition-[width] duration-500 ease-out ${isLeader ? "bg-[var(--ink)]" : "bg-[var(--ink-2)]/55"}`}
+                    className={`h-full rounded-full transition-[width] duration-500 ease-out ${isLeader ? "bg-[var(--accent)] shadow-[0_0_8px_var(--accent-line)]" : "bg-[var(--ink-2)]/45"}`}
                     style={{ width: `${share}%` }}
                   />
                 </div>
@@ -746,7 +746,7 @@ export default function DashboardClient({ setupMode = false, editable = false, s
               type="button"
               onClick={() => openAssistant(prompt)}
               title={compact ? "Ask AI" : prompt}
-              className="group/ai flex min-h-9 w-full min-w-0 cursor-pointer items-center justify-between gap-2 overflow-hidden rounded-md border border-[var(--line)] bg-[var(--bg)] px-3 text-left text-[12.5px] text-[var(--ink-2)] transition-colors hover:border-[var(--line-2)] hover:bg-[var(--panel-2)] hover:text-[var(--ink)]"
+              className="group/ai flex min-h-9 w-full min-w-0 cursor-pointer items-center justify-between gap-2 overflow-hidden rounded-md border border-[var(--line)] bg-[var(--bg)] px-3 text-left text-[12px] leading-none text-[var(--ink-2)] transition-colors hover:border-[var(--line-2)] hover:bg-[var(--panel-2)] hover:text-[var(--ink)]"
             >
               <span className="block min-w-0 flex-1 truncate">{compact ? "Ask AI" : prompt}</span>
               <span aria-hidden className="font-mono text-[11px] tabular-nums text-[var(--ink-4)] transition-transform duration-200 group-hover/ai:translate-x-[2px] group-hover/ai:text-[var(--ink)]">{">"}</span>
@@ -763,7 +763,7 @@ export default function DashboardClient({ setupMode = false, editable = false, s
           Array.from({ length: limit }).map((_, index) => <SkeletonBlock key={index} className="h-[54px] w-full" />)
         ) : metaSignals.length > 0 ? metaSignals.slice(0, limit).map(signal => (
           <Link key={signal.label} href={signal.href} className="group/signal relative min-w-0 overflow-hidden rounded-md border border-[var(--line)] bg-[var(--panel-2)] p-3 text-inherit no-underline transition-colors hover:border-[var(--line-2)] hover:bg-[var(--hover-bg)]">
-            <span aria-hidden className="absolute inset-y-2 left-0 w-[2px] rounded-r-full bg-[var(--ink)] opacity-50 transition-opacity group-hover/signal:opacity-100" />
+            <span aria-hidden className="absolute inset-y-2 left-0 w-[2px] rounded-r-full bg-[var(--accent)] opacity-70 transition-opacity group-hover/signal:opacity-100" />
             <div className="mb-1 truncate pl-2 text-[10.5px] font-medium uppercase tracking-[0.06em] text-[var(--ink-4)]">{signal.label}</div>
             <div className="line-clamp-2 pl-2 text-[13px] font-semibold leading-[1.35] tracking-[-0.005em] text-[var(--ink)]">{signal.value}</div>
           </Link>
@@ -797,17 +797,22 @@ export default function DashboardClient({ setupMode = false, editable = false, s
       )}
       <div className={`relative z-[1] mx-auto w-full max-w-[1460px] px-6 pb-20 max-md:px-4 max-sm:px-3.5 max-sm:pb-14 ${showIntro ? "pt-10 max-md:pt-7" : "pt-4 max-md:pt-4"}`}>
         {showIntro && (
-          <div className="mb-5 flex items-center justify-between gap-4 max-sm:gap-2">
+          <div className="mb-6 flex flex-wrap items-end justify-between gap-x-6 gap-y-4 max-sm:gap-y-3">
             <div className="min-w-0">
-              <h1 className="m-0 text-[clamp(28px,4.4vw,38px)] font-semibold leading-none tracking-[-0.032em] text-[var(--ink)]">Lensboard</h1>
+              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[var(--line)] bg-[var(--panel-2)] px-2.5 py-1 font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-[var(--ink-3)]">
+                <span aria-hidden className="size-1.5 rounded-full bg-[var(--accent)] shadow-[0_0_8px_var(--accent)]" />
+                Live · {loading ? "syncing" : `${formatNum(totalBattles)} battles`}
+              </div>
+              <h1 className="m-0 text-[clamp(32px,5vw,46px)] font-semibold leading-[0.95] tracking-[-0.038em] text-[var(--ink)]">Lensboard</h1>
+              <p className="mt-2 mb-0 max-w-[520px] text-[13.5px] leading-[1.5] text-[var(--ink-3)] max-sm:text-[12.5px]">A live read on the Brawl Stars meta. Player tags, top maps, brawler signal, and AI shortcuts &mdash; arranged the way you want them.</p>
             </div>
-            <div className="flex shrink-0 items-center gap-2">
-              <button type="button" onClick={() => openAssistant("Give me the most important BrawlLens meta signals right now.")} className="inline-flex min-h-10 whitespace-nowrap items-center justify-center gap-2 rounded-md border border-[var(--line)] bg-[var(--panel)] px-4 text-[14px] font-medium text-[var(--ink-2)] shadow-[var(--shadow-lift)] transition-colors hover:border-[var(--line-2)] hover:text-[var(--ink)] max-sm:px-3">
-                <Image src="/ai-sparkle-512.png" alt="" width={18} height={18} className="size-[18px] shrink-0" />
+            <div className="flex shrink-0 items-center gap-2 max-sm:w-full">
+              <button type="button" onClick={() => openAssistant("Give me the most important BrawlLens meta signals right now.")} className="group/ask inline-flex min-h-10 whitespace-nowrap items-center justify-center gap-2 rounded-md border border-[var(--line)] bg-[var(--panel)] px-4 text-[13px] font-medium text-[var(--ink-2)] shadow-[var(--shadow-lift)] transition-all hover:border-[var(--accent-line)] hover:bg-[var(--panel-2)] hover:text-[var(--ink)] max-sm:flex-1 max-sm:px-3">
+                <Image src="/ai-sparkle-512.png" alt="" width={16} height={16} className="size-4 shrink-0 transition-transform duration-300 group-hover/ask:rotate-12" />
                 Ask AI
               </button>
-              <Link href="/edit" className="inline-flex min-h-10 whitespace-nowrap items-center justify-center rounded-md bg-[var(--ink)] px-4 text-[14px] font-medium text-[#fcfbf8] no-underline shadow-[var(--shadow-lift)] transition-opacity hover:opacity-90 max-sm:px-3">
-                Edit
+              <Link href="/edit" className="inline-flex min-h-10 whitespace-nowrap items-center justify-center gap-1.5 rounded-md bg-[var(--ink)] px-4 text-[13px] font-semibold text-[var(--ink-on)] no-underline shadow-[var(--shadow-lift)] transition-opacity hover:opacity-90 max-sm:flex-1 max-sm:px-3">
+                Edit board
               </Link>
             </div>
           </div>
@@ -820,7 +825,7 @@ export default function DashboardClient({ setupMode = false, editable = false, s
                 <div className="border-b border-[var(--line)] p-3.5">
                   <div className="flex items-center justify-between gap-3">
                     <h2 className="m-0 text-[18px] font-semibold tracking-[-0.018em] text-[var(--ink)]">Presets</h2>
-                    <button type="button" onClick={saveBoardAndExit} disabled={savingBoard} className="inline-flex min-h-9 min-w-[76px] cursor-pointer items-center justify-center rounded-md border-0 bg-[var(--ink)] px-3 text-[13px] font-medium text-[#fcfbf8] shadow-[var(--shadow-lift)] transition-opacity hover:opacity-90 disabled:cursor-default disabled:opacity-55">
+                    <button type="button" onClick={saveBoardAndExit} disabled={savingBoard} className="inline-flex min-h-9 min-w-[76px] cursor-pointer items-center justify-center rounded-md border-0 bg-[var(--ink)] px-3 text-[13px] font-medium text-[var(--ink-on)] shadow-[var(--shadow-lift)] transition-opacity hover:opacity-90 disabled:cursor-default disabled:opacity-55">
                       {savingBoard ? "Saving..." : "Save"}
                     </button>
                   </div>
@@ -834,7 +839,7 @@ export default function DashboardClient({ setupMode = false, editable = false, s
                           const first = LENSBOARD_WIDGET_IDS.find(id => widgetInfo[id].category === group) ?? null
                           setOpenPreset(first)
                         }}
-                        className={`h-8 cursor-pointer rounded-md border text-[11px] font-medium transition-colors ${activePresetGroup === group ? "border-[var(--ink)] bg-[var(--ink)] text-[#fcfbf8] shadow-[var(--shadow-lift)]" : "border-[var(--line)] bg-transparent text-[var(--ink-3)] hover:border-[var(--line-2)] hover:text-[var(--ink)]"}`}
+                        className={`h-8 cursor-pointer rounded-md border text-[11px] font-medium transition-colors ${activePresetGroup === group ? "border-[var(--ink)] bg-[var(--ink)] text-[var(--ink-on)] shadow-[var(--shadow-lift)]" : "border-[var(--line)] bg-transparent text-[var(--ink-3)] hover:border-[var(--line-2)] hover:text-[var(--ink)]"}`}
                       >
                         {group}
                       </button>

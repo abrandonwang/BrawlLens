@@ -47,3 +47,33 @@ export async function fetchPlayerResponse(tag: string, init?: NextFetchOptions):
     },
   })
 }
+
+export async function fetchPlayerBattleLogResponse(tag: string, init?: NextFetchOptions): Promise<Response> {
+  const apiKey = brawlApiKey()
+  if (!apiKey) {
+    throw new Error("Missing BRAWL_API_KEY for player battle log lookup")
+  }
+
+  return fetch(`https://api.brawlstars.com/v1/players/%23${encodeURIComponent(tag)}/battlelog`, {
+    ...init,
+    headers: {
+      ...init?.headers,
+      Authorization: `Bearer ${apiKey}`,
+    },
+  })
+}
+
+export async function fetchClubResponse(tag: string, init?: NextFetchOptions): Promise<Response> {
+  const apiKey = brawlApiKey()
+  if (!apiKey) {
+    throw new Error("Missing BRAWL_API_KEY for club lookup")
+  }
+
+  return fetch(`https://api.brawlstars.com/v1/clubs/%23${encodeURIComponent(tag.replace(/^#/, ""))}`, {
+    ...init,
+    headers: {
+      ...init?.headers,
+      Authorization: `Bearer ${apiKey}`,
+    },
+  })
+}

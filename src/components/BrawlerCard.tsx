@@ -21,7 +21,7 @@ export default function BrawlerCard({ id, name, power, rank, trophies, highestTr
     >
       <div style={{
         position: "relative",
-        background: `radial-gradient(ellipse at 50% 70%, color-mix(in srgb, ${hasHC ? "var(--hc-purple)" : "var(--ink-4)"} 18%, transparent), var(--panel-2) 65%)`,
+        background: "var(--panel-2)",
         height: 136,
         display: "flex",
         alignItems: "flex-end",
