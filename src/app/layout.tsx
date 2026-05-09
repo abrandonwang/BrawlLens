@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import NavBar from "../components/NavBar";
 import Footer from "../components/Footer";
@@ -8,12 +8,21 @@ import { Analytics } from "@vercel/analytics/next";
 export const metadata: Metadata = {
   title: "BrawlLens",
   description: "Advanced analytics for competitive players.",
+  manifest: "/site.webmanifest",
   verification: {
     google: "KgSz5bQ-JYhDUKa1e_JLCMQw24ST6zgO0LQqjhNB7kU",
   },
   icons: {
-    icon: "/favicon.ico",
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico", sizes: "32x32" },
+    ],
+    apple: "/apple-touch-icon.svg",
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0d0e10",
 };
 
 export default function RootLayout({

@@ -5,7 +5,7 @@ import { ChevronDown, Search } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { BrawlImage, brawlerIconUrl } from "@/components/BrawlImage"
-import { formatBrawlerName, formatTrophies } from "@/lib/format"
+import { formatBrawlerName } from "@/lib/format"
 import { useClickOutside } from "@/lib/useClickOutside"
 import {
   EmptyLeaderboardState,
@@ -44,10 +44,25 @@ interface PlayerEnrichment {
   iconId: number | null
   totalTrophies?: number | null
   clubBadgeId?: number | null
+  selectedBrawlerId?: number | null
+  selectedBrawler?: BrawlerSummary | null
+  totalPrestigeLevel?: number | null
+  globalRankEstimate?: number | null
+  globalPercentile?: string | null
 }
 
 const PAGE_SIZE = 50
-const brawlerTableGrid = "grid grid-cols-[34px_minmax(160px,1.18fr)_72px_72px_minmax(90px,0.72fr)_40px] items-center gap-1.5"
+const brawlerTableGrid = "grid grid-cols-[34px_minmax(136px,160px)_72px_72px_46px_54px_72px_minmax(112px,1fr)_66px] items-center gap-1"
+
+interface BrawlerSummary {
+  id: number
+  name: string
+  trophies: number
+  highestTrophies: number | null
+  rank: number | null
+  power: number | null
+  prestigeLevel: number | null
+}
 
 export default function BrawlerLeaderboardClient({
   brawlers,
@@ -98,9 +113,15 @@ export default function BrawlerLeaderboardClient({
   const visibleTags = useMemo(() => visiblePlayers.map(player => playerKey(player.player_tag)), [visiblePlayers])
   const visibleTagKey = visibleTags.join(",")
   const selectedName = activeBrawler ? formatBrawlerName(activeBrawler.name) : "Brawler"
+  const rankedTotal = data.length
 
   useEffect(() => {
-    const tags = visibleTags.filter(tag => !apiEnrichments[tag])
+    const activeBrawlerId = activeBrawler?.id ?? null
+    const tags = visibleTags.filter(tag => {
+      const enrichment = apiEnrichments[tag]
+      if (!enrichment) return true
+      return activeBrawlerId !== null && enrichment.selectedBrawlerId !== activeBrawlerId
+    })
     if (!tags.length) return
 
     const controller = new AbortController()
@@ -109,7 +130,7 @@ export default function BrawlerLeaderboardClient({
         const response = await fetch("/api/leaderboards/player-enrichment", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ tags }),
+          body: JSON.stringify({ tags, brawlerId: activeBrawlerId }),
           signal: controller.signal,
         })
         if (!response.ok) return
@@ -127,7 +148,7 @@ export default function BrawlerLeaderboardClient({
 
     void loadEnrichments()
     return () => controller.abort()
-  }, [visibleTagKey, visibleTags, apiEnrichments])
+  }, [activeBrawler?.id, visibleTagKey, visibleTags, apiEnrichments])
 
   function select(brawler: Brawler) {
     setOpen(false)
@@ -182,16 +203,20 @@ export default function BrawlerLeaderboardClient({
                   key={player.player_tag}
                   player={player}
                   enrichment={apiEnrichments[playerKey(player.player_tag)]}
+                  rankedTotal={rankedTotal}
                 />
               ))}
             </section>
 
             <LeaderboardPanel>
-              <TableHead className={brawlerTableGrid}>
-                <span />
+              <TableHead className={`${brawlerTableGrid} bl-lb-brawler-table-head`}>
+                <span>Rank</span>
                 <span>Player</span>
-                <span>Brawler trophies</span>
-                <span>Total trophies</span>
+                <span>Brawler</span>
+                <span>Peak</span>
+                <span>Power</span>
+                <span>Prestige</span>
+                <span>Total</span>
                 <span>Club</span>
                 <span>World</span>
               </TableHead>
@@ -202,6 +227,7 @@ export default function BrawlerLeaderboardClient({
                     key={`${activeBrawler.id}-${player.player_tag}`}
                     player={player}
                     enrichment={apiEnrichments[playerKey(player.player_tag)]}
+                    rankedTotal={rankedTotal}
                   />
                 ))}
               </div>
@@ -298,18 +324,23 @@ function BrawlerSelector({
 function BrawlerRankRow({
   player,
   enrichment,
+  rankedTotal,
 }: {
   player: Player
   enrichment?: PlayerEnrichment
+  rankedTotal: number
 }) {
   const playerHref = `/player/${encodeURIComponent(player.player_tag.replace(/^#/, ""))}`
   const totalTrophies = getTotalTrophies(player, enrichment)
+  const selectedBrawler = enrichment?.selectedBrawler
+  const worldPlacement = formatWorldPlacement(player.world_rank, enrichment, player.rank, rankedTotal)
+  const worldPlacementShort = formatWorldPlacementShort(player.world_rank, enrichment, player.rank, rankedTotal)
 
   return (
     <div className={`bl-lb-row ${brawlerTableGrid}`}>
       <div className="bl-lb-rank-stack">
         <RankCell rank={player.rank} />
-        <span>{formatWorldRank(player.world_rank)}</span>
+        <span>{worldPlacementShort}</span>
       </div>
       <Link href={playerHref} className="bl-lb-identity bl-lb-player-link">
         <PlayerAvatar name={player.player_name} rank={player.rank} iconId={enrichment?.iconId ?? null} />
@@ -319,11 +350,14 @@ function BrawlerRankRow({
         </div>
       </Link>
       <span className="bl-lb-row-stat">
-        {formatTrophies(player.trophies)}
+        {formatExactTrophies(player.trophies)}
       </span>
+      <span className="bl-lb-row-mono">{formatExactTrophies(selectedBrawler?.highestTrophies ?? player.trophies)}</span>
+      <span className="bl-lb-row-mono">{formatPlainStat(selectedBrawler?.power)}</span>
+      <span className="bl-lb-row-mono">{formatPlainStat(selectedBrawler?.prestigeLevel)}</span>
       <span className="bl-lb-row-mono">{formatNullableTrophies(totalTrophies)}</span>
       <ClubCell name={player.club_name} badgeId={enrichment?.clubBadgeId ?? null} />
-      <span className="bl-lb-row-mono">{formatWorldRank(player.world_rank)}</span>
+      <span className="bl-lb-row-mono">{worldPlacement}</span>
     </div>
   )
 }
@@ -331,12 +365,15 @@ function BrawlerRankRow({
 function BrawlerPodiumCard({
   player,
   enrichment,
+  rankedTotal,
 }: {
   player: Player
   enrichment?: PlayerEnrichment
+  rankedTotal: number
 }) {
   const playerHref = `/player/${encodeURIComponent(player.player_tag.replace(/^#/, ""))}`
   const totalTrophies = getTotalTrophies(player, enrichment)
+  const worldPlacement = formatWorldPlacement(player.world_rank, enrichment, player.rank, rankedTotal)
 
   return (
     <div className="bl-lb-podium-card">
@@ -354,14 +391,14 @@ function BrawlerPodiumCard({
           <span>total trophies</span>
         </div>
       </div>
-      <div className="bl-lb-podium-score">{formatTrophies(player.trophies)}</div>
+      <div className="bl-lb-podium-score">{formatExactTrophies(player.trophies)}</div>
       <div className="bl-lb-podium-foot">
         <div className="bl-lb-mini-stat">
-          <strong>{formatWorldRank(player.world_rank)}</strong>
-          <span>world trophy rank</span>
+          <strong>{worldPlacement}</strong>
+          <span>world / top %</span>
         </div>
         <div className="bl-lb-mini-stat bl-lb-mini-stat-center">
-          <strong>{formatTrophies(player.trophies)}</strong>
+          <strong>{formatExactTrophies(player.trophies)}</strong>
           <span>brawler trophies</span>
         </div>
         <div className="bl-lb-mini-stat bl-lb-mini-stat-right">
@@ -403,12 +440,48 @@ function clubBadgeUrl(id: number) {
   return `https://cdn.brawlify.com/club-badges/regular/${id}.png`
 }
 
-function formatWorldRank(value: number | null | undefined) {
-  return typeof value === "number" ? `#${value}` : "--"
+function formatWorldPlacement(
+  value: number | null | undefined,
+  enrichment: PlayerEnrichment | undefined,
+  brawlerRank: number,
+  rankedTotal: number
+) {
+  if (typeof value === "number") return `#${value}`
+  if (enrichment?.globalPercentile) return `Top ${enrichment.globalPercentile}`
+  const brawlerPercentile = formatBrawlerPercentile(brawlerRank, rankedTotal)
+  return brawlerPercentile ? `Top ${brawlerPercentile}` : "--"
+}
+
+function formatWorldPlacementShort(
+  value: number | null | undefined,
+  enrichment: PlayerEnrichment | undefined,
+  brawlerRank: number,
+  rankedTotal: number
+) {
+  if (typeof value === "number") return `#${value}`
+  if (enrichment?.globalPercentile) return enrichment.globalPercentile
+  return formatBrawlerPercentile(brawlerRank, rankedTotal) ?? "--"
+}
+
+function formatBrawlerPercentile(rank: number | null | undefined, total: number | null | undefined) {
+  if (!rank || !total) return null
+  const percentile = (rank / total) * 100
+  if (percentile < 0.01) return "<0.01%"
+  if (percentile < 10) return `${percentile.toFixed(1)}%`
+  if (percentile < 100) return `${Math.round(percentile)}%`
+  return "100%"
 }
 
 function formatNullableTrophies(value: number | null | undefined) {
-  return typeof value === "number" ? formatTrophies(value) : "--"
+  return typeof value === "number" ? value.toLocaleString("en-US") : "--"
+}
+
+function formatExactTrophies(value: number | null | undefined) {
+  return typeof value === "number" ? value.toLocaleString("en-US") : "--"
+}
+
+function formatPlainStat(value: number | null | undefined) {
+  return typeof value === "number" ? value.toLocaleString("en-US") : "--"
 }
 
 function getTotalTrophies(player: Player, enrichment: PlayerEnrichment | undefined) {

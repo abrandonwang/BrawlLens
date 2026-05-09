@@ -3,7 +3,7 @@ import AuthSetupClient from "./AuthSetupClient"
 import DashboardClient from "@/app/dashboard/DashboardClient"
 
 export const metadata: Metadata = {
-  title: "Set Up Account | BrawlLens",
+  title: "Set Up Account - BrawlLens",
   description: "Confirm your BrawlLens account and complete onboarding.",
 }
 

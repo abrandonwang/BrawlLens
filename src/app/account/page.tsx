@@ -5,7 +5,7 @@ import { AUTH_ACCESS_COOKIE } from "@/lib/authCookies"
 import AccountClient from "./AccountClient"
 
 export const metadata: Metadata = {
-  title: "Account Settings | BrawlLens",
+  title: "Account Settings - BrawlLens",
   description: "Manage BrawlLens account, premium, billing, cancellation, and privacy settings.",
 }
 

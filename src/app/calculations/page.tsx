@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation"
 
 export default function CalculationsPage() {
-  redirect("/about#calculations")
+  redirect("/about#metric-rules")
 }

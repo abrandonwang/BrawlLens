@@ -32,7 +32,7 @@ interface Props {
   onToggleCompare: (b: Brawler) => void
 }
 
-const CARD_HEIGHT = 216
+const CARD_HEIGHT = 178
 
 export default function BrawlerCatalog({ brawlers, stats, selectedForCompare, onSelect, onToggleCompare }: Props) {
   if (brawlers.length === 0) {
@@ -47,7 +47,7 @@ export default function BrawlerCatalog({ brawlers, stats, selectedForCompare, on
   const selectedSet = new Set(selectedForCompare)
 
   return (
-    <div className="grid grid-cols-[repeat(auto-fill,minmax(148px,1fr))] gap-5 pt-1 max-[640px]:grid-cols-[repeat(auto-fill,minmax(132px,1fr))] max-[420px]:grid-cols-2">
+    <div className="grid grid-cols-[repeat(auto-fill,minmax(132px,1fr))] gap-2 pt-1 max-[640px]:grid-cols-[repeat(auto-fill,minmax(122px,1fr))] max-[420px]:grid-cols-2">
       {brawlers.map((brawler, index) => {
             const color = sanitizeColor(brawler.rarity.color)
             const stat = stats[brawler.id]
@@ -56,7 +56,7 @@ export default function BrawlerCatalog({ brawlers, stats, selectedForCompare, on
             return (
               <article
                 key={brawler.id}
-                className="group relative block w-full min-w-0 overflow-hidden rounded-[14px] border border-[var(--line)] bg-[var(--panel)] p-2 text-left no-underline transition-[border-color,background] duration-200 hover:border-[var(--line-2)]"
+                className="group relative block w-full min-w-0 overflow-hidden rounded-[5px] border border-[rgba(247,244,237,0.065)] bg-[#1b1d22] p-1.5 text-left no-underline shadow-[rgba(255,255,255,0.032)_0_1px_0_0_inset] transition-colors duration-150 hover:border-[rgba(247,244,237,0.13)] hover:bg-[#202329]"
                 style={{
                   height: CARD_HEIGHT,
                   animationDelay: `${Math.min(index * 8, 90)}ms`,
@@ -68,7 +68,7 @@ export default function BrawlerCatalog({ brawlers, stats, selectedForCompare, on
                   aria-label={`${compareSelected ? "Remove" : "Add"} ${brawler.name} comparison`}
                   aria-pressed={compareSelected}
                   onClick={() => onToggleCompare(brawler)}
-                  className={`absolute top-3 right-3 z-30 grid size-5 place-items-center rounded-full border transition ${compareSelected ? "border-[var(--ink)] bg-[var(--ink)] text-[var(--bg)]" : "border-white/[0.22] bg-[var(--panel)] text-[var(--ink-2)] hover:border-white/[0.42] hover:text-[var(--ink)]"}`}
+                  className={`absolute top-2 right-2 z-30 grid size-5 place-items-center rounded-[5px] border transition ${compareSelected ? "border-[#f0d373] bg-[#f0d373] text-[#171007]" : "border-white/[0.14] bg-[#101113] text-[var(--ink-2)] hover:border-white/[0.28] hover:text-[var(--ink)]"}`}
                 >
                   {compareSelected ? <Check size={10} /> : <Plus size={10} />}
                 </button>
@@ -78,12 +78,12 @@ export default function BrawlerCatalog({ brawlers, stats, selectedForCompare, on
                   className="block h-full w-full cursor-pointer border-0 bg-transparent p-0 text-left"
                   aria-label={`Open ${brawler.name}`}
                 >
-                <span className="absolute top-3 left-3 z-20 flex h-5 max-w-[calc(100%-44px)] items-center truncate rounded-full border border-white/[0.14] bg-[var(--ink)] px-2 text-[9.5px] font-semibold leading-none text-[var(--bg)]">
+                <span className="absolute top-2 left-2 z-20 flex h-5 max-w-[calc(100%-40px)] items-center truncate rounded-[5px] border border-white/[0.10] bg-[#101113] px-2 text-[9.5px] font-semibold leading-none text-[var(--ink-2)]">
                   {brawler.class.name === "Unknown" ? brawler.rarity.name : brawler.class.name}
                 </span>
 
-                <div className="relative grid h-[130px] place-items-center rounded-[10px] bg-[var(--panel)] px-3 pt-8 pb-1">
-                  <div className="relative z-10 size-[108px] overflow-hidden rounded-[9px] border border-white/[0.18] bg-[var(--panel-2)] transition-transform duration-200 group-hover:scale-[1.025]">
+                <div className="relative grid h-[104px] place-items-center rounded-[5px] bg-[#15171a] px-2 pt-7 pb-1">
+                  <div className="relative z-10 size-[84px] overflow-hidden rounded-[5px] border border-white/[0.12] bg-[#101113] transition-transform duration-150 group-hover:scale-[1.015]">
                     <BrawlImage
                       className="size-full object-cover object-center"
                       src={brawler.imageUrl2}
@@ -95,11 +95,11 @@ export default function BrawlerCatalog({ brawlers, stats, selectedForCompare, on
                     />
                   </div>
                 </div>
-                <div className="px-1 pt-2.5 pb-3.5">
-                  <span className="block truncate text-center text-[14px] font-semibold tracking-[-0.016em] text-[var(--ink)]">
+                <div className="px-1 pt-2 pb-2">
+                  <span className="block truncate text-center text-[13px] font-bold tracking-normal text-[var(--ink)]">
                     {brawler.name}
                   </span>
-                  <div className="mt-1 grid grid-cols-2 items-end gap-3">
+                  <div className="mt-1 grid grid-cols-2 items-end gap-2">
                     <div className="min-w-0">
                       <span className="block text-[10px] font-normal tracking-[-0.01em] text-[var(--ink-4)]">Win</span>
                       <strong className="block text-[12px] leading-tight" style={{ color: winRate != null ? winRateColor(winRate) : "var(--ink-4)" }}>

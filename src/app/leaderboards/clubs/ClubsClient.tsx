@@ -1,6 +1,8 @@
 "use client"
 
 import { useEffect, useMemo, useState, type ReactNode } from "react"
+import Link from "next/link"
+import { useSearchParams } from "next/navigation"
 import { BrawlImage } from "@/components/BrawlImage"
 import { formatRelativeTime, formatTrophies } from "@/lib/format"
 import {
@@ -36,14 +38,26 @@ interface RegionData {
 
 interface ClubEnrichment {
   badgeId: number | null
+  topMember?: ClubMemberSummary | null
+  totalPrestige?: number | null
+  prestigeCoverage?: number
 }
 
 const PAGE_SIZE = 50
-const clubTableGrid = "grid grid-cols-[34px_minmax(150px,1fr)_78px_60px_82px_52px_68px] items-center gap-2"
+const clubTableGrid = "grid grid-cols-[34px_minmax(150px,190px)_82px_56px_74px_minmax(116px,1fr)_70px_54px_42px_64px] items-center gap-1"
+
+interface ClubMemberSummary {
+  tag: string | null
+  name: string
+  trophies: number | null
+  role: string | null
+}
 
 export default function ClubsClient({ allData }: { allData: RegionData[] }) {
+  const searchParams = useSearchParams()
+  const initialSearch = searchParams.get("search") ?? ""
   const [activeRegion, setActiveRegion] = useState<string>("global")
-  const [search, setSearch] = useState("")
+  const [search, setSearch] = useState(initialSearch)
   const [page, setPage] = useState(0)
   const [apiEnrichments, setApiEnrichments] = useState<Record<string, ClubEnrichment>>({})
 
@@ -53,6 +67,10 @@ export default function ClubsClient({ allData }: { allData: RegionData[] }) {
   }, [])
 
   useEffect(() => { setPage(0) }, [search, activeRegion])
+
+  useEffect(() => {
+    setSearch(searchParams.get("search") ?? "")
+  }, [searchParams])
 
   const regionData = useMemo(() => allData.find(r => r.code === activeRegion) ?? allData[0], [allData, activeRegion])
   const globalRankByTag = useMemo(() => {
@@ -143,12 +161,15 @@ export default function ClubsClient({ allData }: { allData: RegionData[] }) {
             </section>
 
             <LeaderboardPanel>
-              <TableHead className={clubTableGrid}>
-                <span />
+              <TableHead className={`${clubTableGrid} bl-lb-club-table-head`}>
+                <span>Rank</span>
                 <span>Club</span>
                 <span>Trophies</span>
                 <span>Members</span>
-                <span>Avg/member</span>
+                <span>Avg</span>
+                <span>Top member</span>
+                <span>Prestige</span>
+                <span>Leader %</span>
                 <span>World</span>
                 <span>Updated</span>
               </TableHead>
@@ -185,23 +206,26 @@ function ClubRankRow({
   const avg = averageTrophies(club)
 
   return (
-    <div className={`bl-lb-row ${clubTableGrid}`}>
+    <div className={`bl-lb-row bl-lb-club-row ${clubTableGrid}`}>
       <div className="bl-lb-rank-stack">
         <RankCell rank={club.rank} />
         <span>{formatWorldRank(worldRank)}</span>
       </div>
-      <div className="bl-lb-identity">
+      <Link href={clubDetailHref(club.club_tag)} className="bl-lb-identity bl-lb-identity-link">
         <ClubAvatar name={club.club_name} rank={club.rank} badgeId={enrichment?.badgeId ?? null} />
         <div className="bl-lb-row-main">
           <div className="bl-lb-name">{club.club_name}</div>
           <div className="bl-lb-subline">{club.club_tag}</div>
         </div>
-      </div>
+      </Link>
       <span className="bl-lb-row-stat">
         {formatTrophies(club.trophies)}
       </span>
       <span className="bl-lb-row-mono">{club.member_count ?? "-"}</span>
       <span className="bl-lb-row-mono">{formatTrophies(avg)}</span>
+      <TopMemberCell member={enrichment?.topMember ?? null} />
+      <PrestigeCell value={enrichment?.totalPrestige} coverage={enrichment?.prestigeCoverage} members={club.member_count} />
+      <span className="bl-lb-row-mono">{formatLeaderShare(club, enrichment?.topMember)}</span>
       <span className="bl-lb-row-mono">{formatWorldRank(worldRank)}</span>
       <span suppressHydrationWarning className="bl-lb-row-muted">{formatRelativeTime(club.updated_at) || "Live"}</span>
     </div>
@@ -217,19 +241,17 @@ function ClubPodiumCard({
   worldRank: number | null
   enrichment?: ClubEnrichment
 }) {
-  const avg = averageTrophies(club)
-
   return (
     <div className="bl-lb-podium-card">
       <div className="bl-lb-podium-top">
         <span className="bl-lb-podium-rank">{club.rank}</span>
-        <div className="bl-lb-identity bl-lb-podium-identity">
+        <Link href={clubDetailHref(club.club_tag)} className="bl-lb-identity bl-lb-identity-link bl-lb-podium-identity">
           <ClubAvatar name={club.club_name} rank={club.rank} badgeId={enrichment?.badgeId ?? null} />
           <div className="bl-lb-row-main">
             <div className="bl-lb-name">{club.club_name}</div>
             <div className="bl-lb-subline">{club.club_tag}</div>
           </div>
-        </div>
+        </Link>
         <div className="bl-lb-podium-rate">
           <strong suppressHydrationWarning>{formatRelativeTime(club.updated_at) || "Live"}</strong>
           <span>updated</span>
@@ -242,8 +264,8 @@ function ClubPodiumCard({
           <span>members</span>
         </div>
         <div className="bl-lb-mini-stat bl-lb-mini-stat-center">
-          <strong>{formatTrophies(avg)}</strong>
-          <span>avg/member</span>
+          <strong>{formatPlainStat(enrichment?.totalPrestige)}</strong>
+          <span>total prestige</span>
         </div>
         <div className="bl-lb-mini-stat bl-lb-mini-stat-right">
           <strong>{formatWorldRank(worldRank)}</strong>
@@ -251,6 +273,39 @@ function ClubPodiumCard({
         </div>
       </div>
     </div>
+  )
+}
+
+function PrestigeCell({
+  value,
+  coverage,
+  members,
+}: {
+  value: number | null | undefined
+  coverage: number | undefined
+  members: number | null
+}) {
+  if (typeof value !== "number") return <span className="bl-lb-row-mono">--</span>
+  const complete = typeof members === "number" && typeof coverage === "number" && coverage >= members
+
+  return (
+    <span
+      className="bl-lb-row-mono"
+      title={complete ? "Total club prestige" : `Prestige loaded for ${coverage ?? 0}/${members ?? "?"} members`}
+    >
+      {formatPlainStat(value)}
+    </span>
+  )
+}
+
+function TopMemberCell({ member }: { member: ClubMemberSummary | null }) {
+  if (!member) return <span className="bl-lb-member-cell bl-lb-member-cell-empty">--</span>
+
+  return (
+    <span className="bl-lb-member-cell">
+      <strong>{member.name}</strong>
+      <small>{typeof member.trophies === "number" ? formatFullNumber(member.trophies) : member.role ?? "--"}</small>
+    </span>
   )
 }
 
@@ -269,12 +324,29 @@ function clubBadgeUrl(id: number) {
   return `https://cdn.brawlify.com/club-badges/regular/${id}.png`
 }
 
+function clubDetailHref(tag: string) {
+  return `/leaderboards/clubs/${encodeURIComponent(clubKey(tag))}`
+}
+
 function averageTrophies(club: Club) {
   return club.member_count ? Math.round(club.trophies / Math.max(1, club.member_count)) : club.trophies
 }
 
+function formatLeaderShare(club: Club, topMember: ClubMemberSummary | null | undefined) {
+  if (typeof topMember?.trophies !== "number" || !club.trophies) return "--"
+  return `${Math.round((topMember.trophies / club.trophies) * 100)}%`
+}
+
 function formatWorldRank(value: number | null | undefined) {
   return typeof value === "number" ? `#${value}` : "--"
+}
+
+function formatFullNumber(value: number | null | undefined) {
+  return typeof value === "number" ? value.toLocaleString("en-US") : "--"
+}
+
+function formatPlainStat(value: number | null | undefined) {
+  return typeof value === "number" ? value.toLocaleString("en-US") : "--"
 }
 
 function clubKey(tag: string) {

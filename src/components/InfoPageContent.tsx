@@ -1,342 +1,252 @@
 "use client"
 
-import { useState, useEffect, type SyntheticEvent } from "react"
-import Link from "next/link"
-import { ArrowUp, CheckCircle2, ChevronRight, Mail } from "lucide-react"
+import { useState, type ReactNode, type SyntheticEvent } from "react"
 import { sendContactEmail } from "@/app/actions/contact"
 
-const sections = [
-  {
-    id: "what-it-tracks",
-    label: "What It Tracks",
-    group: "BrawlLens",
-  },
-  {
-    id: "data-sources",
-    label: "Data Sources",
-    group: "BrawlLens",
-  },
-  {
-    id: "calculations",
-    label: "Calculations",
-    group: "BrawlLens",
-  },
-  {
-    id: "metric-notes",
-    label: "Metric Notes",
-    group: "BrawlLens",
-  },
-  {
-    id: "search-help",
-    label: "Search Help",
-    group: "More",
-  },
-  {
-    id: "data-status",
-    label: "Data Status",
-    group: "More",
-  },
-  {
-    id: "changelog",
-    label: "Changelog",
-    group: "More",
-  },
-  {
-    id: "privacy",
-    label: "Privacy",
-    group: "More",
-  },
-  {
-    id: "contact",
-    label: "Contact",
-    group: "More",
-  },
-]
-
-const groups: { title: string; ids: string[] }[] = [
-  { title: "Getting Started", ids: ["introduction"] },
-  { title: "BrawlLens", ids: sections.filter(s => s.group === "BrawlLens").map(s => s.id) },
-  { title: "More", ids: sections.filter(s => s.group === "More").map(s => s.id) },
-]
-
-const idLabel: Record<string, string> = {
-  introduction: "Introduction",
-  ...Object.fromEntries(sections.map(s => [s.id, s.label])),
+type InfoItem = {
+  title: string
+  summary: string
+  body: ReactNode
 }
 
-export function AboutContent() {
-  const [activeSection, setActiveSection] = useState<string>("introduction")
+type InfoGroup = {
+  title: string
+  items: InfoItem[]
+}
 
-  useEffect(() => {
-    const ids = ["introduction", ...sections.map(s => s.id)]
-    const elements = ids.map(id => document.getElementById(id)).filter((el): el is HTMLElement => el !== null)
-    if (elements.length === 0) return
-
-    const observer = new IntersectionObserver(
-      entries => {
-        const visible = entries
-          .filter(e => e.isIntersecting)
-          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)
-        if (visible[0]) setActiveSection(visible[0].target.id)
+const infoGroups: InfoGroup[] = [
+  {
+    title: "What the product tracks",
+    items: [
+      {
+        title: "Leaderboards",
+        summary: "Player, club, and brawler trophy ladders.",
+        body: (
+          <InfoList
+            items={[
+              "Player rankings are ordered by trophy snapshots from the public leaderboard data.",
+              "Club rankings use total club trophies, then add compact enrichment like members, average trophies, top member, prestige, and update age when available.",
+              "Brawler rankings show the highest trophy players for a selected brawler and estimate non-top-200 placement with percentile-style context where the API allows it.",
+            ]}
+          />
+        ),
       },
-      { rootMargin: "-80px 0px -60% 0px", threshold: 0 },
-    )
-    elements.forEach(el => observer.observe(el))
-    return () => observer.disconnect()
-  }, [])
-
-  const activeGroup = groups.find(g => g.ids.includes(activeSection))?.title ?? "Getting Started"
-
-  return (
-    <main className="dpm-page-shell">
-      <div className="grid gap-8 md:grid-cols-[210px_minmax(0,1fr)] lg:grid-cols-[210px_minmax(0,1fr)_220px] lg:gap-10">
-
-        <aside className="hidden md:block">
-          <div className="dpm-section-card sticky top-20 flex flex-col gap-6 p-3">
-            {groups.map(group => (
-              <div key={group.title} className="flex flex-col gap-2">
-                <h4 className="text-[12px] font-medium tracking-normal text-[var(--ink-2)]">
-                  {group.title}
-                </h4>
-                <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
-                  {group.ids.map(id => {
-                    const active = activeSection === id
-                    return (
-                      <li key={id}>
-                        <a
-                          href={`#${id}`}
-                          aria-current={active ? "true" : undefined}
-                          className={`block rounded-md px-2 py-1 text-[13px] no-underline transition-colors ${active ? "dpm-gold-active font-medium" : "text-[var(--ink-3)] hover:text-[var(--ink)]"}`}
-                        >
-                          {idLabel[id]}
-                        </a>
-                      </li>
-                    )
-                  })}
-                </ul>
-              </div>
-            ))}
-          </div>
-        </aside>
-
-        <article className="min-w-0">
-          <div id="introduction" className="dpm-hero-panel scroll-mt-20 p-6 max-sm:p-5">
-            <h1 className="m-0 text-[clamp(30px,4.2vw,52px)] font-semibold leading-[1] tracking-[-0.01em] text-[var(--ink)]">
-              About BrawlLens
-            </h1>
-            <p className="mt-3 max-w-[640px] text-[15px] leading-[1.55] text-[var(--ink-3)]">
-              Battle data, leaderboards, and brawler insight for players who want a precise read on what is performing right now.
+      {
+        title: "Brawlers",
+        summary: "Catalog metadata plus tracked performance stats.",
+        body: (
+          <InfoList
+            items={[
+              "Static metadata covers names, rarities, classes, ability text, gadgets, star powers, gears, hypercharges, and icons.",
+              "Performance rows use tracked battle aggregates. Win rate and pick rate are not hand-authored labels.",
+              "Tier labels are derived from win rate and sample volume so low-data rows do not look stronger than they are.",
+            ]}
+          />
+        ),
+      },
+      {
+        title: "Maps",
+        summary: "Live rotation context and map-level brawler data.",
+        body: (
+          <InfoList
+            items={[
+              "The maps page combines layout metadata, mode labels, observed battle volume, and live rotation markers.",
+              "The spotlight map is the map with the most tracked battles in the current data, not a subjective recommendation.",
+              "Per-map brawler tables aggregate picks and wins before calculating win rate.",
+            ]}
+          />
+        ),
+      },
+      {
+        title: "Player profiles",
+        summary: "Public account stats, brawler lists, clubs, and recent battles.",
+        body: (
+          <InfoList
+            items={[
+              "Profiles use public player data and recent battle logs for current context.",
+              "Prestige, peak brawlers, club links, and battle rows appear only when the upstream data includes enough information.",
+              "Team quality labels should be read as formulas based on battle context, not as proof that a player made the correct decision.",
+            ]}
+          />
+        ),
+      },
+    ],
+  },
+  {
+    title: "Metric rules",
+    items: [
+      {
+        title: "Win rate",
+        summary: "Wins divided by picks after counts are aggregated.",
+        body: (
+          <>
+            <Formula>wins / picks * 100</Formula>
+            <p>
+              Counts are summed before the rate is calculated. A row with 10 picks does not receive the same influence
+              as a row with 1,000 picks.
             </p>
-            <div className="dpm-tile-grid mt-6">
-              <Link href="/meta" className="dpm-tile no-underline transition-colors hover:border-[var(--line-2)]">
-                <span className="dpm-tile-label">Meta</span>
-                <span className="dpm-tile-value">Maps</span>
-              </Link>
-              <Link href="/brawlers" className="dpm-tile no-underline transition-colors hover:border-[var(--line-2)]">
-                <span className="dpm-tile-label">Catalog</span>
-                <span className="dpm-tile-value">Brawlers</span>
-              </Link>
-              <Link href="/leaderboards/players" className="dpm-tile no-underline transition-colors hover:border-[var(--line-2)]">
-                <span className="dpm-tile-label">Ranks</span>
-                <span className="dpm-tile-value">Leaderboards</span>
-              </Link>
-              <Link href="/" className="dpm-tile no-underline transition-colors hover:border-[var(--line-2)]">
-                <span className="dpm-tile-label">Workspace</span>
-                <span className="dpm-tile-value">Lensboard</span>
-              </Link>
+          </>
+        ),
+      },
+      {
+        title: "Pick rate",
+        summary: "A brawler's picks compared with the eligible tracked pool.",
+        body: (
+          <>
+            <Formula>brawler picks / total eligible picks * 100</Formula>
+            <p>
+              Pick rate is a popularity and confidence signal. It does not mean the brawler is stronger by itself.
+            </p>
+          </>
+        ),
+      },
+      {
+        title: "Tier score",
+        summary: "A compact score built from win rate, sample size, and stability.",
+        body: (
+          <InfoList
+            items={[
+              "Win rate is the primary input.",
+              "Volume uses a softened/log-style contribution so popularity matters without dominating.",
+              "Stability rewards brawlers that qualify across more than one slice of the data.",
+              "Rows with very low samples are guarded so one lucky batch does not become the top recommendation.",
+            ]}
+          />
+        ),
+      },
+      {
+        title: "Leaderboard placement",
+        summary: "Top rows use true rank; non-top rows use calculated context.",
+        body: (
+          <p>
+            When a player or brawler is not in a visible top list, BrawlLens estimates context from available ordered
+            data rather than showing a blank dash. The label is meant to be directional, not a permanent official rank.
+          </p>
+        ),
+      },
+    ],
+  },
+  {
+    title: "Data quality",
+    items: [
+      {
+        title: "Freshness",
+        summary: "Different surfaces update on different rhythms.",
+        body: (
+          <InfoList
+            items={[
+              "Static brawler metadata changes only when the source catalog changes.",
+              "Leaderboards depend on public ranking snapshots.",
+              "Tracked brawler and map aggregates depend on collected battle rows.",
+              "Recent battle rows can shift faster than season-level rankings.",
+            ]}
+          />
+        ),
+      },
+      {
+        title: "Empty states",
+        summary: "Usually a filter or sample-size issue, not a broken page.",
+        body: (
+          <p>
+            If a table is empty, the selected map, mode, rarity, class, region, or minimum-pick filter may not have
+            enough matching data. Clearing filters is the fastest check.
+          </p>
+        ),
+      },
+      {
+        title: "Interpretation",
+        summary: "Stats compare signals; they do not remove game context.",
+        body: (
+          <p>
+            A high win rate can come from map shape, mode, team composition, player skill, matchup pool, or sample size.
+            Use the number as a starting signal, then inspect the surrounding columns.
+          </p>
+        ),
+      },
+    ],
+  },
+  {
+    title: "Privacy and contact",
+    items: [
+      {
+        title: "Privacy",
+        summary: "Most of the app uses public game data and local UI state.",
+        body: (
+          <InfoList
+            items={[
+              "No account is required for public lookup and rankings.",
+              "Player searches request public game data for the searched tag.",
+              "Small interface preferences can be stored locally in the browser.",
+              "Contact form submissions use the email you provide so a reply can be sent.",
+            ]}
+          />
+        ),
+      },
+      {
+        title: "Contact",
+        summary: "Send bugs, confusing stats, missing data, or design notes.",
+        body: <ContactForm />,
+      },
+    ],
+  },
+]
+
+export function AboutContent() {
+  return (
+    <main className="bl-doc-shell">
+      <section className="bl-doc-title" aria-labelledby="about-title">
+        <h1 id="about-title">About</h1>
+      </section>
+
+      <div className="bl-doc-groups">
+        {infoGroups.map(group => (
+          <section
+            key={group.title}
+            id={slug(group.title)}
+            className="bl-doc-group"
+            aria-labelledby={`${slug(group.title)}-title`}
+          >
+            <h2 id={`${slug(group.title)}-title`}>{group.title}</h2>
+            <div className="bl-doc-rows">
+              {group.items.map((item, index) => (
+                <details key={item.title} className="bl-doc-row" open={index === 0}>
+                  <summary>
+                    <span className="bl-doc-row-title">{item.title}</span>
+                    <span className="bl-doc-row-summary">{item.summary}</span>
+                  </summary>
+                  <div className="bl-doc-row-body">{item.body}</div>
+                </details>
+              ))}
             </div>
-          </div>
-
-          <Section id="what-it-tracks" title="What It Tracks">
-            <P>BrawlLens covers the surfaces a player typically asks about when they want to know the current state of the game.</P>
-            <H3>Leaderboards</H3>
-            <UL>
-              <Li>Global and regional player rankings</Li>
-              <Li>Club rankings ordered by total trophies</Li>
-              <Li>Per-brawler trophy leaderboards</Li>
-            </UL>
-            <H3>Brawlers</H3>
-            <UL>
-              <Li>Rarity, class, ability, gadget, star power, gear, and hypercharge context</Li>
-              <Li>Overall score, win rate, stability, and per-map performance</Li>
-              <Li>Compact detail sheets without leaving the catalog</Li>
-            </UL>
-            <H3>Maps and Ask AI</H3>
-            <P>Map pages combine layout metadata, observed battle volume, live rotation context, and per-brawler aggregates. The Ask AI assistant answers plain-language questions about anything above.</P>
-          </Section>
-
-          <Section id="data-sources" title="Data Sources">
-            <P>BrawlLens combines public game data, static brawler metadata, live rotation context, and tracked battle aggregates. Each surface uses the source that best matches the metric being shown.</P>
-            <UL>
-              <Li><B>Brawler catalog</B> - static metadata for names, icons, classes, rarities, and ability references.</Li>
-              <Li><B>Player and leaderboard data</B> - public game endpoints. Trophy values are ordering fields, not performance rates.</Li>
-              <Li><B>Map statistics</B> - tracked battle rows grouped by map, mode, and brawler before rates are calculated.</Li>
-              <Li><B>Rotation data</B> - used for live labels and map context only, not as a substitute for battle volume.</Li>
-              <Li><B>Normalization</B> - names and modes are normalized so display labels, route parameters, and aggregate rows resolve to the same entity.</Li>
-            </UL>
-          </Section>
-
-          <Section id="calculations" title="Calculations">
-            <P>The goal is to keep every metric readable while still filtering out obvious noise. The site favors simple formulas with visible supporting context instead of opaque scoring.</P>
-            <H3>Win rate</H3>
-            <P><Code>wins / picks * 100</Code>. For map stats, wins and picks are aggregated first, then the rate is calculated. A brawler with 60 wins from 100 picks has a 60% win rate. Two separate 60% rows are not averaged unless their pick counts are equal.</P>
-            <H3>Best overall brawler</H3>
-            <P><Code>0.68 win rate + 0.18 volume + 0.14 stability</Code>.</P>
-            <UL>
-              <Li><B>Win rate</B> is the primary signal because it measures conversion from pick to win.</Li>
-              <Li><B>Volume</B> uses a logarithmic pick score so popularity matters without dominating.</Li>
-              <Li><B>Stability</B> measures qualifying map volume at or above 50% win rate.</Li>
-              <Li>The score is a banner heuristic for one highlighted brawler. It is not a tier list.</Li>
-            </UL>
-            <H3>Other rules</H3>
-            <UL>
-              <Li><B>Qualifying thresholds</B> - minimum pick floors keep single-match outliers out of banner slots.</Li>
-              <Li><B>Map spotlight</B> - the Maps banner uses the most-played tracked map, with the highest qualifying win rate as its supporting stat.</Li>
-              <Li><B>Leaderboard top three</B> - ranking order follows trophies; the larger top-three treatment is visual emphasis only.</Li>
-              <Li><B>Display formatting</B> - large counts may be abbreviated for readability; underlying ordering uses the numeric value.</Li>
-            </UL>
-          </Section>
-
-          <Section id="metric-notes" title="Metric Notes">
-            <P>How to read the numbers. The stats are designed for fast comparison, not perfect prediction.</P>
-            <UL>
-              <Li><B>Aggregation order</B> - counts are summed before rates are calculated so a 10-pick row and a 1,000-pick row do not contribute equally.</Li>
-              <Li><B>Sample floors</B> - highlights can require a minimum number of picks. This is a guardrail against small samples, not a claim that the remaining data is perfect.</Li>
-              <Li><B>Ranking fields</B> - leaderboards use trophies; meta surfaces use picks, wins, win rate, or blended score depending on the control selected.</Li>
-              <Li><B>Display values</B> - abbreviated labels like <Code>2.7k</Code> are for readability. Score and ordering use the underlying numeric value.</Li>
-              <Li><B>Interpretation</B> - a high win rate does not automatically mean a brawler is universally best. Map shape, mode, team composition, pick volume, and sample size all affect the reading.</Li>
-            </UL>
-          </Section>
-
-          <Section id="search-help" title="Search Help">
-            <P>Global search works like a small command palette. It is meant for jumping to pages, documentation anchors, leaderboard surfaces, or public player profiles without deciding which navigation path to use first.</P>
-            <UL>
-              <Li><B>Commands</B> - search for a page name, a metric name, or a related word. <Code>formula</Code> opens Calculations; <Code>clubs</Code> opens Club Leaderboards.</Li>
-              <Li><B>Player lookup</B> - paste a player tag with or without the <Code>#</Code>. The panel offers a direct profile lookup when the query looks like a tag.</Li>
-              <Li><B>Keyboard flow</B> - arrow keys move through results, Enter opens the highlighted result, Escape closes the panel.</Li>
-            </UL>
-          </Section>
-
-          <Section id="data-status" title="Data Status">
-            <P>Different parts of the site update on different rhythms. The labels on each page should be read as context for the current view, not as a promise that every surface refreshes at the same moment.</P>
-            <UL>
-              <Li><B>Static metadata</B> - brawler names, rarities, classes, map names, and images change only when the underlying catalog changes.</Li>
-              <Li><B>Public rankings</B> - leaderboards order from public trophy data. If a row appears stale, retrying the page or switching regions is the safest first check.</Li>
-              <Li><B>Tracked aggregates</B> - map and brawler performance views depend on observed battle rows. Empty states usually mean the current filter does not have enough matching data.</Li>
-              <Li><B>Interface state</B> - recent jumps and similar preferences are stored locally in the browser. They do not require a BrawlLens account.</Li>
-            </UL>
-          </Section>
-
-          <Section id="changelog" title="Changelog">
-            <P>High-level product changes so the documentation does not feel detached from the interface.</P>
-            <UL>
-              <Li><B>Interface polish</B> - map cards, brawler cards, modals, loading states, and route motion were tightened so navigation feels less abrupt.</Li>
-              <Li><B>Search</B> - global search behaves like a command palette with grouped destinations, keyboard navigation, and player tag lookup.</Li>
-              <Li><B>Ranking emphasis</B> - leaderboard top-three rows share a hover and emphasis system while preserving trophy-based ordering.</Li>
-              <Li><B>Documentation</B> - the About page was rebuilt as a text-first reference for calculations, data interpretation, privacy, contact, and feature help.</Li>
-            </UL>
-          </Section>
-
-          <Section id="privacy" title="Privacy">
-            <P>BrawlLens does not require an account. Most interactions are public game lookups, aggregate stat views, or local interface preferences.</P>
-            <UL>
-              <Li>No BrawlLens account is required.</Li>
-              <Li>Player searches request public game data for the searched tag.</Li>
-              <Li>Contact form submissions use the email you provide so a reply can be sent.</Li>
-              <Li>Local browser storage is used for small interface preferences only.</Li>
-              <Li>Private account credentials are not requested by the site.</Li>
-            </UL>
-          </Section>
-
-          <Section id="contact" title="Contact">
-            <P>Send bugs, confusing data, feature requests, or polish notes. The most helpful reports include the page URL, what you expected, and what happened instead.</P>
-            <ContactForm />
-          </Section>
-
-          <div className="mt-5 flex items-center justify-between border-t border-[var(--line)] pt-6">
-            <a href="#introduction" className="flex items-center gap-2 text-[13px] text-[var(--ink-3)] no-underline hover:text-[var(--ink)]">
-              <ChevronRight size={14} className="rotate-180" />
-              <span>Back to top</span>
-            </a>
-            <Link href="/brawlers" className="flex items-center gap-2 text-[13px] text-[var(--ink-3)] no-underline hover:text-[var(--ink)]">
-              <span>Open Brawlers</span>
-              <ChevronRight size={14} />
-            </Link>
-          </div>
-        </article>
-
-        <aside className="hidden lg:block">
-          <div className="sticky top-20 flex flex-col gap-3 pb-6">
-            <div className="text-[12px] font-medium tracking-normal text-[var(--ink-2)]">
-              Reading
-            </div>
-            <div className="dpm-section-card p-3">
-              <div className="text-[11px] text-[var(--ink-4)]">Current section</div>
-              <div className="mt-1 text-[14px] font-semibold tracking-[-0.012em] text-[var(--ink)]">
-                {idLabel[activeSection] ?? "Introduction"}
-              </div>
-              <div className="mt-2 text-[11px] text-[var(--ink-4)]">in {activeGroup}</div>
-            </div>
-            <a
-              href="#introduction"
-              className="inline-flex items-center gap-1.5 self-start rounded-md border border-[var(--line)] bg-[var(--panel)] px-2.5 py-1.5 text-[12px] text-[var(--ink-3)] no-underline transition-colors hover:border-[var(--line-2)] hover:text-[var(--ink)]"
-            >
-              <ArrowUp size={12} />
-              Back to top
-            </a>
-          </div>
-        </aside>
-
+          </section>
+        ))}
       </div>
     </main>
   )
 }
 
-function Section({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
+function slug(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")
+}
+
+function InfoList({ items }: { items: string[] }) {
   return (
-    <section id={id} className="dpm-section-card mt-4 scroll-mt-20 p-5 max-sm:p-4">
-      <h2 className="text-[19px] font-semibold leading-[1.3] tracking-[-0.012em] text-[var(--ink)]">
-        {title}
-      </h2>
-      <div className="mt-3 flex flex-col gap-3 text-[14.5px] leading-[1.6] text-[var(--ink-2)]">
-        {children}
-      </div>
-    </section>
+    <ul>
+      {items.map(item => (
+        <li key={item}>{item}</li>
+      ))}
+    </ul>
   )
 }
 
-function P({ children }: { children: React.ReactNode }) {
-  return <p className="m-0">{children}</p>
-}
-
-function H3({ children }: { children: React.ReactNode }) {
-  return <h3 className="m-0 mt-2 text-[13.5px] font-semibold tracking-[-0.005em] text-[var(--ink)]">{children}</h3>
-}
-
-function UL({ children }: { children: React.ReactNode }) {
-  return <ul className="m-0 flex list-disc flex-col gap-1.5 pl-5 marker:text-[var(--ink-5)]">{children}</ul>
-}
-
-function Li({ children }: { children: React.ReactNode }) {
-  return <li className="pl-1">{children}</li>
-}
-
-function B({ children }: { children: React.ReactNode }) {
-  return <strong className="font-semibold text-[var(--ink)]">{children}</strong>
-}
-
-function Code({ children }: { children: React.ReactNode }) {
-  return (
-    <code className="rounded border border-[var(--line)] bg-[var(--panel-2)] px-1.5 py-0.5 font-mono text-[12.5px] text-[var(--ink)]">
-      {children}
-    </code>
-  )
+function Formula({ children }: { children: ReactNode }) {
+  return <code className="bl-doc-formula">{children}</code>
 }
 
 function ContactForm() {
   const [pending, setPending] = useState(false)
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle")
-  const [errorMessage, setErrorMessage] = useState<string>("")
+  const [errorMessage, setErrorMessage] = useState("")
   const startedAt = useState(() => Date.now())[0]
 
   async function handleSubmit(e: SyntheticEvent<HTMLFormElement>) {
@@ -345,64 +255,48 @@ function ContactForm() {
       setStatus("success")
       return
     }
+
     setPending(true)
     const result = await sendContactEmail(new FormData(e.currentTarget))
     setPending(false)
+
     if (result.error) {
       setErrorMessage(result.error)
       setStatus("error")
-    } else {
-      setStatus("success")
+      return
     }
+
+    setStatus("success")
   }
 
   if (status === "success") {
-    return (
-      <div className="my-2 flex items-start gap-2 rounded-md border border-[var(--line)] bg-[var(--panel-2)] px-3 py-2 text-[13px] text-[var(--ink-2)]">
-        <CheckCircle2 className="mt-0.5 shrink-0 text-[var(--ink)]" size={14} />
-        <p className="m-0"><strong className="font-semibold text-[var(--ink)]">Message received.</strong> Thanks. It is in the inbox now.</p>
-      </div>
-    )
+    return <p className="bl-doc-status">Message received. Thanks, it is in the inbox now.</p>
   }
 
   return (
-    <form onSubmit={handleSubmit} className="relative my-2 flex flex-col gap-4">
+    <form onSubmit={handleSubmit} className="bl-doc-form">
       <div aria-hidden="true" className="absolute -left-[10000px] top-auto h-px w-px overflow-hidden">
         <label>
           Website
           <input name="website" type="text" tabIndex={-1} autoComplete="off" />
         </label>
       </div>
-      <label className="block">
-        <span className="mb-1 block text-[12px] font-medium text-[var(--ink)]">Email</span>
-        <input
-          name="email"
-          type="email"
-          required
-          maxLength={254}
-          autoComplete="email"
-          className="h-10 w-full rounded-md border border-[var(--line)] bg-[var(--panel-2)] px-3 text-[13.5px] text-[var(--ink)] outline-none transition-colors placeholder:text-[var(--ink-4)] focus:border-[var(--line-2)]"
-        />
+
+      <label>
+        <span>Email</span>
+        <input name="email" type="email" autoComplete="email" placeholder="you@example.com" required />
       </label>
-      <label className="block">
-        <span className="mb-1 block text-[12px] font-medium text-[var(--ink)]">Message</span>
-        <textarea
-          name="message"
-          rows={3}
-          required
-          maxLength={4000}
-          className="w-full resize-none rounded-md border border-[var(--line)] bg-[var(--panel-2)] px-3 py-2 text-[13.5px] text-[var(--ink)] outline-none transition-colors placeholder:text-[var(--ink-4)] focus:border-[var(--line-2)]"
-        />
+
+      <label>
+        <span>Message</span>
+        <textarea name="message" rows={4} placeholder="What should BrawlLens fix or add?" required />
       </label>
-      <button
-        type="submit"
-        disabled={pending}
-        className="inline-flex h-9 w-fit items-center gap-2 rounded-md border border-[var(--line)] bg-[var(--panel)] px-3 text-[13px] font-medium text-[var(--ink)] transition-colors hover:bg-[var(--hover-bg)] disabled:opacity-50"
-      >
-        <Mail size={13} />
+
+      {status === "error" && <p className="bl-doc-error">{errorMessage}</p>}
+
+      <button type="submit" disabled={pending}>
         {pending ? "Sending" : "Send message"}
       </button>
-      {status === "error" && <span className="text-[12.5px] text-[var(--loss)]">{errorMessage || "Could not send. Try again in a bit."}</span>}
     </form>
   )
 }

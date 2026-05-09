@@ -6,10 +6,10 @@ import LeaderboardsClient from "../LeaderboardsClient"
 import { fetchPlayerBattleLogResponse, fetchPlayerResponse } from "@/lib/playerLookup"
 
 export const metadata: Metadata = {
-  title: "Player Leaderboards | BrawlLens",
+  title: "Player Leaderboards - BrawlLens",
   description: "Top Brawl Stars players across global and regional leaderboards. Open any profile for detailed stats.",
   openGraph: {
-    title: "Player Leaderboards | BrawlLens",
+    title: "Player Leaderboards - BrawlLens",
     description: "Top players across global and regional leaderboards.",
     type: "website",
   },
@@ -35,10 +35,14 @@ interface Player {
 
 interface PlayerProfile {
   icon?: { id?: number }
+  trophies?: number
+  highestTrophies?: number
+  totalPrestigeLevel?: number
   "3vs3Victories"?: number
   soloVictories?: number
+  duoVictories?: number
   club?: { tag?: string; name?: string }
-  brawlers?: { id: number; name: string; trophies: number }[]
+  brawlers?: PlayerBrawler[]
 }
 
 interface BattleLog {
@@ -49,11 +53,38 @@ export interface TopPlayerEnrichment {
   iconId: number | null
   recentGames: number | null
   recentWinRate: number | null
+  totalTrophies: number | null
+  highestTrophies: number | null
+  totalPrestigeLevel: number | null
   threeVsThreeWins: number | null
   soloWins: number | null
+  duoWins: number | null
   clubTag: string | null
   clubBadgeId: number | null
-  topBrawlers: { id: number; name: string }[]
+  topBrawlers: BrawlerSummary[]
+  peakBrawler: BrawlerSummary | null
+  selectedBrawlerId: number | null
+  selectedBrawler: BrawlerSummary | null
+}
+
+interface PlayerBrawler {
+  id: number
+  name: string
+  trophies: number
+  highestTrophies?: number
+  rank?: number
+  power?: number
+  prestigeLevel?: number
+}
+
+interface BrawlerSummary {
+  id: number
+  name: string
+  trophies: number
+  highestTrophies: number | null
+  rank: number | null
+  power: number | null
+  prestigeLevel: number | null
 }
 
 async function fetchLeaderboard(region: string) {
@@ -85,11 +116,18 @@ async function fetchTopPlayerEnrichment(player: Player): Promise<TopPlayerEnrich
     iconId: null,
     recentGames: null,
     recentWinRate: null,
+    totalTrophies: null,
+    highestTrophies: null,
+    totalPrestigeLevel: null,
     threeVsThreeWins: null,
     soloWins: null,
+    duoWins: null,
     clubTag: null,
     clubBadgeId: null,
     topBrawlers: [],
+    peakBrawler: null,
+    selectedBrawlerId: null,
+    selectedBrawler: null,
   }
 
   try {
@@ -115,23 +153,45 @@ async function fetchTopPlayerEnrichment(player: Player): Promise<TopPlayerEnrich
     })
     const wins = decided.filter(item => item.battle?.result === "victory").length
     const recentWinRate = decided.length ? Math.round((wins / decided.length) * 100) : null
+    const brawlers = profile?.brawlers ?? []
+    const peakBrawler = [...brawlers]
+      .sort((a, b) => (b.highestTrophies ?? b.trophies) - (a.highestTrophies ?? a.trophies))[0]
 
     return {
       iconId: profile?.icon?.id ?? null,
+      totalTrophies: profile?.trophies ?? null,
+      highestTrophies: profile?.highestTrophies ?? null,
+      totalPrestigeLevel: profile?.totalPrestigeLevel ?? null,
       recentGames: battles.length || null,
       recentWinRate,
       threeVsThreeWins: profile?.["3vs3Victories"] ?? null,
       soloWins: profile?.soloVictories ?? null,
+      duoWins: profile?.duoVictories ?? null,
       clubTag: profile?.club?.tag ? profile.club.tag.replace(/^#/, "") : null,
       clubBadgeId: null,
-      topBrawlers: [...(profile?.brawlers ?? [])]
+      topBrawlers: [...brawlers]
         .sort((a, b) => b.trophies - a.trophies)
         .slice(0, 4)
-        .map(brawler => ({ id: brawler.id, name: brawler.name })),
+        .map(toBrawlerSummary),
+      peakBrawler: peakBrawler ? toBrawlerSummary(peakBrawler) : null,
+      selectedBrawlerId: null,
+      selectedBrawler: null,
     }
   } catch (error) {
     console.error(`Top player enrichment failed [${player.player_tag}]:`, error)
     return fallback
+  }
+}
+
+function toBrawlerSummary(brawler: PlayerBrawler): BrawlerSummary {
+  return {
+    id: brawler.id,
+    name: brawler.name,
+    trophies: brawler.trophies,
+    highestTrophies: brawler.highestTrophies ?? null,
+    rank: brawler.rank ?? null,
+    power: brawler.power ?? null,
+    prestigeLevel: brawler.prestigeLevel ?? null,
   }
 }
 

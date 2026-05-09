@@ -1,8 +1,12 @@
 import { createClient } from "@supabase/supabase-js"
+import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import MapDetailClient from "./MapDetailClient"
+import { getModeName } from "@/lib/modes"
 
 export const dynamic = "force-dynamic"
+
+type PageProps = { params: Promise<{ map: string }> }
 
 async function getMapImage(mapName: string): Promise<string | null> {
   try {
@@ -30,7 +34,21 @@ async function getRotationMapNames(): Promise<Set<string>> {
   }
 }
 
-export default async function MapDetailPage({ params }: { params: Promise<{ map: string }> }) {
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { map: encodedMap } = await params
+  const mapName = decodeURIComponent(encodedMap)
+  return {
+    title: `${mapName} - BrawlLens`,
+    description: `Brawler win rates, picks, and matchup stats for ${mapName}.`,
+    openGraph: {
+      title: `${mapName} - BrawlLens`,
+      description: `Brawl Stars map meta and brawler performance for ${mapName}.`,
+      type: "website",
+    },
+  }
+}
+
+export default async function MapDetailPage({ params }: PageProps) {
   const { map: encodedMap } = await params
   const mapName = decodeURIComponent(encodedMap)
 
@@ -39,19 +57,26 @@ export default async function MapDetailPage({ params }: { params: Promise<{ map:
     process.env.SUPABASE_SERVICE_KEY!
   )
 
-  const [{ data, error }, imageUrl, rotationNames] = await Promise.all([
+  const [{ data, error }, { data: mapMeta }, imageUrl, rotationNames] = await Promise.all([
     supabase
       .from("map_brawler_stats")
       .select("brawler_id, brawler_name, picks, wins, win_rate")
       .eq("map", mapName)
       .order("picks", { ascending: false }),
+    supabase
+      .from("map_stats")
+      .select("mode, battle_count")
+      .eq("map", mapName)
+      .order("battle_count", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
     getMapImage(mapName),
     getRotationMapNames(),
   ])
 
   if (error) notFound()
 
-  const rows = data
+  const rows = data ?? []
   const totalBattles = Math.round(rows.reduce((sum, r) => sum + Number(r.picks), 0) / 6)
 
   const brawlers = rows.map((row) => ({
@@ -66,6 +91,7 @@ export default async function MapDetailPage({ params }: { params: Promise<{ map:
     <MapDetailClient
       mapName={mapName}
       imageUrl={imageUrl}
+      modeName={mapMeta?.mode ? getModeName(mapMeta.mode) : null}
       totalBattles={totalBattles}
       brawlers={brawlers}
       isLive={rotationNames.has(mapName)}

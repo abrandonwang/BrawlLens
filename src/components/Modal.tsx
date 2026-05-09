@@ -94,7 +94,7 @@ export default function Modal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[300] flex items-center justify-center bg-black/[0.58] p-5 animate-[modalOverlayIn_0.18s_ease_both]"
+      className="fixed inset-0 z-[300] flex items-center justify-center bg-black/[0.72] p-5 backdrop-blur-[2px] animate-[modalOverlayIn_0.18s_ease_both]"
       onClick={onClose}
     >
       <div
@@ -103,7 +103,7 @@ export default function Modal({
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className={`flex max-h-[90vh] w-full flex-col overflow-hidden rounded-2xl border border-[var(--line-2)] bg-[var(--panel)] shadow-[0_36px_90px_-28px_rgba(0,0,0,0.72)] outline-none animate-[modalSheetIn_0.22s_cubic-bezier(0.16,1,0.3,1)_both] ${className}`}
+        className={`flex max-h-[90vh] w-full flex-col overflow-hidden rounded-[8px] border border-white/[0.08] bg-[#0b0c0f] text-[#f7f4ed] shadow-[0_36px_90px_-28px_rgba(0,0,0,0.82),rgba(255,255,255,0.06)_0_1px_0_0_inset] outline-none animate-[modalSheetIn_0.22s_cubic-bezier(0.16,1,0.3,1)_both] ${className}`}
         style={{
           maxWidth: SIZE_MAP[size],
         }}
@@ -135,7 +135,7 @@ export function ModalIconButton({
       onClick={onClick}
       aria-label={label}
       aria-pressed={pressed}
-      className={`grid size-8 cursor-pointer place-items-center rounded-full border-0 bg-transparent text-[var(--ink-3)] transition-colors duration-200 ease-out hover:bg-[color-mix(in_srgb,var(--ink)_6%,transparent)] hover:text-[var(--ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--line-2)] ${className}`}
+      className={`grid size-8 cursor-pointer place-items-center rounded-[5px] border border-white/[0.08] bg-[#15171d] text-[rgba(247,244,237,0.54)] transition-colors duration-200 ease-out hover:border-white/[0.14] hover:bg-[#1b1d22] hover:text-[#f7f4ed] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#f0d373]/30 ${className}`}
     >
       <Icon size={15} strokeWidth={2} />
     </button>

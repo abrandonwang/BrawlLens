@@ -1,36 +1,24 @@
 import type { Metadata } from "next"
-import type { CSSProperties } from "react"
 import { notFound } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@supabase/supabase-js"
-import {
-  ArrowLeft,
-  BarChart3,
-  Bot,
-  ChevronDown,
-  Filter,
-  List,
-  Medal,
-  RefreshCw,
-  Shield,
-  Sparkles,
-  Swords,
-  Trophy,
-  Users,
-  Zap,
-} from "lucide-react"
 import { BrawlImage, brawlerIconUrl } from "@/components/BrawlImage"
-import { formatBrawlerName, formatNum, formatTrophies } from "@/lib/format"
-import { fetchPlayerBattleLogResponse, fetchPlayerResponse } from "@/lib/playerLookup"
+import { formatBrawlerName } from "@/lib/format"
+import { fetchClubResponse, fetchPlayerBattleLogResponse, fetchPlayerResponse } from "@/lib/playerLookup"
 import { sanitizePlayerTag } from "@/lib/validation"
-import type { Gear, Player, PlayerBrawler } from "@/types/brawler"
-import PlayerInsightButton from "./PlayerInsightButton"
+import type { Player, PlayerBrawler } from "@/types/brawler"
+import PlayerBattleFilters from "./PlayerBattleFilters"
+import PlayerProfileHero from "./PlayerProfileHero"
 
 export const revalidate = 60
 
 type PlayerWithMeta = Player & {
   icon?: { id?: number }
   club?: { name?: string; tag?: string }
+}
+
+interface ClubProfile {
+  badgeId?: number
 }
 
 interface LeaderboardRecord {
@@ -68,12 +56,23 @@ interface BattleLogItem {
   }
 }
 
-type LoadoutKind = "gadget" | "starPower" | "gear" | "hyperCharge"
+interface BrawlerPerformanceStat {
+  key: string
+  brawler: BattleBrawler | PlayerBrawler
+  games: number
+  wins: number
+  swing: number
+  averageSwing: number
+  winRate: number
+}
 
-interface LoadoutItem {
-  id: number
-  name: string
-  kind: LoadoutKind
+interface ModePerformanceStat {
+  key: string
+  label: string
+  games: number
+  wins: number
+  swing: number
+  winRate: number
 }
 
 const stateActionClass = "inline-flex min-h-9 cursor-pointer items-center justify-center rounded-md border border-[var(--lb-line)] bg-[var(--lb-panel-2)] px-4 text-[13px] font-bold text-[var(--lb-text)] no-underline transition-colors hover:border-[var(--lb-line-2)] hover:bg-[var(--lb-panel-3)]"
@@ -85,7 +84,7 @@ export async function generateMetadata(
 ): Promise<Metadata> {
   const { tag: rawTag } = await params
   const tag = sanitizePlayerTag(decodeURIComponent(rawTag))
-  if (!tag) return { title: "Player | BrawlLens" }
+  if (!tag) return { title: "Player - BrawlLens" }
 
   try {
     const res = await fetchPlayerResponse(tag, { next: { revalidate: 300 } })
@@ -95,13 +94,13 @@ export async function generateMetadata(
     const trophies = data?.trophies ?? 0
     const description = `${name} (#${tag}) - ${trophies.toLocaleString()} trophies on BrawlLens.`
     return {
-      title: `${name} | BrawlLens`,
+      title: `${name} - BrawlLens`,
       description,
       openGraph: { title: `${name} (#${tag})`, description, type: "profile" },
     }
   } catch {
     return {
-      title: `Player #${tag} | BrawlLens`,
+      title: `Player #${tag} - BrawlLens`,
       description: `BrawlLens profile lookup for player #${tag}.`,
     }
   }
@@ -160,19 +159,6 @@ function lookupErrorCopy(status?: number) {
   return "The player API did not respond. Try again in a moment, or search for a different tag."
 }
 
-function get3v3Wins(player: PlayerWithMeta) {
-  return player["3vs3Victories"] ?? player.threesVictories ?? player.threesvictories ?? 0
-}
-
-function leagueName(trophies: number) {
-  if (trophies >= 100_000) return "Ultimate"
-  if (trophies >= 80_000) return "Masters"
-  if (trophies >= 60_000) return "Legendary"
-  if (trophies >= 40_000) return "Mythic"
-  if (trophies >= 25_000) return "Diamond"
-  return "Trophy"
-}
-
 function ordinal(value: number) {
   const rem100 = value % 100
   if (rem100 >= 11 && rem100 <= 13) return `${value}th`
@@ -189,36 +175,95 @@ function percentRank(rank: number | null | undefined, total: number | null | und
   return `${((rank / total) * 100).toFixed(2)}%`
 }
 
-function profileIconUrl(id: number) {
-  return `https://cdn.brawlify.com/profile-icons/regular/${id}.png`
+function formatFullNumber(value: number) {
+  return value.toLocaleString("en-US")
+}
+
+function formatTrophyCount(value: number) {
+  return formatFullNumber(value)
+}
+
+function formatSigned(value: number, digits = 0) {
+  const formatted = digits > 0 ? value.toFixed(digits) : Math.round(value).toLocaleString("en-US")
+  return value > 0 ? `+${formatted}` : formatted
+}
+
+function formatAverage(value: number | null, digits = 0) {
+  if (value === null) return "--"
+  return digits > 0 ? value.toFixed(digits) : Math.round(value).toLocaleString("en-US")
+}
+
+function formatPowerAverage(value: number | null) {
+  return value === null ? "--" : `P${formatAverage(value, 1)}`
+}
+
+function formatBattleDuration(seconds: number | undefined) {
+  if (!seconds) return "--"
+  const minutes = Math.floor(seconds / 60)
+  const remainingSeconds = seconds % 60
+  return minutes ? `${minutes}:${String(remainingSeconds).padStart(2, "0")}` : `${remainingSeconds}s`
+}
+
+function ladderTier(trophies: number) {
+  if (trophies >= 100_000) return { key: "ultimate", label: "Ultimate", short: "" }
+  if (trophies >= 80_000) return { key: "masters", label: "Masters", short: "M" }
+  if (trophies >= 60_000) return { key: "legendary", label: "Legendary", short: "L" }
+  if (trophies >= 40_000) return { key: "mythic", label: "Mythic", short: "M" }
+  if (trophies >= 25_000) return { key: "diamond", label: "Diamond", short: "D" }
+  return { key: "trophy", label: "Trophy", short: "T" }
+}
+
+function ladderRankValue(record: LeaderboardRecord | null, total: number | null) {
+  if (!record) return "--"
+  if (record.rank <= 200) return ordinal(record.rank)
+  const percentile = percentRank(record.rank, total)
+  return percentile ? `Top ${percentile}` : `#${record.rank.toLocaleString("en-US")}`
 }
 
 function firstGlyph(value: string | undefined) {
   return Array.from((value ?? "").trim())[0]?.toUpperCase() || "?"
 }
 
-function rankColor(rank: number) {
-  if (rank >= 35) return "#8bd7ff"
-  if (rank >= 30) return "#f0d373"
-  if (rank >= 25) return "#ff9f6e"
-  if (rank >= 20) return "#c7b7ff"
-  return "#aeb2bb"
-}
-
-function rankLabel(rank: number) {
-  if (rank >= 35) return "Elite"
-  if (rank >= 30) return "Rank 30+"
-  if (rank >= 25) return "Rank 25+"
-  if (rank >= 20) return "Rank 20+"
-  return "Building"
-}
-
 function winRate(wins: number, total: number) {
   return total > 0 ? Math.round((wins / total) * 100) : 0
 }
 
+function brawlerTrophies(brawler: BattleBrawler | PlayerBrawler) {
+  return typeof brawler.trophies === "number" ? brawler.trophies : null
+}
+
+function brawlerPower(brawler: BattleBrawler | PlayerBrawler) {
+  return typeof brawler.power === "number" ? brawler.power : null
+}
+
+function brawlerRowMeta(brawler: BattleBrawler | PlayerBrawler) {
+  const power = brawlerPower(brawler)
+  return power ? `P${power}` : "Roster"
+}
+
 function cleanBattleTag(value?: string) {
   return sanitizePlayerTag((value ?? "").replace(/^#/, ""))
+}
+
+function cleanClubTag(value?: string) {
+  return sanitizePlayerTag((value ?? "").replace(/^#/, ""))
+}
+
+function clubBadgeUrl(id: number) {
+  return `https://cdn.brawlify.com/club-badges/regular/${id}.png`
+}
+
+async function fetchClubBadgeId(tag: string | null): Promise<number | null> {
+  if (!tag) return null
+
+  try {
+    const response = await fetchClubResponse(tag, { next: { revalidate: 900 } })
+    if (!response.ok) return null
+    const club = (await response.json()) as ClubProfile
+    return club.badgeId ?? null
+  } catch {
+    return null
+  }
 }
 
 function parseBattleTime(value?: string) {
@@ -289,6 +334,75 @@ function findOpponents(item: BattleLogItem, player: PlayerWithMeta, tag: string)
     .slice(0, 3)
 }
 
+function findTeamContext(item: BattleLogItem, player: PlayerWithMeta, tag: string) {
+  const expected = cleanBattleTag(tag)
+  const teams = item.battle?.teams
+  if (!teams?.length) return { teammates: [] as BattleParticipant[], opponents: findOpponents(item, player, tag) }
+
+  const ownIndex = teams.findIndex(team => team.some(participant => cleanBattleTag(participant.tag) === expected || participant.name === player.name))
+  if (ownIndex < 0) return { teammates: [] as BattleParticipant[], opponents: teams.flat().slice(0, 3) }
+
+  return {
+    teammates: teams[ownIndex].filter(participant => cleanBattleTag(participant.tag) !== expected && participant.name !== player.name).slice(0, 2),
+    opponents: teams.filter((_, index) => index !== ownIndex).flat().slice(0, 3),
+  }
+}
+
+function averageBattleValue(participants: BattleParticipant[], field: "power" | "trophies") {
+  const values = participants
+    .map(participant => participant.brawler?.[field])
+    .filter((value): value is number => typeof value === "number")
+  if (!values.length) return null
+  return values.reduce((sum, value) => sum + value, 0) / values.length
+}
+
+function isParticipantOnTeam(team: BattleParticipant[], tag?: string) {
+  const expected = cleanBattleTag(tag)
+  if (!expected) return false
+  return team.some(participant => cleanBattleTag(participant.tag) === expected)
+}
+
+function teamQuality(item: BattleLogItem, player: PlayerWithMeta, tag: string) {
+  const expected = cleanBattleTag(tag)
+  const teams = item.battle?.teams
+  if (!teams?.length) return null
+
+  const ownIndex = teams.findIndex(team => team.some(participant => cleanBattleTag(participant.tag) === expected || participant.name === player.name))
+  if (ownIndex < 0) return null
+
+  const ownTeam = teams[ownIndex]
+  const enemyTeam = teams.filter((_, index) => index !== ownIndex).flat()
+  if (!enemyTeam.length) return null
+
+  let score = 0
+  let evidence = 0
+  const ownPower = averageBattleValue(ownTeam, "power")
+  const enemyPower = averageBattleValue(enemyTeam, "power")
+  const ownTrophies = averageBattleValue(ownTeam, "trophies")
+  const enemyTrophies = averageBattleValue(enemyTeam, "trophies")
+
+  if (ownPower !== null && enemyPower !== null) {
+    score += Math.max(-20, Math.min(20, (ownPower - enemyPower) * 7))
+    evidence += 1
+  }
+
+  if (ownTrophies !== null && enemyTrophies !== null) {
+    score += Math.max(-22, Math.min(22, (ownTrophies - enemyTrophies) / 35))
+    evidence += 1
+  }
+
+  if (item.battle?.starPlayer?.tag) {
+    if (isParticipantOnTeam(ownTeam, item.battle.starPlayer.tag)) score += 8
+    if (isParticipantOnTeam(enemyTeam, item.battle.starPlayer.tag)) score -= 8
+    evidence += 1
+  }
+
+  if (!evidence) return null
+  if (score >= 10) return { label: "Strong team", tone: "strong" }
+  if (score <= -10) return { label: "Weak team", tone: "weak" }
+  return { label: "Even team", tone: "even" }
+}
+
 function battleOutcome(item: BattleLogItem) {
   if (item.battle?.result === "victory") return "win"
   if (item.battle?.result === "defeat") return "loss"
@@ -300,25 +414,12 @@ function battleScore(item: BattleLogItem) {
   const outcome = battleOutcome(item)
   const trophyChange = item.battle?.trophyChange ?? 0
   const rank = item.battle?.rank
-  let score = outcome === "win" ? 78 : outcome === "loss" ? 46 : 62
-  score += Math.max(-18, Math.min(18, trophyChange * 2))
-  if (typeof rank === "number") score += Math.max(-18, 12 - rank * 2)
+  let score = 50
+  score += Math.max(-24, Math.min(24, trophyChange * 2.4))
+  if (typeof rank === "number") score += Math.max(-18, Math.min(18, (5 - rank) * 4))
+  if (outcome === "win") score += 8
+  if (outcome === "loss") score -= 8
   return Math.max(22, Math.min(100, Math.round(score)))
-}
-
-function gradeLabel(score: number) {
-  if (score >= 96) return "MVP"
-  if (score >= 86) return "ACE"
-  if (score >= 72) return "Good"
-  if (score >= 55) return "Avg"
-  return "Low"
-}
-
-function teamRead(item: BattleLogItem) {
-  const outcome = battleOutcome(item)
-  if (outcome === "win") return "Good team"
-  if (outcome === "loss") return "Bad team"
-  return "Avg team"
 }
 
 function battleResultLine(item: BattleLogItem) {
@@ -346,39 +447,15 @@ function battleBrawlerName(brawler: BattleBrawler | null | undefined, fallback?:
   return formatBrawlerName(brawler?.name ?? fallback?.name ?? "Brawler")
 }
 
-function accessoryIconUrl(item: LoadoutItem) {
-  if (item.kind === "gadget") return `https://cdn.brawlify.com/gadgets/regular/${item.id}.png`
-  if (item.kind === "starPower") return `https://cdn.brawlify.com/star-powers/regular/${item.id}.png`
-  if (item.kind === "gear") return `https://cdn.brawlify.com/gears/regular/${item.id}.png`
-  return `https://cdn.brawlify.com/hypercharges/regular/${item.id}.png`
-}
-
-function buildLoadout(brawler: PlayerBrawler | null) {
-  if (!brawler) return []
-  const gearItems: LoadoutItem[] = (brawler.gears ?? []).slice(0, 2).map((gear: Gear) => ({ id: gear.id, name: gear.name, kind: "gear" }))
-  const gadgetItems: LoadoutItem[] = (brawler.gadgets ?? []).slice(0, 2).map(item => ({ id: item.id, name: item.name, kind: "gadget" }))
-  const starPowerItems: LoadoutItem[] = (brawler.starPowers ?? []).slice(0, 2).map(item => ({ id: item.id, name: item.name, kind: "starPower" }))
-  const hyperItems: LoadoutItem[] = (brawler.hyperCharges ?? []).slice(0, 1).map(item => ({ id: item.id, name: item.name, kind: "hyperCharge" }))
-  return [...gadgetItems, ...starPowerItems, ...gearItems, ...hyperItems].slice(0, 6)
-}
-
-function sparkPoints(values: number[]) {
-  const sample = values.length ? values : [0]
-  const min = Math.min(...sample)
-  const max = Math.max(...sample)
-  const range = Math.max(1, max - min)
-  return sample.map((value, index) => {
-    const x = sample.length === 1 ? 0 : (index / (sample.length - 1)) * 100
-    const y = 88 - ((value - min) / range) * 72
-    return `${x.toFixed(2)},${y.toFixed(2)}`
-  }).join(" ")
-}
-
 function compactMode(value: string) {
   return value
     .replace(/([a-z])([A-Z])/g, "$1 $2")
     .replace(/_/g, " ")
     .replace(/\b\w/g, letter => letter.toUpperCase())
+}
+
+function slugifyFilter(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "unknown"
 }
 
 function groupBattles(items: BattleLogItem[]) {
@@ -395,38 +472,99 @@ function groupBattles(items: BattleLogItem[]) {
   return groups
 }
 
-function ModeRow({ icon, label, value, percent }: { icon: React.ReactNode; label: string; value: string; percent: number }) {
-  return (
-    <div className="bl-profile-mode-row">
-      <span>{icon}</span>
-      <strong>{label}</strong>
-      <b>{value}</b>
-      <em>{percent}%</em>
-    </div>
-  )
+function winRateTone(value: number) {
+  if (value >= 60) return "is-good"
+  if (value >= 50) return "is-even"
+  if (value >= 40) return "is-warn"
+  return "is-low"
 }
 
-function LoadoutGrid({ brawler }: { brawler: PlayerBrawler | null }) {
-  const loadout = buildLoadout(brawler)
-  return (
-    <div className="bl-profile-loadout" aria-label="Brawler loadout">
-      {Array.from({ length: 6 }).map((_, index) => {
-        const item = loadout[index]
-        return item ? (
-          <BrawlImage
-            key={`${item.kind}-${item.id}`}
-            src={accessoryIconUrl(item)}
-            alt={item.name}
-            width={24}
-            height={24}
-            sizes="24px"
-          />
-        ) : (
-          <span key={`empty-${index}`} aria-hidden="true" />
-        )
-      })}
-    </div>
-  )
+function buildBrawlerPerformanceStats(items: BattleLogItem[], player: PlayerWithMeta, tag: string, roster: PlayerBrawler[]) {
+  const stats = new Map<string, BrawlerPerformanceStat>()
+
+  for (const item of items) {
+    const participant = findPlayerParticipant(item, player, tag)
+    const battleBrawler = participant?.brawler ?? null
+    const rosterBrawler = findRosterBrawler(roster, battleBrawler)
+    const brawler = rosterBrawler ?? battleBrawler
+    if (!brawler?.id && !brawler?.name) continue
+
+    const key = String(brawler.id ?? brawler.name)
+    const existing = stats.get(key) ?? {
+      key,
+      brawler,
+      games: 0,
+      wins: 0,
+      swing: 0,
+      averageSwing: 0,
+      winRate: 0,
+    }
+    existing.games += 1
+    existing.wins += battleOutcome(item) === "win" ? 1 : 0
+    existing.swing += item.battle?.trophyChange ?? 0
+    existing.averageSwing = existing.games ? existing.swing / existing.games : 0
+    existing.winRate = winRate(existing.wins, existing.games)
+    stats.set(key, existing)
+  }
+
+  const rows = [...stats.values()]
+    .sort((a, b) => b.games - a.games || b.winRate - a.winRate || b.swing - a.swing)
+    .slice(0, 6)
+
+  const seen = new Set(rows.map(row => row.key))
+  for (const brawler of roster) {
+    if (rows.length >= 6) break
+    const key = String(brawler.id)
+    if (seen.has(key)) continue
+    rows.push({
+      key,
+      brawler,
+      games: 0,
+      wins: 0,
+      swing: 0,
+      averageSwing: 0,
+      winRate: 0,
+    })
+    seen.add(key)
+  }
+
+  if (rows.length) return rows
+
+  return roster.slice(0, 6).map(brawler => ({
+    key: String(brawler.id),
+    brawler,
+    games: 0,
+    wins: 0,
+    swing: 0,
+    averageSwing: 0,
+    winRate: 0,
+  }))
+}
+
+function buildModePerformanceStats(items: BattleLogItem[]) {
+  const stats = new Map<string, ModePerformanceStat>()
+
+  for (const item of items) {
+    const label = compactMode(modeLabel(item))
+    const key = label.toLowerCase()
+    const existing = stats.get(key) ?? {
+      key,
+      label,
+      games: 0,
+      wins: 0,
+      swing: 0,
+      winRate: 0,
+    }
+    existing.games += 1
+    existing.wins += battleOutcome(item) === "win" ? 1 : 0
+    existing.swing += item.battle?.trophyChange ?? 0
+    existing.winRate = winRate(existing.wins, existing.games)
+    stats.set(key, existing)
+  }
+
+  return [...stats.values()]
+    .sort((a, b) => b.games - a.games || b.winRate - a.winRate || b.swing - a.swing)
+    .slice(0, 5)
 }
 
 function BrawlerThumb({ brawler, size = 38 }: { brawler?: BattleBrawler | PlayerBrawler | null; size?: number }) {
@@ -444,31 +582,73 @@ function BrawlerThumb({ brawler, size = 38 }: { brawler?: BattleBrawler | Player
   return <span>{firstGlyph(brawler?.name)}</span>
 }
 
-function OpponentStack({ opponents, fallback }: { opponents: BattleParticipant[]; fallback: PlayerBrawler[] }) {
-  const entries = opponents.length ? opponents.map(participant => participant.brawler ?? null) : fallback.slice(0, 2)
+function BrawlerStack({ entries }: { entries: (BattleBrawler | PlayerBrawler | null | undefined)[] }) {
   return (
-    <div className="bl-profile-versus">
-      <div className="bl-profile-opponents">
-        {entries.slice(0, 2).map((brawler, index) => (
+    <div className="bl-profile-party-stack">
+      {entries.slice(0, 3).map((brawler, index) => (
+        brawler ? (
           <span key={`${brawler?.id ?? brawler?.name ?? "fallback"}-${index}`}>
-            <BrawlerThumb brawler={brawler} size={34} />
+            <BrawlerThumb brawler={brawler} size={24} />
           </span>
-        ))}
-      </div>
-      <b>VS</b>
+        ) : null
+      ))}
     </div>
   )
 }
 
-function BrawlerPerformanceRow({ brawler }: { brawler: PlayerBrawler }) {
+function TeamPreview({
+  playerBrawler,
+  teammates,
+  opponents,
+  fallback,
+}: {
+  playerBrawler: BattleBrawler | PlayerBrawler | null | undefined
+  teammates: BattleParticipant[]
+  opponents: BattleParticipant[]
+  fallback: PlayerBrawler[]
+}) {
+  const teammateBrawlers = [playerBrawler, ...teammates.map(participant => participant.brawler ?? null)].filter(Boolean)
+  const opponentBrawlers = opponents.length ? opponents.map(participant => participant.brawler ?? null) : fallback.slice(0, 3)
+
+  return (
+    <div className="bl-profile-versus">
+      <BrawlerStack entries={teammateBrawlers} />
+      <b>VS</b>
+      <BrawlerStack entries={opponentBrawlers} />
+    </div>
+  )
+}
+
+function BrawlerPerformanceRow({ stat }: { stat: BrawlerPerformanceStat }) {
+  const trophies = brawlerTrophies(stat.brawler)
+  const winRateText = stat.games ? `${stat.winRate}%` : "--"
+
   return (
     <div className="bl-profile-brawler-perf-row">
-      <BrawlImage src={brawlerIconUrl(brawler.id)} alt="" width={34} height={34} sizes="34px" />
-      <strong>{formatBrawlerName(brawler.name)}</strong>
-      <span>{formatTrophies(brawler.trophies)}</span>
-      <span>{formatTrophies(brawler.highestTrophies)}</span>
-      <span style={{ color: rankColor(brawler.rank) }}>R{brawler.rank}</span>
-      <em>P{brawler.power}</em>
+      <div className="bl-profile-brawler-cell">
+        <BrawlerThumb brawler={stat.brawler} size={34} />
+        <span>
+          <strong>{formatBrawlerName(stat.brawler.name ?? "Brawler")}</strong>
+          <small>{brawlerRowMeta(stat.brawler)}</small>
+        </span>
+      </div>
+      <strong className="bl-profile-brawler-trophies">{trophies ? formatTrophyCount(trophies) : "--"}</strong>
+      <span className="bl-profile-brawler-games">{stat.games}</span>
+      <em className={stat.games ? winRateTone(stat.winRate) : ""}>{winRateText}</em>
+    </div>
+  )
+}
+
+function ModePerformanceRow({ stat }: { stat: ModePerformanceStat }) {
+  return (
+    <div className="bl-profile-mode-row">
+      <strong>
+        {stat.label}
+        <small>{formatSigned(stat.swing)} trophies</small>
+      </strong>
+      <b>{stat.games}</b>
+      <span>{stat.games ? formatSigned(stat.swing / stat.games, 1) : "--"}</span>
+      <em className={winRateTone(stat.winRate)}>{stat.winRate}%</em>
     </div>
   )
 }
@@ -491,53 +671,87 @@ function BattleRow({
   const battleBrawler = participant?.brawler
   const rosterBrawler = findRosterBrawler(roster, battleBrawler)
   const fallback = rosterBrawler ?? fallbackBrawlers[0]
-  const score = battleScore(item)
   const trophyChange = item.battle?.trophyChange ?? 0
-  const scoreColor = score >= 90 ? "#fff1a6" : score >= 74 ? "#d8c8ff" : score >= 55 ? "#8bd7ff" : "#ff6b62"
+  const outcome = battleOutcome(item)
+  const mode = compactMode(modeLabel(item))
+  const teamContext = findTeamContext(item, player, tag)
+  const quality = teamQuality(item, player, tag)
+  const ownTeamMembers = [participant, ...teamContext.teammates].filter((member): member is BattleParticipant => Boolean(member))
+  const ownPower = averageBattleValue(ownTeamMembers, "power")
+  const enemyPower = averageBattleValue(teamContext.opponents, "power")
+  const ownTrophies = averageBattleValue(ownTeamMembers, "trophies")
+  const enemyTrophies = averageBattleValue(teamContext.opponents, "trophies")
+  const starPlayer = item.battle?.starPlayer
+  const starPlayerBrawler = starPlayer?.brawler?.name ? formatBrawlerName(starPlayer.brawler.name) : "--"
 
   return (
-    <article className={`bl-profile-match-row ${resultTone(item)}`}>
-      <div className="bl-profile-match-meta">
-        <strong>{formatClock(time)}</strong>
-        <span>{formatAge(time)}</span>
-        <b>{compactMode(modeLabel(item))}</b>
-        <em className={trophyChange < 0 ? "is-loss" : ""}>{battleResultLine(item)} trophies</em>
+    <details
+      className={`bl-profile-match-shell ${resultTone(item)}`}
+      data-battle-row
+      data-outcome={outcome}
+      data-mode={slugifyFilter(mode)}
+    >
+      <summary className="bl-profile-match-row">
+        <div className="bl-profile-match-meta">
+          <strong>{formatClock(time)}</strong>
+          <span>{formatAge(time)}</span>
+          <b>{mode}</b>
+          <em className={trophyChange < 0 ? "is-loss" : ""}>{battleResultLine(item)} trophies</em>
+        </div>
+
+        <div className="bl-profile-match-brawler">
+          <BrawlerThumb brawler={battleBrawler ?? fallback} size={48} />
+          <span>{battleBrawler?.power ?? rosterBrawler?.power ? `P${battleBrawler?.power ?? rosterBrawler?.power}` : ""}</span>
+        </div>
+
+        <div className="bl-profile-match-scoreline">
+          <strong>{outcome === "win" ? "Win" : outcome === "loss" ? "Loss" : "Draw"}</strong>
+          {quality && <span className={`is-${quality.tone}`}>{quality.label}</span>}
+        </div>
+
+        <div className="bl-profile-match-details">
+          <strong>{battleBrawlerName(battleBrawler, fallback)}</strong>
+          <span>{item.event?.map ?? "Unknown map"}</span>
+          <em>{rosterBrawler ? formatTrophyCount(rosterBrawler.trophies) : "Battle log"}</em>
+        </div>
+
+        <TeamPreview playerBrawler={battleBrawler ?? fallback} teammates={teamContext.teammates} opponents={teamContext.opponents} fallback={fallbackBrawlers} />
+        <span className="bl-profile-row-arrow" aria-hidden="true" />
+      </summary>
+
+      <div className="bl-profile-match-extra">
+        <div>
+          <span>Map</span>
+          <strong>{item.event?.map ?? "Unknown map"}</strong>
+          <small>{mode}</small>
+        </div>
+        <div>
+          <span>Battle</span>
+          <strong>{compactMode(item.battle?.type ?? "Battle log")}</strong>
+          <small>{formatBattleDuration(item.battle?.duration)}</small>
+        </div>
+        <div>
+          <span>Your team</span>
+          <strong>{formatPowerAverage(ownPower)}</strong>
+          <small>{formatAverage(ownTrophies)} avg trophies</small>
+        </div>
+        <div>
+          <span>Enemy team</span>
+          <strong>{formatPowerAverage(enemyPower)}</strong>
+          <small>{formatAverage(enemyTrophies)} avg trophies</small>
+        </div>
+        <div>
+          <span>Team read</span>
+          <strong>{quality?.label ?? "No signal"}</strong>
+          <small>Power, trophies, star player</small>
+        </div>
+        <div>
+          <span>Star player</span>
+          <strong>{starPlayer?.name ?? "--"}</strong>
+          <small>{starPlayerBrawler}</small>
+        </div>
       </div>
-
-      <div className="bl-profile-match-brawler">
-        <BrawlerThumb brawler={battleBrawler ?? fallback} size={48} />
-        <span>{battleBrawler?.power ?? rosterBrawler?.power ? `P${battleBrawler?.power ?? rosterBrawler?.power}` : ""}</span>
-      </div>
-
-      <div className="bl-profile-match-scoreline">
-        <strong>{battleOutcome(item) === "win" ? "Win" : battleOutcome(item) === "loss" ? "Loss" : "Draw"}</strong>
-        <span>{teamRead(item)}</span>
-      </div>
-
-      <div className="bl-profile-match-details">
-        <strong>{battleBrawlerName(battleBrawler, fallback)}</strong>
-        <span>{item.event?.map ?? "Unknown map"}</span>
-        <em>{rosterBrawler ? `${rankLabel(rosterBrawler.rank)} · ${formatTrophies(rosterBrawler.trophies)}` : "Battle log"}</em>
-      </div>
-
-      <LoadoutGrid brawler={rosterBrawler} />
-      <OpponentStack opponents={findOpponents(item, player, tag)} fallback={fallbackBrawlers} />
-
-      <div
-        className="bl-profile-match-grade"
-        style={{
-          "--score": `${score}%`,
-          "--score-color": scoreColor,
-        } as CSSProperties}
-      >
-        <strong>{score}</strong>
-        <span>{gradeLabel(score)}</span>
-      </div>
-
-      <button type="button" aria-label="Open battle details">
-        <ChevronDown size={18} />
-      </button>
-    </article>
+    </details>
   )
 }
 
@@ -571,24 +785,16 @@ export default async function PlayerProfile({ params }: { params: Promise<{ tag:
     )
   }
 
-  const [{ record: leaderboardRecord, globalCount }, recentBattles] = await Promise.all([
+  const playerClubTag = cleanClubTag(player.club?.tag)
+  const [{ record: leaderboardRecord, globalCount }, recentBattles, clubBadgeId] = await Promise.all([
     fetchLeaderboardRecord(tag),
     fetchRecentBattles(tag),
+    fetchClubBadgeId(playerClubTag),
   ])
 
   const sorted = [...(player.brawlers ?? [])].sort((a, b) => b.trophies - a.trophies)
   const topBrawlers = sorted.slice(0, 8)
-  const top = sorted[0]
   const club = player.club
-  const threeVsThreeWins = get3v3Wins(player)
-  const soloWins = player.soloVictories ?? 0
-  const duoWins = player.duoVictories ?? 0
-  const totalWins = threeVsThreeWins + soloWins + duoWins
-  const power11 = sorted.filter(brawler => brawler.power >= 11).length
-  const hyperCount = sorted.filter(brawler => (brawler.hyperCharges ?? []).length > 0).length
-  const rank30 = sorted.filter(brawler => brawler.rank >= 30).length
-  const topEightAverage = topBrawlers.length ? Math.round(topBrawlers.reduce((sum, brawler) => sum + brawler.trophies, 0) / topBrawlers.length) : 0
-  const ladderPercent = percentRank(leaderboardRecord?.rank, globalCount)
   const regionLabel = leaderboardRecord?.region === "global" ? "ALL" : leaderboardRecord?.region ?? "ALL"
   const recentWins = recentBattles.filter(item => battleOutcome(item) === "win").length
   const recentLosses = recentBattles.filter(item => battleOutcome(item) === "loss").length
@@ -598,258 +804,174 @@ export default async function PlayerProfile({ params }: { params: Promise<{ tag:
   const averageRank = averageRankValues.length ? (averageRankValues.reduce((sum, value) => sum + value, 0) / averageRankValues.length).toFixed(1) : "--"
   const averageBattleScore = recentBattles.length ? (recentBattles.reduce((sum, item) => sum + battleScore(item), 0) / recentBattles.length).toFixed(1) : "--"
   const battleGroups = groupBattles(recentBattles)
-  const sparkValues = [...topBrawlers].reverse().map(brawler => brawler.highestTrophies || brawler.trophies)
-  const modeTotal = Math.max(1, totalWins)
+  const recentWinRate = winRate(recentWins, Math.max(1, recentTotal))
+  const tier = ladderTier(player.trophies)
+  const brawlerPerformance = buildBrawlerPerformanceStats(recentBattles, player, tag, sorted)
+  const modePerformance = buildModePerformanceStats(recentBattles)
+  const clubHref = playerClubTag ? `/leaderboards/clubs?search=${encodeURIComponent(playerClubTag)}` : "/leaderboards/clubs"
+  const recentAverageSwing = recentBattles.length ? recentTrophySwing / recentBattles.length : 0
+  const mostPlayed = brawlerPerformance.find(stat => stat.games > 0) ?? brawlerPerformance[0] ?? null
+  const bestRoster = topBrawlers[0] ?? null
+  const bestMode = modePerformance[0] ?? null
+  const battleModeOptions = Array.from(
+    new Map(recentBattles.map(item => {
+      const label = compactMode(modeLabel(item))
+      return [slugifyFilter(label), { label, value: slugifyFilter(label) }]
+    })).values()
+  )
 
   return (
-    <main className="bl-profile-shell">
-      <section className="bl-profile-hero">
-        <div className="bl-profile-hero-inner">
-          <Link href="/leaderboards/players" className="bl-profile-back">
-            <ArrowLeft size={13} />
-            Leaderboards
-          </Link>
+    <main className="bl-lb-shell bl-profile-shell">
+      <PlayerProfileHero
+        name={player.name}
+        tag={tag}
+        prestigeLevel={player.totalPrestigeLevel ?? 0}
+        regionLabel={regionLabel}
+        iconId={player.icon?.id}
+        activeTab="overview"
+      />
 
-          <div className="bl-profile-identity">
-            <div className="bl-profile-avatar-wrap">
-              <span className="bl-profile-avatar">
-                {player.icon?.id ? (
-                  <BrawlImage src={profileIconUrl(player.icon.id)} alt="" width={88} height={88} sizes="88px" />
-                ) : firstGlyph(player.name)}
-              </span>
-              <span className="bl-profile-level">{player.expLevel}</span>
-            </div>
-
-            <div className="bl-profile-title">
-              <h1>
-                {player.name}
-                <span>#{tag}</span>
-              </h1>
-              <div className="bl-profile-tags">
-                <span>{regionLabel}</span>
-                {club?.name && <span>{club.name}</span>}
-                {top && <b>{formatBrawlerName(top.name)}.</b>}
-              </div>
-              <div className="bl-profile-actions">
-                <Link href={`/player/${encodeURIComponent(tag)}`} className="bl-profile-refresh" prefetch={false}>
-                  <span />
-                  Update now
-                </Link>
-                <button type="button" className="bl-profile-icon-button" aria-label="Refresh player">
-                  <RefreshCw size={15} />
-                </button>
-                <PlayerInsightButton playerName={player.name} tag={tag} />
-              </div>
-            </div>
-          </div>
-
-          <nav className="bl-profile-tabs" aria-label="Player profile sections">
-            <a href="#overview">
-              <List size={17} />
-              Overview
-            </a>
-            <a href="#lens">
-              <Bot size={17} />
-              BrawlLens
-            </a>
-            <a href="#brawlers">
-              <Shield size={17} />
-              Brawlers
-            </a>
-            <a href="#battles">
-              <Swords size={17} />
-              Battles
-            </a>
-            <a href="#club">
-              <Users size={17} />
-              Club
-            </a>
-          </nav>
-        </div>
-      </section>
-
-      <div className="bl-profile-dashboard">
+      <div className="bl-lb-frame bl-profile-frame">
+        <section className="bl-lb-board bl-profile-board">
+          <div className="bl-profile-dashboard">
         <aside className="bl-profile-left-rail" id="overview">
           <section className="bl-profile-ranked-card">
             <div className="bl-profile-card-title">
-              <Medal size={17} />
-              <span>Trophy ladder</span>
+              <span>Ladder</span>
             </div>
             <div className="bl-profile-rank-main">
-              <span className="bl-profile-rank-badge">
-                {top ? <BrawlImage src={brawlerIconUrl(top.id)} alt="" width={64} height={64} sizes="64px" /> : <Trophy size={34} />}
+              <span className={`bl-profile-tier-mark bl-profile-tier-${tier.key}`} title={tier.label}>
+                <strong>{tier.short}</strong>
               </span>
-              <div>
-                <strong>{leagueName(player.trophies)} {formatTrophies(player.trophies)}</strong>
-                <p>{formatNum(totalWins)}W across visible modes</p>
+              <div className="bl-profile-ladder-stack">
+                <div className="bl-profile-ladder-line">
+                  <strong>{formatFullNumber(player.trophies)}</strong>
+                </div>
+                <div className="bl-profile-ladder-line">
+                  <strong>{recentWinRate}% recent winrate</strong>
+                </div>
               </div>
             </div>
             <div className="bl-profile-ladder-rank">
-              <span>Ladder rank</span>
-              <strong>{leaderboardRecord ? ordinal(leaderboardRecord.rank) : "--"}</strong>
-              <em>{ladderPercent ? `Top ${ladderPercent}` : "Tracked players"}</em>
+              <span>LADDER RANK</span>
+              <strong>{ladderRankValue(leaderboardRecord, globalCount)}</strong>
             </div>
-            <div className="bl-profile-window-stats">
-              <span>Last 30d <b>{formatTrophies(topEightAverage)} avg</b></span>
-              <span>Best <b>{formatTrophies(player.highestTrophies ?? 0)}</b></span>
-            </div>
-            <svg className="bl-profile-sparkline" viewBox="0 0 100 96" role="img" aria-label="Brawler trophy depth chart">
-              <path d="M0 20 H100 M0 38 H100 M0 56 H100 M0 74 H100" />
-              <polyline points={sparkPoints(sparkValues)} />
-            </svg>
-            <div className="bl-profile-chart-foot">
-              <span>Peak <b>{formatTrophies(player.highestTrophies ?? player.trophies)}</b></span>
-              <span>Current <b>{formatTrophies(player.trophies)}</b></span>
+            <div className="bl-profile-ladder-meta">
+              <span>Peak <b>{formatFullNumber(player.highestTrophies ?? player.trophies)}</b></span>
+              <span className={`bl-profile-ladder-tier-label bl-profile-ladder-tier-${tier.key}`}>{tier.label}</span>
             </div>
           </section>
 
-          <div className="bl-profile-left-tabs">
-            <span>All</span>
-            <span>3v3</span>
-            <span>Solo</span>
-            <span>Duo</span>
-          </div>
-
           <section className="bl-profile-panel" id="brawlers">
             <div className="bl-profile-card-title">
-              <Sparkles size={17} />
-              <span>Brawler Performance</span>
+              <span>Brawler performance</span>
             </div>
             <div className="bl-profile-brawler-head">
-              <span />
               <span>Brawler</span>
               <span>Trophies</span>
-              <span>Peak</span>
-              <span>Rank</span>
-              <span>Power</span>
+              <span>Games</span>
+              <span>WR</span>
             </div>
             <div className="bl-profile-brawler-table">
-              {topBrawlers.slice(0, 7).map(brawler => (
-                <BrawlerPerformanceRow key={brawler.id} brawler={brawler} />
+              {brawlerPerformance.map(stat => (
+                <BrawlerPerformanceRow key={stat.key} stat={stat} />
               ))}
             </div>
+            <Link href="#brawlers" className="bl-profile-card-action">All</Link>
           </section>
 
           <section className="bl-profile-panel">
             <div className="bl-profile-card-title">
-              <Swords size={17} />
-              <span>Mode Performance</span>
+              <span>Mode performance</span>
+            </div>
+            <div className="bl-profile-mode-head">
+              <span>Mode</span>
+              <span>Games</span>
+              <span>Avg</span>
+              <span>WR</span>
             </div>
             <div className="bl-profile-mode-table">
-              <ModeRow icon={<Swords size={16} />} label="3v3" value={formatNum(threeVsThreeWins)} percent={winRate(threeVsThreeWins, modeTotal)} />
-              <ModeRow icon={<Trophy size={16} />} label="Solo" value={formatNum(soloWins)} percent={winRate(soloWins, modeTotal)} />
-              <ModeRow icon={<Users size={16} />} label="Duo" value={formatNum(duoWins)} percent={winRate(duoWins, modeTotal)} />
-              <ModeRow icon={<Medal size={16} />} label="Rank 30+" value={String(rank30)} percent={winRate(rank30, Math.max(1, sorted.length))} />
+              {modePerformance.length ? modePerformance.map(stat => (
+                <ModePerformanceRow key={stat.key} stat={stat} />
+              )) : (
+                <div className="bl-profile-mode-empty">No recent mode breakdown</div>
+              )}
             </div>
           </section>
 
           <section className="bl-profile-panel" id="club">
             <div className="bl-profile-card-title">
-              <Users size={17} />
               <span>Club</span>
             </div>
-            <div className="bl-profile-played-with">
-              <span className="bl-profile-club-mark">{club?.name ? club.name.slice(0, 2).toUpperCase() : "--"}</span>
+            <Link href={clubHref} className="bl-profile-played-with">
+              <span className="bl-profile-club-mark">
+                {clubBadgeId ? (
+                  <BrawlImage src={clubBadgeUrl(clubBadgeId)} alt="" width={42} height={42} sizes="42px" />
+                ) : (
+                  club?.name ? club.name.slice(0, 2).toUpperCase() : "--"
+                )}
+              </span>
               <div>
                 <strong>{club?.name ?? "No club"}</strong>
                 <p>{club?.tag ?? "No visible club tag"}</p>
               </div>
-            </div>
-          </section>
-
-          <section className="bl-profile-panel">
-            <div className="bl-profile-card-title">
-              <Zap size={17} />
-              <span>Account Signals</span>
-            </div>
-            <div className="bl-profile-signal-grid">
-              <div><Trophy size={24} /><strong>{formatTrophies(player.trophies)}</strong><span>Current</span></div>
-              <div><Medal size={24} /><strong>{formatTrophies(player.highestTrophies ?? 0)}</strong><span>Best</span></div>
-              <div><Swords size={24} /><strong>{formatNum(totalWins)}</strong><span>Wins</span></div>
-              <div><Shield size={24} /><strong>{power11}</strong><span>Power 11</span></div>
-              <div><Sparkles size={24} /><strong>{hyperCount}</strong><span>Hyper</span></div>
-              <div><BarChart3 size={24} /><strong>{rank30}</strong><span>R30+</span></div>
-            </div>
+            </Link>
           </section>
         </aside>
 
         <section className="bl-profile-main-lane">
           <section className="bl-profile-summary-card" id="lens">
             <div className="bl-profile-summary-title">
-              <BarChart3 size={18} />
               <span>Last 30 games performances</span>
-              <em>Brawl Score : {averageBattleScore}</em>
+              <em>Brawl score: {averageBattleScore}</em>
             </div>
-            <div className="bl-profile-summary-grid">
-              <div className="bl-profile-win-arc" style={{ "--score": `${winRate(recentWins, Math.max(1, recentTotal))}%` } as CSSProperties}>
-                <strong>{winRate(recentWins, Math.max(1, recentTotal))}%</strong>
-                <span>Winrate</span>
-                <em>{recentWins}W - {recentLosses}L</em>
+            <div className="bl-profile-summary-metrics">
+              <div className="bl-profile-summary-metric">
+                <span>Recent WR</span>
+                <strong>{recentWinRate}%</strong>
+                <small>{recentWins}W - {recentLosses}L</small>
               </div>
-
-              <div className="bl-profile-summary-brawlers">
-                {topBrawlers.slice(0, 3).map((brawler, index) => (
-                  <div key={brawler.id}>
-                    <BrawlImage src={brawlerIconUrl(brawler.id)} alt="" width={38} height={38} sizes="38px" />
-                    <strong style={{ color: index === 0 ? "#f0d373" : index === 1 ? "#ff9f6e" : "#8bd7ff" }}>
-                      {index === 0 ? "Top" : rankLabel(brawler.rank)}
-                    </strong>
-                    <span>{formatTrophies(brawler.trophies)}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="bl-profile-summary-kda">
+              <div className="bl-profile-summary-metric">
                 <span>Trophy swing</span>
-                <strong>{recentTrophySwing > 0 ? "+" : ""}{recentTrophySwing}</strong>
-                <em>{recentBattles.length ? `${(recentTrophySwing / recentBattles.length).toFixed(1)} avg` : "-- avg"}</em>
+                <strong>{formatSigned(recentTrophySwing)}</strong>
+                <small>{recentBattles.length ? `${formatSigned(recentAverageSwing, 1)} avg / battle` : "-- avg / battle"}</small>
               </div>
-
-              <div className="bl-profile-summary-rank">
+              <div className="bl-profile-summary-metric">
                 <span>Average rank</span>
-                <strong>{averageRank}<small>/10</small></strong>
-                <div>
-                  <b>MVP</b>
-                  <b>ACE</b>
-                </div>
+                <strong>{averageRank}</strong>
+                <small>{averageRank === "--" ? "No placement data" : "Recent placement"}</small>
+              </div>
+              <div className="bl-profile-summary-metric">
+                <span>Most played</span>
+                <strong>{mostPlayed ? formatBrawlerName(mostPlayed.brawler.name ?? "Brawler") : "--"}</strong>
+                <small>{mostPlayed?.games ? `${mostPlayed.games} games · ${mostPlayed.winRate}% WR` : "No recent brawler"}</small>
+              </div>
+              <div className="bl-profile-summary-metric">
+                <span>Best brawler</span>
+                <strong>{bestRoster ? formatBrawlerName(bestRoster.name) : "--"}</strong>
+                <small>{bestRoster ? `${formatTrophyCount(bestRoster.trophies)} · P${bestRoster.power}` : "No roster data"}</small>
+              </div>
+              <div className="bl-profile-summary-metric">
+                <span>Best mode</span>
+                <strong>{bestMode?.label ?? "--"}</strong>
+                <small>{bestMode ? `${bestMode.games} games · ${bestMode.winRate}% WR` : "No mode data"}</small>
               </div>
             </div>
           </section>
 
-          <div className="bl-profile-filter-row">
-            <div className="bl-profile-icon-filter">
-              <span className="is-active"><Sparkles size={18} /></span>
-              <span><Shield size={18} /></span>
-              <span><Swords size={18} /></span>
-              <span><Users size={18} /></span>
-            </div>
-            <div className="bl-profile-segment">
-              <span className="is-active">Day</span>
-              <span>Session</span>
-              <span>None</span>
-            </div>
-            <button type="button" className="bl-profile-filter-button">
-              <Filter size={16} />
-              Filters
-              <ChevronDown size={16} />
-            </button>
-          </div>
-
-          <div className="bl-profile-match-list" id="battles">
+          <PlayerBattleFilters modes={battleModeOptions}>
             {battleGroups.length ? battleGroups.map(group => {
               const wins = group.items.filter(item => battleOutcome(item) === "win").length
               const losses = group.items.filter(item => battleOutcome(item) === "loss").length
-              const swing = group.items.reduce((sum, item) => sum + (item.battle?.trophyChange ?? 0), 0)
               const groupScore = group.items.length ? (group.items.reduce((sum, item) => sum + battleScore(item), 0) / group.items.length).toFixed(1) : "--"
               return (
                 <section key={group.day} className="bl-profile-day-group">
                   <div className="bl-profile-day-head">
                     <h2>{group.day}</h2>
                     <div>
-                      <span>Brawl Score : {groupScore}</span>
+                      <span>Brawl score: {groupScore}</span>
                       <b>{wins} wins</b>
                       <em>{losses} losses</em>
-                      <strong>{swing > 0 ? "+" : ""}{swing} trophies</strong>
                     </div>
                   </div>
                   {group.items.map((item, index) => (
@@ -870,6 +992,8 @@ export default async function PlayerProfile({ params }: { params: Promise<{ tag:
                 <span>The Brawl Stars battle log endpoint did not return matches for this tag.</span>
               </section>
             )}
+          </PlayerBattleFilters>
+        </section>
           </div>
         </section>
       </div>

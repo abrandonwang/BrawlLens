@@ -2,11 +2,11 @@ import type { Metadata } from "next"
 import { AboutContent } from "@/components/InfoPageContent"
 
 export const metadata: Metadata = {
-  title: "About | BrawlLens",
-  description: "How BrawlLens computes win rates, rankings, and meta scores. Documentation, data sources, and contact.",
+  title: "Data Reference - BrawlLens",
+  description: "Compact BrawlLens reference for tracked surfaces, metric rules, data freshness, privacy, and contact.",
   openGraph: {
-    title: "About | BrawlLens",
-    description: "How BrawlLens computes its stats. Data sources and methodology.",
+    title: "Data Reference - BrawlLens",
+    description: "Compact formulas, data notes, and methodology for BrawlLens.",
     type: "article",
   },
 }

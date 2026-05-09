@@ -38,17 +38,34 @@ interface RegionData {
 
 interface TopPlayerEnrichment {
   iconId: number | null
+  totalTrophies?: number | null
+  highestTrophies?: number | null
+  totalPrestigeLevel?: number | null
   recentGames?: number | null
   recentWinRate?: number | null
   threeVsThreeWins?: number | null
   soloWins?: number | null
+  duoWins?: number | null
   clubTag?: string | null
   clubBadgeId?: number | null
-  topBrawlers: { id: number; name: string }[]
+  topBrawlers: BrawlerSummary[]
+  peakBrawler?: BrawlerSummary | null
+  selectedBrawlerId?: number | null
+  selectedBrawler?: BrawlerSummary | null
 }
 
 const PAGE_SIZE = 50
-const playerTableGrid = "grid grid-cols-[34px_minmax(150px,1.18fr)_58px_58px_72px_minmax(86px,0.72fr)_40px_92px] items-center gap-1.5"
+const playerTableGrid = "grid grid-cols-[34px_minmax(156px,1fr)_78px_minmax(150px,1fr)_66px_140px_86px_54px_42px] items-center gap-1"
+
+interface BrawlerSummary {
+  id: number
+  name: string
+  trophies: number
+  highestTrophies: number | null
+  rank: number | null
+  power: number | null
+  prestigeLevel: number | null
+}
 
 export default function LeaderboardsClient({
   allData,
@@ -178,15 +195,16 @@ export default function LeaderboardsClient({
             </section>
 
             <LeaderboardPanel>
-              <TableHead className={playerTableGrid}>
-                <span />
+              <TableHead className={`${playerTableGrid} bl-lb-player-table-head`}>
+                <span>Rank</span>
                 <span>Player</span>
-                <span>3v3 wins</span>
-                <span>Solo wins</span>
                 <span>Trophies</span>
                 <span>Club</span>
-                <span>World</span>
+                <span>Wins</span>
                 <span>Best brawlers</span>
+                <span>Peak</span>
+                <span>Prestige</span>
+                <span>World</span>
               </TableHead>
 
               <div className="bl-lb-table-list">
@@ -233,14 +251,15 @@ function PlayerRankRow({
           <div className="bl-lb-subline">{player.player_tag}</div>
         </div>
       </Link>
-      <span className="bl-lb-row-mono">{formatStat(enrichment?.threeVsThreeWins)}</span>
-      <span className="bl-lb-row-mono">{formatStat(enrichment?.soloWins)}</span>
       <span className="bl-lb-row-stat">
         {formatTrophies(player.trophies)}
       </span>
       <ClubCell name={player.club_name} badgeId={enrichment?.clubBadgeId ?? null} />
-      <span className="bl-lb-row-mono">{formatWorldRank(worldRank)}</span>
+      <span className="bl-lb-row-mono">{formatStat(getTotalWins(enrichment))}</span>
       <TopBrawlerIcons brawlers={enrichment?.topBrawlers ?? []} compact />
+      <BrawlerMetric brawler={enrichment?.peakBrawler ?? enrichment?.topBrawlers?.[0] ?? null} valueKey="highestTrophies" compact />
+      <span className="bl-lb-row-mono">{formatPlainStat(enrichment?.totalPrestigeLevel)}</span>
+      <span className="bl-lb-row-mono">{formatWorldRank(worldRank)}</span>
     </div>
   )
 }
@@ -336,6 +355,29 @@ function TopBrawlerIcons({
   )
 }
 
+function BrawlerMetric({
+  brawler,
+  valueKey,
+  compact = false,
+}: {
+  brawler: BrawlerSummary | null
+  valueKey: "trophies" | "highestTrophies"
+  compact?: boolean
+}) {
+  if (!brawler) return <span className="bl-lb-brawler-metric bl-lb-brawler-metric-empty">--</span>
+  const value = valueKey === "trophies" ? brawler.trophies : brawler.highestTrophies ?? brawler.trophies
+
+  return (
+    <span className={`bl-lb-brawler-metric ${compact ? "bl-lb-brawler-metric-compact" : ""}`}>
+      <BrawlImage src={brawlerIconUrl(brawler.id)} alt={brawler.name} width={24} height={24} sizes="24px" />
+      <span>
+        {!compact && <strong>{formatBrawlerLabel(brawler.name)}</strong>}
+        <small>{formatFullNumber(value)}</small>
+      </span>
+    </span>
+  )
+}
+
 function profileIconUrl(id: number) {
   return `https://cdn.brawlify.com/profile-icons/regular/${id}.png`
 }
@@ -348,6 +390,21 @@ function formatStat(value: number | null | undefined) {
   return typeof value === "number" ? formatTrophies(value) : "--"
 }
 
+function formatPlainStat(value: number | null | undefined) {
+  return typeof value === "number" ? value.toLocaleString("en-US") : "--"
+}
+
+function formatFullNumber(value: number | null | undefined) {
+  return typeof value === "number" ? value.toLocaleString("en-US") : "--"
+}
+
+function formatBrawlerLabel(name: string) {
+  return name
+    .split(" ")
+    .map(word => word.charAt(0) + word.slice(1).toLowerCase())
+    .join(" ")
+}
+
 function formatWorldRank(value: number | null | undefined) {
   return typeof value === "number" ? `#${value}` : "--"
 }
@@ -355,8 +412,9 @@ function formatWorldRank(value: number | null | undefined) {
 function getTotalWins(enrichment: TopPlayerEnrichment | undefined) {
   const threeVsThreeWins = enrichment?.threeVsThreeWins
   const soloWins = enrichment?.soloWins
-  if (typeof threeVsThreeWins !== "number" && typeof soloWins !== "number") return null
-  return (threeVsThreeWins ?? 0) + (soloWins ?? 0)
+  const duoWins = enrichment?.duoWins
+  if (typeof threeVsThreeWins !== "number" && typeof soloWins !== "number" && typeof duoWins !== "number") return null
+  return (threeVsThreeWins ?? 0) + (soloWins ?? 0) + (duoWins ?? 0)
 }
 
 function playerKey(tag: string) {

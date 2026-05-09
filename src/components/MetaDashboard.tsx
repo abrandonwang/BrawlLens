@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, type ReactNode } from "react";
+import Link from "next/link";
 import { BrawlImage } from "@/components/BrawlImage";
 import { EmptyState, MapGridSkeleton, StateButton } from "@/components/PolishStates";
 import { MODE_CONFIG } from "@/lib/modes";
@@ -17,20 +18,13 @@ interface ModeInfo {
   maps: MapInfo[];
 }
 
-interface SelectedMapInfo {
-  name: string;
-  imageUrl?: string;
-  mode: string | null;
-  isLive: boolean;
-}
-
 interface Props {
   modes: ModeInfo[];
   loading: boolean;
   selectedMode: string | null;
   mapSearch: string;
-  onSelect: (map: SelectedMapInfo) => void;
   onClearFilters?: () => void;
+  toolbar?: ReactNode;
 }
 
 function getModeForMap(modes: ModeInfo[], mapName: string): string | null {
@@ -38,6 +32,10 @@ function getModeForMap(modes: ModeInfo[], mapName: string): string | null {
     if (m.maps.some(map => map.name === mapName)) return m.mode;
   }
   return null;
+}
+
+function mapHref(name: string) {
+  return `/meta/${encodeURIComponent(name)}`;
 }
 
 function MapPreview({ imageUrl, name, modeColor }: { imageUrl?: string; name: string; mode: string | null; modeColor?: string }) {
@@ -58,7 +56,7 @@ function MapPreview({ imageUrl, name, modeColor }: { imageUrl?: string; name: st
 
   return (
     <div
-      className="map-preview-frame relative grid w-full place-items-center rounded-t-lg"
+      className="map-preview-frame relative grid w-full place-items-center rounded-t-[5px]"
       style={{ aspectRatio }}
     >
       <BrawlImage
@@ -66,7 +64,7 @@ function MapPreview({ imageUrl, name, modeColor }: { imageUrl?: string; name: st
         alt={name}
         fill
         sizes="(max-width: 520px) 50vw, 220px"
-        className="block object-contain transition-[transform,filter] duration-200 rounded-t-lg"
+        className="block rounded-t-[5px] object-contain transition-[transform,filter] duration-200"
         loading="lazy"
         onLoad={(event) => {
           const img = event.currentTarget;
@@ -80,7 +78,7 @@ function MapPreview({ imageUrl, name, modeColor }: { imageUrl?: string; name: st
   );
 }
 
-export default function MetaDashboard({ modes, loading, selectedMode, mapSearch, onSelect, onClearFilters }: Props) {
+export default function MetaDashboard({ modes, loading, selectedMode, mapSearch, onClearFilters, toolbar }: Props) {
   const [mapImageLookup, setMapImageLookup] = useState<Map<string, string>>(new Map());
   const [rotationMapNames, setRotationMapNames] = useState<Set<string>>(new Set());
   const [mapPage, setMapPage] = useState(0);
@@ -169,29 +167,26 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch,
 
   return (
     <div className="relative pt-1">
-      <div className="mb-5 flex items-end justify-between gap-3 rounded-[18px] border border-[var(--line)] bg-[var(--panel)] px-5 py-4">
-        <div className="min-w-0">
-          <div className="mb-1 text-[12px] font-normal tracking-[-0.01em] text-[var(--ink-4)]">{selectedMode === null ? "All Maps" : MODE_CONFIG[selectedMode]?.label ?? selectedMode}</div>
-          <div className="truncate text-[21px] leading-[1.19] font-semibold tracking-[0.011em] text-[var(--ink)]">
-            {displayedMaps.length.toLocaleString()} {displayedMaps.length === 1 ? "map" : "maps"}
+      <div className="mb-3 rounded-[5px] border border-[rgba(247,244,237,0.065)] bg-[#17191f] px-4 py-3 shadow-[rgba(255,255,255,0.035)_0_1px_0_0_inset]">
+        <div className="flex items-center justify-between gap-3 max-[720px]:flex-col max-[720px]:items-stretch">
+          <div className="min-w-0 flex-1">{toolbar}</div>
+          <div className="flex shrink-0 flex-nowrap items-center justify-end gap-1.5 max-[720px]:justify-start">
+            <button
+              type="button"
+              onClick={() => setLiveOnly(v => !v)}
+              disabled={!liveOnly && liveCountAll === 0}
+              aria-pressed={liveOnly}
+              className={`inline-flex min-h-8 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-[5px] border px-3 text-[12px] font-semibold tracking-normal transition-colors max-[420px]:px-2 max-[420px]:text-[10px] disabled:cursor-default disabled:opacity-40 ${liveOnly ? "border-[var(--win-line)] bg-[var(--win-soft)] text-[var(--win)]" : "border-[var(--line)] bg-[#101113] text-[var(--ink-3)] hover:text-[var(--ink)]"}`}
+            >
+              <span className={`size-1.5 rounded-full ${liveOnly ? "bg-[var(--win)]" : "bg-[var(--ink-4)]"}`} />
+              {liveOnly ? `${liveCount.toLocaleString()} live · on` : `${liveCountAll.toLocaleString()} live`}
+            </button>
+            <span className="inline-flex min-h-8 items-center whitespace-nowrap rounded-[5px] border border-[var(--line)] bg-[#101113] px-3 text-[12px] font-semibold tracking-normal text-[var(--ink-3)] max-[420px]:px-2 max-[420px]:text-[10px]">Page {mapPage + 1} of {mapTotalPages}</span>
           </div>
-        </div>
-        <div className="flex shrink-0 flex-nowrap items-center justify-end gap-1.5">
-          <button
-            type="button"
-            onClick={() => setLiveOnly(v => !v)}
-            disabled={!liveOnly && liveCountAll === 0}
-            aria-pressed={liveOnly}
-            className={`inline-flex min-h-8 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border px-3 text-[12px] font-normal tracking-[-0.01em] transition-colors max-[420px]:px-2 max-[420px]:text-[10px] disabled:cursor-default disabled:opacity-40 ${liveOnly ? "border-[var(--win-line)] bg-[var(--win-soft)] text-[var(--win)]" : "border-[var(--line)] bg-[var(--panel)] text-[var(--ink-3)] hover:text-[var(--ink)]"}`}
-          >
-            <span className={`size-1.5 rounded-full ${liveOnly ? "bg-[var(--win)]" : "bg-[var(--ink-4)]"}`} />
-            {liveOnly ? `${liveCount.toLocaleString()} live · on` : `${liveCountAll.toLocaleString()} live`}
-          </button>
-          <span className="inline-flex min-h-8 items-center whitespace-nowrap rounded-full border border-[var(--line)] bg-[var(--panel)] px-3 text-[12px] font-normal tracking-[-0.01em] text-[var(--ink-3)] max-[420px]:px-2 max-[420px]:text-[10px]">Page {mapPage + 1} of {mapTotalPages}</span>
         </div>
       </div>
 
-      <div className="mb-8 grid grid-cols-[repeat(auto-fill,minmax(210px,1fr))] gap-5 max-[520px]:grid-cols-2 max-[520px]:gap-3">
+      <div className="mb-5 grid grid-cols-[repeat(auto-fill,minmax(170px,1fr))] gap-2 max-[520px]:grid-cols-2 max-[520px]:gap-2">
         {paginatedMaps.map(map => {
           const imageUrl = mapImageLookup.get(map.name) ?? mapImageLookup.get(normalizeMapName(map.name));
           const isLive = rotationMapNames.has(map.name);
@@ -199,12 +194,12 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch,
           const modeColor = mode ? MODE_CONFIG[mode]?.color : undefined;
 
           return (
-            <button
+            <Link
               key={map.name}
-              onClick={() => onSelect({ name: map.name, imageUrl, mode, isLive })}
-              className="map-card group relative block w-full cursor-pointer overflow-hidden border border-[var(--line)] bg-[var(--panel)] p-0 text-left transition-[transform,border-color,background] duration-200 hover:-translate-y-px hover:border-[var(--line-2)] active:-translate-y-px"
+              href={mapHref(map.name)}
+              className="map-card group relative block w-full cursor-pointer overflow-hidden border border-[var(--line)] bg-[var(--panel)] p-0 text-left transition-[border-color,background] duration-150 hover:border-[var(--line-2)]"
             >
-              <div className="relative z-[1] overflow-hidden rounded-t-lg bg-[var(--panel-2)]">
+              <div className="relative z-[1] overflow-hidden rounded-t-[5px] bg-[var(--panel-2)]">
                 <MapPreview imageUrl={imageUrl} name={map.name} mode={mode} modeColor={modeColor} />
                 {modeColor && (
                   <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, ${modeColor}, transparent)`, opacity: 0.6 }} />
@@ -224,53 +219,43 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch,
                   )}
                 </div>
               </div>
-            </button>
+            </Link>
           );
         })}
       </div>
 
       {mapTotalPages > 1 && (
-        <div className="mt-0.5 flex items-center justify-center gap-1">
+        <nav className="bl-lb-pager" aria-label="Map pages">
           <button
+            type="button"
             onClick={() => setMapPage(p => p - 1)}
             disabled={mapPage === 0}
-            className="grid size-[30px] cursor-pointer place-items-center rounded-lg border border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_72%,transparent)] text-[12px] font-semibold text-[var(--ink-3)] transition hover:-translate-y-px hover:border-[var(--line-2)] hover:bg-[var(--hover-bg)] hover:text-[var(--ink)] disabled:cursor-default disabled:opacity-30 disabled:hover:translate-y-0"
+            aria-label="Previous page"
           >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
           </button>
 
-          {(() => {
-            const pages: (number | "...")[] = [];
-            for (let i = 0; i < mapTotalPages; i++) {
-              if (i === 0 || i === mapTotalPages - 1 || (i >= mapPage - 1 && i <= mapPage + 1)) {
-                pages.push(i);
-              } else if (pages[pages.length - 1] !== "...") {
-                pages.push("...");
-              }
-            }
-            return pages.map((p, i) =>
-              p === "..." ? (
-                <span key={`e-${i}`} className="grid size-[30px] place-items-center rounded-lg text-[12px] font-semibold text-[var(--ink-4)]">…</span>
-              ) : (
-                <button
-                  key={p}
-                  onClick={() => setMapPage(p as number)}
-                  className={`grid size-[30px] cursor-pointer place-items-center rounded-lg text-[12px] font-semibold transition ${p === mapPage ? "border border-transparent bg-[var(--accent)] text-[var(--ink-on)]" : "border border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_72%,transparent)] text-[var(--ink-3)] hover:-translate-y-px hover:border-[var(--line-2)] hover:bg-[var(--hover-bg)] hover:text-[var(--ink)]"}`}
-                >
-                  {(p as number) + 1}
-                </button>
-              )
-            );
-          })()}
+          {Array.from({ length: mapTotalPages }, (_, idx) => (
+            <button
+              key={idx}
+              type="button"
+              onClick={() => setMapPage(idx)}
+              className={idx === mapPage ? "bl-lb-page-active" : ""}
+              aria-current={idx === mapPage ? "page" : undefined}
+            >
+              {idx + 1}
+            </button>
+          ))}
 
           <button
+            type="button"
             onClick={() => setMapPage(p => p + 1)}
             disabled={mapPage === mapTotalPages - 1}
-            className="grid size-[30px] cursor-pointer place-items-center rounded-lg border border-[var(--line)] bg-[color-mix(in_srgb,var(--panel)_72%,transparent)] text-[12px] font-semibold text-[var(--ink-3)] transition hover:-translate-y-px hover:border-[var(--line-2)] hover:bg-[var(--hover-bg)] hover:text-[var(--ink)] disabled:cursor-default disabled:opacity-30 disabled:hover:translate-y-0"
+            aria-label="Next page"
           >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
           </button>
-        </div>
+        </nav>
       )}
     </div>
   );

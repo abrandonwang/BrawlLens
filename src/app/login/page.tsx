@@ -3,7 +3,7 @@ import { Suspense } from "react"
 import LoginClient from "./LoginClient"
 
 export const metadata: Metadata = {
-  title: "Account | BrawlLens",
+  title: "Account - BrawlLens",
   description: "Create or log in to a BrawlLens account.",
 }
 
