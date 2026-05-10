@@ -101,7 +101,6 @@ const tabs = [
   { key: "players", label: "Players", href: "/leaderboards/players" },
   { key: "clubs", label: "Clubs", href: "/leaderboards/clubs" },
   { key: "brawlers", label: "Brawlers", href: "/leaderboards/brawlers" },
-  { key: "community", label: "Community" },
 ] as const
 
 export function regionCode(code: string) {
@@ -119,6 +118,11 @@ export function LeaderboardPageShell({
   active: LeaderboardKind
   children: ReactNode
 }) {
+  useEffect(() => {
+    document.documentElement.classList.add("landing-bg")
+    return () => document.documentElement.classList.remove("landing-bg")
+  }, [])
+
   return (
     <main className="bl-lb-shell">
       <LeaderboardTabs active={active} />
@@ -167,21 +171,12 @@ export function LeaderboardTabs({ active }: { active: LeaderboardKind }) {
         <nav aria-label="Leaderboard sections" className="bl-lb-subnav">
           {tabs.map(tab => {
             const isActive = tab.key === active
-            const className = `bl-lb-tab ${isActive ? "bl-lb-tab-active" : ""} ${tab.key === "community" ? "bl-lb-tab-disabled" : ""}`
-            const inner = <span>{tab.label}</span>
-
-            if ("href" in tab) {
-              return (
-                <Link key={tab.key} href={tab.href} className={className}>
-                  {inner}
-                </Link>
-              )
-            }
+            const className = `bl-lb-tab ${isActive ? "bl-lb-tab-active" : ""}`
 
             return (
-              <span key={tab.key} className={className} aria-disabled="true">
-                {inner}
-              </span>
+              <Link key={tab.key} href={tab.href} className={className}>
+                <span>{tab.label}</span>
+              </Link>
             )
           })}
         </nav>

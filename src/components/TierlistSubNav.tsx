@@ -11,7 +11,6 @@ export type TierlistSection = "brawlers" | "maps"
 const tabs = [
   { key: "brawlers", label: "Brawlers", href: "/brawlers" },
   { key: "maps", label: "Maps", href: "/meta" },
-  { key: "guide", label: "Guide" },
 ] as const
 
 export default function TierlistSubNav({ active }: { active: TierlistSection }) {
@@ -58,14 +57,6 @@ export default function TierlistSubNav({ active }: { active: TierlistSection }) 
         <div className="bl-lb-subnav-wrap">
           <nav aria-label="Tierlist sections" className="bl-lb-subnav">
             {tabs.map(tab => {
-              if (tab.key === "guide") {
-                return (
-                  <span key={tab.key} className="bl-lb-tab bl-lb-tab-disabled" aria-disabled="true">
-                    <span>{tab.label}</span>
-                  </span>
-                )
-              }
-
               const isActive = tab.key === active
               return (
                 <Link key={tab.key} href={tab.href} className={`bl-lb-tab ${isActive ? "bl-lb-tab-active" : ""}`}>

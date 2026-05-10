@@ -1,13 +1,14 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { ArrowLeft, BarChart3, Flame, MapPinned, Search, Trophy, Users } from "lucide-react"
+import { Flame, Search } from "lucide-react"
 import Link from "next/link"
 import { BrawlImage, brawlerIconUrl } from "@/components/BrawlImage"
 import { EmptyState, StateButton, StateLink } from "@/components/PolishStates"
 import TierlistSubNav from "@/components/TierlistSubNav"
+import { LeaderboardPanel, RankCell, TableHead } from "@/app/leaderboards/LeaderboardDpmShell"
 import { formatBrawlerName, formatNum } from "@/lib/format"
-import { getBarWidth, getTierInfo, winRateColor } from "@/lib/tiers"
+import { getTierInfo, winRateColor } from "@/lib/tiers"
 
 interface BrawlerStat {
   brawlerId: number
@@ -18,6 +19,9 @@ interface BrawlerStat {
 }
 
 type SortKey = "winRate" | "wins" | "picks"
+
+const performanceGrid = "grid grid-cols-[44px_minmax(190px,1.2fr)_96px_82px_82px_60px] items-center gap-1"
+const compactSignalGrid = "grid grid-cols-[34px_minmax(0,1fr)_72px] items-center gap-1"
 
 interface Props {
   mapName: string
@@ -37,6 +41,10 @@ function brawlerHref(id: number) {
   return `/brawlers/${id}`
 }
 
+function formatFullNumber(value: number) {
+  return value.toLocaleString("en-US")
+}
+
 function StatMetric({ value, label, detail, color }: { value: string; label: string; detail?: string; color?: string }) {
   return (
     <div className="bl-bd-stat">
@@ -47,56 +55,85 @@ function StatMetric({ value, label, detail, color }: { value: string; label: str
   )
 }
 
-function Distribution({ brawlers }: { brawlers: BrawlerStat[] }) {
-  const buckets = useMemo(() => {
-    return brawlers.reduce<number[]>((acc, brawler) => {
-      const index = Math.max(0, Math.min(4, Math.floor(brawler.winRate / 20)))
-      acc[index] += 1
-      return acc
-    }, [0, 0, 0, 0, 0])
-  }, [brawlers])
-  const labels = ["0-20", "20-40", "40-60", "60-80", "80-100"]
-  const max = Math.max(...buckets, 1)
-
+function NamedStatMetric({ label, brawler, detail }: { label: string; brawler: BrawlerStat | null; detail?: string }) {
   return (
-    <div className="bl-md-dist">
-      {labels.map((label, index) => (
-        <div key={label} className="bl-md-dist-bar">
-          <i style={{ height: `${Math.max(8, ((buckets[index] ?? 0) / max) * 104)}px` }} />
-          <span>{label}</span>
-        </div>
-      ))}
+    <div className="bl-bd-stat bl-bd-stat-named">
+      <span>{label}:</span>
+      <strong>{brawler ? formatBrawlerName(brawler.name) : "-"}</strong>
+      {detail && <em>{detail}</em>}
     </div>
   )
 }
 
-function TierBreakdown({ brawlers }: { brawlers: BrawlerStat[] }) {
-  const tiers = useMemo(() => {
-    const counts = new Map<string, { count: number; color: string }>()
-    for (const brawler of brawlers) {
-      const tier = getTierInfo(brawler.winRate)
-      const current = counts.get(tier.label) ?? { count: 0, color: tier.color }
-      current.count += 1
-      counts.set(tier.label, current)
-    }
-    return ["S", "A", "B", "C", "D"].map(label => ({ label, count: counts.get(label)?.count ?? 0, color: counts.get(label)?.color ?? "var(--lb-text-3)" }))
-  }, [brawlers])
+function SnapshotBrawler({ label, brawler }: { label: string; brawler: BrawlerStat | null }) {
+  if (!brawler) {
+    return (
+      <div className="bl-md-snapshot-empty">
+        <span>{label}</span>
+        <b>No sample</b>
+      </div>
+    )
+  }
+
+  const tier = getTierInfo(brawler.winRate)
 
   return (
-    <div className="bl-md-tier-grid">
-      {tiers.map(tier => (
-        <div key={tier.label}>
-          <b style={{ color: tier.color }}>{tier.label}</b>
-          <span>{tier.count}</span>
+    <Link href={brawlerHref(brawler.brawlerId)} className="bl-md-snapshot-brawler">
+      <BrawlImage src={brawlerIconUrl(brawler.brawlerId)} alt={brawler.name} width={54} height={54} className="size-[54px] object-contain" sizes="54px" />
+      <span>
+        <em>{label}</em>
+        <b>{formatBrawlerName(brawler.name)}</b>
+      </span>
+      <strong style={{ color: winRateColor(brawler.winRate) }}>{formatPercent(brawler.winRate)}</strong>
+      <small style={{ color: tier.color, borderColor: tier.border, background: tier.bg }}>{tier.label}</small>
+    </Link>
+  )
+}
+
+function MapBrawlerRow({ brawler, rank }: { brawler: BrawlerStat; rank: number }) {
+  const tier = getTierInfo(brawler.winRate)
+
+  return (
+    <div className={`bl-lb-row bl-md-performance-row ${performanceGrid}`}>
+      <RankCell rank={rank} />
+      <Link href={brawlerHref(brawler.brawlerId)} className="bl-lb-identity bl-md-brawler-link">
+        <span className="bl-lb-avatar bl-md-brawler-avatar">
+          <BrawlImage src={brawlerIconUrl(brawler.brawlerId)} alt={brawler.name} width={34} height={34} className="size-full object-contain" loading="lazy" sizes="34px" />
+        </span>
+        <div className="bl-lb-row-main">
+          <div className="bl-lb-name">{formatBrawlerName(brawler.name)}</div>
+          <div className="bl-lb-subline">{formatFullNumber(brawler.picks)} games</div>
         </div>
-      ))}
+      </Link>
+      <span className="bl-lb-row-stat" style={{ color: winRateColor(brawler.winRate) }}>{formatPercent(brawler.winRate)}</span>
+      <span className="bl-lb-row-mono">{formatNum(brawler.wins)}</span>
+      <span className="bl-lb-row-mono">{formatNum(brawler.picks)}</span>
+      <span className="bl-md-tier-pill" style={{ color: tier.color, borderColor: tier.border, background: tier.bg }}>{tier.label}</span>
+    </div>
+  )
+}
+
+function CompactSignalRow({ brawler, rank }: { brawler: BrawlerStat; rank: number }) {
+  return (
+    <div className={`bl-lb-row bl-md-compact-row ${compactSignalGrid}`}>
+      <RankCell rank={rank} />
+      <Link href={brawlerHref(brawler.brawlerId)} className="bl-lb-identity bl-md-brawler-link">
+        <span className="bl-lb-avatar bl-md-brawler-avatar">
+          <BrawlImage src={brawlerIconUrl(brawler.brawlerId)} alt={brawler.name} width={30} height={30} className="size-full object-contain" loading="lazy" sizes="30px" />
+        </span>
+        <div className="bl-lb-row-main">
+          <div className="bl-lb-name">{formatBrawlerName(brawler.name)}</div>
+          <div className="bl-lb-subline">{formatNum(brawler.picks)} games</div>
+        </div>
+      </Link>
+      <span className="bl-lb-row-stat" style={{ color: winRateColor(brawler.winRate) }}>{formatPercent(brawler.winRate)}</span>
     </div>
   )
 }
 
 export default function MapDetailClient({ mapName, imageUrl, modeName, totalBattles, brawlers, isLive }: Props) {
   const [searchQuery, setSearchQuery] = useState("")
-  const [minPicks, setMinPicks] = useState(10)
+  const [minPicks, setMinPicks] = useState(10_000)
   const [sortBy, setSortBy] = useState<SortKey>("picks")
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc")
 
@@ -117,11 +154,18 @@ export default function MapDetailClient({ mapName, imageUrl, modeName, totalBatt
 
   const bestWinRate = useMemo(() => [...brawlers].filter(b => b.picks >= minPicks).sort((a, b) => b.winRate - a.winRate)[0] ?? null, [brawlers, minPicks])
   const mostPicked = useMemo(() => [...brawlers].sort((a, b) => b.picks - a.picks)[0] ?? null, [brawlers])
+  const reliablePicks = useMemo(() => {
+    return [...brawlers]
+      .filter(brawler => brawler.picks >= minPicks)
+      .sort((a, b) => (b.winRate * 0.7 + Math.log10(b.picks + 1) * 8) - (a.winRate * 0.7 + Math.log10(a.picks + 1) * 8))
+      .slice(0, 8)
+  }, [brawlers, minPicks])
+  const topContenders = useMemo(() => [...brawlers].filter(b => b.picks >= minPicks).sort((a, b) => b.winRate - a.winRate).slice(0, 3), [brawlers, minPicks])
   const totalPicks = brawlers.reduce((sum, brawler) => sum + brawler.picks, 0)
   const totalWins = brawlers.reduce((sum, brawler) => sum + brawler.wins, 0)
   const avgWinRate = totalPicks > 0 ? (totalWins / totalPicks) * 100 : null
   const sortOptions: { key: SortKey; label: string }[] = [
-    { key: "picks", label: "Picks" },
+    { key: "picks", label: "Games" },
     { key: "winRate", label: "Win Rate" },
     { key: "wins", label: "Wins" },
   ]
@@ -143,15 +187,19 @@ export default function MapDetailClient({ mapName, imageUrl, modeName, totalBatt
 
       <section className="bl-bd-hero">
         <div className="bl-bd-hero-inner">
-          <Link href="/meta" className="bl-bd-back">
-            <ArrowLeft size={13} />
-            Maps
-          </Link>
-
           <div className="bl-bd-identity bl-md-identity">
             <div className="bl-md-map-thumb">
               {imageUrl ? (
-                <BrawlImage src={imageUrl} alt={mapName} width={96} height={72} className="size-full object-cover" priority sizes="96px" />
+                <BrawlImage
+                  src={imageUrl}
+                  alt={mapName}
+                  width={144}
+                  height={108}
+                  className="size-full object-contain"
+                  priority
+                  sizes="144px"
+                  style={{ width: "100%", height: "100%", objectFit: "contain" }}
+                />
               ) : (
                 <Flame size={28} />
               )}
@@ -162,13 +210,13 @@ export default function MapDetailClient({ mapName, imageUrl, modeName, totalBatt
               <div className="bl-md-tags">
                 {isLive && <span className="bl-md-live">Live</span>}
                 {modeName && <span>{modeName}</span>}
-                <span>{formatNum(totalBattles)} battles analyzed</span>
+                <span>{formatFullNumber(totalBattles)} battles analyzed</span>
                 {mostPicked && <span>Most picked: {formatBrawlerName(mostPicked.name)}</span>}
               </div>
             </div>
 
             <p className="bl-bd-summary">
-              Brawler performance, pick volume, win rates, and tier spread for {mapName}{modeName ? ` in ${modeName}` : ""}.
+              Brawler performance, pick volume, and win rates for {mapName}{modeName ? ` in ${modeName}` : ""}.
             </p>
           </div>
         </div>
@@ -176,28 +224,63 @@ export default function MapDetailClient({ mapName, imageUrl, modeName, totalBatt
 
       <div className="bl-lb-frame bl-bd-frame">
         <section className="bl-lb-board bl-bd-board">
-          <div className="bl-bd-toolbar" aria-label="Map stat selectors">
-            <button type="button" className="bl-bd-selector bl-bd-selector-active">Ranked</button>
-            <button type="button" className="bl-bd-selector">All Brawlers</button>
-            <button type="button" className="bl-bd-selector">Season 50</button>
-            <button type="button" className="bl-bd-selector">{minPicks}+ Pick Sample</button>
-          </div>
-
-          <div className="bl-bd-divider" />
-
           <section className="bl-bd-stat-strip" aria-label={`${mapName} stat summary`}>
-            <StatMetric value={formatNum(totalBattles)} label="battles analyzed" detail={`${formatNum(totalPicks)} brawler picks`} />
+            <StatMetric value={formatFullNumber(totalBattles)} label="battles analyzed" />
             <StatMetric value={formatPercent(avgWinRate)} label="avg winrate" color={avgWinRate != null ? winRateColor(avgWinRate) : undefined} />
-            <StatMetric value={bestWinRate ? formatPercent(bestWinRate.winRate) : "-"} label="best brawler" detail={bestWinRate ? formatBrawlerName(bestWinRate.name) : "No sample"} color={bestWinRate ? winRateColor(bestWinRate.winRate) : undefined} />
-            <StatMetric value={mostPicked ? formatNum(mostPicked.picks) : "-"} label="most picked" detail={mostPicked ? formatBrawlerName(mostPicked.name) : "No sample"} />
-            <StatMetric value={formatNum(brawlers.length)} label="brawlers tracked" detail={`${filtered.length} visible`} />
+            <NamedStatMetric label="Best brawler" brawler={bestWinRate} detail={bestWinRate ? `${formatPercent(bestWinRate.winRate)} win rate` : "No sample"} />
+            <NamedStatMetric label="Most picked" brawler={mostPicked} detail={mostPicked ? `${formatFullNumber(mostPicked.picks)} games` : "No sample"} />
+            <StatMetric value={formatNum(brawlers.length)} label="brawlers tracked" />
           </section>
 
-          <section className="bl-md-layout">
+          <section className="bl-md-snapshot-grid">
+            <div className="bl-bd-panel bl-md-snapshot-card">
+              <div className="bl-bd-panel-head">
+                <span>Map Read</span>
+                <small>{modeName ?? "All modes"}</small>
+              </div>
+              <div className="bl-md-map-read">
+                <div>
+                  <b>{isLive ? "Active rotation" : "Archive sample"}</b>
+                  <span>{isLive ? "This map is currently live, so matchup freshness is stronger." : "This map is analyzed from tracked ladder battle samples."}</span>
+                </div>
+                <div>
+                  <b>{formatFullNumber(minPicks)}+ game filter</b>
+                  <span>{filtered.length} brawlers clear the current sample threshold.</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="bl-bd-panel bl-md-snapshot-card">
+              <div className="bl-bd-panel-head">
+                <span>Signal Picks</span>
+                <small>sample adjusted</small>
+              </div>
+              <div className="bl-md-snapshot-stack">
+                <SnapshotBrawler label="Best win rate" brawler={bestWinRate} />
+                <SnapshotBrawler label="Most picked" brawler={mostPicked} />
+              </div>
+            </div>
+
+            <div className="bl-bd-panel bl-md-snapshot-card">
+              <div className="bl-bd-panel-head">
+                <span>Top Contenders</span>
+                <small>{formatFullNumber(minPicks)}+ games</small>
+              </div>
+              <div className="bl-lb-table-list bl-md-compact-list">
+                {topContenders.length ? topContenders.map((brawler, index) => (
+                  <CompactSignalRow key={brawler.brawlerId} brawler={brawler} rank={index + 1} />
+                )) : (
+                  <div className="bl-bd-empty">No contenders clear the sample threshold.</div>
+                )}
+              </div>
+            </div>
+          </section>
+
+          <section className="bl-md-performance">
             <div className="bl-bd-panel bl-md-table-panel">
               <div className="bl-md-table-head">
-                <span><Users size={16} /> Brawler Performance</span>
-                <em>{filtered.length} shown · {brawlers.length} tracked</em>
+                <span>Brawler Performance</span>
+                <em>{formatFullNumber(minPicks)}+ game minimum</em>
               </div>
 
               <div className="bl-md-filters">
@@ -220,13 +303,12 @@ export default function MapDetailClient({ mapName, imageUrl, modeName, totalBatt
                 </div>
 
                 <label className="bl-md-min">
-                  Min picks
+                  Min games
                   <select value={minPicks} onChange={event => setMinPicks(Number(event.target.value))}>
-                    <option value={5}>5+</option>
-                    <option value={10}>10+</option>
-                    <option value={25}>25+</option>
-                    <option value={50}>50+</option>
-                    <option value={100}>100+</option>
+                    <option value={10000}>10K+</option>
+                    <option value={25000}>25K+</option>
+                    <option value={50000}>50K+</option>
+                    <option value={100000}>100K+</option>
                   </select>
                 </label>
               </div>
@@ -234,78 +316,40 @@ export default function MapDetailClient({ mapName, imageUrl, modeName, totalBatt
               {filtered.length === 0 ? (
                 <EmptyState
                   title="No brawlers match"
-                  description="Your search or minimum pick filter removed every brawler from this map."
-                  action={<StateButton onClick={() => { setSearchQuery(""); setMinPicks(5) }}>Clear filters</StateButton>}
+                  description="Your search or minimum game filter removed every brawler from this map."
+                  action={<StateButton onClick={() => { setSearchQuery(""); setMinPicks(10_000) }}>Clear filters</StateButton>}
                   secondary={<StateLink href="/meta">All maps</StateLink>}
                 />
               ) : (
-                <div className="bl-md-table">
-                  <div className="bl-md-table-row bl-md-table-labels">
-                    <span />
+                <LeaderboardPanel>
+                  <TableHead className={`${performanceGrid} bl-md-performance-head`}>
+                    <span>Rank</span>
                     <span>Brawler</span>
                     <span>Win rate</span>
                     <span>Wins</span>
-                    <span>Picks</span>
+                    <span>Games</span>
                     <span>Tier</span>
+                  </TableHead>
+                  <div className="bl-lb-table-list">
+                    {filtered.map((brawler, index) => <MapBrawlerRow key={brawler.brawlerId} brawler={brawler} rank={index + 1} />)}
                   </div>
-
-                  {filtered.map(brawler => {
-                    const tier = getTierInfo(brawler.winRate)
-                    return (
-                      <Link key={brawler.brawlerId} href={brawlerHref(brawler.brawlerId)} className="bl-md-table-row">
-                        <div className="bl-md-brawler-icon">
-                          <BrawlImage src={brawlerIconUrl(brawler.brawlerId)} alt={brawler.name} width={36} height={36} className="size-full object-contain" loading="lazy" sizes="36px" />
-                        </div>
-                        <b>{formatBrawlerName(brawler.name)}</b>
-                        <div className="bl-md-wr">
-                          <strong style={{ color: winRateColor(brawler.winRate) }}>{formatPercent(brawler.winRate)}</strong>
-                          <i><span style={{ width: `${getBarWidth(brawler.winRate)}%`, background: winRateColor(brawler.winRate) }} /></i>
-                        </div>
-                        <em>{formatNum(brawler.wins)}</em>
-                        <em>{formatNum(brawler.picks)}</em>
-                        <small style={{ color: tier.color, borderColor: tier.border, background: tier.bg }}>{tier.label}</small>
-                      </Link>
-                    )
-                  })}
-                </div>
+                </LeaderboardPanel>
               )}
             </div>
 
-            <aside className="bl-md-aside">
-              <section className="bl-bd-panel">
-                <div className="bl-bd-panel-head">
-                  <span><BarChart3 size={16} /> Win-Rate Distribution</span>
+            <div className="bl-bd-panel bl-md-reliable-panel">
+              <div className="bl-bd-panel-head">
+                <span>Reliable Picks</span>
+                <small>{formatFullNumber(minPicks)}+ games</small>
+              </div>
+              <div className="bl-lb-table-list bl-md-compact-list">
+                {reliablePicks.length ? reliablePicks.map((brawler, index) => (
+                  <CompactSignalRow key={brawler.brawlerId} brawler={brawler} rank={index + 1} />
+                )) : (
+                  <div className="bl-bd-empty">No reliable picks at this threshold.</div>
+                )}
                 </div>
-                <Distribution brawlers={brawlers} />
-              </section>
-
-              <section className="bl-bd-panel">
-                <div className="bl-bd-panel-head">
-                  <span><Trophy size={16} /> Tier Counts</span>
-                </div>
-                <TierBreakdown brawlers={brawlers} />
-              </section>
-
-              <section className="bl-bd-panel">
-                <div className="bl-bd-panel-head">
-                  <span><MapPinned size={16} /> Top Signals</span>
-                </div>
-                <div className="bl-md-signals">
-                  {[bestWinRate, mostPicked].filter(Boolean).map((brawler, index) => brawler && (
-                    <Link key={`${brawler.brawlerId}-${index}`} href={brawlerHref(brawler.brawlerId)}>
-                      <BrawlImage src={brawlerIconUrl(brawler.brawlerId)} alt={brawler.name} width={34} height={34} className="size-[34px] object-contain" sizes="34px" />
-                      <span>
-                        <b>{formatBrawlerName(brawler.name)}</b>
-                        <em>{index === 0 ? "Best win rate" : "Highest pick volume"}</em>
-                      </span>
-                      <strong style={{ color: index === 0 ? winRateColor(brawler.winRate) : "var(--lb-text)" }}>
-                        {index === 0 ? formatPercent(brawler.winRate) : formatNum(brawler.picks)}
-                      </strong>
-                    </Link>
-                  ))}
-                </div>
-              </section>
-            </aside>
+            </div>
           </section>
         </section>
       </div>

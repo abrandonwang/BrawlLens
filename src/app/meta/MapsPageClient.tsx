@@ -8,7 +8,7 @@ import HelpTooltip from "@/components/HelpTooltip"
 import MetaDashboard from "@/components/MetaDashboard"
 import { BrawlImage } from "@/components/BrawlImage"
 import TierlistSubNav from "@/components/TierlistSubNav"
-import { formatNum, formatBrawlerName, normalizeMapName } from "@/lib/format"
+import { formatBrawlerName, normalizeMapName } from "@/lib/format"
 import { getModeName } from "@/lib/modes"
 import { useClickOutside } from "@/lib/useClickOutside"
 
@@ -28,6 +28,10 @@ interface CatalogBrawlerStat {
 
 function mapHref(name: string) {
   return `/meta/${encodeURIComponent(name)}`
+}
+
+function formatFullNumber(value: number) {
+  return value.toLocaleString("en-US")
 }
 
 export default function MapsPageClient() {
@@ -147,7 +151,7 @@ export default function MapsPageClient() {
           <h1 id="maps-title">Maps & Meta</h1>
           <div className="bl-tier-analyzed">
             <span>BATTLES ANALYZED</span>
-            <strong>{totalBattlesAnalyzed > 0 ? formatNum(totalBattlesAnalyzed) : "-"}</strong>
+            <strong>{totalBattlesAnalyzed > 0 ? formatFullNumber(totalBattlesAnalyzed) : "-"}</strong>
             <HelpTooltip label="How map stats are summarized">
               Battle counts come from the current tracked map dataset. The most popular map is the map with the
               highest tracked battle volume, while best brawler uses the current brawler win-rate dataset.
@@ -156,7 +160,7 @@ export default function MapsPageClient() {
           <p>
             Scan live maps and open matchup data for the brawlers performing best on each layout.
             <span className="mt-2 block text-[var(--lb-text-2)]">
-              Most popular map: <strong className="font-semibold text-[var(--lb-text)]">{spotlightMap ? `${spotlightMap.name} (${getModeName(spotlightMap.mode)}, ${formatNum(spotlightMap.battles)} battles)` : "Loading..."}</strong>
+              Most popular map: <strong className="font-semibold text-[var(--lb-text)]">{spotlightMap ? `${spotlightMap.name} (${getModeName(spotlightMap.mode)}, ${formatFullNumber(spotlightMap.battles)} battles)` : "Loading..."}</strong>
               <span aria-hidden="true"> · </span>
               Best brawler: <strong className="font-semibold text-[var(--lb-text)]">{spotlightTopBrawler ? `${formatBrawlerName(spotlightTopBrawler.name)} ${spotlightTopBrawler.winRate.toFixed(1)}%` : "-"}</strong>
             </span>

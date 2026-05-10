@@ -3,6 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react"
+import { playerProfileHref } from "@/lib/leaderboardUtils"
 
 interface Player {
   rank: number
@@ -52,7 +53,7 @@ export default function BrawlerRankingClient({ data, brawlerName }: { data: Play
         {paginated.map((player) => (
           <Link
             key={player.player_tag}
-            href={`/player/${encodeURIComponent(player.player_tag.replace(/^#/, ""))}`}
+            href={playerProfileHref(player.player_tag)}
             className={`interactive-row group grid min-h-[58px] grid-cols-[52px_1fr_auto_auto_24px] items-center gap-4 rounded-xl bg-[var(--panel)] px-5 py-4 text-inherit no-underline transition-colors hover:bg-[var(--hover-bg)] max-md:grid-cols-[40px_minmax(0,1fr)_90px] max-md:gap-2.5 max-md:border max-md:border-[var(--line)] max-md:p-3 max-md:shadow-[var(--shadow-lift)] ${rankBg(player.rank)}`}
           >
             <span className={`text-base font-semibold tabular-nums max-md:grid max-md:h-[34px] max-md:min-w-[34px] max-md:place-items-center max-md:rounded-lg max-md:border max-md:border-[var(--line)] max-md:bg-[var(--panel-2)] max-md:text-[12px] ${rankColor(player.rank)}`}>

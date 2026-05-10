@@ -79,11 +79,22 @@ function rankSuffix(rank: number | null) {
   return `${rank}th by win rate`
 }
 
+function cleanAbilityDescription(value: string | undefined, fallback: string) {
+  const cleaned = (value ?? fallback)
+    .replace(/<!card\.accessory\.skill\.maxAmmo>/gi, "multiple")
+    .replace(/<![^>]+>/g, "")
+    .replace(/\s+([.,!?;:])/g, "$1")
+    .replace(/\s{2,}/g, " ")
+    .trim()
+
+  return cleaned || fallback
+}
+
 function abilityItemsFor(brawler: Brawler): AbilityItem[] {
   const gadgets = (brawler.gadgets ?? []).map((gadget, index) => ({
     key: `gadget-${gadget.id ?? index}`,
     name: gadget.name,
-    description: gadget.description || "Gadget details from Brawlify.",
+    description: cleanAbilityDescription(gadget.description, "Gadget details from Brawlify."),
     label: "G",
     iconUrl: gadget.imageUrl,
     tone: "gadget" as const,
@@ -92,7 +103,7 @@ function abilityItemsFor(brawler: Brawler): AbilityItem[] {
   const starPowers = (brawler.starPowers ?? []).map((starPower, index) => ({
     key: `star-${starPower.id ?? index}`,
     name: starPower.name,
-    description: starPower.description || "Star Power details from Brawlify.",
+    description: cleanAbilityDescription(starPower.description, "Star Power details from Brawlify."),
     label: "S",
     iconUrl: starPower.imageUrl,
     tone: "star" as const,

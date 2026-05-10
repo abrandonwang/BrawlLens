@@ -6,6 +6,14 @@ import { useSearchParams } from "next/navigation"
 import { BrawlImage } from "@/components/BrawlImage"
 import { formatRelativeTime, formatTrophies } from "@/lib/format"
 import {
+  clubBadgeUrl,
+  clubDetailHref,
+  firstGlyph,
+  formatLeaderboardRank,
+  formatPlainNumber,
+  leaderboardTagKey,
+} from "@/lib/leaderboardUtils"
+import {
   EmptyLeaderboardState,
   FeatureCardRail,
   LeaderboardBoard,
@@ -61,11 +69,6 @@ export default function ClubsClient({ allData }: { allData: RegionData[] }) {
   const [page, setPage] = useState(0)
   const [apiEnrichments, setApiEnrichments] = useState<Record<string, ClubEnrichment>>({})
 
-  useEffect(() => {
-    document.documentElement.classList.add("landing-bg")
-    return () => document.documentElement.classList.remove("landing-bg")
-  }, [])
-
   useEffect(() => { setPage(0) }, [search, activeRegion])
 
   useEffect(() => {
@@ -75,7 +78,7 @@ export default function ClubsClient({ allData }: { allData: RegionData[] }) {
   const regionData = useMemo(() => allData.find(r => r.code === activeRegion) ?? allData[0], [allData, activeRegion])
   const globalRankByTag = useMemo(() => {
     const globalClubs = allData.find(r => r.code === "global")?.clubs ?? []
-    return new Map(globalClubs.map(club => [clubKey(club.club_tag), club.rank]))
+    return new Map(globalClubs.map(club => [leaderboardTagKey(club.club_tag), club.rank]))
   }, [allData])
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -91,7 +94,7 @@ export default function ClubsClient({ allData }: { allData: RegionData[] }) {
   const totalPages = Math.max(1, Math.ceil(tableClubs.length / PAGE_SIZE))
   const paginated = tableClubs.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
   const visibleClubs = useMemo(() => [...filtered.slice(0, 3), ...paginated], [filtered, paginated])
-  const visibleTags = useMemo(() => visibleClubs.map(club => clubKey(club.club_tag)), [visibleClubs])
+  const visibleTags = useMemo(() => visibleClubs.map(club => leaderboardTagKey(club.club_tag)), [visibleClubs])
   const visibleTagKey = visibleTags.join(",")
 
   useEffect(() => {
@@ -154,8 +157,8 @@ export default function ClubsClient({ allData }: { allData: RegionData[] }) {
                 <ClubPodiumCard
                   key={club.club_tag}
                   club={club}
-                  worldRank={globalRankByTag.get(clubKey(club.club_tag)) ?? (activeRegion === "global" ? club.rank : null)}
-                  enrichment={apiEnrichments[clubKey(club.club_tag)]}
+                  worldRank={globalRankByTag.get(leaderboardTagKey(club.club_tag)) ?? (activeRegion === "global" ? club.rank : null)}
+                  enrichment={apiEnrichments[leaderboardTagKey(club.club_tag)]}
                 />
               ))}
             </section>
@@ -179,8 +182,8 @@ export default function ClubsClient({ allData }: { allData: RegionData[] }) {
                   <ClubRankRow
                     key={`${activeRegion}-${club.club_tag}`}
                     club={club}
-                    worldRank={globalRankByTag.get(clubKey(club.club_tag)) ?? (activeRegion === "global" ? club.rank : null)}
-                    enrichment={apiEnrichments[clubKey(club.club_tag)]}
+                    worldRank={globalRankByTag.get(leaderboardTagKey(club.club_tag)) ?? (activeRegion === "global" ? club.rank : null)}
+                    enrichment={apiEnrichments[leaderboardTagKey(club.club_tag)]}
                   />
                 ))}
               </div>
@@ -320,14 +323,6 @@ function ClubAvatar({ name, rank, badgeId }: { name: string; rank: number; badge
   )
 }
 
-function clubBadgeUrl(id: number) {
-  return `https://cdn.brawlify.com/club-badges/regular/${id}.png`
-}
-
-function clubDetailHref(tag: string) {
-  return `/leaderboards/clubs/${encodeURIComponent(clubKey(tag))}`
-}
-
 function averageTrophies(club: Club) {
   return club.member_count ? Math.round(club.trophies / Math.max(1, club.member_count)) : club.trophies
 }
@@ -338,23 +333,15 @@ function formatLeaderShare(club: Club, topMember: ClubMemberSummary | null | und
 }
 
 function formatWorldRank(value: number | null | undefined) {
-  return typeof value === "number" ? `#${value}` : "--"
+  return formatLeaderboardRank(value)
 }
 
 function formatFullNumber(value: number | null | undefined) {
-  return typeof value === "number" ? value.toLocaleString("en-US") : "--"
+  return formatPlainNumber(value)
 }
 
 function formatPlainStat(value: number | null | undefined) {
-  return typeof value === "number" ? value.toLocaleString("en-US") : "--"
-}
-
-function clubKey(tag: string) {
-  return tag.replace(/^#/, "").toUpperCase()
-}
-
-function firstGlyph(value: string) {
-  return Array.from(value.trim())[0]?.toUpperCase() || "?"
+  return formatPlainNumber(value)
 }
 
 function DpmButton({

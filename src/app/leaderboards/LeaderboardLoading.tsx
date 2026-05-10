@@ -1,10 +1,9 @@
 type LeaderboardLoadingKind = "players" | "clubs" | "brawlers"
 
-const tabs: { key: LeaderboardLoadingKind | "community"; width: string }[] = [
+const tabs: { key: LeaderboardLoadingKind; width: string }[] = [
   { key: "players", width: "w-[58px]" },
   { key: "clubs", width: "w-[48px]" },
   { key: "brawlers", width: "w-[66px]" },
-  { key: "community", width: "w-[84px]" },
 ]
 
 const rowCounts: Record<LeaderboardLoadingKind, number> = {

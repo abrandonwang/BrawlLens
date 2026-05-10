@@ -1,13 +1,10 @@
+import { cleanEnv } from "@/lib/env"
+
 type NextFetchOptions = RequestInit & {
   next?: {
     revalidate?: number | false
     tags?: string[]
   }
-}
-
-function cleanEnv(value: string | undefined): string | null {
-  const cleaned = value?.trim().replace(/^['"]|['"]$/g, "")
-  return cleaned || null
 }
 
 function playerProxyUrl(): string | null {

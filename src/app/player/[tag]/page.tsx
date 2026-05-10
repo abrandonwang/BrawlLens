@@ -3,6 +3,7 @@ import { notFound } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@supabase/supabase-js"
 import { BrawlImage, brawlerIconUrl } from "@/components/BrawlImage"
+import { cleanEnv } from "@/lib/env"
 import { formatBrawlerName } from "@/lib/format"
 import { fetchClubResponse, fetchPlayerBattleLogResponse, fetchPlayerResponse } from "@/lib/playerLookup"
 import { sanitizePlayerTag } from "@/lib/validation"
@@ -104,11 +105,6 @@ export async function generateMetadata(
       description: `BrawlLens profile lookup for player #${tag}.`,
     }
   }
-}
-
-function cleanEnv(value: string | undefined) {
-  const cleaned = value?.trim().replace(/^['"]|['"]$/g, "")
-  return cleaned || null
 }
 
 async function fetchLeaderboardRecord(tag: string): Promise<{ record: LeaderboardRecord | null; globalCount: number | null }> {

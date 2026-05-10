@@ -134,11 +134,18 @@ export default function LoginClient() {
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-[480px] flex-1 flex-col justify-center px-4 py-14">
-      <div className="rounded-[16px] border border-[var(--line)] bg-[var(--panel)] p-6 shadow-[var(--shadow-lift)]">
-        <h1 className="sr-only">{mode === "signup" ? "Create account" : "Log in"}</h1>
+    <main className="mx-auto flex w-full max-w-[500px] flex-1 flex-col justify-center px-4 py-14">
+      <div className="rounded-[18px] border border-[#8bd7ff]/15 bg-[#0d1016] p-6 shadow-[0_26px_90px_-46px_rgba(139,215,255,0.55),0_1px_0_rgba(255,255,255,0.06)_inset]">
+        <div className="mb-5">
+          <h1 className="m-0 text-[28px] font-extrabold leading-[1.05] tracking-0 text-[var(--ink)]">
+            {mode === "signup" ? "Create your account" : "Welcome back"}
+          </h1>
+          <p className="mt-2 mb-0 text-[14px] leading-relaxed text-[var(--ink-3)]">
+            {mode === "signup" ? "Save your Lensboard profile and keep your workspace synced." : "Log in to return to your Lensboard workspace."}
+          </p>
+        </div>
 
-        <div className="grid grid-cols-2 rounded-[9px] border border-[var(--line)] bg-[var(--panel-2)] p-1">
+        <div className="grid grid-cols-2 rounded-[10px] border border-white/[0.09] bg-[#151923] p-1">
           {[
             { id: "signup" as const, label: "Create" },
             { id: "login" as const, label: "Log in" },
@@ -147,7 +154,7 @@ export default function LoginClient() {
               key={item.id}
               type="button"
               onClick={() => chooseMode(item.id)}
-              className={`h-9 cursor-pointer rounded-md border-0 text-[13px] font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[rgba(133,141,255,0.22)] ${mode === item.id ? "bg-[var(--ink)] text-[var(--ink-on)]" : "bg-transparent text-[var(--ink-3)] hover:text-[var(--ink)]"}`}
+              className={`h-9 cursor-pointer rounded-md border-0 text-[13px] font-bold outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[#8bd7ff]/25 ${mode === item.id ? "bg-[#8bd7ff] text-[#061018]" : "bg-transparent text-[var(--ink-3)] hover:text-[var(--ink)]"}`}
             >
               {item.label}
             </button>
@@ -156,7 +163,7 @@ export default function LoginClient() {
 
         {state === "sent" && mode === "signup" ? (
           <div className="mt-6">
-            <div className="rounded-[12px] border border-[var(--line)] bg-[var(--panel-2)] px-4 py-4">
+            <div className="rounded-[12px] border border-[#8bd7ff]/14 bg-[#151923] px-4 py-4">
               <p className="m-0 text-[15px] font-semibold text-[var(--ink)]">Check your inbox</p>
               <p className="mt-1 mb-0 text-[13px] leading-relaxed text-[var(--ink-3)]">
                 We sent a setup link to <strong className="font-semibold text-[var(--ink)]">{email}</strong>.
@@ -186,7 +193,7 @@ export default function LoginClient() {
                     setError(null)
                   }
                 }}
-                className="h-11 w-full rounded-lg border border-[var(--line)] bg-[var(--panel)] px-3 text-[15px] text-[var(--ink)] outline-none transition-colors placeholder:text-[var(--ink-4)] focus:border-[var(--line-2)]"
+                className="h-11 w-full rounded-lg border border-white/[0.10] bg-[#11151d] px-3 text-[15px] text-[var(--ink)] outline-none transition-colors placeholder:text-[var(--ink-4)] focus:border-[#8bd7ff]/45"
                 placeholder="you@example.com"
               />
               {mode === "signup" && (
@@ -213,7 +220,7 @@ export default function LoginClient() {
                     setError(null)
                   }
                 }}
-                className="h-11 w-full rounded-lg border border-[var(--line)] bg-[var(--panel)] px-3 text-[15px] text-[var(--ink)] outline-none transition-colors placeholder:text-[var(--ink-4)] focus:border-[var(--line-2)]"
+                className="h-11 w-full rounded-lg border border-white/[0.10] bg-[#11151d] px-3 text-[15px] text-[var(--ink)] outline-none transition-colors placeholder:text-[var(--ink-4)] focus:border-[#8bd7ff]/45"
                 placeholder="8+ characters, include a number"
               />
               {mode === "signup" && (
@@ -230,7 +237,7 @@ export default function LoginClient() {
             <button
               type="submit"
               disabled={!canSubmit}
-              className="inline-flex h-11 w-full cursor-pointer items-center justify-center rounded-lg border-0 bg-[var(--ink)] px-4 text-[14px] font-semibold text-[var(--ink-on)] shadow-[var(--shadow-lift)] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex h-11 w-full cursor-pointer items-center justify-center rounded-lg border-0 bg-[#8bd7ff] px-4 text-[14px] font-extrabold text-[#061018] shadow-[0_14px_32px_-22px_rgba(139,215,255,0.9)] transition-[filter,opacity] hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {state === "sending" ? (mode === "login" ? "Logging in..." : "Sending...") : mode === "login" ? "Log in" : "Create account"}
             </button>

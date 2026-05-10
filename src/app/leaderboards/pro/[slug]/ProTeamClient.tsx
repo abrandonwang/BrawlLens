@@ -5,6 +5,7 @@
 import { useMemo, useState, type CSSProperties, type ReactNode } from "react"
 import Link from "next/link"
 import { BrawlImage, brawlerIconUrl } from "@/components/BrawlImage"
+import { profileIconUrl } from "@/lib/leaderboardUtils"
 import {
   type LeaderboardKind,
   LeaderboardBoard,
@@ -395,10 +396,6 @@ function formatCompact(value: number) {
   if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1).replace(/\.0$/, "")}M`
   if (value >= 1000) return `${(value / 1000).toFixed(1).replace(/\.0$/, "")}K`
   return formatFull(value)
-}
-
-function profileIconUrl(id: number) {
-  return `https://cdn.brawlify.com/profile-icons/regular/${id}.png`
 }
 
 function initials(value: string) {

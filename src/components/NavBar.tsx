@@ -25,14 +25,12 @@ type NavPanelItem = {
 const browseItems: NavPanelItem[] = [
   { label: "Brawlers", href: "/brawlers", description: "Stats and abilities" },
   { label: "Maps", href: "/meta", description: "Modes and matchups" },
-  { label: "Guide", description: "Coming soon", disabled: true },
 ];
 
 const leaderboardItems: NavPanelItem[] = [
   { label: "Player rankings", href: "/leaderboards/players", description: "Top player trophies" },
   { label: "Club rankings", href: "/leaderboards/clubs", description: "Top club trophies" },
   { label: "Brawler rankings", href: "/leaderboards/brawlers", description: "Brawler trophy ranks" },
-  { label: "Community", description: "Coming soon", disabled: true },
 ];
 
 const accountMenuItems = [
@@ -763,10 +761,10 @@ export default function NavBar() {
           <button
             type="button"
             onClick={() => setIsAssistantOpen(o => !o)}
-            className={`hidden h-[34px] cursor-pointer items-center gap-1.5 rounded-[7px] px-2.5 text-left text-[10px] font-extrabold uppercase leading-[1.05] tracking-[0.01em] text-[#1a1408] shadow-[rgba(255,255,255,0.45)_0_0.5px_0_0_inset,rgba(0,0,0,0.25)_0_1px_2px] transition-[filter,transform] duration-150 hover:brightness-105 active:scale-[0.98] md:inline-flex ${isNavFlowRoute ? "bg-[#e8c86c]" : "bg-gradient-to-b from-[#f5d573] to-[#e6b94a]"}`}
-            aria-label="Get BrawlLens Pro"
+            className={`inline-flex h-[34px] cursor-pointer items-center gap-1.5 rounded-[7px] px-2.5 text-left text-[10px] font-extrabold uppercase leading-[1.05] tracking-[0.01em] text-[#1a1408] shadow-[rgba(255,255,255,0.45)_0_0.5px_0_0_inset,rgba(0,0,0,0.25)_0_1px_2px] transition-[filter,transform] duration-150 hover:brightness-105 active:scale-[0.98] max-[430px]:w-[34px] max-[430px]:justify-center max-[430px]:px-0 ${isNavFlowRoute ? "bg-[#e8c86c]" : "bg-gradient-to-b from-[#f5d573] to-[#e6b94a]"}`}
+            aria-label="Open BrawlLens AI assistant"
             aria-expanded={isAssistantOpen}
-            title="BrawlLens Pro Beta"
+            title="BrawlLens AI assistant"
           >
             <Image
               src="/ai-sparkle-512.png"
@@ -776,7 +774,7 @@ export default function NavBar() {
               className="size-5 shrink-0 object-contain"
               aria-hidden="true"
             />
-            <span className="hidden whitespace-nowrap sm:block">Get BrawlLens<br />Pro Beta</span>
+            <span className="hidden whitespace-nowrap sm:block">Ask<br />AI</span>
           </button>
           {isNavFlowRoute ? (
             <button

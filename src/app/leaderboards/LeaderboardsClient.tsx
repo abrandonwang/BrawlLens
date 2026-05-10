@@ -3,7 +3,16 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react"
 import Link from "next/link"
 import { BrawlImage, brawlerIconUrl } from "@/components/BrawlImage"
-import { formatTrophies } from "@/lib/format"
+import { formatBrawlerName, formatTrophies } from "@/lib/format"
+import {
+  clubBadgeUrl,
+  firstGlyph,
+  formatLeaderboardRank,
+  formatPlainNumber,
+  leaderboardTagKey,
+  playerProfileHref,
+  profileIconUrl,
+} from "@/lib/leaderboardUtils"
 import {
   EmptyLeaderboardState,
   FeatureCardRail,
@@ -80,17 +89,12 @@ export default function LeaderboardsClient({
   const [page, setPage] = useState(0)
   const [apiEnrichments, setApiEnrichments] = useState<Record<string, TopPlayerEnrichment>>({})
 
-  useEffect(() => {
-    document.documentElement.classList.add("landing-bg")
-    return () => document.documentElement.classList.remove("landing-bg")
-  }, [])
-
   useEffect(() => { setPage(0) }, [search, activeRegion])
 
   const regionData = useMemo(() => allData.find(r => r.code === activeRegion) ?? allData[0], [allData, activeRegion])
   const globalRankByTag = useMemo(() => {
     const globalPlayers = allData.find(r => r.code === "global")?.players ?? []
-    return new Map(globalPlayers.map(player => [playerKey(player.player_tag), player.rank]))
+    return new Map(globalPlayers.map(player => [leaderboardTagKey(player.player_tag), player.rank]))
   }, [allData])
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -107,7 +111,7 @@ export default function LeaderboardsClient({
   const tablePages = Math.max(1, Math.ceil(tablePlayers.length / PAGE_SIZE))
   const paginated = tablePlayers.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
   const visiblePlayers = useMemo(() => [...filtered.slice(0, 3), ...paginated], [filtered, paginated])
-  const visibleTags = useMemo(() => visiblePlayers.map(player => playerKey(player.player_tag)), [visiblePlayers])
+  const visibleTags = useMemo(() => visiblePlayers.map(player => leaderboardTagKey(player.player_tag)), [visiblePlayers])
   const visibleTagKey = visibleTags.join(",")
   const serverEnrichments = useMemo(
     () => topPlayerEnrichment[activeRegion] ?? {},
@@ -116,7 +120,7 @@ export default function LeaderboardsClient({
   const enrichments = useMemo(() => {
     const merged = { ...apiEnrichments }
     for (const [rawKey, serverData] of Object.entries(serverEnrichments)) {
-      const key = playerKey(rawKey)
+      const key = leaderboardTagKey(rawKey)
       const apiData = apiEnrichments[key]
       merged[key] = {
         ...serverData,
@@ -189,7 +193,7 @@ export default function LeaderboardsClient({
                   key={player.player_tag}
                   player={player}
                   region={activeRegion}
-                  enrichment={enrichments[playerKey(player.player_tag)]}
+                  enrichment={enrichments[leaderboardTagKey(player.player_tag)]}
                 />
               ))}
             </section>
@@ -212,8 +216,8 @@ export default function LeaderboardsClient({
                   <PlayerRankRow
                     key={`${activeRegion}-${player.player_tag}`}
                     player={player}
-                    worldRank={globalRankByTag.get(playerKey(player.player_tag)) ?? (activeRegion === "global" ? player.rank : null)}
-                    enrichment={enrichments[playerKey(player.player_tag)]}
+                    worldRank={globalRankByTag.get(leaderboardTagKey(player.player_tag)) ?? (activeRegion === "global" ? player.rank : null)}
+                    enrichment={enrichments[leaderboardTagKey(player.player_tag)]}
                   />
                 ))}
               </div>
@@ -236,10 +240,10 @@ function PlayerRankRow({
   worldRank: number | null
   enrichment?: TopPlayerEnrichment
 }) {
-  const playerHref = `/player/${encodeURIComponent(player.player_tag.replace(/^#/, ""))}`
+  const playerHref = playerProfileHref(player.player_tag)
 
   return (
-    <div className={`bl-lb-row ${playerTableGrid}`}>
+    <div className={`bl-lb-row bl-lb-player-row ${playerTableGrid}`}>
       <div className="bl-lb-rank-stack">
         <RankCell rank={player.rank} />
         <span>{formatWorldRank(worldRank)}</span>
@@ -274,7 +278,7 @@ function PlayerPodiumCard({
   enrichment?: TopPlayerEnrichment
 }) {
   const totalWins = getTotalWins(enrichment)
-  const playerHref = `/player/${encodeURIComponent(player.player_tag.replace(/^#/, ""))}`
+  const playerHref = playerProfileHref(player.player_tag)
 
   return (
     <div className="bl-lb-podium-card">
@@ -378,35 +382,24 @@ function BrawlerMetric({
   )
 }
 
-function profileIconUrl(id: number) {
-  return `https://cdn.brawlify.com/profile-icons/regular/${id}.png`
-}
-
-function clubBadgeUrl(id: number) {
-  return `https://cdn.brawlify.com/club-badges/regular/${id}.png`
-}
-
 function formatStat(value: number | null | undefined) {
   return typeof value === "number" ? formatTrophies(value) : "--"
 }
 
 function formatPlainStat(value: number | null | undefined) {
-  return typeof value === "number" ? value.toLocaleString("en-US") : "--"
+  return formatPlainNumber(value)
 }
 
 function formatFullNumber(value: number | null | undefined) {
-  return typeof value === "number" ? value.toLocaleString("en-US") : "--"
+  return formatPlainNumber(value)
 }
 
 function formatBrawlerLabel(name: string) {
-  return name
-    .split(" ")
-    .map(word => word.charAt(0) + word.slice(1).toLowerCase())
-    .join(" ")
+  return formatBrawlerName(name)
 }
 
 function formatWorldRank(value: number | null | undefined) {
-  return typeof value === "number" ? `#${value}` : "--"
+  return formatLeaderboardRank(value)
 }
 
 function getTotalWins(enrichment: TopPlayerEnrichment | undefined) {
@@ -415,14 +408,6 @@ function getTotalWins(enrichment: TopPlayerEnrichment | undefined) {
   const duoWins = enrichment?.duoWins
   if (typeof threeVsThreeWins !== "number" && typeof soloWins !== "number" && typeof duoWins !== "number") return null
   return (threeVsThreeWins ?? 0) + (soloWins ?? 0) + (duoWins ?? 0)
-}
-
-function playerKey(tag: string) {
-  return tag.replace(/^#/, "").toUpperCase()
-}
-
-function firstGlyph(value: string) {
-  return Array.from(value.trim())[0]?.toUpperCase() || "?"
 }
 
 function DpmButton({

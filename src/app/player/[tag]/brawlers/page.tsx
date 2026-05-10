@@ -3,6 +3,7 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import { createClient } from "@supabase/supabase-js"
 import { BrawlImage, brawlerIconUrl } from "@/components/BrawlImage"
+import { cleanEnv } from "@/lib/env"
 import { formatBrawlerName } from "@/lib/format"
 import { fetchPlayerBattleLogResponse, fetchPlayerResponse } from "@/lib/playerLookup"
 import { sanitizePlayerTag } from "@/lib/validation"
@@ -87,11 +88,6 @@ export async function generateMetadata(
   return {
     title: tag ? `Brawlers #${tag} - BrawlLens` : "Player brawlers - BrawlLens",
   }
-}
-
-function cleanEnv(value: string | undefined) {
-  const cleaned = value?.trim().replace(/^['"]|['"]$/g, "")
-  return cleaned || null
 }
 
 function cleanBattleTag(value?: string) {

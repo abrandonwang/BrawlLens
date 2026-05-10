@@ -4,7 +4,8 @@ import type { Metadata } from "next"
 import { createClient } from "@supabase/supabase-js"
 import LeaderboardsClient from "../LeaderboardsClient"
 import { fetchPlayerBattleLogResponse, fetchPlayerResponse } from "@/lib/playerLookup"
-import { leaderboardRegionLabel, sortLeaderboardRegions } from "@/lib/leaderboardRegions"
+import { FALLBACK_LEADERBOARD_REGIONS, leaderboardRegionsFromCodes } from "@/lib/leaderboardRegions"
+import { stripTagPrefix } from "@/lib/leaderboardUtils"
 
 export const metadata: Metadata = {
   title: "Player Leaderboards - BrawlLens",
@@ -15,15 +16,6 @@ export const metadata: Metadata = {
     type: "website",
   },
 }
-
-const FALLBACK_REGIONS = [
-  { code: "global", label: "Global" },
-  { code: "US", label: "United States" },
-  { code: "JP", label: "Japan" },
-  { code: "KR", label: "Korea" },
-  { code: "BR", label: "Brazil" },
-  { code: "DE", label: "Germany" },
-]
 
 interface Player {
   rank: number
@@ -120,16 +112,14 @@ async function fetchLeaderboardRegions() {
 
   if (error) {
     console.error("Leaderboard region fetch error:", error.message)
-    return FALLBACK_REGIONS
+    return FALLBACK_LEADERBOARD_REGIONS
   }
 
-  const codes = Array.from(new Set((data ?? []).map(row => String(row.region)).filter(Boolean)))
-  if (!codes.length) return FALLBACK_REGIONS
-  return sortLeaderboardRegions(codes.map(code => ({ code, label: leaderboardRegionLabel(code) })))
+  return leaderboardRegionsFromCodes((data ?? []).map(row => String(row.region)))
 }
 
 function cleanTag(tag: string) {
-  return tag.replace(/^#/, "")
+  return stripTagPrefix(tag)
 }
 
 async function fetchTopPlayerEnrichment(player: Player): Promise<TopPlayerEnrichment> {
@@ -189,7 +179,7 @@ async function fetchTopPlayerEnrichment(player: Player): Promise<TopPlayerEnrich
       threeVsThreeWins: profile?.["3vs3Victories"] ?? null,
       soloWins: profile?.soloVictories ?? null,
       duoWins: profile?.duoVictories ?? null,
-      clubTag: profile?.club?.tag ? profile.club.tag.replace(/^#/, "") : null,
+      clubTag: profile?.club?.tag ? stripTagPrefix(profile.club.tag) : null,
       clubBadgeId: null,
       topBrawlers: [...brawlers]
         .sort((a, b) => b.trophies - a.trophies)

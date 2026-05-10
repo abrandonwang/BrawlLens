@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
+import { cleanEnv } from "@/lib/env"
+import { stripTagPrefix } from "@/lib/leaderboardUtils"
 import { fetchClubResponse, fetchPlayerResponse } from "@/lib/playerLookup"
 import { sanitizePlayerTag } from "@/lib/validation"
 
@@ -81,11 +83,6 @@ function cleanTag(raw: unknown) {
   return typeof raw === "string" ? sanitizePlayerTag(raw) : null
 }
 
-function cleanEnv(value: string | undefined) {
-  const cleaned = value?.trim().replace(/^['"]|['"]$/g, "")
-  return cleaned || null
-}
-
 async function fetchPlayerEnrichment(tag: string, selectedBrawlerId?: number | null): Promise<PlayerEnrichment> {
   try {
     const response = await fetchPlayerResponse(tag, { next: { revalidate: 300 } })
@@ -111,7 +108,7 @@ async function fetchPlayerEnrichment(tag: string, selectedBrawlerId?: number | n
       threeVsThreeWins: profile["3vs3Victories"] ?? null,
       soloWins: profile.soloVictories ?? null,
       duoWins: profile.duoVictories ?? null,
-      clubTag: profile.club?.tag ? profile.club.tag.replace(/^#/, "") : null,
+      clubTag: profile.club?.tag ? stripTagPrefix(profile.club.tag) : null,
       clubBadgeId: null,
       topBrawlers,
       peakBrawler: peakBrawler ? toBrawlerSummary(peakBrawler) : null,

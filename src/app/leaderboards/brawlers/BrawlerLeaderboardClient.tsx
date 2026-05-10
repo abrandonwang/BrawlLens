@@ -6,6 +6,14 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { BrawlImage, brawlerIconUrl } from "@/components/BrawlImage"
 import { formatBrawlerName } from "@/lib/format"
+import {
+  clubBadgeUrl,
+  firstGlyph,
+  formatPlainNumber,
+  leaderboardTagKey,
+  playerProfileHref,
+  profileIconUrl,
+} from "@/lib/leaderboardUtils"
 import { useClickOutside } from "@/lib/useClickOutside"
 import {
   EmptyLeaderboardState,
@@ -82,11 +90,6 @@ export default function BrawlerLeaderboardClient({
   const triggerRef = useRef<HTMLButtonElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    document.documentElement.classList.add("landing-bg")
-    return () => document.documentElement.classList.remove("landing-bg")
-  }, [])
-
   useClickOutside([triggerRef, dropdownRef], () => setOpen(false), open)
   useEffect(() => { setPage(0) }, [activeBrawler?.id, playerSearch])
 
@@ -110,7 +113,7 @@ export default function BrawlerLeaderboardClient({
   const totalPages = Math.max(1, Math.ceil(tablePlayers.length / PAGE_SIZE))
   const paginated = tablePlayers.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
   const visiblePlayers = useMemo(() => [...filteredPlayers.slice(0, 3), ...paginated], [filteredPlayers, paginated])
-  const visibleTags = useMemo(() => visiblePlayers.map(player => playerKey(player.player_tag)), [visiblePlayers])
+  const visibleTags = useMemo(() => visiblePlayers.map(player => leaderboardTagKey(player.player_tag)), [visiblePlayers])
   const visibleTagKey = visibleTags.join(",")
   const selectedName = activeBrawler ? formatBrawlerName(activeBrawler.name) : "Brawler"
   const rankedTotal = data.length
@@ -202,7 +205,7 @@ export default function BrawlerLeaderboardClient({
                 <BrawlerPodiumCard
                   key={player.player_tag}
                   player={player}
-                  enrichment={apiEnrichments[playerKey(player.player_tag)]}
+                  enrichment={apiEnrichments[leaderboardTagKey(player.player_tag)]}
                   rankedTotal={rankedTotal}
                 />
               ))}
@@ -226,7 +229,7 @@ export default function BrawlerLeaderboardClient({
                   <BrawlerRankRow
                     key={`${activeBrawler.id}-${player.player_tag}`}
                     player={player}
-                    enrichment={apiEnrichments[playerKey(player.player_tag)]}
+                    enrichment={apiEnrichments[leaderboardTagKey(player.player_tag)]}
                     rankedTotal={rankedTotal}
                   />
                 ))}
@@ -330,14 +333,14 @@ function BrawlerRankRow({
   enrichment?: PlayerEnrichment
   rankedTotal: number
 }) {
-  const playerHref = `/player/${encodeURIComponent(player.player_tag.replace(/^#/, ""))}`
+  const playerHref = playerProfileHref(player.player_tag)
   const totalTrophies = getTotalTrophies(player, enrichment)
   const selectedBrawler = enrichment?.selectedBrawler
   const worldPlacement = formatWorldPlacement(player.world_rank, enrichment, player.rank, rankedTotal)
   const worldPlacementShort = formatWorldPlacementShort(player.world_rank, enrichment, player.rank, rankedTotal)
 
   return (
-    <div className={`bl-lb-row ${brawlerTableGrid}`}>
+    <div className={`bl-lb-row bl-lb-brawler-row ${brawlerTableGrid}`}>
       <div className="bl-lb-rank-stack">
         <RankCell rank={player.rank} />
         <span>{worldPlacementShort}</span>
@@ -371,7 +374,7 @@ function BrawlerPodiumCard({
   enrichment?: PlayerEnrichment
   rankedTotal: number
 }) {
-  const playerHref = `/player/${encodeURIComponent(player.player_tag.replace(/^#/, ""))}`
+  const playerHref = playerProfileHref(player.player_tag)
   const totalTrophies = getTotalTrophies(player, enrichment)
   const worldPlacement = formatWorldPlacement(player.world_rank, enrichment, player.rank, rankedTotal)
 
@@ -432,14 +435,6 @@ function ClubCell({ name, badgeId }: { name: string | null; badgeId?: number | n
   )
 }
 
-function profileIconUrl(id: number) {
-  return `https://cdn.brawlify.com/profile-icons/regular/${id}.png`
-}
-
-function clubBadgeUrl(id: number) {
-  return `https://cdn.brawlify.com/club-badges/regular/${id}.png`
-}
-
 function formatWorldPlacement(
   value: number | null | undefined,
   enrichment: PlayerEnrichment | undefined,
@@ -473,27 +468,19 @@ function formatBrawlerPercentile(rank: number | null | undefined, total: number 
 }
 
 function formatNullableTrophies(value: number | null | undefined) {
-  return typeof value === "number" ? value.toLocaleString("en-US") : "--"
+  return formatPlainNumber(value)
 }
 
 function formatExactTrophies(value: number | null | undefined) {
-  return typeof value === "number" ? value.toLocaleString("en-US") : "--"
+  return formatPlainNumber(value)
 }
 
 function formatPlainStat(value: number | null | undefined) {
-  return typeof value === "number" ? value.toLocaleString("en-US") : "--"
+  return formatPlainNumber(value)
 }
 
 function getTotalTrophies(player: Player, enrichment: PlayerEnrichment | undefined) {
   return enrichment?.totalTrophies ?? player.total_trophies
-}
-
-function playerKey(tag: string) {
-  return tag.replace(/^#/, "").toUpperCase()
-}
-
-function firstGlyph(value: string) {
-  return Array.from(value.trim())[0]?.toUpperCase() || "?"
 }
 
 function DpmLink({ href, children }: { href: string; children: ReactNode }) {

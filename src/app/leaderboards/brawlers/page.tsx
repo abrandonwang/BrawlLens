@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic"
 import type { Metadata } from "next"
 import { createClient } from "@supabase/supabase-js"
 import BrawlerLeaderboardClient from "./BrawlerLeaderboardClient"
+import { leaderboardTagKey } from "@/lib/leaderboardUtils"
 
 export const metadata: Metadata = {
   title: "Brawler Trophy Leaderboards - BrawlLens",
@@ -53,10 +54,6 @@ async function fetchBrawlers(): Promise<Brawler[]> {
   }
 }
 
-function playerKey(tag: string) {
-  return tag.replace(/^#/, "").toUpperCase()
-}
-
 export default async function BrawlerLeaderboardsPage({
   searchParams,
 }: {
@@ -90,11 +87,11 @@ export default async function BrawlerLeaderboardsPage({
         .in("player_tag", tags)
     : { data: [] as TrophyLeaderboardRow[] | null }
   const trophyRanks = new Map((trophyRankRes.data ?? []).map(row => [
-    playerKey(row.player_tag),
+    leaderboardTagKey(row.player_tag),
     { rank: row.rank, trophies: row.trophies },
   ]))
   const data = leaderboardRows.map(row => {
-    const trophyRank = trophyRanks.get(playerKey(row.player_tag))
+    const trophyRank = trophyRanks.get(leaderboardTagKey(row.player_tag))
     return {
       ...row,
       world_rank: trophyRank?.rank ?? null,
