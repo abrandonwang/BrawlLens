@@ -2,7 +2,7 @@ import { createHash } from "crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Pool } from "pg";
 
-const PAGE_SIZE = 1000;
+const RPC_CHUNK_SIZE = 500;
 
 interface MapStatRow {
   map: string;
@@ -17,7 +17,6 @@ interface BrawlerStatRow {
   brawler_name: string;
   picks: number;
   wins: number;
-  win_rate: number;
 }
 
 interface AggregateResult {
@@ -35,112 +34,17 @@ function chunk<T>(rows: T[], size: number) {
   return chunks;
 }
 
-function mapKey(row: Pick<MapStatRow, "map" | "mode">) {
-  return `${row.map}\u0000${row.mode}`;
-}
-
-function brawlerKey(row: Pick<BrawlerStatRow, "map" | "mode" | "brawler_id">) {
-  return `${row.map}\u0000${row.mode}\u0000${row.brawler_id}`;
-}
-
-async function fetchAllRows<T>(supabase: SupabaseClient, table: string, select: string): Promise<T[]> {
-  const rows: T[] = [];
-  for (let from = 0; ; from += PAGE_SIZE) {
-    const { data, error } = await supabase
-      .from(table)
-      .select(select)
-      .range(from, from + PAGE_SIZE - 1);
-
-    if (error) throw new Error(`${table} select failed: ${error.message}`);
-    rows.push(...((data ?? []) as T[]));
-    if (!data || data.length < PAGE_SIZE) break;
-  }
-  return rows;
-}
-
-async function upsertChunks<T extends object>(
+async function rpcMerge<T extends object>(
   supabase: SupabaseClient,
-  table: string,
+  fn: "merge_map_stats" | "merge_brawler_stats",
   rows: T[],
-  onConflict: string,
 ) {
-  for (const group of chunk(rows, 500)) {
-    const { error } = await supabase.from(table).upsert(group, { onConflict });
-    if (error) throw new Error(`${table} upsert failed: ${error.message}`);
+  if (rows.length === 0) return 0;
+  for (const group of chunk(rows, RPC_CHUNK_SIZE)) {
+    const { error } = await supabase.rpc(fn, { rows: group });
+    if (error) throw new Error(`${fn} rpc failed: ${error.message}`);
   }
-}
-
-async function mergeMapStats(supabase: SupabaseClient, increments: MapStatRow[]) {
-  if (increments.length === 0) return 0;
-
-  const existing = await fetchAllRows<MapStatRow>(
-    supabase,
-    "map_stats",
-    "map, mode, battle_count",
-  );
-  const merged = new Map<string, MapStatRow>();
-
-  for (const row of existing) {
-    merged.set(mapKey(row), {
-      map: row.map,
-      mode: row.mode,
-      battle_count: Number(row.battle_count) || 0,
-    });
-  }
-
-  for (const row of increments) {
-    const key = mapKey(row);
-    const current = merged.get(key);
-    if (current) current.battle_count += row.battle_count;
-    else merged.set(key, { ...row });
-  }
-
-  const rows = Array.from(merged.values());
-  await upsertChunks(supabase, "map_stats", rows, "map,mode");
-  return increments.length;
-}
-
-async function mergeBrawlerStats(supabase: SupabaseClient, increments: BrawlerStatRow[]) {
-  if (increments.length === 0) return 0;
-
-  const existing = await fetchAllRows<BrawlerStatRow>(
-    supabase,
-    "map_brawler_stats",
-    "map, mode, brawler_id, brawler_name, picks, wins, win_rate",
-  );
-  const merged = new Map<string, BrawlerStatRow>();
-
-  for (const row of existing) {
-    merged.set(brawlerKey(row), {
-      map: row.map,
-      mode: row.mode,
-      brawler_id: Number(row.brawler_id),
-      brawler_name: row.brawler_name,
-      picks: Number(row.picks) || 0,
-      wins: Number(row.wins) || 0,
-      win_rate: Number(row.win_rate) || 0,
-    });
-  }
-
-  for (const row of increments) {
-    const key = brawlerKey(row);
-    const current = merged.get(key);
-    if (current) {
-      current.brawler_name = row.brawler_name;
-      current.picks += row.picks;
-      current.wins += row.wins;
-      current.win_rate = current.picks > 0 ? Number(((current.wins / current.picks) * 100).toFixed(2)) : 0;
-    } else {
-      merged.set(key, {
-        ...row,
-        win_rate: row.picks > 0 ? Number(((row.wins / row.picks) * 100).toFixed(2)) : 0,
-      });
-    }
-  }
-
-  const rows = Array.from(merged.values());
-  await upsertChunks(supabase, "map_brawler_stats", rows, "map,mode,brawler_id");
-  return increments.length;
+  return rows.length;
 }
 
 async function ensureFlushLedger(localPg: Pool) {
@@ -224,22 +128,17 @@ export async function aggregateAndFlushStats(
     GROUP BY b.map, b.mode, bp.brawler_id, bp.brawler_name
     ORDER BY picks DESC
   `);
-  const brawlerRows: BrawlerStatRow[] = brawlerRes.rows.map(row => {
-    const picks = Number(row.picks);
-    const wins = Number(row.wins);
-    return {
-      map: row.map,
-      mode: row.mode,
-      brawler_id: Number(row.brawler_id),
-      brawler_name: row.brawler_name,
-      picks,
-      wins,
-      win_rate: picks > 0 ? Number(((wins / picks) * 100).toFixed(2)) : 0,
-    };
-  });
+  const brawlerRows: BrawlerStatRow[] = brawlerRes.rows.map(row => ({
+    map: row.map,
+    mode: row.mode,
+    brawler_id: Number(row.brawler_id),
+    brawler_name: row.brawler_name,
+    picks: Number(row.picks),
+    wins: Number(row.wins),
+  }));
 
-  const pushedMapRows = await mergeMapStats(supabase, mapRows);
-  const pushedBrawlerRows = await mergeBrawlerStats(supabase, brawlerRows);
+  const pushedMapRows = await rpcMerge(supabase, "merge_map_stats", mapRows);
+  const pushedBrawlerRows = await rpcMerge(supabase, "merge_brawler_stats", brawlerRows);
 
   await localPg.query(
     "INSERT INTO aggregation_flushes (batch_id, battle_count, player_count) VALUES ($1, $2, $3)",
