@@ -120,7 +120,7 @@ async function fetchLeaderboardRecord(tag: string): Promise<LeaderboardRecord | 
 
 async function fetchRecentBattles(tag: string): Promise<BattleLogItem[]> {
   try {
-    const response = await fetchPlayerBattleLogResponse(tag, { next: { revalidate: 120 } })
+    const response = await fetchPlayerBattleLogResponse(tag, { cache: "no-store" })
     if (!response.ok) return []
     const data = (await response.json()) as { items?: BattleLogItem[] }
     return data.items ?? []

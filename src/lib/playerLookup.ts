@@ -44,25 +44,51 @@ function buildPlayerProxyUrl(url: string, tag: string): string {
   return `${url.replace(/\/$/, "")}/player/${encodeURIComponent(tag)}`
 }
 
-function buildBattleLogProxyUrl(url: string, tag: string, options?: { allowBaseUrl?: boolean }): string | null {
+function uniqueUrls(urls: (string | null)[]): string[] {
+  return Array.from(new Set(urls.filter((url): url is string => Boolean(url))))
+}
+
+function buildBattleLogProxyUrls(url: string, tag: string, options?: { allowBaseUrl?: boolean; assumeBattleLog?: boolean }): string[] {
   const hasTemplate = url.includes("{tag}") || url.includes("{hashTag}") || url.includes("{endpoint}")
+  const encodedTag = encodeURIComponent(tag)
+  const encodedHashTag = encodeURIComponent(`#${tag}`)
 
   if (hasTemplate) {
     const templatedUrl = applyPlayerProxyTemplate(url, tag, "battlelog")
-    if (url.includes("{endpoint}") || /battlelog(?:[/?#]|$)/i.test(templatedUrl)) {
-      return templatedUrl
+    if (options?.assumeBattleLog || url.includes("{endpoint}") || /battlelog(?:[/?#]|$)/i.test(templatedUrl)) {
+      return [templatedUrl]
     }
 
     if (!/[?#]/.test(templatedUrl)) {
-      return `${templatedUrl.replace(/\/$/, "")}/battlelog`
+      return [`${templatedUrl.replace(/\/$/, "")}/battlelog`]
     }
 
-    return null
+    return []
   }
 
-  if (!options?.allowBaseUrl) return null
+  if (!options?.allowBaseUrl) return []
 
-  return `${url.replace(/\/$/, "")}/player/${encodeURIComponent(tag)}/battlelog`
+  const baseUrl = url.replace(/\/$/, "")
+  return uniqueUrls([
+    `${baseUrl}/player/${encodedTag}/battlelog`,
+    `${baseUrl}/players/${encodedHashTag}/battlelog`,
+  ])
+}
+
+async function fetchFirstOk(urls: string[], init?: NextFetchOptions): Promise<Response | null> {
+  let fallbackResponse: Response | null = null
+
+  for (const url of urls) {
+    try {
+      const response = await fetch(url, init)
+      if (response.ok) return response
+      fallbackResponse ??= response
+    } catch {
+      // Keep trying the next compatible proxy shape before falling back to the official API.
+    }
+  }
+
+  return fallbackResponse
 }
 
 export async function fetchPlayerResponse(tag: string, init?: NextFetchOptions): Promise<Response> {
@@ -88,21 +114,31 @@ export async function fetchPlayerResponse(tag: string, init?: NextFetchOptions):
 
 export async function fetchPlayerBattleLogResponse(tag: string, init?: NextFetchOptions): Promise<Response> {
   const explicitProxyUrl = battleLogProxyUrl()
+  let fallbackResponse: Response | null = null
 
   if (explicitProxyUrl) {
-    const url = buildBattleLogProxyUrl(explicitProxyUrl, tag, { allowBaseUrl: true })
-    if (url) return fetch(url, init)
+    const response = await fetchFirstOk(
+      buildBattleLogProxyUrls(explicitProxyUrl, tag, { allowBaseUrl: true, assumeBattleLog: true }),
+      init,
+    )
+    if (response?.ok) return response
+    fallbackResponse ??= response
   }
 
   const proxyUrl = playerProxyUrl()
 
   if (proxyUrl) {
-    const url = buildBattleLogProxyUrl(proxyUrl, tag, { allowBaseUrl: !/[?#]/.test(proxyUrl) })
-    if (url) return fetch(url, init)
+    const response = await fetchFirstOk(
+      buildBattleLogProxyUrls(proxyUrl, tag, { allowBaseUrl: !/[?#]/.test(proxyUrl) }),
+      init,
+    )
+    if (response?.ok) return response
+    fallbackResponse ??= response
   }
 
   const apiKey = brawlApiKey()
   if (!apiKey) {
+    if (fallbackResponse) return fallbackResponse
     throw new Error("Missing PLAYER_BATTLELOG_API_URL or BRAWL_API_KEY for player battle log lookup")
   }
 
