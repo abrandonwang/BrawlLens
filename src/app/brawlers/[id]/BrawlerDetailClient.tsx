@@ -263,9 +263,15 @@ export default function BrawlerDetailClient({ brawler }: { brawler: Brawler }) {
 
     return {
       good: [...pool].filter(item => item.delta > 0).sort((a, b) => b.delta - a.delta).slice(0, 5),
-      bad: [...pool].filter(item => item.delta < 0).sort((a, b) => a.delta - b.delta).slice(0, 5),
+      bad: [...pool].sort((a, b) => a.delta - b.delta).slice(0, 5),
     }
   }, [brawler.id, catalogValues, selectedWinRate])
+  const matchupEmptyText = selectedPicks < 50
+    ? "Need more sample."
+    : "No matchup edge found."
+  const badMatchupEmptyText = selectedPicks < 50
+    ? "Need more sample."
+    : "No comparison sample yet."
 
   const summary = selectedWinRate == null
     ? `${formatBrawlerName(brawler.name)} does not have enough tracked map data yet.`
@@ -373,19 +379,19 @@ export default function BrawlerDetailClient({ brawler }: { brawler: Brawler }) {
                 </div>
                 <div className="bl-bd-match-labels">
                   <b>Good Against</b>
-                  <span>Compared with other brawlers at 50+ tracked games</span>
+                  <span>Compared against brawlers at 50+ tracked games</span>
                   <b>Bad Against</b>
                 </div>
                 <div className="bl-bd-match-strip">
                   <div className="bl-bd-match-side">
-                    {matchups.good.length ? matchups.good.map(item => <MatchupCard key={item.stat.id} type="good" {...item} />) : <div className="bl-bd-empty">Need more sample.</div>}
+                    {matchups.good.length ? matchups.good.map(item => <MatchupCard key={item.stat.id} type="good" {...item} />) : <div className="bl-bd-empty">{matchupEmptyText}</div>}
                   </div>
                   <Link href="/brawlers" className="bl-bd-full-list">
                     <span>+</span>
                     Full List
                   </Link>
                   <div className="bl-bd-match-side">
-                    {matchups.bad.length ? matchups.bad.map(item => <MatchupCard key={item.stat.id} type="bad" {...item} delta={Math.abs(item.delta)} />) : <div className="bl-bd-empty">Need more sample.</div>}
+                    {matchups.bad.length ? matchups.bad.map(item => <MatchupCard key={item.stat.id} type="bad" {...item} delta={Math.abs(item.delta)} />) : <div className="bl-bd-empty">{badMatchupEmptyText}</div>}
                   </div>
                 </div>
               </section>
