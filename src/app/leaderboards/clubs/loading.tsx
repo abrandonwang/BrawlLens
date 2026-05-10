@@ -1,5 +1,5 @@
 import { LeaderboardLoading } from "../LeaderboardLoading"
 
 export default function Loading() {
-  return <LeaderboardLoading titleWidth="w-64" />
+  return <LeaderboardLoading kind="clubs" titleWidth="w-64" />
 }

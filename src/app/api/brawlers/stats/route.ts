@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { getModeName } from "@/lib/modes"
+import { fetchAllPaged } from "@/lib/supabaseFetch"
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
@@ -9,12 +10,27 @@ const supabase = createClient(
 
 const MIN_BEST_MAP_PICKS = 20
 
-export async function GET() {
-  const { data, error } = await supabase
-    .from("map_brawler_stats")
-    .select("brawler_id, brawler_name, map, mode, picks, wins, win_rate")
+type Row = {
+  brawler_id: number
+  brawler_name: string
+  map: string
+  mode: string
+  picks: number | string
+  wins: number | string
+  win_rate: number | string
+}
 
-  if (error || !data) {
+export async function GET() {
+  const { data, error } = await fetchAllPaged<Row>(() =>
+    supabase
+      .from("map_brawler_stats")
+      .select("brawler_id, brawler_name, map, mode, picks, wins, win_rate")
+      .order("brawler_id", { ascending: true })
+      .order("map", { ascending: true })
+      .order("mode", { ascending: true })
+  )
+
+  if (error || data.length === 0) {
     return NextResponse.json({ stats: {} }, { status: error ? 502 : 200 })
   }
 

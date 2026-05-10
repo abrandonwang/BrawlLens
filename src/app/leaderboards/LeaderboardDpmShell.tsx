@@ -14,6 +14,7 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { BrawlImage, brawlerIconUrl } from "@/components/BrawlImage"
+import { leaderboardRegionShort } from "@/lib/leaderboardRegions"
 
 export type LeaderboardKind = "players" | "clubs" | "brawlers"
 
@@ -103,17 +104,8 @@ const tabs = [
   { key: "community", label: "Community" },
 ] as const
 
-const regionShort: Record<string, string> = {
-  global: "ALL",
-  US: "US",
-  KR: "KR",
-  BR: "BR",
-  DE: "DE",
-  JP: "JP",
-}
-
 export function regionCode(code: string) {
-  return regionShort[code] ?? code.slice(0, 2).toUpperCase()
+  return leaderboardRegionShort(code)
 }
 
 function teamSlug(title: string) {

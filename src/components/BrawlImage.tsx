@@ -20,3 +20,7 @@ export function BrawlImage({ src, alt, sizes = "96px", ...props }: Props) {
 export function brawlerIconUrl(id: number) {
   return `https://cdn.brawlify.com/brawlers/borderless/${id}.png`
 }
+
+export function profileIconUrl(id: number) {
+  return `/api/player-icon?id=${encodeURIComponent(id)}`
+}

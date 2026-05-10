@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
+import { fetchAllPaged } from "@/lib/supabaseFetch"
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
@@ -8,15 +9,27 @@ const supabase = createClient(
 
 const MIN_TOTAL_PICKS = 200
 
+type Row = {
+  brawler_id: number
+  brawler_name: string
+  picks: number | string
+  wins: number | string
+}
+
 export async function GET(request: Request) {
   const url = new URL(request.url)
   const limit = Math.min(Math.max(Number(url.searchParams.get("limit")) || 12, 1), 50)
 
-  const { data, error } = await supabase
-    .from("map_brawler_stats")
-    .select("brawler_id, brawler_name, picks, wins")
+  const { data, error } = await fetchAllPaged<Row>(() =>
+    supabase
+      .from("map_brawler_stats")
+      .select("brawler_id, brawler_name, picks, wins")
+      .order("brawler_id", { ascending: true })
+      .order("map", { ascending: true })
+      .order("mode", { ascending: true })
+  )
 
-  if (error || !data) return NextResponse.json({ brawlers: [] })
+  if (error || data.length === 0) return NextResponse.json({ brawlers: [] })
 
   const agg = new Map<number, { id: number; name: string; picks: number; wins: number }>()
   for (const r of data) {

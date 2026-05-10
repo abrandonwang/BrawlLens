@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef, useMemo, type CSSProperties } from "react"
+import { useState, useEffect, useRef, useMemo } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { ChevronDown, Search } from "lucide-react"
@@ -100,6 +100,10 @@ export default function MapsPageClient() {
     return best
   }, [modes])
 
+  const totalBattlesAnalyzed = useMemo(() => {
+    return modes.reduce((total, mode) => total + mode.totalBattles, 0)
+  }, [modes])
+
   const allMapsList = useMemo(() => {
     const seen = new Set<string>()
     const list: { name: string; mode: string }[] = []
@@ -139,41 +143,25 @@ export default function MapsPageClient() {
       <main className="bl-tier-shell">
         <TierlistSubNav active="maps" />
         <div className="dpm-page-shell">
-        <div className="dpm-hero-panel mb-6 p-6 text-center max-sm:p-5">
-          <div className="mx-auto min-w-0">
-            <h1 className="m-0 text-[clamp(28px,4.1vw,46px)] leading-[1.07] font-semibold tracking-[-0.01em] text-[var(--ink)]">Maps</h1>
-            <p className="mx-auto mt-3 mb-0 max-w-[760px] text-[17px] leading-[1.47] tracking-[-0.022em] text-[var(--ink-3)]">Scan live maps and open matchup data for the brawlers performing best on each layout.</p>
+        <section className="bl-tier-intro-card" aria-labelledby="maps-title">
+          <h1 id="maps-title">Maps & Meta</h1>
+          <div className="bl-tier-analyzed">
+            <span>BATTLES ANALYZED</span>
+            <strong>{totalBattlesAnalyzed > 0 ? formatNum(totalBattlesAnalyzed) : "-"}</strong>
+            <HelpTooltip label="How map stats are summarized">
+              Battle counts come from the current tracked map dataset. The most popular map is the map with the
+              highest tracked battle volume, while best brawler uses the current brawler win-rate dataset.
+            </HelpTooltip>
           </div>
-        </div>
-
-        <div className="page-summary mb-6 flex items-center justify-between gap-6 p-8 max-md:flex-col max-md:items-stretch max-sm:p-6" style={{ "--summary-gradient": "linear-gradient(135deg, rgba(59,130,246,0.34) 0%, rgba(124,58,237,0.28) 52%, rgba(240,211,115,0.16) 100%)" } as CSSProperties}>
-          <div className="flex min-w-0 items-center gap-3">
-            <div className="min-w-0">
-              <p className="mb-1 inline-flex items-center gap-2 text-[12px] leading-none tracking-[0.08em] text-white/70 uppercase">
-                <span>Most popular map</span>
-                <HelpTooltip label="Why this map is shown" align="left">
-                  This spotlight uses the map with the most tracked battles in the current dataset. It is a volume
-                  signal, not a prediction that the map is best or easiest.
-                </HelpTooltip>
-              </p>
-              <h2 className="m-0 truncate text-[28px] leading-[1.15] font-semibold tracking-[-0.01em] text-white">{spotlightMap ? spotlightMap.name : "Loading..."}</h2>
-            </div>
-          </div>
-          <div className="grid min-w-[min(420px,48%)] grid-cols-3 gap-2 max-md:min-w-0">
-            <div className="page-summary-stat">
-              <span>Battles</span>
-              <strong>{spotlightMap ? formatNum(spotlightMap.battles) : "-"}</strong>
-            </div>
-            <div className="page-summary-stat">
-              <span>Mode</span>
-              <strong>{spotlightMap ? getModeName(spotlightMap.mode) : "-"}</strong>
-            </div>
-            <div className="page-summary-stat">
-              <span>Best brawler</span>
-              <strong>{spotlightTopBrawler ? `${formatBrawlerName(spotlightTopBrawler.name)} - ${spotlightTopBrawler.winRate.toFixed(1)}%` : "-"}</strong>
-            </div>
-          </div>
-        </div>
+          <p>
+            Scan live maps and open matchup data for the brawlers performing best on each layout.
+            <span className="mt-2 block text-[var(--lb-text-2)]">
+              Most popular map: <strong className="font-semibold text-[var(--lb-text)]">{spotlightMap ? `${spotlightMap.name} (${getModeName(spotlightMap.mode)}, ${formatNum(spotlightMap.battles)} battles)` : "Loading..."}</strong>
+              <span aria-hidden="true"> · </span>
+              Best brawler: <strong className="font-semibold text-[var(--lb-text)]">{spotlightTopBrawler ? `${formatBrawlerName(spotlightTopBrawler.name)} ${spotlightTopBrawler.winRate.toFixed(1)}%` : "-"}</strong>
+            </span>
+          </p>
+        </section>
 
         <MetaDashboard
           modes={modes}

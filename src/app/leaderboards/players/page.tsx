@@ -4,6 +4,7 @@ import type { Metadata } from "next"
 import { createClient } from "@supabase/supabase-js"
 import LeaderboardsClient from "../LeaderboardsClient"
 import { fetchPlayerBattleLogResponse, fetchPlayerResponse } from "@/lib/playerLookup"
+import { leaderboardRegionLabel, sortLeaderboardRegions } from "@/lib/leaderboardRegions"
 
 export const metadata: Metadata = {
   title: "Player Leaderboards - BrawlLens",
@@ -15,13 +16,13 @@ export const metadata: Metadata = {
   },
 }
 
-const REGIONS = [
+const FALLBACK_REGIONS = [
   { code: "global", label: "Global" },
   { code: "US", label: "United States" },
+  { code: "JP", label: "Japan" },
   { code: "KR", label: "Korea" },
   { code: "BR", label: "Brazil" },
   { code: "DE", label: "Germany" },
-  { code: "JP", label: "Japan" },
 ]
 
 interface Player {
@@ -104,6 +105,27 @@ async function fetchLeaderboard(region: string) {
     return []
   }
   return data || []
+}
+
+async function fetchLeaderboardRegions() {
+  const supabase = createClient(
+    process.env.SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_KEY!
+  )
+  const { data, error } = await supabase
+    .from("leaderboards")
+    .select("region")
+    .eq("rank", 1)
+    .limit(300)
+
+  if (error) {
+    console.error("Leaderboard region fetch error:", error.message)
+    return FALLBACK_REGIONS
+  }
+
+  const codes = Array.from(new Set((data ?? []).map(row => String(row.region)).filter(Boolean)))
+  if (!codes.length) return FALLBACK_REGIONS
+  return sortLeaderboardRegions(codes.map(code => ({ code, label: leaderboardRegionLabel(code) })))
 }
 
 function cleanTag(tag: string) {
@@ -196,8 +218,9 @@ function toBrawlerSummary(brawler: PlayerBrawler): BrawlerSummary {
 }
 
 export default async function PlayersLeaderboardPage() {
+  const regions = await fetchLeaderboardRegions()
   const allData = await Promise.all(
-    REGIONS.map(async (r) => ({ ...r, players: await fetchLeaderboard(r.code) }))
+    regions.map(async (r) => ({ ...r, players: await fetchLeaderboard(r.code) }))
   )
   const topPlayers = allData.flatMap(region =>
     region.players.slice(0, 3).map(player => ({ region: region.code, player }))

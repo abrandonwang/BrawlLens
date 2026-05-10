@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic"
 import type { Metadata } from "next"
 import { createClient } from "@supabase/supabase-js"
 import ClubsClient from "./ClubsClient"
+import { leaderboardRegionLabel, sortLeaderboardRegions } from "@/lib/leaderboardRegions"
 
 export const metadata: Metadata = {
   title: "Club Leaderboards - BrawlLens",
@@ -14,13 +15,13 @@ export const metadata: Metadata = {
   },
 }
 
-const REGIONS = [
+const FALLBACK_REGIONS = [
   { code: "global", label: "Global" },
   { code: "US", label: "United States" },
+  { code: "JP", label: "Japan" },
   { code: "KR", label: "Korea" },
   { code: "BR", label: "Brazil" },
   { code: "DE", label: "Germany" },
-  { code: "JP", label: "Japan" },
 ]
 
 async function fetchClubLeaderboard(region: string) {
@@ -42,9 +43,31 @@ async function fetchClubLeaderboard(region: string) {
   return data || []
 }
 
+async function fetchClubLeaderboardRegions() {
+  const supabase = createClient(
+    process.env.SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_KEY!
+  )
+  const { data, error } = await supabase
+    .from("club_leaderboards")
+    .select("region")
+    .eq("rank", 1)
+    .limit(300)
+
+  if (error) {
+    console.error("Club leaderboard region fetch error:", error.message)
+    return FALLBACK_REGIONS
+  }
+
+  const codes = Array.from(new Set((data ?? []).map(row => String(row.region)).filter(Boolean)))
+  if (!codes.length) return FALLBACK_REGIONS
+  return sortLeaderboardRegions(codes.map(code => ({ code, label: leaderboardRegionLabel(code) })))
+}
+
 export default async function ClubsLeaderboardPage() {
+  const regions = await fetchClubLeaderboardRegions()
   const allData = await Promise.all(
-    REGIONS.map(async (r) => ({ ...r, clubs: await fetchClubLeaderboard(r.code) }))
+    regions.map(async (r) => ({ ...r, clubs: await fetchClubLeaderboard(r.code) }))
   )
   return <ClubsClient allData={allData} />
 }

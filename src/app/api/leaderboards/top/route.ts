@@ -1,26 +1,49 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
+import { leaderboardRegionLabel, sortLeaderboardRegions } from "@/lib/leaderboardRegions"
+import { fetchPlayerResponse } from "@/lib/playerLookup"
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_KEY!
 )
 
-const REGIONS = [
+const FALLBACK_REGIONS = [
   { code: "global", label: "Global" },
-  { code: "US", label: "US" },
-  { code: "KR", label: "KR" },
-  { code: "BR", label: "BR" },
-  { code: "DE", label: "DE" },
-  { code: "JP", label: "JP" },
+  { code: "US", label: "United States" },
+  { code: "JP", label: "Japan" },
+  { code: "KR", label: "Korea" },
+  { code: "BR", label: "Brazil" },
+  { code: "DE", label: "Germany" },
 ]
 
 export async function GET(request: Request) {
   const url = new URL(request.url)
   const limit = Math.min(Math.max(Number(url.searchParams.get("limit")) || 5, 1), 20)
+  const withIcons = url.searchParams.get("icons") === "1"
+  const requestedRegions = url.searchParams.get("regions")
+    ?.split(",")
+    .map(region => region.trim())
+    .filter(Boolean)
+
+  const { data: regionRows } = await supabase
+    .from("leaderboards")
+    .select("region")
+    .eq("rank", 1)
+    .limit(300)
+
+  const regionCodes = Array.from(
+    new Set((regionRows ?? []).map(row => String(row.region)).filter(Boolean)),
+  )
+  const discoveredRegions = regionCodes.length
+    ? sortLeaderboardRegions(regionCodes.map(code => ({ code, label: leaderboardRegionLabel(code) })))
+    : FALLBACK_REGIONS
+  const regions = requestedRegions?.length
+    ? requestedRegions.map(code => ({ code, label: leaderboardRegionLabel(code) }))
+    : discoveredRegions
 
   const results = await Promise.all(
-    REGIONS.map(async region => {
+    regions.map(async region => {
       const { data, error } = await supabase
         .from("leaderboards")
         .select("rank, player_tag, player_name, trophies, club_name")
@@ -28,11 +51,38 @@ export async function GET(request: Request) {
         .order("rank", { ascending: true })
         .limit(limit)
       if (error) return { ...region, players: [] }
-      return { ...region, players: data ?? [] }
+      const players = withIcons ? await enrichPlayerIcons(data ?? []) : data ?? []
+      return { ...region, players }
     })
   )
 
   const res = NextResponse.json({ regions: results })
   res.headers.set("Cache-Control", "s-maxage=300, stale-while-revalidate=600")
   return res
+}
+
+type LeaderboardPlayerRow = {
+  rank: number
+  player_tag: string
+  player_name: string
+  trophies: number
+  club_name: string | null
+}
+
+type PlayerProfile = {
+  icon?: { id?: number }
+}
+
+async function enrichPlayerIcons(players: LeaderboardPlayerRow[]) {
+  return Promise.all(players.map(async player => {
+    try {
+      const tag = player.player_tag.replace(/^#/, "")
+      const response = await fetchPlayerResponse(tag, { next: { revalidate: 300 } })
+      if (!response.ok) return { ...player, iconId: null }
+      const profile = await response.json() as PlayerProfile
+      return { ...player, iconId: profile.icon?.id ?? null }
+    } catch {
+      return { ...player, iconId: null }
+    }
+  }))
 }

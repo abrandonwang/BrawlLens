@@ -1,11 +1,22 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { getModeName } from "@/lib/modes"
+import { fetchAllPaged } from "@/lib/supabaseFetch"
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_KEY!
 )
+
+type Row = {
+  brawler_id: number
+  brawler_name: string
+  map: string
+  mode: string
+  picks: number | string
+  wins: number | string
+  win_rate: number | string
+}
 
 const MIN_TOTAL_PICKS = 500
 const MIN_MAP_PICKS = 20
@@ -16,11 +27,16 @@ function getVolumeScore(picks: number, maxPicks: number) {
 }
 
 export async function GET() {
-  const { data, error } = await supabase
-    .from("map_brawler_stats")
-    .select("brawler_id, brawler_name, map, mode, picks, wins, win_rate")
+  const { data, error } = await fetchAllPaged<Row>(() =>
+    supabase
+      .from("map_brawler_stats")
+      .select("brawler_id, brawler_name, map, mode, picks, wins, win_rate")
+      .order("brawler_id", { ascending: true })
+      .order("map", { ascending: true })
+      .order("mode", { ascending: true })
+  )
 
-  if (error || !data) return NextResponse.json({ brawler: null })
+  if (error || data.length === 0) return NextResponse.json({ brawler: null })
 
   const agg = new Map<number, {
     id: number

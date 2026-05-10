@@ -7,11 +7,11 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import AssistantPopup from "./AssistantPopup";
 import BrandMark from "./BrandMark";
+import SearchOverlay from "./SearchOverlay";
 import { lockBodyScroll } from "@/lib/bodyScrollLock";
 import { authHeaders, clearAuthSession, clearServerSession, storeAuthSession } from "@/lib/clientAuth";
 import type { PremiumUser } from "@/lib/premium";
 import { isEmailFormatValid, useEmailCheck } from "@/lib/useEmailCheck";
-import { sanitizePlayerTag } from "@/lib/validation";
 
 type NavPanelItem = {
   label: string;
@@ -125,7 +125,6 @@ export default function NavBar() {
   const menuCloseTimerRef = useRef<number | null>(null);
   const desktopHoverTimerRef = useRef<number | null>(null);
   const loginInputRef = useRef<HTMLInputElement>(null);
-  const navSearchInputRef = useRef<HTMLInputElement>(null);
   const [desktopPanelLeft, setDesktopPanelLeft] = useState(190);
   const bodyScrollLocked = isMenuOpen || menuClosing || isLoginOpen;
 
@@ -163,6 +162,15 @@ export default function NavBar() {
     setIsLoginOpen(true);
   }, [closeMenu]);
 
+  const openSearchOverlay = useCallback((query = "") => {
+    closeMenu();
+    setDesktopPanel(null);
+    setHoverDesktopPanel(null);
+    setSuppressedDesktopPanel(null);
+    setNavSearch("");
+    window.dispatchEvent(new CustomEvent("brawllens:open-search", { detail: { query } }));
+  }, [closeMenu]);
+
   useEffect(() => {
     if (!bodyScrollLocked) return;
     return lockBodyScroll();
@@ -182,7 +190,7 @@ export default function NavBar() {
     function onKey(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
-        navSearchInputRef.current?.focus();
+        openSearchOverlay();
         return;
       }
       if (e.key === "Escape") {
@@ -197,7 +205,7 @@ export default function NavBar() {
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [closeMenu]);
+  }, [closeMenu, openSearchOverlay]);
 
   useEffect(() => {
     return () => {
@@ -469,35 +477,7 @@ export default function NavBar() {
   function submitNavSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const query = navSearch.trim();
-    if (!query) return;
-
-    const playerTag = sanitizePlayerTag(query);
-    const normalized = query.toLowerCase();
-    const destination = playerTag
-      ? `/player/${encodeURIComponent(playerTag)}`
-      : normalized.includes("club")
-        ? "/leaderboards/clubs"
-        : normalized.includes("leader") || normalized.includes("rank") || normalized.includes("player")
-          ? "/leaderboards/players"
-          : normalized.includes("brawler") || normalized.includes("tier")
-            ? "/brawlers"
-            : normalized.includes("map") || normalized.includes("meta")
-              ? "/meta"
-              : null;
-
-    closeMenu();
-    setDesktopPanel(null);
-    setHoverDesktopPanel(null);
-    setSuppressedDesktopPanel(null);
-    setNavSearch("");
-
-    if (destination) {
-      router.push(destination);
-      return;
-    }
-
-    setPendingAssistantQuery(query);
-    setIsAssistantOpen(true);
+    openSearchOverlay(query);
   }
 
   function signOut() {
@@ -547,7 +527,7 @@ export default function NavBar() {
     animationDelay: menuClosing ? "0ms" : `${30 + index * 42}ms`,
   });
   const navTextClass = (active: boolean) =>
-    `relative inline-flex h-[60px] items-center rounded-none border-0 bg-transparent px-0 text-[14px] font-semibold leading-none tracking-[-0.005em] no-underline outline-none transition-colors duration-150 focus-visible:text-white ${active ? "text-white hover:text-white" : "text-[#cfd2d8] hover:text-white"} ${isNavFlowRoute && active ? "after:absolute after:right-0 after:bottom-[10px] after:left-0 after:h-[3px] after:rounded-full after:bg-[#ead672] after:content-['']" : ""}`;
+    `relative inline-flex h-[60px] items-center rounded-none border-0 bg-transparent px-0 text-[14px] font-semibold leading-none tracking-[-0.005em] no-underline outline-none transition-colors duration-150 focus-visible:text-white ${active ? "text-white hover:text-white" : "text-[#cfd2d8] hover:text-white"} ${isNavFlowRoute && active ? "after:absolute after:right-0 after:bottom-[10px] after:left-0 after:h-[3px] after:rounded-full after:bg-[#8bd7ff] after:content-['']" : ""}`;
 
   useEffect(() => {
     document.documentElement.classList.toggle("leaderboards-nav-flow", isLeaderboardsRoute);
@@ -705,11 +685,11 @@ export default function NavBar() {
                             setHoverDesktopPanel(null);
                             setSuppressedDesktopPanel(null);
                           }}
-                          className={`flex min-h-[58px] items-start gap-3 rounded-[10px] px-3 py-2.5 text-inherit no-underline transition-colors duration-200 ${active ? "bg-[#e8c86c] text-[#171007] shadow-[rgba(255,255,255,0.26)_0_1px_0_inset]" : "text-[#f4f5f7] hover:bg-white/[0.06]"}`}
+                          className={`flex min-h-[58px] items-start gap-3 rounded-[10px] px-3 py-2.5 text-inherit no-underline transition-colors duration-200 ${active ? "bg-[#8bd7ff] text-[#061018] shadow-[rgba(255,255,255,0.26)_0_1px_0_inset]" : "text-[#f4f5f7] hover:bg-white/[0.06]"}`}
                         >
                           <span className="min-w-0">
-                            <span className={`block truncate text-[14px] font-semibold leading-tight ${active ? "text-[#171007]" : "text-[#f4f5f7]"}`}>{item.label}</span>
-                            <span className={`mt-1 block text-[12px] leading-snug ${active ? "text-[#171007]/70" : "text-[#8f96a1]"}`}>{item.description}</span>
+                            <span className={`block truncate text-[14px] font-semibold leading-tight ${active ? "text-[#061018]" : "text-[#f4f5f7]"}`}>{item.label}</span>
+                            <span className={`mt-1 block text-[12px] leading-snug ${active ? "text-[#061018]/70" : "text-[#8f96a1]"}`}>{item.description}</span>
                           </span>
                         </Link>
                       );
@@ -746,11 +726,11 @@ export default function NavBar() {
                             setHoverDesktopPanel(null);
                             setSuppressedDesktopPanel(null);
                           }}
-                          className={`flex min-h-[58px] min-w-0 items-start justify-between gap-3 rounded-[10px] px-3 py-2.5 text-inherit no-underline transition-colors duration-200 ${active ? "bg-[#e8c86c] text-[#171007] shadow-[rgba(255,255,255,0.26)_0_1px_0_inset]" : "text-[#f4f5f7] hover:bg-white/[0.06]"}`}
+                          className={`flex min-h-[58px] min-w-0 items-start justify-between gap-3 rounded-[10px] px-3 py-2.5 text-inherit no-underline transition-colors duration-200 ${active ? "bg-[#8bd7ff] text-[#061018] shadow-[rgba(255,255,255,0.26)_0_1px_0_inset]" : "text-[#f4f5f7] hover:bg-white/[0.06]"}`}
                         >
                           <span className="min-w-0">
-                            <span className={`block truncate text-[14px] font-semibold leading-tight ${active ? "text-[#171007]" : "text-[#f4f5f7]"}`}>{item.label}</span>
-                            <span className={`mt-1 block text-[12px] leading-snug ${active ? "text-[#171007]/70" : "text-[#8f96a1]"}`}>{item.description}</span>
+                            <span className={`block truncate text-[14px] font-semibold leading-tight ${active ? "text-[#061018]" : "text-[#f4f5f7]"}`}>{item.label}</span>
+                            <span className={`mt-1 block text-[12px] leading-snug ${active ? "text-[#061018]/70" : "text-[#8f96a1]"}`}>{item.description}</span>
                           </span>
                         </Link>
                       );
@@ -765,13 +745,14 @@ export default function NavBar() {
         <form
           role="search"
           onSubmit={submitNavSearch}
+          onClick={() => openSearchOverlay()}
           className="relative z-10 ml-7 hidden h-[34px] w-[min(35vw,470px)] min-w-[270px] max-w-[470px] items-center rounded-full border border-white/[0.12] bg-[#12151a] px-3 text-[#d9dbe1] shadow-[rgba(255,255,255,0.08)_0_0.5px_0_0_inset] transition-colors duration-150 focus-within:border-white/[0.22] focus-within:bg-[#171a20] xl:flex"
         >
           <Search size={17} strokeWidth={2} className="mr-2 shrink-0 text-[#8f96a1]" aria-hidden="true" />
           <input
-            ref={navSearchInputRef}
             value={navSearch}
             onChange={event => setNavSearch(event.target.value)}
+            onFocus={() => openSearchOverlay()}
             className="h-full min-w-0 flex-1 border-0 bg-transparent p-0 text-[13px] font-semibold leading-none text-[#f4f5f7] outline-none placeholder:text-[#8f96a1]"
             placeholder="Search player tag, brawler, map..."
             aria-label="Search BrawlLens"
@@ -801,7 +782,7 @@ export default function NavBar() {
             <button
               type="button"
               onClick={openLogin}
-              className="inline-flex h-[34px] cursor-pointer items-center gap-2 whitespace-nowrap rounded-[6px] border border-[#f0d373]/35 bg-[#17140b] px-4 text-[13px] font-extrabold leading-none text-[#f0d373] outline-none shadow-[rgba(255,255,255,0.07)_0_0.5px_0_0_inset,rgba(240,211,115,0.12)_0_0_18px] transition-colors duration-150 hover:border-[#f0d373]/55 hover:bg-[#211b0c] hover:text-[#ffe68a] focus-visible:ring-1 focus-visible:ring-[#f0d373]/40 max-[420px]:px-3"
+              className="inline-flex h-[34px] cursor-pointer items-center gap-2 whitespace-nowrap rounded-[7px] border border-[#8bd7ff]/30 bg-gradient-to-b from-[#182333] to-[#0c111b] px-4 text-[13px] font-extrabold leading-none text-[#c9efff] outline-none shadow-[rgba(255,255,255,0.14)_0_1px_0_0_inset,rgba(139,215,255,0.26)_0_0_0_1px,rgba(0,0,0,0.72)_0_5px_0_#05070a,rgba(139,215,255,0.12)_0_0_18px] transition-[transform,filter,border-color] duration-150 hover:border-[#8bd7ff]/55 hover:brightness-110 active:translate-y-[2px] active:shadow-[rgba(255,255,255,0.10)_0_1px_0_0_inset,rgba(139,215,255,0.18)_0_0_0_1px,rgba(0,0,0,0.72)_0_2px_0_#05070a] focus-visible:ring-1 focus-visible:ring-[#8bd7ff]/40 max-[420px]:px-3"
             >
               <span>Log in</span>
             </button>
@@ -855,7 +836,7 @@ export default function NavBar() {
             <button
               type="button"
               onClick={openLogin}
-              className="inline-flex h-[34px] cursor-pointer items-center gap-2 whitespace-nowrap rounded-[6px] border border-[#f0d373]/35 bg-[#17140b] px-4 text-[13px] font-extrabold leading-none text-[#f0d373] outline-none shadow-[rgba(255,255,255,0.07)_0_0.5px_0_0_inset,rgba(240,211,115,0.12)_0_0_18px] transition-colors duration-150 hover:border-[#f0d373]/55 hover:bg-[#211b0c] hover:text-[#ffe68a] focus-visible:ring-1 focus-visible:ring-[#f0d373]/40 max-[420px]:px-3"
+              className="inline-flex h-[34px] cursor-pointer items-center gap-2 whitespace-nowrap rounded-[7px] border border-[#8bd7ff]/30 bg-gradient-to-b from-[#182333] to-[#0c111b] px-4 text-[13px] font-extrabold leading-none text-[#c9efff] outline-none shadow-[rgba(255,255,255,0.14)_0_1px_0_0_inset,rgba(139,215,255,0.26)_0_0_0_1px,rgba(0,0,0,0.72)_0_5px_0_#05070a,rgba(139,215,255,0.12)_0_0_18px] transition-[transform,filter,border-color] duration-150 hover:border-[#8bd7ff]/55 hover:brightness-110 active:translate-y-[2px] active:shadow-[rgba(255,255,255,0.10)_0_1px_0_0_inset,rgba(139,215,255,0.18)_0_0_0_1px,rgba(0,0,0,0.72)_0_2px_0_#05070a] focus-visible:ring-1 focus-visible:ring-[#8bd7ff]/40 max-[420px]:px-3"
             >
               <span>{accountLabel}</span>
             </button>
@@ -1028,7 +1009,7 @@ export default function NavBar() {
                   key={item.id}
                   type="button"
                   onClick={() => setAuthMode(item.id)}
-                  className={`h-8 cursor-pointer rounded-[4px] border-0 text-[12px] font-extrabold outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[#f0d373]/25 ${authMode === item.id ? "bg-[#f0d373] text-[#171007]" : "bg-transparent text-[rgba(247,244,237,0.52)] hover:text-[#f7f4ed]"}`}
+                  className={`h-8 cursor-pointer rounded-[4px] border-0 text-[12px] font-extrabold outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[#8bd7ff]/25 ${authMode === item.id ? "bg-[#8bd7ff] text-[#061018]" : "bg-transparent text-[rgba(247,244,237,0.52)] hover:text-[#f7f4ed]"}`}
                 >
                   {item.label}
                 </button>
@@ -1068,7 +1049,7 @@ export default function NavBar() {
                         setLoginError(null);
                       }
                     }}
-                    className="h-10 w-full rounded-[5px] border border-white/[0.10] bg-[#101113] px-3 text-[13px] font-semibold text-[#f7f4ed] outline-none transition-colors placeholder:text-[rgba(247,244,237,0.34)] focus:border-[#f0d373]/45"
+                    className="h-10 w-full rounded-[5px] border border-white/[0.10] bg-[#101113] px-3 text-[13px] font-semibold text-[#f7f4ed] outline-none transition-colors placeholder:text-[rgba(247,244,237,0.34)] focus:border-[#8bd7ff]/45"
                     placeholder="you@example.com"
                   />
                   {authMode === "signup" && (
@@ -1095,7 +1076,7 @@ export default function NavBar() {
                         setLoginError(null);
                       }
                     }}
-                    className="h-10 w-full rounded-[5px] border border-white/[0.10] bg-[#101113] px-3 text-[13px] font-semibold text-[#f7f4ed] outline-none transition-colors placeholder:text-[rgba(247,244,237,0.34)] focus:border-[#f0d373]/45"
+                    className="h-10 w-full rounded-[5px] border border-white/[0.10] bg-[#101113] px-3 text-[13px] font-semibold text-[#f7f4ed] outline-none transition-colors placeholder:text-[rgba(247,244,237,0.34)] focus:border-[#8bd7ff]/45"
                     placeholder="8+ characters, include a number"
                   />
                   {authMode === "signup" && (
@@ -1113,7 +1094,7 @@ export default function NavBar() {
                 <button
                   type="submit"
                   disabled={!canSubmitLogin}
-                  className="mt-3 inline-flex h-10 w-full cursor-pointer items-center justify-center rounded-[5px] border-0 bg-[#f0d373] px-4 text-[13px] font-extrabold text-[#171007] shadow-[rgba(255,255,255,0.18)_0_1px_0_0_inset] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-45"
+                  className="mt-3 inline-flex h-10 w-full cursor-pointer items-center justify-center rounded-[5px] border-0 bg-[#8bd7ff] px-4 text-[13px] font-extrabold text-[#061018] shadow-[rgba(255,255,255,0.18)_0_1px_0_0_inset] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-45"
                 >
                   {loginState === "sending" ? (authMode === "login" ? "Logging in..." : "Sending...") : authMode === "login" ? "Log in" : "Create account"}
                 </button>
@@ -1139,6 +1120,7 @@ export default function NavBar() {
         pendingQuery={pendingAssistantQuery}
         onPendingConsumed={() => setPendingAssistantQuery(null)}
       />
+      <SearchOverlay />
     </>
   );
 }

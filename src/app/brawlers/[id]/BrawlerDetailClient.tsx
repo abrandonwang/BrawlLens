@@ -1,38 +1,30 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { ArrowLeft, BarChart3, Bolt, MapPinned, Shield, Sparkles, Swords } from "lucide-react"
 import Link from "next/link"
-import { BrawlImage } from "@/components/BrawlImage"
-import { EmptyState, SkeletonBlock, StateButton } from "@/components/PolishStates"
+import { Bolt } from "lucide-react"
+import { BrawlImage, brawlerIconUrl } from "@/components/BrawlImage"
 import TierlistSubNav from "@/components/TierlistSubNav"
-import { BUFFIES } from "@/data/buffies"
 import { HYPERCHARGES } from "@/data/hypercharges"
-import { getBarWidth, winRateColor } from "@/lib/tiers"
+import { formatBrawlerName, formatNum } from "@/lib/format"
+import { getTierInfo, winRateColor } from "@/lib/tiers"
 
-interface StarPower {
+interface BrawlerPower {
   id: number
   name: string
-  description: string
-  imageUrl: string
-}
-
-interface Gadget {
-  id: number
-  name: string
-  description: string
-  imageUrl: string
+  description?: string
+  imageUrl?: string
 }
 
 interface Brawler {
   id: number
   name: string
-  description: string
-  imageUrl2: string
-  rarity: { id: number; name: string; color: string }
-  class: { id: number; name: string }
-  starPowers: StarPower[]
-  gadgets: Gadget[]
+  description?: string
+  imageUrl?: string
+  class?: { name?: string }
+  rarity?: { name?: string; color?: string }
+  gadgets?: BrawlerPower[]
+  starPowers?: BrawlerPower[]
 }
 
 interface BrawlerStats {
@@ -40,22 +32,26 @@ interface BrawlerStats {
   avgWinRate: number | null
   maps: { map: string; mode: string; picks: number; wins: number; winRate: number }[]
   modes: { mode: string; picks: number; winRate: number }[]
+}
+
+interface CatalogStat {
+  id: number
+  name: string
+  picks: number
+  wins: number
+  mapCount: number
+  bestMap: { name: string; mode: string; winRate: number; picks: number } | null
   histogram: number[]
-  trend7: { label: string; winRate: number; picks: number }[]
-  trend30: { label: string; winRate: number; picks: number }[]
+  winRate: number | null
 }
 
-type MapSort = "winRate" | "wins" | "picks" | "map" | "mode"
-
-function cleanDesc(text: string) {
-  return text.replace(/<![\w.]+>/g, "X")
-}
-
-function formatCompact(value: number | null | undefined) {
-  if (value == null || Number.isNaN(value)) return "-"
-  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`
-  if (value >= 1_000) return `${(value / 1_000).toFixed(1)}K`
-  return Math.round(value).toLocaleString()
+type AbilityItem = {
+  key: string
+  name: string
+  description: string
+  label: string
+  iconUrl?: string
+  tone: "gadget" | "star" | "hyper"
 }
 
 function formatPercent(value: number | null | undefined, digits = 1) {
@@ -63,340 +59,339 @@ function formatPercent(value: number | null | undefined, digits = 1) {
   return `${value.toFixed(digits)}%`
 }
 
-function tierFor(winRate: number | null | undefined, picks: number) {
-  if (winRate == null || picks < 10) return { label: "-", color: "var(--lb-text-4)" }
-  if (winRate >= 58) return { label: "S+", color: "#ffe16d" }
-  if (winRate >= 54) return { label: "S", color: "#b9a7ff" }
-  if (winRate >= 51) return { label: "A", color: "#74ddff" }
-  if (winRate >= 48) return { label: "B", color: "#f5f7fb" }
-  if (winRate >= 45) return { label: "C", color: "#ffb35f" }
-  return { label: "D", color: "#ff6b6b" }
+function formatRank(rank: number | null, total: number) {
+  if (!rank || !total) return "-"
+  return `${rank}/${total}`
 }
 
-function mapHref(name: string) {
-  return `/meta/${encodeURIComponent(name)}`
+function compactNumber(value: number | null | undefined) {
+  if (value == null || Number.isNaN(value)) return "-"
+  return formatNum(Math.round(value))
 }
 
-function StatCard({ label, value, detail, color }: { label: string; value: string; detail?: string; color?: string }) {
+function rankSuffix(rank: number | null) {
+  if (!rank) return "No rank yet"
+  const last = rank % 10
+  const teen = rank % 100
+  if (last === 1 && teen !== 11) return `${rank}st by win rate`
+  if (last === 2 && teen !== 12) return `${rank}nd by win rate`
+  if (last === 3 && teen !== 13) return `${rank}rd by win rate`
+  return `${rank}th by win rate`
+}
+
+function abilityItemsFor(brawler: Brawler): AbilityItem[] {
+  const gadgets = (brawler.gadgets ?? []).map((gadget, index) => ({
+    key: `gadget-${gadget.id ?? index}`,
+    name: gadget.name,
+    description: gadget.description || "Gadget details from Brawlify.",
+    label: "G",
+    iconUrl: gadget.imageUrl,
+    tone: "gadget" as const,
+  }))
+
+  const starPowers = (brawler.starPowers ?? []).map((starPower, index) => ({
+    key: `star-${starPower.id ?? index}`,
+    name: starPower.name,
+    description: starPower.description || "Star Power details from Brawlify.",
+    label: "S",
+    iconUrl: starPower.imageUrl,
+    tone: "star" as const,
+  }))
+
+  const hypercharge = HYPERCHARGES[brawler.id]
+  const hyper = hypercharge ? [{
+    key: `hyper-${brawler.id}`,
+    name: hypercharge.name,
+    description: `${hypercharge.description} +${hypercharge.speedBoost}% speed, +${hypercharge.damageBoost}% damage, +${hypercharge.shieldBoost}% shield while active.`,
+    label: "H",
+    tone: "hyper" as const,
+  }] : []
+
+  return [...gadgets, ...starPowers, ...hyper]
+}
+
+function StatMetric({ value, label, detail, color }: { value: string; label: string; detail?: string; color?: string }) {
   return (
-    <div className="rounded-[6px] border border-[rgba(247,244,237,0.08)] bg-[#15171d] p-4 shadow-[rgba(255,255,255,0.035)_0_1px_0_0_inset]">
-      <div className="text-[10px] font-bold tracking-[0.08em] text-[var(--lb-text-3)] uppercase">{label}</div>
-      <div className="mt-2 text-[28px] leading-none font-extrabold tracking-normal text-[var(--lb-text)]" style={{ color }}>{value}</div>
-      {detail && <div className="mt-2 truncate text-[11px] font-semibold text-[var(--lb-text-3)]">{detail}</div>}
+    <div className="bl-bd-stat">
+      <strong style={color ? { color } : undefined}>{value}</strong>
+      <span>{label}</span>
+      {detail && <em>{detail}</em>}
     </div>
   )
 }
 
-function WinRateSparkline({ values }: { values: { label?: string; winRate: number; picks?: number }[] }) {
-  if (values.length < 2) {
-    return <div className="grid h-[118px] place-items-center rounded-[6px] border border-[var(--line)] bg-[#101113] text-[11px] text-[var(--lb-text-3)]">Need more qualifying maps</div>
-  }
-  const min = Math.min(...values.map(point => point.winRate))
-  const max = Math.max(...values.map(point => point.winRate))
-  const range = Math.max(max - min, 4)
-  const points = values.map((point, index) => {
-    const x = (index / Math.max(values.length - 1, 1)) * 260
-    const normalized = (point.winRate - min) / range
-    const y = 82 - normalized * 64
-    return `${x.toFixed(1)},${y.toFixed(1)}`
-  }).join(" ")
-  const areaPoints = `0,92 ${points} 260,92`
+function AbilityBadge({ ability }: { ability: AbilityItem }) {
   return (
-    <div className="rounded-[6px] border border-[rgba(247,244,237,0.08)] bg-[#101113] px-4 py-3">
-      <svg viewBox="0 0 260 96" className="h-[118px] w-full text-[var(--dpm-warm)]">
-        <polyline points={areaPoints} fill="currentColor" opacity="0.12" stroke="none" />
-        <polyline points={points} fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-      <div className="flex items-center justify-between text-[10px] font-semibold text-[var(--lb-text-3)]">
-        <span>{values[0]?.label ?? "Start"} · {formatPercent(values[0]?.winRate)}</span>
-        <span>{values.at(-1)?.label ?? "Current"} · {formatPercent(values.at(-1)?.winRate)}</span>
+    <div className={`bl-bd-ability bl-bd-ability-${ability.tone}`}>
+      <div className="bl-bd-ability-icon" aria-label={ability.name}>
+        {ability.iconUrl ? (
+          <BrawlImage src={ability.iconUrl} alt={ability.name} width={34} height={34} className="size-full object-cover" sizes="34px" />
+        ) : (
+          <Bolt size={18} strokeWidth={2.5} />
+        )}
+        <span>{ability.label}</span>
+      </div>
+      <div className="bl-bd-ability-tip" role="tooltip">
+        <h3>{ability.name}</h3>
+        <p>{ability.description}</p>
       </div>
     </div>
   )
 }
 
-function Histogram({ buckets }: { buckets: number[] }) {
-  const labels = ["0-20", "20-40", "40-60", "60-80", "80-100"]
-  const max = Math.max(...buckets, 1)
+function BuildCell({ title, items, note }: { title: string; items: AbilityItem[]; note: string }) {
   return (
-    <div className="grid h-[157px] grid-cols-5 items-end gap-2 rounded-[6px] border border-[rgba(247,244,237,0.08)] bg-[#101113] px-4 py-3">
-      {labels.map((label, index) => (
-        <div key={label} className="flex h-full min-w-0 flex-col justify-end gap-2">
-          <div
-            className="min-h-1 rounded-t bg-[var(--accent)] opacity-90"
-            style={{ height: `${Math.max(8, ((buckets[index] ?? 0) / max) * 104)}px` }}
-            title={`${label}%: ${buckets[index] ?? 0} maps`}
-          />
-          <span className="truncate text-center text-[9px] font-semibold text-[var(--lb-text-3)]">{label}</span>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-function AbilityCard({ item, variant, buffy }: { item: StarPower | Gadget; variant: "gadget" | "starpower"; buffy?: string }) {
-  const isBuffied = Boolean(buffy)
-  const accent = isBuffied ? "#38bdf8" : variant === "gadget" ? "#4ade80" : "#22d3ee"
-  return (
-    <div className="rounded-[6px] border border-[rgba(247,244,237,0.08)] bg-[#15171d] p-4">
-      <div className="flex gap-3">
-        <div className="grid size-11 shrink-0 place-items-center overflow-hidden rounded-[6px] border bg-[#101113]" style={{ borderColor: `${accent}55` }}>
-          <BrawlImage src={item.imageUrl} alt={item.name} width={34} height={34} className="size-[34px] object-contain" sizes="34px" />
-        </div>
-        <div className="min-w-0">
-          <div className="flex min-w-0 flex-wrap items-center gap-2">
-            <h3 className="m-0 text-[14px] font-bold text-[var(--lb-text)]">{item.name}</h3>
-            {isBuffied && <span className="rounded-[4px] bg-sky-400/16 px-1.5 py-0.5 text-[9px] font-extrabold tracking-[0.08em] text-sky-200 uppercase">Buffied</span>}
+    <div className="bl-bd-build">
+      <div className="bl-bd-build-head">
+        <b>{title}</b>
+        <span>{note}</span>
+      </div>
+      <div className="bl-bd-build-icons">
+        {items.length ? items.map(item => (
+          <div key={`${title}-${item.key}`} className="bl-bd-mini-icon" title={item.name}>
+            {item.iconUrl ? (
+              <BrawlImage src={item.iconUrl} alt={item.name} width={34} height={34} className="size-full object-cover" sizes="34px" />
+            ) : (
+              <Bolt size={18} />
+            )}
           </div>
-          <p className="mt-1 mb-0 text-[12px] leading-[1.55] text-[var(--lb-text-2)]">{cleanDesc(buffy ?? item.description)}</p>
-        </div>
+        )) : <span className="bl-bd-muted">No kit data</span>}
       </div>
     </div>
+  )
+}
+
+function MapRow({ map }: { map: BrawlerStats["maps"][number] }) {
+  return (
+    <Link href={`/meta/${encodeURIComponent(map.map)}`} className="bl-bd-map-row">
+      <span>
+        <b>{map.map}</b>
+        <em>{map.mode}</em>
+      </span>
+      <strong style={{ color: winRateColor(map.winRate) }}>{formatPercent(map.winRate)}</strong>
+      <small>{compactNumber(map.picks)} picks</small>
+    </Link>
+  )
+}
+
+function MatchupCard({ stat, delta, type }: { stat: CatalogStat; delta: number; type: "good" | "bad" }) {
+  return (
+    <Link href={`/brawlers/${stat.id}`} className={`bl-bd-match-card bl-bd-match-card-${type}`}>
+      <BrawlImage src={brawlerIconUrl(stat.id)} alt={stat.name} width={116} height={128} className="bl-bd-match-img" sizes="116px" />
+      <div className="bl-bd-match-copy">
+        <b>{formatBrawlerName(stat.name)}</b>
+        <strong>{type === "good" ? "+" : "-"}{Math.abs(delta).toFixed(1)}%</strong>
+        <span>{compactNumber(stat.picks)} games</span>
+      </div>
+    </Link>
   )
 }
 
 export default function BrawlerDetailClient({ brawler }: { brawler: Brawler }) {
   const [stats, setStats] = useState<BrawlerStats | null>(null)
-  const [statsLoading, setStatsLoading] = useState(true)
-  const [statsError, setStatsError] = useState(false)
-  const [mapSort, setMapSort] = useState<{ key: MapSort; dir: "asc" | "desc" }>({ key: "winRate", dir: "desc" })
-  const [buffied, setBuffied] = useState(false)
-  const hypercharge = HYPERCHARGES[brawler.id]
-  const buffies = BUFFIES[brawler.id]
+  const [catalogStats, setCatalogStats] = useState<Record<string, CatalogStat>>({})
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    let alive = true
-    setStatsLoading(true)
-    setStatsError(false)
-    fetch(`/api/brawler-stats?id=${brawler.id}`, { cache: "no-store" })
-      .then(r => {
-        if (!r.ok) throw new Error("stats fetch failed")
-        return r.json()
-      })
-      .then((data: BrawlerStats) => {
-        if (!alive) return
-        setStats(data)
-        setStatsLoading(false)
+    document.body.classList.add("landing-bg")
+    return () => document.body.classList.remove("landing-bg")
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+
+    Promise.all([
+      fetch(`/api/brawler-stats?id=${brawler.id}`).then(res => res.ok ? res.json() : null),
+      fetch("/api/brawlers/stats").then(res => res.ok ? res.json() : null),
+    ])
+      .then(([detail, catalog]) => {
+        if (cancelled) return
+        setStats(detail)
+        setCatalogStats(catalog?.stats ?? {})
       })
       .catch(() => {
-        if (!alive) return
-        setStatsError(true)
-        setStatsLoading(false)
+        if (cancelled) return
+        setStats(null)
+        setCatalogStats({})
       })
-    return () => { alive = false }
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
   }, [brawler.id])
 
-  const sortedMaps = useMemo(() => {
-    const maps = stats?.maps ?? []
-    return [...maps].sort((a, b) => {
-      const dir = mapSort.dir === "asc" ? 1 : -1
-      if (mapSort.key === "map") return a.map.localeCompare(b.map) * dir
-      if (mapSort.key === "mode") return a.mode.localeCompare(b.mode) * dir
-      if (mapSort.key === "wins") return (a.wins - b.wins) * dir
-      if (mapSort.key === "picks") return (a.picks - b.picks) * dir
-      return (a.winRate - b.winRate) * dir
-    })
-  }, [stats?.maps, mapSort])
+  const abilities = useMemo(() => abilityItemsFor(brawler), [brawler])
+  const selectedCatalog = catalogStats[String(brawler.id)]
+  const catalogValues = useMemo(
+    () => Object.values(catalogStats).filter(stat => stat.winRate != null && stat.picks > 0),
+    [catalogStats],
+  )
+  const totalCatalogPicks = catalogValues.reduce((sum, stat) => sum + stat.picks, 0)
+  const selectedWinRate = stats?.avgWinRate ?? selectedCatalog?.winRate ?? null
+  const selectedPicks = stats?.totalPicks ?? selectedCatalog?.picks ?? 0
+  const rankable = catalogValues.filter(stat => stat.picks >= 50).sort((a, b) => (b.winRate ?? 0) - (a.winRate ?? 0))
+  const rank = rankable.findIndex(stat => stat.id === brawler.id)
+  const displayRank = rank >= 0 ? rank + 1 : null
+  const pickRate = totalCatalogPicks > 0 && selectedCatalog ? (selectedCatalog.picks / totalCatalogPicks) * 100 : null
+  const tier = selectedWinRate != null ? getTierInfo(selectedWinRate) : null
+  const topMaps = stats?.maps?.slice(0, 2) ?? []
+  const topModes = stats?.modes?.slice(0, 2) ?? []
+  const bestMapName = topMaps[0]?.map ?? selectedCatalog?.bestMap?.name ?? null
+  const bestMode = topModes[0] ?? null
+  const hyper = HYPERCHARGES[brawler.id]
 
-  const tier = tierFor(stats?.avgWinRate, stats?.totalPicks ?? 0)
-  const bestMap = sortedMaps[0]
-  const topMode = stats?.modes[0]
-  const abilityCount = brawler.gadgets.length + brawler.starPowers.length + (hypercharge ? 1 : 0)
-  const rarityColor = brawler.rarity.color.match(/#[0-9a-fA-F]{3,6}/)?.[0] ?? "#858dff"
+  const builds = useMemo(() => {
+    const gadgets = abilities.filter(item => item.tone === "gadget")
+    const stars = abilities.filter(item => item.tone === "star")
+    const hypers = abilities.filter(item => item.tone === "hyper")
+    return [
+      { title: "Primary build", items: [gadgets[0], stars[0], hypers[0]].filter(Boolean) as AbilityItem[], note: "Default ladder" },
+      { title: "Pressure build", items: [gadgets[1] ?? gadgets[0], stars[1] ?? stars[0], hypers[0]].filter(Boolean) as AbilityItem[], note: "High-tempo maps" },
+      { title: "Control build", items: [gadgets[0], stars[1] ?? stars[0], hypers[0]].filter(Boolean) as AbilityItem[], note: "Safer lanes" },
+    ]
+  }, [abilities])
 
-  const setMapHeaderSort = (key: MapSort) => {
-    setMapSort(current => current.key === key
-      ? { key, dir: current.dir === "asc" ? "desc" : "asc" }
-      : { key, dir: key === "map" || key === "mode" ? "asc" : "desc" })
-  }
+  const matchups = useMemo(() => {
+    if (selectedWinRate == null) return { good: [] as { stat: CatalogStat; delta: number }[], bad: [] as { stat: CatalogStat; delta: number }[] }
+    const pool = catalogValues
+      .filter(stat => stat.id !== brawler.id && stat.picks >= 50 && stat.winRate != null)
+      .map(stat => ({ stat, delta: selectedWinRate - (stat.winRate ?? selectedWinRate) }))
+
+    return {
+      good: [...pool].filter(item => item.delta > 0).sort((a, b) => b.delta - a.delta).slice(0, 5),
+      bad: [...pool].filter(item => item.delta < 0).sort((a, b) => a.delta - b.delta).slice(0, 5),
+    }
+  }, [brawler.id, catalogValues, selectedWinRate])
+
+  const summary = selectedWinRate == null
+    ? `${formatBrawlerName(brawler.name)} does not have enough tracked map data yet.`
+    : `${formatBrawlerName(brawler.name)} is ${rankSuffix(displayRank)} with ${formatPercent(selectedWinRate)} across ${compactNumber(selectedPicks)} analyzed games${bestMapName ? `, peaking on ${bestMapName}` : ""}.`
 
   return (
-    <main className="bl-tier-shell">
+    <main className="bl-bd-shell">
       <TierlistSubNav active="brawlers" />
-      <div className="mx-auto w-[min(1180px,calc(100vw_-_20px))] px-0 pt-5 pb-14">
-        <Link href="/brawlers" className="mb-4 inline-flex items-center gap-1.5 text-[12px] font-bold text-[var(--lb-text-3)] no-underline transition-colors hover:text-[var(--lb-text)]">
-          <ArrowLeft size={13} />
-          Brawlers
-        </Link>
 
-        <section className="mb-3 overflow-hidden rounded-[8px] border border-[rgba(247,244,237,0.065)] bg-[#15171d] shadow-[rgba(255,255,255,0.04)_0_1px_0_0_inset]">
-          <div className="grid grid-cols-[220px_minmax(0,1fr)] gap-0 max-md:grid-cols-1">
-            <div className="grid min-h-[230px] place-items-center border-r border-[rgba(247,244,237,0.065)] bg-[#101113] p-6 max-md:min-h-[190px] max-md:border-r-0 max-md:border-b">
-              <div className="grid size-[164px] place-items-center rounded-[8px] border-2 bg-black/18 p-4" style={{ borderColor: rarityColor }}>
-                <BrawlImage src={brawler.imageUrl2} alt={brawler.name} width={140} height={140} className="size-full object-contain" priority sizes="140px" />
+      <section className="bl-bd-hero">
+        <div className="bl-bd-hero-inner">
+          <div className="bl-bd-identity">
+            <div className="bl-bd-avatar">
+              <BrawlImage
+                src={brawler.imageUrl || brawlerIconUrl(brawler.id)}
+                alt={brawler.name}
+                width={72}
+                height={72}
+                className="size-full object-cover"
+                priority
+                sizes="72px"
+              />
+            </div>
+
+            <div className="bl-bd-title-block">
+              <h1><span>{formatBrawlerName(brawler.name)}</span> Build, Stats, Season 50</h1>
+              <div className="bl-bd-abilities" aria-label={`${brawler.name} abilities`}>
+                {abilities.length ? abilities.map(ability => <AbilityBadge key={ability.key} ability={ability} />) : (
+                  <span className="bl-bd-muted">Ability data unavailable</span>
+                )}
               </div>
             </div>
-            <div className="p-6 max-sm:p-4">
-              <div className="mb-3 flex flex-wrap items-center gap-2">
-                <span className="rounded-[5px] border px-2.5 py-1 text-[11px] font-extrabold" style={{ color: rarityColor, borderColor: `${rarityColor}66`, background: `${rarityColor}1c` }}>{brawler.rarity.name}</span>
-                {brawler.class.name !== "Unknown" && <span className="rounded-[5px] border border-[rgba(247,244,237,0.08)] bg-[#101113] px-2.5 py-1 text-[11px] font-bold text-[var(--lb-text-2)]">{brawler.class.name}</span>}
-              </div>
-              <h1 className="m-0 text-[clamp(34px,6vw,72px)] leading-[0.95] font-black tracking-normal text-[var(--lb-text)]">{brawler.name}</h1>
-              <p className="mt-4 mb-0 max-w-[720px] text-[14px] leading-[1.6] text-[var(--lb-text-2)]">{cleanDesc(brawler.description)}</p>
 
-              <div className="mt-6 grid grid-cols-4 gap-2 max-lg:grid-cols-2 max-sm:grid-cols-1">
-                <StatCard label="Tier" value={tier.label} detail="Dataset rank signal" color={tier.color} />
-                <StatCard label="Win rate" value={statsLoading ? "-" : formatPercent(stats?.avgWinRate)} detail={`${formatCompact(stats?.totalPicks)} tracked picks`} color={stats?.avgWinRate != null ? winRateColor(stats.avgWinRate) : undefined} />
-                <StatCard label="Best map" value={bestMap ? formatPercent(bestMap.winRate) : "-"} detail={bestMap?.map ?? "No map sample"} color={bestMap ? winRateColor(bestMap.winRate) : undefined} />
-                <StatCard label="Kit data" value={String(abilityCount)} detail="Gadgets, powers, hypercharge" />
-              </div>
-            </div>
+            <p className="bl-bd-summary">{summary}</p>
           </div>
+        </div>
+      </section>
+
+      <div className="bl-lb-frame bl-bd-frame">
+        <section className="bl-lb-board bl-bd-board">
+          {loading ? (
+            <div className="bl-bd-loading">Loading {formatBrawlerName(brawler.name)} stats...</div>
+          ) : (
+            <>
+              <section className="bl-bd-stat-strip" aria-label={`${brawler.name} stat summary`}>
+                <StatMetric value={tier?.label ?? "-"} label="tier" color={tier?.color} />
+                <StatMetric value={formatRank(displayRank, rankable.length)} label="rank" />
+                <StatMetric value={formatPercent(selectedWinRate)} label="winrate" color={selectedWinRate != null ? winRateColor(selectedWinRate) : undefined} />
+                <StatMetric value={formatPercent(pickRate)} label="pickrate" />
+                <StatMetric value={compactNumber(selectedPicks)} label="games analyzed" />
+              </section>
+
+              <section className="bl-bd-main-grid">
+                <div className="bl-bd-panel bl-bd-build-panel">
+                  <div className="bl-bd-panel-head">
+                    <span>Recommended Builds</span>
+                    <small>from available kit data</small>
+                  </div>
+                  <div className="bl-bd-build-grid">
+                    {builds.map(build => <BuildCell key={build.title} {...build} />)}
+                  </div>
+                  {hyper && (
+                    <div className="bl-bd-hyper-note">
+                      <Bolt size={14} />
+                      <span><b>{hyper.name}</b> adds {hyper.speedBoost}% speed, {hyper.damageBoost}% damage, and {hyper.shieldBoost}% shield during Hypercharge.</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="bl-bd-panel">
+                  <div className="bl-bd-panel-head">
+                    <span>Best Maps</span>
+                    <small>{bestMode ? bestMode.mode : brawler.class?.name ?? "tracked modes"}</small>
+                  </div>
+                  <div className="bl-bd-map-list">
+                    {topMaps.length ? topMaps.map(map => <MapRow key={`${map.map}-${map.mode}`} map={map} />) : (
+                      <div className="bl-bd-empty">No map sample yet.</div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="bl-bd-panel">
+                  <div className="bl-bd-panel-head">
+                    <span>Mode Profile</span>
+                    <small>{compactNumber(selectedPicks)} games</small>
+                  </div>
+                  <div className="bl-bd-mode-list">
+                    {topModes.length ? topModes.map(mode => (
+                      <div key={mode.mode} className="bl-bd-mode-row">
+                        <span>{mode.mode}</span>
+                        <strong style={{ color: winRateColor(mode.winRate) }}>{formatPercent(mode.winRate)}</strong>
+                        <em>{compactNumber(mode.picks)}</em>
+                      </div>
+                    )) : <div className="bl-bd-empty">No mode sample yet.</div>}
+                  </div>
+                </div>
+              </section>
+
+              <section className="bl-bd-matchups">
+                <div className="bl-bd-match-head">
+                  <span>Meta Matchups as {formatBrawlerName(brawler.name)}</span>
+                  <div className="bl-bd-match-tools">
+                    <button type="button" className="bl-bd-match-tab bl-bd-match-tab-active">Matchups</button>
+                  </div>
+                </div>
+                <div className="bl-bd-match-labels">
+                  <b>Good Against</b>
+                  <span>Compared with other brawlers at 50+ tracked games</span>
+                  <b>Bad Against</b>
+                </div>
+                <div className="bl-bd-match-strip">
+                  <div className="bl-bd-match-side">
+                    {matchups.good.length ? matchups.good.map(item => <MatchupCard key={item.stat.id} type="good" {...item} />) : <div className="bl-bd-empty">Need more sample.</div>}
+                  </div>
+                  <Link href="/brawlers" className="bl-bd-full-list">
+                    <span>+</span>
+                    Full List
+                  </Link>
+                  <div className="bl-bd-match-side">
+                    {matchups.bad.length ? matchups.bad.map(item => <MatchupCard key={item.stat.id} type="bad" {...item} delta={Math.abs(item.delta)} />) : <div className="bl-bd-empty">Need more sample.</div>}
+                  </div>
+                </div>
+              </section>
+            </>
+          )}
         </section>
-
-        {statsError ? (
-          <EmptyState
-            title="Stats did not load"
-            description="The brawler detail request failed. The kit data below is still available."
-            action={<StateButton onClick={() => window.location.reload()}>Retry</StateButton>}
-          />
-        ) : (
-          <div className="grid grid-cols-[minmax(0,1.45fr)_minmax(300px,0.75fr)] gap-3 max-lg:grid-cols-1">
-            <div className="space-y-3">
-              <section className="rounded-[8px] border border-[rgba(247,244,237,0.065)] bg-[#15171d] p-4">
-                <div className="mb-3 flex items-center gap-2 text-[14px] font-extrabold text-[var(--lb-text)]">
-                  <BarChart3 size={16} />
-                  Performance Shape
-                </div>
-                {statsLoading ? (
-                  <div className="grid grid-cols-2 gap-3 max-sm:grid-cols-1">
-                    <SkeletonBlock className="h-[178px] rounded-[6px]" />
-                    <SkeletonBlock className="h-[178px] rounded-[6px]" />
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 gap-3 max-sm:grid-cols-1">
-                    <WinRateSparkline values={stats?.trend7 ?? []} />
-                    <Histogram buckets={stats?.histogram ?? []} />
-                  </div>
-                )}
-              </section>
-
-              <section className="rounded-[8px] border border-[rgba(247,244,237,0.065)] bg-[#15171d] p-4">
-                <div className="mb-3 flex items-center gap-2 text-[14px] font-extrabold text-[var(--lb-text)]">
-                  <MapPinned size={16} />
-                  Best Maps
-                </div>
-                {statsLoading ? (
-                  <div className="space-y-2">{Array.from({ length: 8 }).map((_, index) => <SkeletonBlock key={index} className="h-12 rounded-[5px]" />)}</div>
-                ) : sortedMaps.length === 0 ? (
-                  <EmptyState title="No map stats yet" description="This brawler does not have enough tracked picks on individual maps." />
-                ) : (
-                  <div className="overflow-hidden rounded-[6px] border border-[rgba(247,244,237,0.08)]">
-                    <div className="grid grid-cols-[minmax(0,1.25fr)_minmax(0,0.8fr)_minmax(120px,1fr)_72px_72px] gap-3 border-b border-[rgba(247,244,237,0.08)] bg-[#101113] px-4 py-3 text-[11px] font-bold text-[var(--lb-text-3)] max-md:hidden">
-                      {([
-                        ["Map", "map", "left"],
-                        ["Mode", "mode", "left"],
-                        ["Win rate", "winRate", "left"],
-                        ["Wins", "wins", "right"],
-                        ["Picks", "picks", "right"],
-                      ] as [string, MapSort, "left" | "right"][]).map(([label, key, align]) => (
-                        <button
-                          key={`${label}-${key}`}
-                          type="button"
-                          onClick={() => setMapHeaderSort(key)}
-                          className={`cursor-pointer border-0 bg-transparent p-0 text-[11px] font-bold text-inherit ${align === "right" ? "text-right" : "text-left"}`}
-                        >
-                          {label}{mapSort.key === key ? (mapSort.dir === "asc" ? " ↑" : " ↓") : ""}
-                        </button>
-                      ))}
-                    </div>
-                    {sortedMaps.map((map, index) => (
-                      <Link
-                        key={`${map.map}-${map.mode}-${index}`}
-                        href={mapHref(map.map)}
-                        className="grid min-h-[58px] grid-cols-[minmax(0,1.25fr)_minmax(0,0.8fr)_minmax(120px,1fr)_72px_72px] items-center gap-3 border-b border-[rgba(247,244,237,0.065)] bg-[#15171d] px-4 py-3 text-[13px] no-underline transition-colors last:border-b-0 hover:bg-[#202329] max-md:grid-cols-[minmax(0,1fr)_72px] max-md:gap-y-1"
-                      >
-                        <span className="min-w-0 truncate font-bold text-[var(--lb-text)]">{map.map}</span>
-                        <span className="min-w-0 truncate text-[var(--lb-text-3)] max-md:hidden">{map.mode}</span>
-                        <div className="flex min-w-0 items-center gap-3 max-md:col-span-2">
-                          <span className="bl-num w-[52px] shrink-0 font-extrabold" style={{ color: winRateColor(map.winRate) }}>{formatPercent(map.winRate)}</span>
-                          <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/10">
-                            <div className="h-full rounded-full" style={{ width: `${getBarWidth(map.winRate)}%`, background: winRateColor(map.winRate) }} />
-                          </div>
-                        </div>
-                        <span className="bl-num text-right text-[var(--lb-text-2)] max-md:hidden">{formatCompact(map.wins)}</span>
-                        <span className="bl-num text-right text-[var(--lb-text-2)]">{formatCompact(map.picks)}</span>
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </section>
-            </div>
-
-            <aside className="space-y-3">
-              <section className="rounded-[8px] border border-[rgba(247,244,237,0.065)] bg-[#15171d] p-4">
-                <div className="mb-3 flex items-center gap-2 text-[14px] font-extrabold text-[var(--lb-text)]">
-                  <Swords size={16} />
-                  Mode Profile
-                </div>
-                {statsLoading ? (
-                  <div className="space-y-2">{Array.from({ length: 5 }).map((_, index) => <SkeletonBlock key={index} className="h-11 rounded-[5px]" />)}</div>
-                ) : stats?.modes.length ? (
-                  <div className="space-y-2">
-                    {stats.modes.map(mode => (
-                      <div key={mode.mode} className="rounded-[6px] border border-[rgba(247,244,237,0.08)] bg-[#101113] px-3 py-2.5">
-                        <div className="mb-2 flex items-center justify-between gap-3">
-                          <span className="truncate text-[13px] font-bold text-[var(--lb-text)]">{mode.mode}</span>
-                          <span className="bl-num font-extrabold" style={{ color: winRateColor(mode.winRate) }}>{formatPercent(mode.winRate)}</span>
-                        </div>
-                        <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
-                          <div className="h-full rounded-full" style={{ width: `${getBarWidth(mode.winRate)}%`, background: winRateColor(mode.winRate) }} />
-                        </div>
-                        <div className="mt-1.5 text-[10px] font-semibold text-[var(--lb-text-3)]">{formatCompact(mode.picks)} picks</div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="m-0 text-[12px] text-[var(--lb-text-3)]">No mode sample yet.</p>
-                )}
-                {topMode && <p className="mt-3 mb-0 text-[11px] font-semibold text-[var(--lb-text-3)]">Strongest tracked mode: <span className="text-[var(--lb-text)]">{topMode.mode}</span></p>}
-              </section>
-
-              <section className="rounded-[8px] border border-[rgba(247,244,237,0.065)] bg-[#15171d] p-4">
-                <div className="mb-3 flex items-center gap-2 text-[14px] font-extrabold text-[var(--lb-text)]">
-                  <Sparkles size={16} />
-                  Abilities
-                </div>
-                <div className="space-y-2">
-                  {brawler.gadgets.map(gadget => (
-                    <AbilityCard key={gadget.id} item={gadget} variant="gadget" buffy={buffied ? buffies?.gadgets?.[gadget.name] : undefined} />
-                  ))}
-                  {brawler.starPowers.map(starPower => (
-                    <AbilityCard key={starPower.id} item={starPower} variant="starpower" buffy={buffied ? buffies?.starPowers?.[starPower.name] : undefined} />
-                  ))}
-                  {hypercharge && (
-                    <div className="rounded-[6px] border border-purple-300/20 bg-[#101113] p-4">
-                      <div className="mb-2 flex items-center gap-2 text-[14px] font-bold text-[var(--lb-text)]">
-                        <Bolt size={15} className="text-purple-300" />
-                        {hypercharge.name}
-                        {buffied && buffies?.hypercharge && <span className="rounded-[4px] bg-sky-400/16 px-1.5 py-0.5 text-[9px] font-extrabold tracking-[0.08em] text-sky-200 uppercase">Buffied</span>}
-                      </div>
-                      <p className="m-0 text-[12px] leading-[1.55] text-[var(--lb-text-2)]">{buffied && buffies?.hypercharge ? buffies.hypercharge : hypercharge.description}</p>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        <span className="rounded-[5px] bg-red-400/12 px-2 py-1 text-[10px] font-bold text-red-300">+{hypercharge.damageBoost}% damage</span>
-                        <span className="rounded-[5px] bg-blue-400/12 px-2 py-1 text-[10px] font-bold text-blue-300">+{hypercharge.shieldBoost}% shield</span>
-                        <span className="rounded-[5px] bg-emerald-400/12 px-2 py-1 text-[10px] font-bold text-emerald-300">+{hypercharge.speedBoost}% speed</span>
-                      </div>
-                    </div>
-                  )}
-                  {!brawler.gadgets.length && !brawler.starPowers.length && !hypercharge && (
-                    <p className="m-0 text-[12px] text-[var(--lb-text-3)]">No ability data available.</p>
-                  )}
-                </div>
-                {buffies && (
-                  <button
-                    type="button"
-                    onClick={() => setBuffied(value => !value)}
-                    className="mt-3 inline-flex min-h-8 cursor-pointer items-center gap-2 rounded-[5px] border border-sky-300/24 bg-sky-400/10 px-3 text-[12px] font-extrabold text-sky-100"
-                  >
-                    <Shield size={13} />
-                    {buffied ? "Buffies on" : "Apply buffies"}
-                  </button>
-                )}
-              </section>
-            </aside>
-          </div>
-        )}
       </div>
     </main>
   )
