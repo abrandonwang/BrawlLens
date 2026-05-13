@@ -25,7 +25,7 @@ async function main() {
   console.log(`battles: ${bCount[0].count}, battle_players: ${bpCount[0].count}`);
 
   if (Number(bpCount[0].count) === 0) {
-    console.log("No raw data in local DB — nothing to aggregate.");
+    console.log("No raw data in local DB - nothing to aggregate.");
     await localPg.end();
     return;
   }

@@ -148,7 +148,7 @@ export default function MapsPageClient() {
         <TierlistSubNav active="maps" />
         <div className="dpm-page-shell">
         <section className="bl-tier-intro-card" aria-labelledby="maps-title">
-          <h1 id="maps-title">Maps & Meta</h1>
+          <h1 id="maps-title">Maps</h1>
           <div className="bl-tier-analyzed">
             <span>BATTLES ANALYZED</span>
             <strong>{totalBattlesAnalyzed > 0 ? formatFullNumber(totalBattlesAnalyzed) : "-"}</strong>

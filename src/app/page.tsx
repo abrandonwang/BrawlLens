@@ -2,11 +2,11 @@ import type { Metadata } from "next"
 import LandingClient from "./LandingClient"
 
 export const metadata: Metadata = {
-  title: "BrawlLens - Clean Brawl Stars analytics",
-  description: "A quiet workspace for Brawl Stars leaderboards, player lookups, brawler trends, and map meta.",
+  title: "BrawlLens",
+  description: "Brawl Stars leaderboards, player lookups, brawler stats, and maps.",
   openGraph: {
-    title: "BrawlLens - Clean Brawl Stars analytics",
-    description: "A quiet workspace for Brawl Stars leaderboards, player lookups, brawler trends, and map meta.",
+    title: "BrawlLens",
+    description: "Brawl Stars leaderboards, player lookups, brawler stats, and maps.",
     type: "website",
   },
 }

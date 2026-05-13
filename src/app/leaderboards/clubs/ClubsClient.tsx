@@ -26,6 +26,7 @@ import {
   RegionPills,
   SearchBox,
   TableHead,
+  TableHeadHelp,
   professionalTeamCards,
 } from "../LeaderboardDpmShell"
 
@@ -167,14 +168,14 @@ export default function ClubsClient({ allData }: { allData: RegionData[] }) {
               <TableHead className={`${clubTableGrid} bl-lb-club-table-head`}>
                 <span>Rank</span>
                 <span>Club</span>
-                <span>Trophies</span>
-                <span>Members</span>
-                <span>Avg</span>
-                <span>Top member</span>
-                <span>Prestige</span>
-                <span>Leader %</span>
-                <span>World</span>
-                <span>Updated</span>
+                <TableHeadHelp label="Trophies" help="Club trophy total from the selected leaderboard snapshot." />
+                <TableHeadHelp label="Members" help="Visible member count for the club." />
+                <TableHeadHelp label="Avg" help="Club trophies divided by visible member count." />
+                <TableHeadHelp label="Top member" help="Highest trophy member returned by club enrichment." />
+                <TableHeadHelp label="Prestige" help="Summed member prestige from enrichment when available." />
+                <TableHeadHelp label="Leader %" help="Top member trophies as a share of the club trophy total." />
+                <TableHeadHelp label="World" help="The club's global rank when BrawlLens can match it to the global leaderboard." />
+                <TableHeadHelp label="Updated" help="How recently BrawlLens last updated this leaderboard row." />
               </TableHead>
 
               <div className="bl-lb-table-list">

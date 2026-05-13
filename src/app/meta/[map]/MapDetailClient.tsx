@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react"
 import { Flame, Search } from "lucide-react"
 import Link from "next/link"
 import { BrawlImage, brawlerIconUrl } from "@/components/BrawlImage"
+import HelpTooltip from "@/components/HelpTooltip"
 import { EmptyState, StateButton, StateLink } from "@/components/PolishStates"
 import TierlistSubNav from "@/components/TierlistSubNav"
 import { LeaderboardPanel, RankCell, TableHead } from "@/app/leaderboards/LeaderboardDpmShell"
@@ -45,23 +46,48 @@ function formatFullNumber(value: number) {
   return value.toLocaleString("en-US")
 }
 
-function StatMetric({ value, label, detail, color }: { value: string; label: string; detail?: string; color?: string }) {
+function StatMetric({ value, label, detail, color, help }: { value: string; label: string; detail?: string; color?: string; help?: string }) {
   return (
     <div className="bl-bd-stat">
       <strong style={color ? { color } : undefined}>{value}</strong>
-      <span>{label}</span>
+      <span className="bl-help-label bl-help-label-center">
+        <span>{label}</span>
+        {help && (
+          <HelpTooltip label={`${label} explained`}>
+            {help}
+          </HelpTooltip>
+        )}
+      </span>
       {detail && <em>{detail}</em>}
     </div>
   )
 }
 
-function NamedStatMetric({ label, brawler, detail }: { label: string; brawler: BrawlerStat | null; detail?: string }) {
+function NamedStatMetric({ label, brawler, detail, help }: { label: string; brawler: BrawlerStat | null; detail?: string; help?: string }) {
   return (
     <div className="bl-bd-stat bl-bd-stat-named">
-      <span>{label}:</span>
+      <span className="bl-help-label bl-help-label-center">
+        <span>{label}:</span>
+        {help && (
+          <HelpTooltip label={`${label} explained`}>
+            {help}
+          </HelpTooltip>
+        )}
+      </span>
       <strong>{brawler ? formatBrawlerName(brawler.name) : "-"}</strong>
       {detail && <em>{detail}</em>}
     </div>
+  )
+}
+
+function HeaderHelp({ label, help }: { label: string; help: string }) {
+  return (
+    <span className="bl-help-label">
+      <span>{label}</span>
+      <HelpTooltip label={`${label} explained`}>
+        {help}
+      </HelpTooltip>
+    </span>
   )
 }
 
@@ -85,7 +111,7 @@ function SnapshotBrawler({ label, brawler }: { label: string; brawler: BrawlerSt
         <b>{formatBrawlerName(brawler.name)}</b>
       </span>
       <strong style={{ color: winRateColor(brawler.winRate) }}>{formatPercent(brawler.winRate)}</strong>
-      <small style={{ color: tier.color, borderColor: tier.border, background: tier.bg }}>{tier.label}</small>
+      <span className="bl-tier-tier bl-md-snapshot-tier" style={{ color: tier.color }}>{tier.label}</span>
     </Link>
   )
 }
@@ -108,7 +134,7 @@ function MapBrawlerRow({ brawler, rank }: { brawler: BrawlerStat; rank: number }
       <span className="bl-lb-row-stat" style={{ color: winRateColor(brawler.winRate) }}>{formatPercent(brawler.winRate)}</span>
       <span className="bl-lb-row-mono">{formatNum(brawler.wins)}</span>
       <span className="bl-lb-row-mono">{formatNum(brawler.picks)}</span>
-      <span className="bl-md-tier-pill" style={{ color: tier.color, borderColor: tier.border, background: tier.bg }}>{tier.label}</span>
+      <span className="bl-tier-tier" style={{ color: tier.color }}>{tier.label}</span>
     </div>
   )
 }
@@ -225,11 +251,11 @@ export default function MapDetailClient({ mapName, imageUrl, modeName, totalBatt
       <div className="bl-lb-frame bl-bd-frame">
         <section className="bl-lb-board bl-bd-board">
           <section className="bl-bd-stat-strip" aria-label={`${mapName} stat summary`}>
-            <StatMetric value={formatFullNumber(totalBattles)} label="battles analyzed" />
-            <StatMetric value={formatPercent(avgWinRate)} label="avg winrate" color={avgWinRate != null ? winRateColor(avgWinRate) : undefined} />
-            <NamedStatMetric label="Best brawler" brawler={bestWinRate} detail={bestWinRate ? `${formatPercent(bestWinRate.winRate)} win rate` : "No sample"} />
-            <NamedStatMetric label="Most picked" brawler={mostPicked} detail={mostPicked ? `${formatFullNumber(mostPicked.picks)} games` : "No sample"} />
-            <StatMetric value={formatNum(brawlers.length)} label="brawlers tracked" />
+            <StatMetric value={formatFullNumber(totalBattles)} label="battles analyzed" help="Total battles is derived from tracked brawler pick rows for this map." />
+            <StatMetric value={formatPercent(avgWinRate)} label="avg winrate" color={avgWinRate != null ? winRateColor(avgWinRate) : undefined} help="Average win rate is calculated from total wins divided by total picks across tracked brawlers." />
+            <NamedStatMetric label="Best brawler" brawler={bestWinRate} detail={bestWinRate ? `${formatPercent(bestWinRate.winRate)} win rate` : "No sample"} help="Best brawler is the highest win-rate brawler after the current minimum games filter is applied." />
+            <NamedStatMetric label="Most picked" brawler={mostPicked} detail={mostPicked ? `${formatFullNumber(mostPicked.picks)} games` : "No sample"} help="Most picked is the brawler with the highest tracked pick count on this map, regardless of win rate." />
+            <StatMetric value={formatNum(brawlers.length)} label="brawlers tracked" help="This is the number of brawlers with tracked rows for this map before search and minimum-game filters." />
           </section>
 
           <section className="bl-md-snapshot-grid">
@@ -325,10 +351,10 @@ export default function MapDetailClient({ mapName, imageUrl, modeName, totalBatt
                   <TableHead className={`${performanceGrid} bl-md-performance-head`}>
                     <span>Rank</span>
                     <span>Brawler</span>
-                    <span>Win rate</span>
-                    <span>Wins</span>
-                    <span>Games</span>
-                    <span>Tier</span>
+                    <HeaderHelp label="Win rate" help="Wins divided by games for this brawler on this map." />
+                    <HeaderHelp label="Wins" help="Tracked wins for this brawler on this map." />
+                    <HeaderHelp label="Games" help="Tracked picks for this brawler on this map. Higher samples are usually more reliable." />
+                    <HeaderHelp label="Tier" help="A compact tier derived from win rate, using the same tier color language as the brawler tierlist." />
                   </TableHead>
                   <div className="bl-lb-table-list">
                     {filtered.map((brawler, index) => <MapBrawlerRow key={brawler.brawlerId} brawler={brawler} rank={index + 1} />)}

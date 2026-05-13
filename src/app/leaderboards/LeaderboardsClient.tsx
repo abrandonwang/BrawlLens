@@ -26,6 +26,7 @@ import {
   RegionPills,
   SearchBox,
   TableHead,
+  TableHeadHelp,
   professionalTeamCards,
   regionCode,
 } from "./LeaderboardDpmShell"
@@ -202,13 +203,13 @@ export default function LeaderboardsClient({
               <TableHead className={`${playerTableGrid} bl-lb-player-table-head`}>
                 <span>Rank</span>
                 <span>Player</span>
-                <span>Trophies</span>
+                <TableHeadHelp label="Trophies" help="Current trophy count from the leaderboard snapshot for the selected region." />
                 <span>Club</span>
-                <span>Wins</span>
-                <span>Best brawlers</span>
-                <span>Peak</span>
-                <span>Prestige</span>
-                <span>World</span>
+                <TableHeadHelp label="Wins" help="Total public win categories from the enriched player profile when available." />
+                <TableHeadHelp label="Best brawlers" help="The player's highest trophy brawlers from their public profile." />
+                <TableHeadHelp label="Peak" help="The highest trophy brawler found in the player's profile snapshot." />
+                <TableHeadHelp label="Prestige" help="Total prestige level from the public profile when the API returns it." />
+                <TableHeadHelp label="World" help="The player's global trophy rank when BrawlLens can match the selected row to the global leaderboard." />
               </TableHead>
 
               <div className="bl-lb-table-list">

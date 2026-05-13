@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, type ReactNode } from "react";
 import Link from "next/link";
 import { BrawlImage } from "@/components/BrawlImage";
+import HelpTooltip from "@/components/HelpTooltip";
 import { EmptyState, MapGridSkeleton, StateButton } from "@/components/PolishStates";
 import { MODE_CONFIG } from "@/lib/modes";
 import { normalizeMapName } from "@/lib/format";
@@ -181,6 +182,9 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch,
               <span className={`size-1.5 rounded-full ${liveOnly ? "bg-[var(--win)]" : "bg-[var(--ink-4)]"}`} />
               {liveOnly ? `${liveCount.toLocaleString()} live · on` : `${liveCountAll.toLocaleString()} live`}
             </button>
+            <HelpTooltip label="Live maps explained" align="left">
+              Live maps come from the current rotation feed. Turning this on filters the grid to maps active right now.
+            </HelpTooltip>
             <span className="inline-flex min-h-8 items-center whitespace-nowrap rounded-[5px] border border-[var(--line)] bg-[#101113] px-3 text-[12px] font-semibold tracking-normal text-[var(--ink-3)] max-[420px]:px-2 max-[420px]:text-[10px]">Page {mapPage + 1} of {mapTotalPages}</span>
           </div>
         </div>

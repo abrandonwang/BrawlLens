@@ -8,6 +8,7 @@ const footerLinks: { label: string; href: string }[] = [
   { label: "Clubs", href: "/leaderboards/clubs" },
   { label: "Brawlers", href: "/brawlers" },
   { label: "Maps", href: "/meta" },
+  { label: "Guides", href: "/guides" },
 ]
 
 export default function Footer() {

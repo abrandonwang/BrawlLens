@@ -86,7 +86,7 @@ export async function generateMetadata(
   const { tag: rawTag } = await params
   const tag = sanitizePlayerTag(decodeURIComponent(rawTag))
   return {
-    title: tag ? `Brawlers #${tag} - BrawlLens` : "Player brawlers - BrawlLens",
+    title: tag ? `#${tag} Brawlers - BrawlLens` : "Player Brawlers - BrawlLens",
   }
 }
 

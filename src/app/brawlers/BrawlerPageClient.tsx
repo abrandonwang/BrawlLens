@@ -124,6 +124,17 @@ function getBrawlerClassName(brawler: Brawler) {
     ?? "Unclassified"
 }
 
+function HeaderHelp({ label, help }: { label: string; help: string }) {
+  return (
+    <span className="bl-help-label">
+      <span>{label}</span>
+      <HelpTooltip label={`${label} explained`}>
+        {help}
+      </HelpTooltip>
+    </span>
+  )
+}
+
 export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] }) {
   const [activeRarity, setActiveRarity] = useState<string | null>(null)
   const [activeClass, setActiveClass] = useState<string | null>(null)
@@ -419,10 +430,10 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
                   <span>Brawler</span>
                   <span>Rarity</span>
                   <span>Class</span>
-                  <span>Tier</span>
-                  <span>Winrate</span>
-                  <span>Pickrate</span>
-                  <span>Games</span>
+                  <HeaderHelp label="Tier" help="Tier is derived from tracked win rate with a minimum sample guardrail, so tiny lucky samples do not jump to the top." />
+                  <HeaderHelp label="Winrate" help="Wins divided by tracked picks for that brawler across the eligible map dataset." />
+                  <HeaderHelp label="Pickrate" help="This brawler's tracked picks divided by the total tracked brawler picks in the current dataset." />
+                  <HeaderHelp label="Games" help="The raw tracked pick count used as the sample size for this brawler row." />
                 </div>
 
                 {filteredCount === 0 ? (

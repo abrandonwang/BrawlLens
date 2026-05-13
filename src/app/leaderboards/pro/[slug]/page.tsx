@@ -26,10 +26,10 @@ export async function generateMetadata({
   }
 
   return {
-    title: `${team.name} Pro Board - BrawlLens`,
-    description: `Roster and recent match board for ${team.name}.`,
+    title: `${team.name} - BrawlLens`,
+    description: `Roster and recent matches for ${team.name}.`,
     openGraph: {
-      title: `${team.name} Pro Board - BrawlLens`,
+      title: `${team.name} - BrawlLens`,
       description: team.description,
       type: "website",
     },

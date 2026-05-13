@@ -93,15 +93,15 @@ export async function generateMetadata(
     const data = (await res.json()) as Player
     const name = data?.name ?? `#${tag}`
     const trophies = data?.trophies ?? 0
-    const description = `${name} (#${tag}) - ${trophies.toLocaleString()} trophies on BrawlLens.`
+    const description = `${name} (#${tag}) with ${trophies.toLocaleString()} trophies on BrawlLens.`
     return {
       title: `${name} - BrawlLens`,
       description,
-      openGraph: { title: `${name} (#${tag})`, description, type: "profile" },
+      openGraph: { title: `${name} - BrawlLens`, description, type: "profile" },
     }
   } catch {
     return {
-      title: `Player #${tag} - BrawlLens`,
+      title: `#${tag} - BrawlLens`,
       description: `BrawlLens profile lookup for player #${tag}.`,
     }
   }

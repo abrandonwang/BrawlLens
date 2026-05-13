@@ -80,11 +80,178 @@ interface LandingData {
   club:   { name: string; tag: string; trophies: number } | null
 }
 
+interface PageTableContext {
+  caption?: string
+  headers: string[]
+  rows: string[][]
+}
+
+interface PageLinkContext {
+  text: string
+  href: string
+}
+
+interface PageContext {
+  url: string
+  path: string
+  title: string
+  headings: string[]
+  stats: string[]
+  tables: PageTableContext[]
+  links: PageLinkContext[]
+  visibleText: string
+}
+
 interface Props {
   open: boolean
   onClose: () => void
   pendingQuery?: string | null
   onPendingConsumed?: () => void
+}
+
+function compactText(value: string, maxLength = 220) {
+  const text = value.replace(/\s+/g, " ").trim()
+  return text.length > maxLength ? `${text.slice(0, maxLength - 1).trim()}…` : text
+}
+
+function uniqueCompact(values: string[], limit: number) {
+  const seen = new Set<string>()
+  const next: string[] = []
+  for (const value of values) {
+    const compact = compactText(value)
+    if (!compact || seen.has(compact)) continue
+    seen.add(compact)
+    next.push(compact)
+    if (next.length >= limit) break
+  }
+  return next
+}
+
+function isElementVisible(element: Element) {
+  if (!(element instanceof HTMLElement)) return true
+  const rect = element.getBoundingClientRect()
+  const style = window.getComputedStyle(element)
+  return rect.width > 0 && rect.height > 0 && style.display !== "none" && style.visibility !== "hidden"
+}
+
+function textFromElement(element: Element, maxLength = 220) {
+  return compactText(element.textContent ?? "", maxLength)
+}
+
+function collectVisibleTables(root: Element): PageTableContext[] {
+  return Array.from(root.querySelectorAll("table"))
+    .filter(isElementVisible)
+    .slice(0, 4)
+    .map(table => {
+      const caption = table.querySelector("caption")
+      const headers = uniqueCompact(
+        Array.from(table.querySelectorAll("thead th, thead td")).map(cell => textFromElement(cell, 90)),
+        10,
+      )
+      const rows = Array.from(table.querySelectorAll("tbody tr, tr"))
+        .filter(isElementVisible)
+        .slice(0, 12)
+        .map(row => Array.from(row.querySelectorAll("th, td")).map(cell => textFromElement(cell, 90)).filter(Boolean))
+        .filter(row => row.length > 0)
+      return {
+        caption: caption ? textFromElement(caption, 140) : undefined,
+        headers,
+        rows,
+      }
+    })
+    .filter(table => table.headers.length > 0 || table.rows.length > 0)
+}
+
+function collectPageContext(): PageContext | null {
+  if (typeof window === "undefined" || typeof document === "undefined") return null
+
+  const root = document.querySelector("main") ?? document.body
+  if (!root) return null
+
+  const textClone = root.cloneNode(true) as Element
+  textClone.querySelectorAll("script, style, noscript, nav, [role='dialog'], input, textarea").forEach(node => node.remove())
+
+  const headings = uniqueCompact(
+    Array.from(root.querySelectorAll("h1, h2, h3"))
+      .filter(isElementVisible)
+      .map(heading => textFromElement(heading, 140)),
+    12,
+  )
+
+  const stats = uniqueCompact(
+    Array.from(root.querySelectorAll("[data-ai-context], .bl-bd-stat, .bl-md-kpi, .bl-map-hero-pill, .bl-lb-podium-card, .bl-profile-stat, .bl-card-stat, .bl-tier-card-stat"))
+      .filter(isElementVisible)
+      .map(node => textFromElement(node, 180)),
+    24,
+  )
+
+  const links = Array.from(root.querySelectorAll<HTMLAnchorElement>("a[href]"))
+    .filter(isElementVisible)
+    .map(link => ({
+      text: textFromElement(link, 90),
+      href: link.href,
+    }))
+    .filter(link => link.text)
+    .slice(0, 28)
+
+  return {
+    url: window.location.href,
+    path: `${window.location.pathname}${window.location.search}`,
+    title: document.title,
+    headings,
+    stats,
+    tables: collectVisibleTables(root),
+    links,
+    visibleText: compactText(textClone.textContent ?? "", 4200),
+  }
+}
+
+function suggestionsForCurrentPage() {
+  const context = collectPageContext()
+  if (!context) return []
+
+  const primaryHeading = context.headings[0]?.replace(/\s+(Map|Brawler|Stats|Tier List).*$/i, "").trim()
+  if (context.path.startsWith("/meta/") && primaryHeading) {
+    return [
+      `Best brawlers on ${primaryHeading}?`,
+      `Summarize this map's meta.`,
+      "Which picks have enough games to trust?",
+    ]
+  }
+
+  if (context.path.startsWith("/brawlers/") && primaryHeading) {
+    return [
+      `What are ${primaryHeading}'s best maps?`,
+      `Summarize ${primaryHeading}'s performance.`,
+      "Where should I use this brawler?",
+    ]
+  }
+
+  if (context.path.startsWith("/leaderboards")) {
+    return [
+      "Summarize this leaderboard.",
+      "Who stands out on this page?",
+      "What should I click next?",
+    ]
+  }
+
+  if (context.path.startsWith("/meta")) {
+    return [
+      "Which maps have the most data?",
+      "What map should I inspect first?",
+      "Summarize the current maps page.",
+    ]
+  }
+
+  if (context.path.startsWith("/brawlers")) {
+    return [
+      "Who are the strongest brawlers here?",
+      "Which brawler should I inspect first?",
+      "Summarize this brawler tier list.",
+    ]
+  }
+
+  return []
 }
 
 export default function AssistantPopup({ open, onClose, pendingQuery, onPendingConsumed }: Props) {
@@ -113,7 +280,7 @@ export default function AssistantPopup({ open, onClose, pendingQuery, onPendingC
       res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: history }),
+        body: JSON.stringify({ messages: history, pageContext: collectPageContext() }),
         signal: controller.signal,
       })
     } catch (e) {
@@ -177,6 +344,13 @@ export default function AssistantPopup({ open, onClose, pendingQuery, onPendingC
   useEffect(() => {
     if (!open) return
     let cancelled = false
+    const pageSuggestions = suggestionsForCurrentPage()
+    if (pageSuggestions.length) {
+      setSuggestions(pageSuggestions)
+    } else {
+      setSuggestions(FALLBACK_SUGGESTIONS)
+    }
+
     fetch("/api/landing")
       .then(r => r.ok ? r.json() : null)
       .then((data: LandingData | null) => {
@@ -185,7 +359,9 @@ export default function AssistantPopup({ open, onClose, pendingQuery, onPendingC
         if (data.brawler) next.push(`Why is ${data.brawler.name} performing at ${data.brawler.winRate.toFixed(1)}% win rate?`)
         if (data.map) next.push(`Best brawlers on ${data.map.name}?`)
         if (data.player) next.push(`Look up player #${data.player.tag.replace(/^#/, "")}`)
-        if (next.length) setSuggestions(next)
+        if (next.length) {
+          setSuggestions(current => uniqueCompact([...(pageSuggestions.length ? pageSuggestions : current), ...next], 3))
+        }
       })
       .catch(() => {})
     return () => { cancelled = true }

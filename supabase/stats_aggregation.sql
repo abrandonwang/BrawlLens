@@ -5,7 +5,7 @@
 --   1. Dedupe any duplicate (map, mode, brawler_id) and (map, mode) rows that
 --      may exist, since the ON CONFLICT upsert pattern requires uniqueness and
 --      logs show the constraint is currently missing on map_brawler_stats.
---   2. Create UNIQUE INDEXes (idempotent — IF NOT EXISTS) so future ON CONFLICT
+--   2. Create UNIQUE INDEXes (idempotent - IF NOT EXISTS) so future ON CONFLICT
 --      writes can resolve the target.
 --   3. Create the merge RPC functions used by scripts/stats-aggregation.ts.
 --      Atomic increment, race-safe, no read step required.

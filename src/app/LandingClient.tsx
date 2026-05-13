@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, type FormEvent } from "react"
 import Link from "next/link"
 import { ArrowRight } from "lucide-react"
 import BrandMark from "@/components/BrandMark"
@@ -97,11 +97,12 @@ export default function LandingClient() {
   const [activeLeaderboardRegion, setActiveLeaderboardRegion] = useState("")
   const [tierPreview, setTierPreview] = useState<TierPreviewRow[]>([])
   const [mapPreview, setMapPreview] = useState<MapPreviewRow[]>([])
+  const [landingQuery, setLandingQuery] = useState("")
   const activeRegion = leaderRegions.find(region => region.code === activeLeaderboardRegion) ?? leaderRegions[0]
 
   useEffect(() => {
-    document.documentElement.classList.add("landing-bg")
-    return () => document.documentElement.classList.remove("landing-bg")
+    document.documentElement.classList.add("landing-bg", "home-landing-bg")
+    return () => document.documentElement.classList.remove("landing-bg", "home-landing-bg")
   }, [])
 
   useEffect(() => {
@@ -235,8 +236,13 @@ export default function LandingClient() {
     }
   }, [])
 
-  function openSearch() {
-    window.dispatchEvent(new CustomEvent("brawllens:open-search"))
+  function openSearch(query = "") {
+    window.dispatchEvent(new CustomEvent("brawllens:open-search", { detail: { query } }))
+  }
+
+  function submitLandingSearch(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    openSearch(landingQuery)
   }
 
   return (
@@ -247,12 +253,22 @@ export default function LandingClient() {
         </div>
 
         <div className="bl-landing-track">
-          <button type="button" className="bl-landing-track-cta" onClick={openSearch}>
-            <span className="bl-landing-track-cta-face">
-              <span>Track Your Stats</span>
-              <ArrowRight size={19} strokeWidth={2.7} />
+          <p className="bl-landing-line">Real ladder data for players, brawlers, maps, and upgrade decisions.</p>
+          <form className={`bl-landing-search-form${landingQuery ? " has-value" : ""}`} onSubmit={submitLandingSearch}>
+            <input
+              value={landingQuery}
+              onChange={event => setLandingQuery(event.target.value)}
+              aria-label="Search BrawlLens"
+              autoComplete="off"
+              spellCheck={false}
+            />
+            <span className="bl-landing-search-placeholder" aria-hidden="true">
+              Type a player tag, brawler, map, or club...
             </span>
-          </button>
+            <button type="submit" aria-label="Search">
+              <ArrowRight size={21} strokeWidth={2.8} aria-hidden="true" />
+            </button>
+          </form>
         </div>
       </section>
 
@@ -353,6 +369,7 @@ export default function LandingClient() {
           </div>
         </div>
       </section>
+
     </main>
   )
 }

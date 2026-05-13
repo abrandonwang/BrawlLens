@@ -42,7 +42,14 @@ const accountMenuItems = [
 const rootMenuLinks = [
   { label: "Lensboard", href: "/", description: "Custom data workspace" },
   { label: "Leaderboards", href: "/leaderboards/players", description: "Rankings" },
+  { label: "Guides", href: "/guides", description: "Data wiki" },
 ];
+
+const assistantButtonClass =
+  "bl-nav-ai-button inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-[8px] px-3 text-left text-[11px] font-black uppercase leading-none tracking-[0.01em] max-[430px]:w-9 max-[430px]:justify-center max-[430px]:px-0"
+
+const loginButtonClass =
+  "bl-nav-login-button inline-flex h-9 cursor-pointer items-center gap-2 whitespace-nowrap rounded-[8px] px-4 text-[13px] font-black leading-none outline-none max-[420px]:px-3"
 
 type MenuPanel = "root" | "browse";
 type DesktopPanel = "browse" | "leaderboards";
@@ -491,7 +498,8 @@ export default function NavBar() {
   const isLeaderboardsRoute = pathname.startsWith("/leaderboards");
   const isPlayerRoute = pathname.startsWith("/player/");
   const isTierlistRoute = pathname === "/brawlers" || pathname.startsWith("/brawlers/") || pathname === "/meta" || pathname.startsWith("/meta/");
-  const isNavFlowRoute = isLeaderboardsRoute || isPlayerRoute || isTierlistRoute;
+  const isGuidesRoute = pathname === "/guides" || pathname.startsWith("/guides/");
+  const isNavFlowRoute = isLeaderboardsRoute || isPlayerRoute || isTierlistRoute || isGuidesRoute;
   const browseActive = browseItems.some(item => item.href && isDesktopItemActive(pathname, item.href));
   const leaderboardsActive = isPlayerRoute || leaderboardItems.some(item => item.href && isDesktopItemActive(pathname, item.href));
   const loginEmailCheck = useEmailCheck(loginEmail, isLoginOpen && authMode === "signup");
@@ -518,9 +526,7 @@ export default function NavBar() {
   const visibleDesktopPanel = desktopPanel ?? hoverDesktopPanel;
   const renderedDesktopPanel = visibleDesktopPanel ?? lastDesktopPanel;
   const desktopPanelIndex = renderedDesktopPanel === "leaderboards" ? 1 : 0;
-  const navPositionClass = isNavFlowRoute
-    ? "relative z-[100]"
-    : "fixed top-0 left-0 z-[100]";
+  const navPositionClass = "fixed top-0 left-0 z-[100]";
   const mobileItemStyle = (index: number) => ({
     animationDelay: menuClosing ? "0ms" : `${30 + index * 42}ms`,
   });
@@ -606,6 +612,17 @@ export default function NavBar() {
               <ChevronDown size={13} strokeWidth={2.25} className="nav-trigger-arrow ml-0.5 transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]" />
             </button>
           </div>
+          <Link
+            href="/guides"
+            className={navTextClass(isGuidesRoute)}
+            onClick={() => {
+              setDesktopPanel(null);
+              setHoverDesktopPanel(null);
+              setSuppressedDesktopPanel(null);
+            }}
+          >
+            Guides
+          </Link>
           <div
             className="nav-browse-panel fixed top-[58px] w-[540px] max-xl:w-[500px]"
             data-open={visibleDesktopPanel ? "true" : undefined}
@@ -761,7 +778,7 @@ export default function NavBar() {
           <button
             type="button"
             onClick={() => setIsAssistantOpen(o => !o)}
-            className={`inline-flex h-[34px] cursor-pointer items-center gap-1.5 rounded-[7px] px-2.5 text-left text-[10px] font-extrabold uppercase leading-[1.05] tracking-[0.01em] text-[#1a1408] shadow-[rgba(255,255,255,0.45)_0_0.5px_0_0_inset,rgba(0,0,0,0.25)_0_1px_2px] transition-[filter,transform] duration-150 hover:brightness-105 active:scale-[0.98] max-[430px]:w-[34px] max-[430px]:justify-center max-[430px]:px-0 ${isNavFlowRoute ? "bg-[#e8c86c]" : "bg-gradient-to-b from-[#f5d573] to-[#e6b94a]"}`}
+            className={assistantButtonClass}
             aria-label="Open BrawlLens AI assistant"
             aria-expanded={isAssistantOpen}
             title="BrawlLens AI assistant"
@@ -774,13 +791,13 @@ export default function NavBar() {
               className="size-5 shrink-0 object-contain"
               aria-hidden="true"
             />
-            <span className="hidden whitespace-nowrap sm:block">Ask<br />AI</span>
+            <span className="hidden whitespace-nowrap sm:block">Ask AI</span>
           </button>
           {isNavFlowRoute ? (
             <button
               type="button"
               onClick={openLogin}
-              className="inline-flex h-[34px] cursor-pointer items-center gap-2 whitespace-nowrap rounded-[7px] border border-[#8bd7ff]/30 bg-gradient-to-b from-[#182333] to-[#0c111b] px-4 text-[13px] font-extrabold leading-none text-[#c9efff] outline-none shadow-[rgba(255,255,255,0.14)_0_1px_0_0_inset,rgba(139,215,255,0.26)_0_0_0_1px,rgba(0,0,0,0.72)_0_5px_0_#05070a,rgba(139,215,255,0.12)_0_0_18px] transition-[transform,filter,border-color] duration-150 hover:border-[#8bd7ff]/55 hover:brightness-110 active:translate-y-[2px] active:shadow-[rgba(255,255,255,0.10)_0_1px_0_0_inset,rgba(139,215,255,0.18)_0_0_0_1px,rgba(0,0,0,0.72)_0_2px_0_#05070a] focus-visible:ring-1 focus-visible:ring-[#8bd7ff]/40 max-[420px]:px-3"
+              className={loginButtonClass}
             >
               <span>Log in</span>
             </button>
@@ -834,7 +851,7 @@ export default function NavBar() {
             <button
               type="button"
               onClick={openLogin}
-              className="inline-flex h-[34px] cursor-pointer items-center gap-2 whitespace-nowrap rounded-[7px] border border-[#8bd7ff]/30 bg-gradient-to-b from-[#182333] to-[#0c111b] px-4 text-[13px] font-extrabold leading-none text-[#c9efff] outline-none shadow-[rgba(255,255,255,0.14)_0_1px_0_0_inset,rgba(139,215,255,0.26)_0_0_0_1px,rgba(0,0,0,0.72)_0_5px_0_#05070a,rgba(139,215,255,0.12)_0_0_18px] transition-[transform,filter,border-color] duration-150 hover:border-[#8bd7ff]/55 hover:brightness-110 active:translate-y-[2px] active:shadow-[rgba(255,255,255,0.10)_0_1px_0_0_inset,rgba(139,215,255,0.18)_0_0_0_1px,rgba(0,0,0,0.72)_0_2px_0_#05070a] focus-visible:ring-1 focus-visible:ring-[#8bd7ff]/40 max-[420px]:px-3"
+              className={loginButtonClass}
             >
               <span>{accountLabel}</span>
             </button>

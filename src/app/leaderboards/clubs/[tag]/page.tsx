@@ -41,11 +41,11 @@ export async function generateMetadata({
   const name = club?.name ?? `#${tag}`
 
   return {
-    title: `${name} Club Board - BrawlLens`,
-    description: `Roster and member board for ${name}.`,
+    title: `${name} - BrawlLens`,
+    description: `Roster and members for ${name}.`,
     openGraph: {
-      title: `${name} Club Board - BrawlLens`,
-      description: `Live member board for Brawl Stars club ${name}.`,
+      title: `${name} - BrawlLens`,
+      description: `Brawl Stars club roster for ${name}.`,
       type: "website",
     },
   }

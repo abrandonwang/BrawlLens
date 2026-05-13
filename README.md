@@ -4,11 +4,11 @@ Advanced analytics for competitive Brawl Stars players.
 
 ## Features
 
-- **Player Lookup** — Search any player tag to view trophies, battle history, and brawler roster
-- **Leaderboards** — Top 200 players, clubs, and brawlers by region, updated every 30 minutes
-- **Brawler Catalog** — Browse all brawlers with rarity filtering, win rates, and rankings
-- **Maps** — Browse active and recent maps with pick/win rate meta data
-- **AI Chat** — Ask anything about players, brawlers, maps, and clubs in natural language
+- **Player Lookup** - Search any player tag to view trophies, battle history, and brawler roster
+- **Leaderboards** - Top 200 players, clubs, and brawlers by region, updated every 30 minutes
+- **Brawler Catalog** - Browse all brawlers with rarity filtering, win rates, and rankings
+- **Maps** - Browse active and recent maps with pick/win rate meta data
+- **AI Chat** - Ask anything about players, brawlers, maps, and clubs in natural language
 
 ## Tech Stack
 

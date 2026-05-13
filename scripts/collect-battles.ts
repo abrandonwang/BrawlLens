@@ -386,7 +386,7 @@ async function aggregateStats() {
     return;
   }
   if (!result.aggregated) {
-    console.log("  No raw data in local DB — nothing to aggregate.");
+    console.log("  No raw data in local DB - nothing to aggregate.");
     return;
   }
   console.log(`  Added ${result.mapRows} map stat increments to Supabase.`);
@@ -403,7 +403,7 @@ async function runCycle(cycle: number) {
   const { rows: countRows } = await localPg.query("SELECT COUNT(*) FROM battle_players");
   const bpCount = Number(countRows[0].count);
   if (bpCount > 1_000_000) {
-    console.log(`  [safety] battle_players has ${bpCount} rows — running aggregateStats() before collecting.`);
+    console.log(`  [safety] battle_players has ${bpCount} rows - running aggregateStats() before collecting.`);
     await aggregateStats();
   }
 
@@ -488,7 +488,7 @@ async function leaderboardLoop() {
 }
 
 async function main() {
-  console.log("=== BrawlLens Battle Collector — Continuous Mode ===");
+  console.log("=== BrawlLens Battle Collector - Continuous Mode ===");
   console.log(`Concurrency: ${CONCURRENCY} | Flush every: ${DB_BATCH_SIZE} tags\n`);
   await localPg.query("SELECT 1").catch(e => {
     console.error("FATAL: Cannot connect to local Postgres:", e.message);
@@ -503,7 +503,7 @@ async function main() {
     try {
       await runCycle(cycle);
     } catch (err) {
-      console.error(`  [cycle ${cycle}] runCycle threw — proceeding to cleanup:`, err);
+      console.error(`  [cycle ${cycle}] runCycle threw - proceeding to cleanup:`, err);
     }
     await aggregateStats();
     await resetAllTags();

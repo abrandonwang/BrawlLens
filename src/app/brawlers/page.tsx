@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import { Suspense } from "react"
 import BrawlerPageClient from "./BrawlerPageClient"
+import Loading from "./loading"
 
 export const metadata: Metadata = {
   title: "Brawlers - BrawlLens",
@@ -31,7 +32,7 @@ export default async function Brawlers() {
   const brawlers: Brawler[] = data.list ?? []
   return (
     <div className="flex flex-col">
-      <Suspense>
+      <Suspense fallback={<Loading />}>
         <BrawlerPageClient brawlers={brawlers} />
       </Suspense>
     </div>

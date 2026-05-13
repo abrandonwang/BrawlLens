@@ -27,6 +27,7 @@ import {
   RankCell,
   SearchBox,
   TableHead,
+  TableHeadHelp,
   professionalTeamCards,
 } from "../LeaderboardDpmShell"
 
@@ -215,13 +216,13 @@ export default function BrawlerLeaderboardClient({
               <TableHead className={`${brawlerTableGrid} bl-lb-brawler-table-head`}>
                 <span>Rank</span>
                 <span>Player</span>
-                <span>Brawler</span>
-                <span>Peak</span>
-                <span>Power</span>
-                <span>Prestige</span>
-                <span>Total</span>
+                <TableHeadHelp label="Brawler" help="Current selected-brawler trophies for this player." />
+                <TableHeadHelp label="Peak" help="Highest trophy value found for the selected brawler." />
+                <TableHeadHelp label="Power" help="Selected brawler power level from profile enrichment when available." />
+                <TableHeadHelp label="Prestige" help="Selected brawler prestige level when the public profile returns it." />
+                <TableHeadHelp label="Total" help="The player's total account trophies from leaderboard or profile enrichment." />
                 <span>Club</span>
-                <span>World</span>
+                <TableHeadHelp label="World" help="The player's global trophy rank or estimated global rank context." />
               </TableHead>
 
               <div className="bl-lb-table-list">
