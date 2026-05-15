@@ -7101,6 +7101,28 @@ body:has(.bl-bd-shell) .bl-lb-subnav-wrap {
   min-width: 880px;
 }
 
+.bl-pro-roster-unavailable {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 24px 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--ink-3, #a3a7b7);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+}
+
+.bl-pro-roster-unavailable strong {
+  color: var(--ink, #f7f4ed);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .bl-pro-log-head,
 .bl-pro-log-row {
   min-width: 980px;

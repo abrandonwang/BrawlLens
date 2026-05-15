@@ -5,7 +5,7 @@ import { createClient } from "@supabase/supabase-js"
 import { BrawlImage, brawlerIconUrl } from "@/components/BrawlImage"
 import { cleanEnv } from "@/lib/env"
 import { formatBrawlerName } from "@/lib/format"
-import { clubDetailHref } from "@/lib/leaderboardUtils"
+import { clubBadgeUrl, clubDetailHref } from "@/lib/leaderboardUtils"
 import { fetchClubResponse, fetchPlayerBattleLogResponse, fetchPlayerResponse } from "@/lib/playerLookup"
 import { sanitizePlayerTag } from "@/lib/validation"
 import type { Player, PlayerBrawler } from "@/types/brawler"
@@ -320,10 +320,6 @@ function cleanBattleTag(value?: string) {
 
 function cleanClubTag(value?: string) {
   return sanitizePlayerTag((value ?? "").replace(/^#/, ""))
-}
-
-function clubBadgeUrl(id: number) {
-  return `https://cdn.brawlify.com/club-badges/regular/${id}.png`
 }
 
 async function fetchClubBadgeId(tag: string | null): Promise<number | null> {

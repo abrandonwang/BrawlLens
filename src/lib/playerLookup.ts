@@ -7,15 +7,15 @@ type NextFetchOptions = RequestInit & {
   }
 }
 
-function playerProxyUrl(): string | null {
+export function playerProxyUrl(): string | null {
   return cleanEnv(process.env.PLAYER_API_URL)
 }
 
-function battleLogProxyUrl(): string | null {
+export function battleLogProxyUrl(): string | null {
   return cleanEnv(process.env.PLAYER_BATTLELOG_API_URL) ?? cleanEnv(process.env.BATTLELOG_API_URL)
 }
 
-function clubProxyUrl(): string | null {
+export function clubProxyUrl(): string | null {
   return cleanEnv(process.env.CLUB_API_URL) ?? cleanEnv(process.env.PLAYER_API_URL)
 }
 

@@ -3,7 +3,7 @@ import { notFound } from "next/navigation"
 import { createClient } from "@supabase/supabase-js"
 import type { ProPlayer, ProTeam } from "@/data/proTeams"
 import { cleanEnv } from "@/lib/env"
-import { fetchClubResponse } from "@/lib/playerLookup"
+import { clubProxyUrl, fetchClubResponse } from "@/lib/playerLookup"
 import { displayRosterName, enrichRosterPlayers } from "@/lib/proRoster"
 import { sanitizePlayerTag } from "@/lib/validation"
 import ProTeamClient from "../../pro/[slug]/ProTeamClient"
@@ -17,6 +17,8 @@ interface ClubProfile {
   trophies?: number
   requiredTrophies?: number
   members?: ClubMember[]
+  rosterUnavailable?: boolean
+  rosterUnavailableReason?: string
 }
 
 interface ClubLeaderboardRow {
@@ -80,23 +82,35 @@ export default async function ClubDetailPage({
     description: `${club.name ?? "Club"} member board from club #${tag}.`,
     players,
     recentLog: [],
+    rosterUnavailable: club.rosterUnavailable ?? false,
+    rosterUnavailableReason: club.rosterUnavailableReason,
   }
 
   return <ProTeamClient team={team} active="clubs" />
 }
 
-async function fetchClub(tag: string) {
+async function fetchClub(tag: string): Promise<ClubProfile | null> {
   try {
     const response = await fetchClubResponse(tag, { next: { revalidate: 300 } })
     if (response.ok) return (await response.json()) as ClubProfile
   } catch {
-    // Fall through to the leaderboard snapshot so ranked club links still resolve.
+    // Fall through to the leaderboard snapshot with an explicit unavailable flag.
   }
 
-  return fetchLeaderboardClubFallback(tag)
+  const snapshot = await fetchLeaderboardClubSnapshot(tag)
+  if (!snapshot) return null
+
+  return {
+    ...snapshot,
+    members: [],
+    rosterUnavailable: true,
+    rosterUnavailableReason: clubProxyUrl()
+      ? "Brawl Stars club proxy is unreachable. Showing leaderboard snapshot without member roster."
+      : "Club proxy is not configured for this environment. Member roster is unavailable.",
+  }
 }
 
-async function fetchLeaderboardClubFallback(tag: string): Promise<ClubProfile | null> {
+async function fetchLeaderboardClubSnapshot(tag: string): Promise<ClubProfile | null> {
   const url = cleanEnv(process.env.SUPABASE_URL)
   const key = cleanEnv(process.env.SUPABASE_SERVICE_KEY)
   if (!url || !key) return null
@@ -118,7 +132,6 @@ async function fetchLeaderboardClubFallback(tag: string): Promise<ClubProfile | 
       tag: row.club_tag,
       name: row.club_name,
       trophies: row.trophies,
-      members: [],
     }
   } catch {
     return null

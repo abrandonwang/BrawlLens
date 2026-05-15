@@ -169,9 +169,21 @@ function OverviewBoard({
         </TableHead>
 
         <div className="bl-lb-table-list">
-          {players.map((player, index) => (
-            <OverviewRow key={player.id} player={player} rank={index + 1} />
-          ))}
+          {team.rosterUnavailable ? (
+            <div className="bl-pro-roster-unavailable">
+              <strong>Live roster unavailable</strong>
+              <span>{team.rosterUnavailableReason ?? "Brawl Stars club proxy is unreachable right now. Try again shortly."}</span>
+            </div>
+          ) : players.length === 0 ? (
+            <div className="bl-pro-roster-unavailable">
+              <strong>No members</strong>
+              <span>This club has no listed members.</span>
+            </div>
+          ) : (
+            players.map((player, index) => (
+              <OverviewRow key={player.id} player={player} rank={index + 1} />
+            ))
+          )}
         </div>
       </LeaderboardPanel>
     </>

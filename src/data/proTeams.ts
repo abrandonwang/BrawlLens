@@ -59,6 +59,8 @@ export type ProTeam = {
   description: string
   players: ProPlayer[]
   recentLog: ProMatch[]
+  rosterUnavailable?: boolean
+  rosterUnavailableReason?: string
 }
 
 const BRAWLERS = {

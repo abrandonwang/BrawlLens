@@ -25,6 +25,8 @@ interface Brawler {
   rarity?: { name?: string; color?: string }
   gadgets?: BrawlerPower[]
   starPowers?: BrawlerPower[]
+  hypercharge?: BrawlerPower | null
+  hyperCharge?: BrawlerPower | null
 }
 
 interface BrawlerStats {
@@ -110,11 +112,13 @@ function abilityItemsFor(brawler: Brawler): AbilityItem[] {
   }))
 
   const hypercharge = HYPERCHARGES[brawler.id]
+  const liveHyper = brawler.hypercharge ?? brawler.hyperCharge ?? null
   const hyper = hypercharge ? [{
     key: `hyper-${brawler.id}`,
     name: hypercharge.name,
     description: `${hypercharge.description} +${hypercharge.speedBoost}% speed, +${hypercharge.damageBoost}% damage, +${hypercharge.shieldBoost}% shield while active.`,
     label: "H",
+    iconUrl: liveHyper?.imageUrl,
     tone: "hyper" as const,
   }] : []
 
