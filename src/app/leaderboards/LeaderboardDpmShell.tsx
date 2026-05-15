@@ -14,7 +14,6 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { BrawlImage, brawlerIconUrl } from "@/components/BrawlImage"
-import HelpTooltip from "@/components/HelpTooltip"
 import { leaderboardRegionShort } from "@/lib/leaderboardRegions"
 
 export type LeaderboardKind = "players" | "clubs" | "brawlers"
@@ -449,15 +448,8 @@ export function TableHead({
   )
 }
 
-export function TableHeadHelp({ label, help }: { label: string; help: string }) {
-  return (
-    <span className="bl-help-label">
-      <span>{label}</span>
-      <HelpTooltip label={`${label} explained`}>
-        {help}
-      </HelpTooltip>
-    </span>
-  )
+export function TableHeadHelp({ label }: { label: string; help: string }) {
+  return <span>{label}</span>
 }
 
 export function RankCell({ rank }: { rank: number }) {

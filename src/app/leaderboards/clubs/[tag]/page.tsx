@@ -1,6 +1,8 @@
 import type { Metadata } from "next"
 import { notFound } from "next/navigation"
+import { createClient } from "@supabase/supabase-js"
 import type { ProPlayer, ProTeam } from "@/data/proTeams"
+import { cleanEnv } from "@/lib/env"
 import { fetchClubResponse } from "@/lib/playerLookup"
 import { displayRosterName, enrichRosterPlayers } from "@/lib/proRoster"
 import { sanitizePlayerTag } from "@/lib/validation"
@@ -15,6 +17,13 @@ interface ClubProfile {
   trophies?: number
   requiredTrophies?: number
   members?: ClubMember[]
+}
+
+interface ClubLeaderboardRow {
+  club_tag: string
+  club_name: string
+  trophies: number
+  member_count: number | null
 }
 
 interface ClubMember {
@@ -79,8 +88,38 @@ export default async function ClubDetailPage({
 async function fetchClub(tag: string) {
   try {
     const response = await fetchClubResponse(tag, { next: { revalidate: 300 } })
-    if (!response.ok) return null
-    return (await response.json()) as ClubProfile
+    if (response.ok) return (await response.json()) as ClubProfile
+  } catch {
+    // Fall through to the leaderboard snapshot so ranked club links still resolve.
+  }
+
+  return fetchLeaderboardClubFallback(tag)
+}
+
+async function fetchLeaderboardClubFallback(tag: string): Promise<ClubProfile | null> {
+  const url = cleanEnv(process.env.SUPABASE_URL)
+  const key = cleanEnv(process.env.SUPABASE_SERVICE_KEY)
+  if (!url || !key) return null
+
+  try {
+    const supabase = createClient(url, key)
+    const variants = [`#${tag}`, tag]
+    const { data, error } = await supabase
+      .from("club_leaderboards")
+      .select("club_tag, club_name, trophies, member_count")
+      .in("club_tag", variants)
+      .order("rank", { ascending: true })
+      .limit(1)
+      .maybeSingle()
+
+    if (error || !data) return null
+    const row = data as ClubLeaderboardRow
+    return {
+      tag: row.club_tag,
+      name: row.club_name,
+      trophies: row.trophies,
+      members: [],
+    }
   } catch {
     return null
   }
