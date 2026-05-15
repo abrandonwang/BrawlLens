@@ -118,7 +118,7 @@ function abilityItemsFor(brawler: Brawler): AbilityItem[] {
     name: hypercharge.name,
     description: `${hypercharge.description} +${hypercharge.speedBoost}% speed, +${hypercharge.damageBoost}% damage, +${hypercharge.shieldBoost}% shield while active.`,
     label: "H",
-    iconUrl: liveHyper?.imageUrl ?? `https://media.brawltime.ninja/hypercharges/${brawler.id}.png`,
+    iconUrl: liveHyper?.imageUrl ?? `https://cdn.brawlify.com/brawlers/emoji/${brawler.id}.png`,
     tone: "hyper" as const,
   }] : []
 
