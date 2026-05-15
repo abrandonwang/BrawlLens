@@ -121,7 +121,7 @@ export default function AuthSetupClient() {
             <p className="mt-1 mb-0 text-[13px] leading-relaxed text-[var(--ink-3)]">{error}</p>
             <button
               type="button"
-              onClick={() => router.replace("/login")}
+              onClick={() => router.replace("/?auth=signup")}
               className="mt-4 inline-flex h-10 cursor-pointer items-center rounded-lg border-0 bg-[var(--ink)] px-4 text-[13px] font-semibold text-[var(--ink-on)]"
             >
               Try again

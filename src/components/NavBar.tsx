@@ -1,8 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
-import { ChevronDown, ChevronLeft, ChevronRight, Menu, Search, X } from "lucide-react";
-import Image from "next/image";
+import { ChevronDown, ChevronLeft, ChevronRight, Menu, Search, Sparkles, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import AssistantPopup from "./AssistantPopup";
@@ -45,9 +44,6 @@ const rootMenuLinks = [
   { label: "Guides", href: "/guides", description: "Data wiki" },
 ];
 
-const assistantButtonClass =
-  "bl-nav-ai-button inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-[8px] px-3 text-left text-[11px] font-black uppercase leading-none tracking-[0.01em] max-[430px]:w-9 max-[430px]:justify-center max-[430px]:px-0"
-
 const loginButtonClass =
   "bl-nav-login-button inline-flex h-9 cursor-pointer items-center gap-2 whitespace-nowrap rounded-[8px] px-4 text-[13px] font-black leading-none outline-none max-[420px]:px-3"
 
@@ -55,6 +51,10 @@ type MenuPanel = "root" | "browse";
 type DesktopPanel = "browse" | "leaderboards";
 type LoginState = "idle" | "sending" | "sent" | "error";
 type AuthMode = "signup" | "login";
+type AuthMePayload = {
+  user?: PremiumUser | null;
+  session?: { accessToken?: string; refreshToken?: string; expiresAt?: number } | null;
+};
 
 function passwordRules(password: string) {
   return [
@@ -99,6 +99,17 @@ function authErrorMessage(error: string | undefined, mode: AuthMode) {
   }
 }
 
+function internalRedirectPath(value: string | null) {
+  if (!value || !value.startsWith("/") || value.startsWith("//")) return null;
+  try {
+    const url = new URL(value, "https://brawllens.local");
+    if (url.origin !== "https://brawllens.local") return null;
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    return null;
+  }
+}
+
 export default function NavBar() {
   const pathname = usePathname();
   const router = useRouter();
@@ -123,6 +134,7 @@ export default function NavBar() {
   const [loginState, setLoginState] = useState<LoginState>("idle");
   const [loginResending, setLoginResending] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [loginRedirectTo, setLoginRedirectTo] = useState<string | null>(null);
   const previousPathnameRef = useRef(pathname);
   const desktopNavRef = useRef<HTMLDivElement>(null);
   const browseTriggerRef = useRef<HTMLDivElement>(null);
@@ -157,12 +169,13 @@ export default function NavBar() {
     }, 260);
   }, [isMenuOpen, menuClosing]);
 
-  const showLogin = useCallback((mode: AuthMode = "signup") => {
+  const showLogin = useCallback((mode: AuthMode = "signup", redirectTo: string | null = null) => {
     closeMenu();
     setDesktopPanel(null);
     setHoverDesktopPanel(null);
     setSuppressedDesktopPanel(null);
     setIsAccountMenuOpen(false);
+    setLoginRedirectTo(redirectTo);
     setAuthMode(mode);
     setIsLoginOpen(true);
   }, [closeMenu]);
@@ -239,6 +252,20 @@ export default function NavBar() {
   }, [authMode, isLoginOpen]);
 
   useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const auth = searchParams.get("auth");
+    if (auth !== "login" && auth !== "signup") return;
+
+    showLogin(auth, internalRedirectPath(searchParams.get("next")));
+
+    const nextParams = new URLSearchParams(searchParams.toString());
+    nextParams.delete("auth");
+    nextParams.delete("next");
+    const nextQuery = nextParams.toString();
+    router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, { scroll: false });
+  }, [pathname, router, showLogin]);
+
+  useEffect(() => {
     if (!isLoginOpen) return;
     window.setTimeout(() => loginInputRef.current?.focus(), 80);
   }, [isLoginOpen]);
@@ -283,8 +310,8 @@ export default function NavBar() {
 
   useEffect(() => {
     function onOpenLogin(e: Event) {
-      const detail = (e as CustomEvent<{ mode?: AuthMode }>).detail;
-      showLogin(detail?.mode === "login" ? "login" : "signup");
+      const detail = (e as CustomEvent<{ mode?: AuthMode; next?: string }>).detail;
+      showLogin(detail?.mode === "login" ? "login" : "signup", internalRedirectPath(detail?.next ?? null));
     }
 
     window.addEventListener("brawllens:open-login", onOpenLogin);
@@ -300,8 +327,15 @@ export default function NavBar() {
           headers: authHeaders(),
           cache: "no-store",
         });
-        const payload = await response.json().catch(() => null) as { user?: PremiumUser | null } | null;
+        const payload = await response.json().catch(() => null) as AuthMePayload | null;
         if (active) {
+          if (response.ok && payload?.session?.accessToken) {
+            storeAuthSession({
+              accessToken: payload.session.accessToken,
+              refreshToken: payload.session.refreshToken,
+              expiresAt: payload.session.expiresAt,
+            });
+          }
           applyAccountUser(response.ok ? payload?.user ?? null : null);
         }
       } catch {
@@ -392,7 +426,14 @@ export default function NavBar() {
         headers: authHeaders(),
         cache: "no-store",
       });
-      const payload = await response.json().catch(() => null) as { user?: PremiumUser | null } | null;
+      const payload = await response.json().catch(() => null) as AuthMePayload | null;
+      if (response.ok && payload?.session?.accessToken) {
+        storeAuthSession({
+          accessToken: payload.session.accessToken,
+          refreshToken: payload.session.refreshToken,
+          expiresAt: payload.session.expiresAt,
+        });
+      }
       applyAccountUser(response.ok ? payload?.user ?? null : null);
     } catch {
       applyAccountUser(null);
@@ -452,8 +493,14 @@ export default function NavBar() {
         });
         await refreshSignedInAccount();
         setIsLoginOpen(false);
+        const redirectTo = loginRedirectTo;
+        setLoginRedirectTo(null);
         setLoginPassword("");
-        router.refresh();
+        if (redirectTo) {
+          router.replace(redirectTo);
+        } else {
+          router.refresh();
+        }
         return;
       }
 
@@ -491,7 +538,10 @@ export default function NavBar() {
     setAccountName(null);
     setAccountEmail(null);
     clearAuthSession();
-    clearServerSession().finally(() => router.replace("/login"));
+    clearServerSession().finally(() => {
+      router.replace("/");
+      showLogin("login");
+    });
   }
 
   const accountLabel = isSignedIn ? accountName ?? "Account" : "Log in";
@@ -656,14 +706,7 @@ export default function NavBar() {
                             <span className="min-w-0">
                               <span className="inline-flex items-center gap-1.5 text-[14px] font-semibold leading-tight text-[#f4f5f7]">
                                 <span className="truncate">{item.label}</span>
-                                <Image
-                                  src="/ai-sparkle-512.png"
-                                  alt=""
-                                  width={14}
-                                  height={14}
-                                  className="size-3.5 shrink-0 object-contain brightness-0 invert opacity-85"
-                                  aria-hidden="true"
-                                />
+                                <Sparkles size={14} strokeWidth={1.9} className="shrink-0 text-[#f0d373]" aria-hidden="true" />
                               </span>
                               <span className="mt-1 block text-[12px] leading-snug text-[#8f96a1]">{item.description}</span>
                             </span>
@@ -775,33 +818,7 @@ export default function NavBar() {
         </form>
 
         <div className="relative z-10 ml-auto flex min-w-0 shrink-0 items-center justify-end gap-2 max-[430px]:gap-1.5">
-          <button
-            type="button"
-            onClick={() => setIsAssistantOpen(o => !o)}
-            className={assistantButtonClass}
-            aria-label="Open BrawlLens AI assistant"
-            aria-expanded={isAssistantOpen}
-            title="BrawlLens AI assistant"
-          >
-            <Image
-              src="/ai-sparkle-512.png"
-              alt=""
-              width={20}
-              height={20}
-              className="size-5 shrink-0 object-contain"
-              aria-hidden="true"
-            />
-            <span className="hidden whitespace-nowrap sm:block">Ask AI</span>
-          </button>
-          {isNavFlowRoute ? (
-            <button
-              type="button"
-              onClick={openLogin}
-              className={loginButtonClass}
-            >
-              <span>Log in</span>
-            </button>
-          ) : isSignedIn ? (
+          {isSignedIn ? (
             <div ref={accountMenuRef} className="relative shrink-0">
               <button
                 type="button"
@@ -937,14 +954,7 @@ export default function NavBar() {
                     >
                       <span className="inline-flex items-center gap-2 text-[18px] font-semibold leading-tight text-[#f4f5f7]">
                         <span>{item.label}</span>
-                        <Image
-                          src="/ai-sparkle-512.png"
-                          alt=""
-                          width={15}
-                          height={15}
-                          className="size-[15px] shrink-0 object-contain brightness-0 invert opacity-85"
-                          aria-hidden="true"
-                        />
+                        <Sparkles size={15} strokeWidth={1.9} className="shrink-0 text-[#f0d373]" aria-hidden="true" />
                       </span>
                       <span className="mt-1 block text-[14px] leading-snug text-[#8f96a1]">{item.description}</span>
                     </button>
@@ -985,6 +995,19 @@ export default function NavBar() {
           )}
         </div>
       )}
+
+      <button
+        type="button"
+        onClick={isAssistantOpen ? () => setIsAssistantOpen(false) : openAssistantFromNav}
+        className="bl-ai-bookmark"
+        data-open={isAssistantOpen ? "true" : undefined}
+        aria-label={isAssistantOpen ? "Close BrawlLens AI assistant" : "Open BrawlLens AI assistant"}
+        aria-expanded={isAssistantOpen}
+        title="BrawlLens AI assistant"
+      >
+        <Sparkles size={16} strokeWidth={1.9} aria-hidden="true" />
+        <span>Ask AI</span>
+      </button>
 
       {isLoginOpen && (
         <div

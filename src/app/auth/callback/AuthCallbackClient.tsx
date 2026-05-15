@@ -37,7 +37,7 @@ export default function AuthCallbackClient() {
         {error && (
           <>
             <p className="mx-auto mt-2 mb-0 max-w-[360px] text-[13px] leading-relaxed text-[var(--ink-3)]">{error}</p>
-            <Link href="/login?mode=login" className="mt-5 inline-flex h-10 items-center rounded-lg bg-[var(--ink)] px-4 text-[14px] text-[var(--ink-on)] no-underline">
+            <Link href="/?auth=login" className="mt-5 inline-flex h-10 items-center rounded-lg bg-[var(--ink)] px-4 text-[14px] text-[var(--ink-on)] no-underline">
               Try again
             </Link>
           </>

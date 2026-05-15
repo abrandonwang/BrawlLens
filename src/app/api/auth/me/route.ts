@@ -1,11 +1,22 @@
 import { NextResponse } from "next/server"
-import { getRequestUser } from "@/lib/auth"
+import { getRequestUserWithRefresh, setAuthSessionCookies } from "@/lib/auth"
 
 export async function GET(request: Request) {
-  const user = await getRequestUser(request)
+  const { user, session } = await getRequestUserWithRefresh(request)
   if (!user) {
     return NextResponse.json({ user: null })
   }
 
-  return NextResponse.json({ user })
+  const response = NextResponse.json({
+    user,
+    session: session
+      ? {
+          accessToken: session.accessToken,
+          refreshToken: session.refreshToken,
+          expiresAt: session.expiresAt,
+        }
+      : null,
+  })
+  if (session) setAuthSessionCookies(response, session)
+  return response
 }

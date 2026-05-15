@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { Resend } from "resend"
-import { authRedirectUrl } from "@/lib/auth"
-import { AUTH_ACCESS_COOKIE, AUTH_REFRESH_COOKIE } from "@/lib/authCookies"
+import { authRedirectUrl, setAuthSessionCookies } from "@/lib/auth"
 import { checkEmailLegitimacy, isEmailSyntax, normalizeEmail } from "@/lib/emailValidation"
 
 export const runtime = "nodejs"
@@ -175,23 +174,10 @@ export async function POST(request: Request) {
         expiresAt: data.session.expires_at,
       },
     })
-    const maxAge = data.session.expires_at
-      ? Math.max(0, data.session.expires_at - Math.floor(Date.now() / 1000))
-      : 60 * 60 * 24 * 7
-
-    response.cookies.set(AUTH_ACCESS_COOKIE, data.session.access_token, {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
-      path: "/",
-      maxAge,
-    })
-    response.cookies.set(AUTH_REFRESH_COOKIE, data.session.refresh_token, {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
-      path: "/",
-      maxAge: 60 * 60 * 24 * 30,
+    setAuthSessionCookies(response, {
+      accessToken: data.session.access_token,
+      refreshToken: data.session.refresh_token,
+      expiresAt: data.session.expires_at,
     })
 
     return response

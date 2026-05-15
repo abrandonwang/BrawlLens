@@ -4,12 +4,16 @@ import { useEffect, useMemo, useState, type ReactNode } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { ChevronLeft } from "lucide-react"
-import { authHeaders, clearAuthSession, clearServerSession } from "@/lib/clientAuth"
+import { authHeaders, clearAuthSession, clearServerSession, storeAuthSession } from "@/lib/clientAuth"
 import type { PremiumUser } from "@/lib/premium"
 import { sanitizePlayerTag } from "@/lib/validation"
 
 type LoadState = "loading" | "ready" | "signed-out" | "error"
 type AccountTab = "profile" | "settings" | "appearance"
+type AuthMePayload = {
+  user?: PremiumUser | null
+  session?: { accessToken?: string; refreshToken?: string; expiresAt?: number } | null
+}
 
 function formatDate(value?: string | null) {
   if (!value) return null
@@ -24,7 +28,7 @@ function formatStatus(value: string) {
 
 function ValueBox({ children, muted = false }: { children: ReactNode; muted?: boolean }) {
   return (
-    <div className={`flex min-h-10 w-full items-center rounded-md border border-[var(--line)] bg-[var(--panel-2)] px-3 text-[13px] ${muted ? "text-[var(--ink-4)]" : "text-[var(--ink)]"}`}>
+    <div className={`bl-account-value ${muted ? "is-muted" : ""}`}>
       <span className="min-w-0 truncate">{children}</span>
     </div>
   )
@@ -40,12 +44,12 @@ function SettingsSection({
   children: ReactNode
 }) {
   return (
-    <section className="dpm-section-card">
-      <div className="border-b border-[var(--line)] px-6 py-5 max-sm:px-4">
-        <h2 className="m-0 text-[20px] leading-tight font-semibold tracking-[-0.01em] text-[var(--ink)]">{title}</h2>
-        {description && <p className="mt-1 mb-0 text-[13px] leading-relaxed text-[var(--ink-3)]">{description}</p>}
+    <section className="bl-account-section">
+      <div className="bl-account-section-head">
+        <h2>{title}</h2>
+        {description && <p>{description}</p>}
       </div>
-      <div className="divide-y divide-[var(--line)]">{children}</div>
+      <div>{children}</div>
     </section>
   )
 }
@@ -60,10 +64,10 @@ function SettingsRow({
   children: ReactNode
 }) {
   return (
-    <div className="grid gap-4 px-6 py-5 md:grid-cols-[minmax(0,1fr)_minmax(260px,0.9fr)] md:items-center max-sm:px-4">
+    <div className="bl-account-row">
       <div className="min-w-0">
-        <p className="m-0 text-[14px] font-semibold leading-tight text-[var(--ink)]">{title}</p>
-        {description && <p className="mt-1 mb-0 text-[13px] leading-relaxed text-[var(--ink-3)]">{description}</p>}
+        <p className="bl-account-row-title">{title}</p>
+        {description && <p className="bl-account-row-description">{description}</p>}
       </div>
       <div className="min-w-0">{children}</div>
     </div>
@@ -75,11 +79,7 @@ function ActionButton({ children, danger = false }: { children: ReactNode; dange
     <button
       type="button"
       disabled
-      className={`inline-flex h-10 min-w-[92px] cursor-not-allowed items-center justify-center rounded-md border px-3 text-[13px] font-medium opacity-55 ${
-        danger
-          ? "border-[color-mix(in_srgb,#ef4444_32%,var(--line))] bg-transparent text-[#f87171]"
-          : "border-[var(--line)] bg-[var(--panel-2)] text-[var(--ink-2)]"
-      }`}
+      className={`bl-account-action ${danger ? "is-danger" : ""}`}
     >
       {children}
     </button>
@@ -88,13 +88,13 @@ function ActionButton({ children, danger = false }: { children: ReactNode; dange
 
 function RadioLine({ checked, title, description }: { checked?: boolean; title: string; description?: string }) {
   return (
-    <div className="flex items-start gap-2.5 py-1.5">
-      <span className={`mt-0.5 grid size-4 shrink-0 place-items-center rounded-full border ${checked ? "border-[var(--ink)]" : "border-[var(--line-2)]"}`}>
-        {checked && <span className="size-2 rounded-full bg-[var(--ink)]" />}
+    <div className="bl-account-radio">
+      <span className={`bl-account-radio-mark ${checked ? "is-checked" : ""}`}>
+        {checked && <span />}
       </span>
       <span className="min-w-0">
-        <span className="block text-[13px] font-semibold leading-tight text-[var(--ink)]">{title}</span>
-        {description && <span className="mt-0.5 block text-[12px] leading-snug text-[var(--ink-3)]">{description}</span>}
+        <span className="bl-account-radio-title">{title}</span>
+        {description && <span className="bl-account-radio-description">{description}</span>}
       </span>
     </div>
   )
@@ -102,9 +102,11 @@ function RadioLine({ checked, title, description }: { checked?: boolean; title: 
 
 function LoadingState() {
   return (
-    <main className="mx-auto w-full max-w-[860px] flex-1 px-4 py-14">
-      <div className="dpm-section-card p-6">
-        <p className="m-0 text-[14px] text-[var(--ink-3)]">Loading account...</p>
+    <main className="bl-account-shell">
+      <div className="bl-account-frame">
+        <div className="bl-account-section p-4">
+          <p className="m-0 text-[13px] font-semibold text-[var(--ink-3)]">Loading account...</p>
+        </div>
       </div>
     </main>
   )
@@ -112,11 +114,16 @@ function LoadingState() {
 
 function SignedOutState() {
   return (
-    <main className="mx-auto w-full max-w-[760px] flex-1 px-4 py-14">
-      <div className="dpm-section-card p-6">
-        <h1 className="m-0 mb-2 text-[32px] leading-none font-semibold text-[var(--ink)]">Sign in required</h1>
-        <p className="m-0 text-[14px] text-[var(--ink-3)]">Sign in to manage account, premium, billing, and data settings.</p>
-        <Link href="/login?mode=login" className="mt-5 inline-flex h-10 items-center rounded-md bg-[var(--button-bg)] px-4 text-[14px] text-[var(--ink-on)] no-underline hover:bg-[var(--button-bg-hover)]">
+    <main className="bl-account-shell">
+      <div className="bl-account-frame">
+        <div className="bl-account-hero">
+          <div className="min-w-0">
+            <p className="bl-account-kicker">BrawlLens account</p>
+            <h1>Sign in required</h1>
+            <p>Sign in to manage account, premium, billing, and data settings.</p>
+          </div>
+        </div>
+        <Link href="/?auth=login&next=/account" className="bl-account-primary-link">
           Sign in
         </Link>
       </div>
@@ -153,8 +160,15 @@ export default function AccountClient() {
         return
       }
 
-      const payload = await response.json() as { user: PremiumUser | null }
-      setUser(payload.user)
+      const payload = await response.json() as AuthMePayload
+      if (payload.session?.accessToken) {
+        storeAuthSession({
+          accessToken: payload.session.accessToken,
+          refreshToken: payload.session.refreshToken,
+          expiresAt: payload.session.expiresAt,
+        })
+      }
+      setUser(payload.user ?? null)
       setState(payload.user ? "ready" : "signed-out")
     }
 
@@ -266,7 +280,7 @@ export default function AccountClient() {
 
   function signOut() {
     clearAuthSession()
-    clearServerSession().finally(() => router.replace("/login"))
+    clearServerSession().finally(() => router.replace("/?auth=login"))
   }
 
   const planDetails = useMemo(() => {
@@ -294,10 +308,12 @@ export default function AccountClient() {
 
   if (state === "error" || !user || !planDetails) {
     return (
-      <main className="mx-auto w-full max-w-[760px] flex-1 px-4 py-14">
-        <div className="dpm-section-card p-6">
-          <p className="m-0 text-[15px] font-semibold text-[var(--ink)]">Account did not load</p>
-          <p className="mt-2 mb-0 text-[13px] text-[var(--ink-3)]">Try signing in again.</p>
+      <main className="bl-account-shell">
+        <div className="bl-account-frame">
+          <div className="bl-account-section p-4">
+            <p className="m-0 text-[14px] font-semibold text-[var(--ink)]">Account did not load</p>
+            <p className="mt-1 mb-0 text-[13px] text-[var(--ink-3)]">Try signing in again.</p>
+          </div>
         </div>
       </main>
     )
@@ -314,30 +330,42 @@ export default function AccountClient() {
   ]
 
   return (
-    <main className="grid min-h-[calc(100dvh-64px)] bg-[var(--bg)] lg:h-[calc(100dvh-64px)] lg:grid-cols-[280px_minmax(0,1fr)] lg:overflow-hidden">
-      <aside className="bg-[rgba(5,7,10,0.42)] px-4 py-5 shadow-[1px_0_0_var(--line)] max-lg:border-b max-lg:border-[var(--line)] lg:h-full lg:overflow-y-auto">
-        <Link href="/" className="inline-flex h-9 items-center gap-2 rounded-md px-2 text-[14px] font-medium text-[var(--ink-2)] no-underline transition-colors hover:bg-[var(--hover-bg)] hover:text-[var(--ink)]">
+    <main className="bl-account-shell">
+      <div className="bl-account-frame">
+        <Link href="/" className="bl-account-back">
           <ChevronLeft size={16} strokeWidth={1.8} />
           Go back
         </Link>
 
-        <div className="mt-7">
-          <p className="mb-2 px-2 text-[12px] font-semibold text-[var(--ink-4)]">Workspace</p>
-          <Link href="/" className="flex min-h-10 items-center rounded-md px-2 text-[14px] text-[var(--ink-2)] no-underline transition-colors hover:bg-[var(--hover-bg)] hover:text-[var(--ink)]">
-            Lensboard
-          </Link>
-        </div>
+        <section className="bl-account-hero">
+          <div className="min-w-0">
+            <p className="bl-account-kicker">BrawlLens account</p>
+            <h1>Account settings</h1>
+            <p>{accountTitle}</p>
+            <div className="bl-account-pills" aria-label="Account summary">
+              <span>{planDetails.planName}</span>
+              <span>{formatStatus(user.subscriptionStatus)}</span>
+              <span>{user.accountSetup?.playerTag ? `#${user.accountSetup.playerTag}` : "No player tag"}</span>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={signOut}
+            className="bl-account-signout"
+          >
+            Sign out
+          </button>
+        </section>
 
-        <div className="mt-7">
-          <p className="mb-2 px-2 text-[12px] font-semibold text-[var(--ink-4)]">Account</p>
-          <nav className="grid gap-1" aria-label="Account settings">
+        <div className="bl-account-toolbar">
+          <nav className="bl-account-tabs" aria-label="Account settings">
             {tabs.map(item => {
               const active = item.id === activeTab
               return (
                 <Link
                   key={item.id}
                   href={`/account?tab=${item.id}`}
-                  className={`flex min-h-10 items-center rounded-md px-2 text-[14px] no-underline transition-colors ${active ? "dpm-gold-active font-semibold" : "text-[var(--ink-2)] hover:bg-[var(--hover-bg)] hover:text-[var(--ink)]"}`}
+                  className={`bl-account-tab ${active ? "is-active" : ""}`}
                 >
                   {item.label}
                 </Link>
@@ -345,25 +373,8 @@ export default function AccountClient() {
             })}
           </nav>
         </div>
-      </aside>
 
-      <section className="min-w-0 px-8 py-8 max-lg:px-5 max-sm:px-4 lg:h-full lg:overflow-y-auto">
-        <div className="mx-auto max-w-[1020px]">
-          <div className="dpm-hero-panel mb-5 flex flex-wrap items-start justify-between gap-4 p-6 max-sm:p-5">
-            <div className="min-w-0">
-              <h1 className="m-0 text-[28px] font-semibold leading-tight tracking-[-0.012em] text-[var(--ink)]">Account settings</h1>
-              <p className="mt-1 mb-0 text-[14px] leading-relaxed text-[var(--ink-3)]">Manage profile, billing, and interface preferences.</p>
-            </div>
-            <button
-              type="button"
-              onClick={signOut}
-              className="inline-flex h-10 cursor-pointer items-center rounded-md border border-[var(--line)] bg-[var(--panel-2)] px-3 text-[13px] font-medium text-[var(--ink-2)] transition-colors hover:border-[var(--line-2)] hover:text-[var(--ink)]"
-            >
-              Sign out
-            </button>
-          </div>
-
-          <div className="grid gap-5">
+        <div className="bl-account-content">
             {activeTab === "profile" && (
               <>
                 <SettingsSection title="Profile" description="Change how your account appears in BrawlLens.">
@@ -395,17 +406,13 @@ export default function AccountClient() {
                           placeholder="#YP90U0YL"
                           autoCapitalize="characters"
                           spellCheck={false}
-                          className="h-10 min-w-0 flex-1 rounded-md border border-[var(--line)] bg-[var(--panel-2)] px-3 text-[13px] font-medium text-[var(--ink)] outline-none transition-colors placeholder:text-[var(--ink-4)] focus:border-[var(--line-2)]"
+                          className="bl-account-input"
                         />
                         <button
                           type="button"
                           onClick={() => void savePlayerTag()}
                           disabled={!canSavePlayerTag}
-                          className={`inline-flex h-10 min-w-[82px] items-center justify-center rounded-md px-3 text-[13px] font-medium transition-colors ${
-                            canSavePlayerTag
-                              ? "cursor-pointer border border-[var(--ink)] bg-[var(--ink)] text-[var(--ink-on)] hover:bg-[var(--ink-2)]"
-                              : "cursor-not-allowed border border-[var(--line)] bg-[var(--panel-2)] text-[var(--ink-4)]"
-                          }`}
+                          className={`bl-account-save ${canSavePlayerTag ? "" : "is-disabled"}`}
                         >
                           {playerTagSaveState === "saving" ? "Saving..." : "Save"}
                         </button>
@@ -520,9 +527,8 @@ export default function AccountClient() {
                 </SettingsSection>
               </>
             )}
-          </div>
         </div>
-      </section>
+      </div>
     </main>
   )
 }
