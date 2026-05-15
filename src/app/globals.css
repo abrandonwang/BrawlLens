@@ -187,26 +187,30 @@ html.landing-bg body {
   background-attachment: fixed !important;
 }
 
+html.landing-bg:not(.home-landing-bg) body {
+  background:
+    linear-gradient(180deg, #000 0, #000 60px, rgba(0, 0, 0, 0) 96px),
+    radial-gradient(1400px 860px at 50% 14%, rgba(45, 168, 238, 0.34), transparent 66%),
+    radial-gradient(1040px 780px at 8% 42%, rgba(17, 90, 141, 0.36), transparent 74%),
+    linear-gradient(180deg, #000000 0%, #000000 46%, #000b17 68%, #01224a 88%, #000000 100%) !important;
+  background-attachment: fixed !important;
+}
+
 html.home-landing-bg body {
   background-color: #000;
   background:
-    linear-gradient(
-      180deg,
-      #000 0,
-      #000 60px,
-      rgba(0, 0, 0, 0) 61px
-    ),
-    radial-gradient(1020px 760px at 14% 42%, rgba(75, 230, 202, 0.34), transparent 66%),
-    radial-gradient(1120px 760px at 52% 40%, rgba(127, 117, 255, 0.34), transparent 64%),
-    radial-gradient(1040px 760px at 88% 42%, rgba(255, 84, 150, 0.32), transparent 66%),
-    radial-gradient(980px 700px at 68% 88%, rgba(240, 211, 115, 0.26), transparent 68%),
-    linear-gradient(180deg, #07101a 0%, #16204b 42%, #4a274d 72%, #25180c 100%) !important;
+    radial-gradient(1280px 940px at 8% 10%, rgba(75, 230, 202, 0.36), transparent 66%),
+    radial-gradient(1420px 980px at 50% 0%, rgba(127, 117, 255, 0.38), transparent 66%),
+    radial-gradient(1260px 940px at 95% 8%, rgba(255, 84, 150, 0.32), transparent 66%),
+    radial-gradient(1180px 840px at 68% 90%, rgba(240, 211, 115, 0.28), transparent 70%),
+    linear-gradient(180deg, #06101a 0%, #111a40 38%, #352250 66%, #1c120b 100%) !important;
   background-attachment: fixed !important;
 }
 
 * { box-sizing: border-box; }
 html {
   background: var(--bg);
+  min-height: 100%;
   overflow-y: scroll;
   scrollbar-gutter: stable;
   transition: background 0.25s ease;
@@ -218,10 +222,11 @@ html {
 
 body {
   margin: 0;
+  min-height: 100dvh;
   background: var(--bg);
   background-attachment: fixed;
   background-position: center;
-  background-size: auto, auto;
+  background-size: cover;
   color: var(--ink);
   font-family: var(--font-ui);
   font-feature-settings: "ss01", "cv11";
@@ -231,6 +236,10 @@ body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   transition: background 0.2s ease, color 0.2s ease;
+}
+
+html:not(.landing-bg) body {
+  background: #000;
 }
 
 body > nav,
@@ -245,6 +254,13 @@ body > nav .nav-wordmark {
   font-family: var(--font-ui);
   font-weight: 850;
   letter-spacing: 0 !important;
+}
+
+.bl-footer[data-landing="true"],
+.bl-footer[data-landing="true"] a,
+.bl-footer[data-landing="true"] p,
+.bl-footer[data-landing="true"] span {
+  color: #fff !important;
 }
 
 .bl-nav-ai-button {
@@ -407,23 +423,27 @@ html.home-landing-bg .bl-landing-shell {
   min-height: calc(100dvh - 51px);
 }
 
+body:has(.bl-landing-shell) .app-main-shell {
+  padding-top: 0 !important;
+}
+
 html.home-landing-bg .bl-landing-shell::before {
   content: "";
   position: absolute;
-  top: 60px;
+  top: -60px;
   right: max(-180px, -12vw);
   left: max(-180px, -12vw);
   z-index: -1;
-  height: min(680px, 74vh);
+  height: min(980px, calc(96vh + 60px));
   pointer-events: none;
   background:
-    radial-gradient(760px 380px at 20% 34%, rgba(90, 238, 208, 0.24), transparent 68%),
-    radial-gradient(820px 420px at 52% 26%, rgba(142, 128, 255, 0.24), transparent 70%),
-    radial-gradient(760px 400px at 80% 34%, rgba(255, 96, 153, 0.22), transparent 70%);
-  filter: blur(28px);
-  opacity: 0.82;
-  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 16%, #000 82%, transparent 100%);
-  mask-image: linear-gradient(180deg, transparent 0%, #000 16%, #000 82%, transparent 100%);
+    radial-gradient(900px 470px at 18% 14%, rgba(90, 238, 208, 0.26), transparent 68%),
+    radial-gradient(980px 520px at 52% 8%, rgba(142, 128, 255, 0.28), transparent 70%),
+    radial-gradient(900px 500px at 84% 14%, rgba(255, 96, 153, 0.24), transparent 70%);
+  filter: blur(30px);
+  opacity: 0.9;
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 80%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 0%, #000 80%, transparent 100%);
 }
 
 .bl-landing-stage {
@@ -705,24 +725,26 @@ html.home-landing-bg .bl-brand-glyph {
 
 .bl-landing-preview-card {
   --card-accent: #f0d373;
-  --card-accent-soft: rgba(240, 211, 115, 0.26);
-  --card-wash-a: rgba(63, 224, 255, 0.2);
-  --card-wash-b: rgba(142, 112, 255, 0.18);
+  --card-accent-soft: rgba(240, 211, 115, 0.16);
+  --card-wash-a: rgba(18, 22, 32, 0.8);
+  --card-wash-b: rgba(4, 7, 14, 0.68);
   position: relative;
   min-height: 220px;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.13);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 8px;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.025)),
+    radial-gradient(circle at 24% 0%, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0) 38%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.066), rgba(255, 255, 255, 0.016)),
     linear-gradient(135deg, var(--card-wash-a), var(--card-wash-b)),
-    rgba(4, 9, 18, 0.42);
+    rgba(3, 5, 10, 0.74);
   box-shadow:
-    rgba(255, 255, 255, 0.06) 0 1px 0 0 inset,
-    var(--card-accent-soft) 0 0 34px -22px,
-    rgba(0, 0, 0, 0.52) 0 26px 70px -44px;
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+    rgba(255, 255, 255, 0.07) 0 1px 0 0 inset,
+    rgba(255, 255, 255, 0.035) 0 0 0 1px inset,
+    var(--card-accent-soft) 0 0 24px -20px,
+    rgba(0, 0, 0, 0.56) 0 28px 70px -44px;
+  backdrop-filter: blur(14px) saturate(118%);
+  -webkit-backdrop-filter: blur(14px) saturate(118%);
   color: #f7f4ed;
 }
 
@@ -738,21 +760,6 @@ html.home-landing-bg .bl-brand-glyph {
   box-shadow: var(--card-accent-soft) 0 -10px 28px;
 }
 
-.bl-landing-leader-card {
-  --card-wash-a: rgba(63, 224, 255, 0.24);
-  --card-wash-b: rgba(142, 112, 255, 0.19);
-}
-
-.bl-landing-tier-card {
-  --card-wash-a: rgba(255, 204, 98, 0.24);
-  --card-wash-b: rgba(255, 93, 157, 0.2);
-}
-
-.bl-landing-map-card {
-  --card-wash-a: rgba(83, 239, 186, 0.22);
-  --card-wash-b: rgba(63, 224, 255, 0.21);
-}
-
 .bl-landing-leader-card::before,
 .bl-landing-tier-card::before,
 .bl-landing-map-card::before {
@@ -764,7 +771,7 @@ html.home-landing-bg .bl-brand-glyph {
   z-index: 1;
   height: 64px;
   pointer-events: none;
-  background: linear-gradient(to bottom, rgba(14, 18, 28, 0), rgba(14, 18, 28, 0.88));
+  background: linear-gradient(to bottom, rgba(3, 5, 10, 0), rgba(3, 5, 10, 0.72));
 }
 
 .bl-landing-tier-card {
@@ -1022,7 +1029,10 @@ html.home-landing-bg .bl-brand-glyph {
 .bl-preview-tier {
   font-family: var(--font-number);
   font-size: 18px;
-  font-weight: 760;
+  font-weight: 850;
+  text-shadow:
+    0 0 10px color-mix(in srgb, currentColor 32%, transparent),
+    0 0 2px color-mix(in srgb, currentColor 70%, transparent);
 }
 
 .bl-preview-win,
@@ -2406,6 +2416,35 @@ html.home-landing-bg .bl-brand-glyph {
   gap: 8px;
 }
 
+.bl-tier-table-head > *,
+.bl-tier-row > * {
+  min-width: 0;
+}
+
+.bl-tier-table-head > :nth-child(n+5),
+.bl-tier-row > :nth-child(n+5) {
+  justify-self: stretch;
+  text-align: center;
+}
+
+.bl-tier-table-head .bl-help-label {
+  display: grid;
+  width: 100%;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 5px;
+}
+
+.bl-tier-table-head .bl-help-label > span:first-child {
+  grid-column: 2;
+  justify-self: center;
+}
+
+.bl-tier-table-head .bl-help-label .bl-help-tooltip {
+  grid-column: 3;
+  justify-self: start;
+}
+
 .bl-tier-table-head {
   min-height: 32px;
   margin-bottom: 5px;
@@ -2536,15 +2575,24 @@ html.home-landing-bg .bl-brand-glyph {
   border-radius: 0;
   background: transparent !important;
   font-family: var(--font-number);
-  font-size: 18px;
-  font-weight: 760;
+  font-size: 19px;
+  font-weight: 850;
   line-height: 1;
   text-align: center;
+  text-shadow:
+    0 0 11px color-mix(in srgb, currentColor 34%, transparent),
+    0 0 2px color-mix(in srgb, currentColor 74%, transparent);
 }
 
 .bl-tier-metric,
 .bl-tier-games {
   text-align: center;
+}
+
+.bl-tier-metric {
+  display: grid;
+  justify-items: center;
+  line-height: 1.05;
 }
 
 .bl-tier-metric strong,
@@ -3208,14 +3256,6 @@ html.home-landing-bg .bl-brand-glyph {
   width: min(1120px, calc(100vw - 20px));
   margin-inline: auto;
   padding: 10px 0 18px;
-}
-
-html.leaderboards-nav-flow .app-main-shell,
-html.profile-nav-flow .app-main-shell,
-html.tierlist-nav-flow .app-main-shell,
-body:has(.bl-lb-subnav-wrap) .app-main-shell,
-body:has(.bl-profile-hero-slot) .app-main-shell {
-  padding-top: 60px !important;
 }
 
 .bl-lb-subnav-slot {
@@ -6861,10 +6901,17 @@ body:has(.bl-profile-hero-slot) > nav form:focus-within {
 }
 
 .bl-profile-tag {
+  display: inline-flex;
+  align-items: center;
   color: var(--lb-text-4);
+  font-family: var(--font-ui);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 850;
+  font-feature-settings: "ss01", "cv11", "tnum", "zero";
+  font-variant-numeric: tabular-nums;
   letter-spacing: 0;
+  line-height: 1;
+  text-transform: uppercase;
 }
 
 .bl-profile-region {

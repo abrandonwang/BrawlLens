@@ -14,9 +14,13 @@ const footerLinks: { label: string; href: string }[] = [
 export default function Footer() {
   const pathname = usePathname()
   if (pathname.startsWith("/account")) return null
+  const isLandingPage = pathname === "/"
 
   return (
-    <footer className="w-full border-t border-white/[0.04] bg-[#0a0d11] px-[30px] text-[#a3a6ad] max-lg:px-5 max-sm:px-4">
+    <footer
+      data-landing={isLandingPage ? "true" : undefined}
+      className={`bl-footer w-full border-t px-[30px] text-[#a3a6ad] max-lg:px-5 max-sm:px-4 ${isLandingPage ? "border-white/[0.06] bg-transparent" : "border-white/[0.04] bg-black"}`}
+    >
       <div className="flex min-h-[50px] w-full items-center gap-8 max-lg:min-h-[86px] max-lg:flex-wrap max-lg:items-start max-lg:gap-x-5 max-lg:gap-y-3 max-lg:py-4">
         <div className="flex min-w-0 flex-1 items-center gap-3 max-lg:min-w-full">
           <Link

@@ -5,6 +5,7 @@ import { createClient } from "@supabase/supabase-js"
 import { BrawlImage, brawlerIconUrl } from "@/components/BrawlImage"
 import { cleanEnv } from "@/lib/env"
 import { formatBrawlerName } from "@/lib/format"
+import { clubDetailHref } from "@/lib/leaderboardUtils"
 import { fetchClubResponse, fetchPlayerBattleLogResponse, fetchPlayerResponse } from "@/lib/playerLookup"
 import { sanitizePlayerTag } from "@/lib/validation"
 import type { Player, PlayerBrawler } from "@/types/brawler"
@@ -804,7 +805,7 @@ export default async function PlayerProfile({ params }: { params: Promise<{ tag:
   const tier = ladderTier(player.trophies)
   const brawlerPerformance = buildBrawlerPerformanceStats(recentBattles, player, tag, sorted)
   const modePerformance = buildModePerformanceStats(recentBattles)
-  const clubHref = playerClubTag ? `/leaderboards/clubs?search=${encodeURIComponent(playerClubTag)}` : "/leaderboards/clubs"
+  const clubHref = playerClubTag ? clubDetailHref(playerClubTag) : "/leaderboards/clubs"
   const recentAverageSwing = recentBattles.length ? recentTrophySwing / recentBattles.length : 0
   const mostPlayed = brawlerPerformance.find(stat => stat.games > 0) ?? brawlerPerformance[0] ?? null
   const bestRoster = topBrawlers[0] ?? null

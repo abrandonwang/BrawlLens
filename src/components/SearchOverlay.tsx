@@ -5,6 +5,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Search } from "lucide-react"
 import { BrawlImage, brawlerIconUrl, profileIconUrl } from "@/components/BrawlImage"
+import { clubDetailHref } from "@/lib/leaderboardUtils"
 import { sanitizePlayerTag } from "@/lib/validation"
 
 type SearchItem = {
@@ -52,12 +53,20 @@ type PlayerProfile = {
   icon?: { id?: number }
 }
 
-function resolveSearchDestination(query: string) {
+async function resolveSearchDestination(query: string) {
   const trimmed = query.trim()
   if (!trimmed) return null
 
   const playerTag = sanitizePlayerTag(trimmed)
-  if (playerTag) return `/player/${encodeURIComponent(playerTag)}`
+  if (playerTag) {
+    try {
+      const response = await fetch(`/api/club?tag=${encodeURIComponent(playerTag)}`, { cache: "no-store" })
+      if (response.ok) return clubDetailHref(playerTag)
+    } catch {
+      // Fall back to the existing player lookup path when the club check is unavailable.
+    }
+    return `/player/${encodeURIComponent(playerTag)}`
+  }
 
   const normalized = trimmed.toLowerCase()
   if (normalized.includes("leader") || normalized.includes("rank") || normalized.includes("player")) return "/leaderboards/players"
@@ -101,8 +110,12 @@ export default function SearchOverlay() {
     if (tag) {
       return [
         {
+          label: "Clubs",
+          items: [{ title: `#${tag}`, subtitle: "Open club profile", href: clubDetailHref(tag) }],
+        },
+        {
           label: "Players",
-          items: [{ title: `#${tag}`, subtitle: "Open player profile", href: `/player/${encodeURIComponent(tag)}`, playerTag: tag }],
+          items: [{ title: `#${tag}`, subtitle: "Open player profile if no club matches", href: `/player/${encodeURIComponent(tag)}`, playerTag: tag }],
         },
         ...groups.filter(group => group.label !== "Players"),
       ]
@@ -187,9 +200,9 @@ export default function SearchOverlay() {
     }
   }, [open, playerIcons])
 
-  function submit(event: FormEvent<HTMLFormElement>) {
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    const destination = resolveSearchDestination(query)
+    const destination = await resolveSearchDestination(query)
     if (!destination) return
     close()
     router.push(destination)
@@ -216,7 +229,7 @@ export default function SearchOverlay() {
             <Search size={17} strokeWidth={2.4} />
           </button>
         </form>
-        <div className="bl-search-modal-help">Write a brawler, pro player, or a player tag like #YP90U0YL</div>
+        <div className="bl-search-modal-help">Write a brawler, pro player, player tag, or club tag like #YP90U0YL</div>
         <div className="bl-search-modal-results">
           {visibleSearchGroups.map(group => (
             <section key={group.label} className="bl-search-result-group">

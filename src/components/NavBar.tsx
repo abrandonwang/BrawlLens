@@ -526,7 +526,7 @@ export default function NavBar() {
   const visibleDesktopPanel = desktopPanel ?? hoverDesktopPanel;
   const renderedDesktopPanel = visibleDesktopPanel ?? lastDesktopPanel;
   const desktopPanelIndex = renderedDesktopPanel === "leaderboards" ? 1 : 0;
-  const navPositionClass = "fixed top-0 left-0 z-[100]";
+  const navPositionClass = "relative z-[100]";
   const mobileItemStyle = (index: number) => ({
     animationDelay: menuClosing ? "0ms" : `${30 + index * 42}ms`,
   });
@@ -562,7 +562,7 @@ export default function NavBar() {
 
   return (
     <>
-      <nav className={`${navPositionClass} flex h-[60px] w-full items-center bg-black px-6 text-[#f4f5f7] max-lg:px-4 max-[430px]:px-3`}>
+      <nav className={`${navPositionClass} flex h-[60px] w-full items-center bg-transparent px-6 text-[#f4f5f7] max-lg:px-4 max-[430px]:px-3`}>
         <Link href="/" className="relative z-10 inline-flex h-[60px] shrink-0 items-center whitespace-nowrap text-white no-underline" aria-label="BrawlLens home">
           <BrandMark size="md" />
           <span className="sr-only">BrawlLens</span>
