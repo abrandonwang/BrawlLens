@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, type ReactNode } from "react"
 import Link from "next/link"
+import { useSearchParams } from "next/navigation"
 import { BrawlImage, brawlerIconUrl } from "@/components/BrawlImage"
 import { formatBrawlerName, formatTrophies } from "@/lib/format"
 import {
@@ -85,12 +86,18 @@ export default function LeaderboardsClient({
   updatedAt?: string | null
   topPlayerEnrichment?: Record<string, Record<string, TopPlayerEnrichment>>
 }) {
+  const searchParams = useSearchParams()
+  const initialSearch = searchParams.get("search") ?? ""
   const [activeRegion, setActiveRegion] = useState<string>("global")
-  const [search, setSearch] = useState("")
+  const [search, setSearch] = useState(initialSearch)
   const [page, setPage] = useState(0)
   const [apiEnrichments, setApiEnrichments] = useState<Record<string, TopPlayerEnrichment>>({})
 
   useEffect(() => { setPage(0) }, [search, activeRegion])
+
+  useEffect(() => {
+    setSearch(searchParams.get("search") ?? "")
+  }, [searchParams])
 
   const regionData = useMemo(() => allData.find(r => r.code === activeRegion) ?? allData[0], [allData, activeRegion])
   const globalRankByTag = useMemo(() => {

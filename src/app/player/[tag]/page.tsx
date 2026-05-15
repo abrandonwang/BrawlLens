@@ -29,6 +29,13 @@ interface LeaderboardRecord {
   trophies: number
 }
 
+interface LeaderboardPlacement {
+  record: LeaderboardRecord | null
+  globalCount: number | null
+  estimatedRank: number | null
+  percentile: string | null
+}
+
 interface BattleBrawler {
   id?: number
   name?: string
@@ -80,6 +87,19 @@ interface ModePerformanceStat {
 const stateActionClass = "inline-flex min-h-9 cursor-pointer items-center justify-center rounded-md border border-[var(--lb-line)] bg-[var(--lb-panel-2)] px-4 text-[13px] font-bold text-[var(--lb-text)] no-underline transition-colors hover:border-[var(--lb-line-2)] hover:bg-[var(--lb-panel-3)]"
 
 const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+const trophyPercentileAnchors = [
+  { trophies: 0, percentile: 100 },
+  { trophies: 10_000, percentile: 55 },
+  { trophies: 25_000, percentile: 25 },
+  { trophies: 40_000, percentile: 12 },
+  { trophies: 60_000, percentile: 4 },
+  { trophies: 80_000, percentile: 1.4 },
+  { trophies: 100_000, percentile: 0.5 },
+  { trophies: 120_000, percentile: 0.25 },
+  { trophies: 150_000, percentile: 0.1 },
+  { trophies: 180_000, percentile: 0.05 },
+  { trophies: 210_000, percentile: 0.02 },
+]
 
 export async function generateMetadata(
   { params }: { params: Promise<{ tag: string }> },
@@ -108,10 +128,11 @@ export async function generateMetadata(
   }
 }
 
-async function fetchLeaderboardRecord(tag: string): Promise<{ record: LeaderboardRecord | null; globalCount: number | null }> {
+async function fetchLeaderboardRecord(tag: string, trophies: number | null | undefined): Promise<LeaderboardPlacement> {
+  const trophyPercentile = trophyPercentileEstimate(trophies)
   const url = cleanEnv(process.env.SUPABASE_URL)
   const key = cleanEnv(process.env.SUPABASE_SERVICE_KEY)
-  if (!url || !key) return { record: null, globalCount: null }
+  if (!url || !key) return { record: null, globalCount: null, estimatedRank: null, percentile: trophyPercentile }
 
   try {
     const supabase = createClient(url, key)
@@ -129,12 +150,40 @@ async function fetchLeaderboardRecord(tag: string): Promise<{ record: Leaderboar
     ])
 
     const records = (rankRes.data ?? []) as LeaderboardRecord[]
+    const record = records.find(record => record.region === "global") ?? records[0] ?? null
+    const globalCount = countRes.count ?? null
+    if (record?.region === "global") {
+      return {
+        record,
+        globalCount,
+        estimatedRank: record.rank,
+        percentile: percentRank(record.rank, globalCount) ?? trophyPercentile,
+      }
+    }
+
+    if (typeof trophies !== "number" || !globalCount) {
+      return { record, globalCount, estimatedRank: null, percentile: trophyPercentile }
+    }
+
+    const { count: strongerCount, error: strongerError } = await supabase
+      .from("leaderboards")
+      .select("player_tag", { count: "exact", head: true })
+      .eq("region", "global")
+      .gt("trophies", trophies)
+
+    if (strongerError) {
+      return { record, globalCount, estimatedRank: null, percentile: trophyPercentile }
+    }
+
+    const estimatedRank = (strongerCount ?? 0) + 1
     return {
-      record: records.find(record => record.region === "global") ?? records[0] ?? null,
-      globalCount: countRes.count ?? null,
+      record,
+      globalCount,
+      estimatedRank,
+      percentile: percentRank(estimatedRank, globalCount) ?? trophyPercentile,
     }
   } catch {
-    return { record: null, globalCount: null }
+    return { record: null, globalCount: null, estimatedRank: null, percentile: trophyPercentile }
   }
 }
 
@@ -168,8 +217,34 @@ function ordinal(value: number) {
 }
 
 function percentRank(rank: number | null | undefined, total: number | null | undefined) {
-  if (!rank || !total) return null
-  return `${((rank / total) * 100).toFixed(2)}%`
+  if (!rank || !total || rank > total) return null
+  const percentile = (rank / total) * 100
+  return formatPercentile(percentile)
+}
+
+function formatPercentile(percentile: number) {
+  if (percentile < 0.1) return "<0.1%"
+  if (percentile < 1) return `${Number(percentile.toFixed(2))}%`
+  if (percentile < 10) return `${Number(percentile.toFixed(1))}%`
+  return `${Math.round(percentile)}%`
+}
+
+function trophyPercentileEstimate(trophies: number | null | undefined) {
+  if (typeof trophies !== "number" || trophies <= 0) return null
+  const last = trophyPercentileAnchors[trophyPercentileAnchors.length - 1]
+  if (trophies >= last.trophies) return formatPercentile(last.percentile)
+
+  for (let index = 1; index < trophyPercentileAnchors.length; index += 1) {
+    const lower = trophyPercentileAnchors[index - 1]
+    const upper = trophyPercentileAnchors[index]
+    if (trophies <= upper.trophies) {
+      const progress = (trophies - lower.trophies) / Math.max(1, upper.trophies - lower.trophies)
+      const logPercentile = Math.log(lower.percentile) + progress * (Math.log(upper.percentile) - Math.log(lower.percentile))
+      return formatPercentile(Math.exp(logPercentile))
+    }
+  }
+
+  return null
 }
 
 function formatFullNumber(value: number) {
@@ -210,11 +285,12 @@ function ladderTier(trophies: number) {
   return { key: "trophy", label: "Trophy", short: "T" }
 }
 
-function ladderRankValue(record: LeaderboardRecord | null, total: number | null) {
-  if (!record) return "--"
-  if (record.rank <= 200) return ordinal(record.rank)
-  const percentile = percentRank(record.rank, total)
-  return percentile ? `Top ${percentile}` : `#${record.rank.toLocaleString("en-US")}`
+function ladderRankValue(placement: LeaderboardPlacement) {
+  if (placement.record?.region === "global" && placement.record.rank <= 200) return ordinal(placement.record.rank)
+  if (placement.percentile) return `Top ${placement.percentile}`
+  if (placement.estimatedRank) return `#${placement.estimatedRank.toLocaleString("en-US")}`
+  if (placement.record) return `#${placement.record.rank.toLocaleString("en-US")}`
+  return "--"
 }
 
 function firstGlyph(value: string | undefined) {
@@ -783,11 +859,12 @@ export default async function PlayerProfile({ params }: { params: Promise<{ tag:
   }
 
   const playerClubTag = cleanClubTag(player.club?.tag)
-  const [{ record: leaderboardRecord, globalCount }, recentBattles, clubBadgeId] = await Promise.all([
-    fetchLeaderboardRecord(tag),
+  const [leaderboardPlacement, recentBattles, clubBadgeId] = await Promise.all([
+    fetchLeaderboardRecord(tag, player.trophies),
     fetchRecentBattles(tag),
     fetchClubBadgeId(playerClubTag),
   ])
+  const leaderboardRecord = leaderboardPlacement.record
 
   const sorted = [...(player.brawlers ?? [])].sort((a, b) => b.trophies - a.trophies)
   const topBrawlers = sorted.slice(0, 8)
@@ -851,7 +928,7 @@ export default async function PlayerProfile({ params }: { params: Promise<{ tag:
             </div>
             <div className="bl-profile-ladder-rank">
               <span>LADDER RANK</span>
-              <strong>{ladderRankValue(leaderboardRecord, globalCount)}</strong>
+              <strong>{ladderRankValue(leaderboardPlacement)}</strong>
             </div>
             <div className="bl-profile-ladder-meta">
               <span>Peak <b>{formatFullNumber(player.highestTrophies ?? player.trophies)}</b></span>
