@@ -14,6 +14,7 @@ interface ClubEnrichment {
   topMember: ClubMemberSummary | null
   totalPrestige: number | null
   prestigeCoverage: number
+  prestigeLoaded: boolean
 }
 
 const EMPTY_CLUB: ClubEnrichment = {
@@ -21,6 +22,7 @@ const EMPTY_CLUB: ClubEnrichment = {
   topMember: null,
   totalPrestige: null,
   prestigeCoverage: 0,
+  prestigeLoaded: false,
 }
 
 interface ClubMember {
@@ -45,15 +47,15 @@ function cleanTag(raw: unknown) {
   return typeof raw === "string" ? sanitizePlayerTag(raw) : null
 }
 
-async function fetchClubEnrichment(tag: string): Promise<ClubEnrichment> {
+async function fetchClubEnrichment(tag: string, includePrestige: boolean): Promise<ClubEnrichment> {
   try {
     const response = await fetchClubResponse(tag, { next: { revalidate: 900 } })
-    if (!response.ok) return EMPTY_CLUB
+    if (!response.ok) return { ...EMPTY_CLUB, prestigeLoaded: includePrestige }
 
     const club = (await response.json()) as ClubProfile
     const members = [...(club.members ?? [])].sort((a, b) => (b.trophies ?? 0) - (a.trophies ?? 0))
     const topMember = members[0]
-    const memberPrestiges = await mapWithConcurrency(members, 5, fetchMemberPrestige)
+    const memberPrestiges = includePrestige ? await mapWithConcurrency(members, 5, fetchMemberPrestige) : []
     const prestigeValues = memberPrestiges.filter((value): value is number => typeof value === "number")
 
     return {
@@ -66,10 +68,11 @@ async function fetchClubEnrichment(tag: string): Promise<ClubEnrichment> {
       } : null,
       totalPrestige: prestigeValues.length ? prestigeValues.reduce((sum, value) => sum + value, 0) : null,
       prestigeCoverage: prestigeValues.length,
+      prestigeLoaded: includePrestige,
     }
   } catch (error) {
     console.error(`Leaderboard club enrichment failed [${tag}]:`, error)
-    return EMPTY_CLUB
+    return { ...EMPTY_CLUB, prestigeLoaded: includePrestige }
   }
 }
 
@@ -107,15 +110,16 @@ async function mapWithConcurrency<T, R>(
 }
 
 export async function POST(request: Request) {
-  const body = await request.json().catch(() => null) as { tags?: unknown[] } | null
+  const body = await request.json().catch(() => null) as { tags?: unknown[]; includePrestige?: unknown } | null
   const tags = Array.from(new Set((body?.tags ?? []).map(cleanTag).filter(Boolean))).slice(0, 60) as string[]
+  const includePrestige = body?.includePrestige === true
 
   if (!tags.length) {
     return NextResponse.json({ clubs: {} })
   }
 
-  const entries = await mapWithConcurrency(tags, 4, async tag => [tag, await fetchClubEnrichment(tag)] as const)
+  const entries = await mapWithConcurrency(tags, includePrestige ? 2 : 8, async tag => [tag, await fetchClubEnrichment(tag, includePrestige)] as const)
   const response = NextResponse.json({ clubs: Object.fromEntries(entries) })
-  response.headers.set("Cache-Control", "private, max-age=60")
+  response.headers.set("Cache-Control", includePrestige ? "private, max-age=60" : "private, max-age=300, stale-while-revalidate=900")
   return response
 }

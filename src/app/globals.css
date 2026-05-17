@@ -263,99 +263,13 @@ body > nav .nav-wordmark {
   color: #fff !important;
 }
 
-.bl-ai-bookmark {
-  position: fixed;
-  top: 50%;
-  right: 0;
-  z-index: 155;
-  display: inline-flex;
-  width: 42px;
-  height: 52px;
-  align-items: center;
-  gap: 9px;
-  overflow: hidden;
-  border: 1px solid rgba(247, 244, 237, 0.09);
-  border-right: 0;
-  border-radius: 8px 0 0 8px;
-  background: rgba(16, 17, 19, 0.92);
-  color: rgba(247, 244, 237, 0.76);
-  padding: 0 13px;
-  font-family: var(--font-ui);
-  font-size: 12px;
-  font-weight: 850;
-  letter-spacing: 0;
-  line-height: 1;
-  white-space: nowrap;
-  cursor: pointer;
-  box-shadow:
-    rgba(255, 255, 255, 0.045) 0 1px 0 0 inset,
-    rgba(0, 0, 0, 0.62) 0 18px 42px -28px;
-  transform: translateY(-50%);
-  transition:
-    width 190ms cubic-bezier(0.16, 1, 0.3, 1),
-    border-color 160ms ease,
-    background 160ms ease,
-    color 160ms ease,
-    opacity 160ms ease,
-    transform 160ms ease;
-}
-
-.bl-ai-bookmark::before {
-  content: "";
-  position: absolute;
-  top: 8px;
-  bottom: 8px;
-  left: 0;
-  width: 2px;
-  border-radius: 999px;
-  background: rgba(240, 211, 115, 0.82);
-  opacity: 0.72;
-}
-
-.bl-ai-bookmark svg {
-  flex: 0 0 auto;
-  color: #f0d373;
-}
-
-.bl-ai-bookmark span {
-  opacity: 0;
-  transform: translateX(4px);
-  transition: opacity 150ms ease, transform 180ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.bl-ai-bookmark:hover,
-.bl-ai-bookmark:focus-visible {
-  width: 104px;
-  border-color: rgba(247, 244, 237, 0.16);
-  background: rgba(21, 23, 29, 0.96);
-  color: #f7f4ed;
-  outline: none;
-}
-
-.bl-ai-bookmark:hover span,
-.bl-ai-bookmark:focus-visible span {
-  opacity: 1;
-  transform: translateX(0);
-}
-
-.bl-ai-bookmark[data-open="true"] {
-  opacity: 0;
-  pointer-events: none;
-  transform: translate(8px, -50%);
-}
-
-@media (max-width: 700px) {
-  .bl-ai-bookmark {
-    top: auto;
-    right: 0;
-    bottom: 118px;
-    height: 48px;
-    transform: none;
-  }
-
-  .bl-ai-bookmark[data-open="true"] {
-    transform: translateX(8px);
-  }
+.bl-mnav-grid {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    radial-gradient(ellipse 60% 40% at 50% 0%, rgba(139, 215, 255, 0.05) 0%, transparent 70%);
+  background-size: 32px 32px, 32px 32px, 100% 100%;
+  background-position: 0 0, 0 0, 0 0;
 }
 
 .bl-nav-login-button {
@@ -672,7 +586,8 @@ html.home-landing-bg .bl-brand-glyph {
   font-size: clamp(14px, 1.8vw, 17px);
   font-weight: 800;
   letter-spacing: 0;
-  line-height: 1;
+  line-height: 1.35;
+  padding-block: 2px;
   pointer-events: none;
   text-overflow: ellipsis;
   transform: translateY(-50%);
@@ -1805,6 +1720,63 @@ html.home-landing-bg .bl-brand-glyph {
     linear-gradient(135deg, color-mix(in srgb, var(--ink) 6%, transparent), transparent 42%),
     linear-gradient(315deg, color-mix(in srgb, var(--ink) 5%, transparent), transparent 44%);
   pointer-events: none;
+}
+
+.map-preview-fallback {
+  isolation: isolate;
+}
+
+.map-preview-fallback::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    linear-gradient(color-mix(in srgb, var(--map-accent) 10%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--map-accent) 10%, transparent) 1px, transparent 1px),
+    radial-gradient(circle at 50% 28%, color-mix(in srgb, var(--map-accent) 24%, transparent), transparent 48%);
+  background-size: 28px 28px, 28px 28px, 100% 100%;
+  opacity: 0.72;
+  pointer-events: none;
+}
+
+.map-preview-fallback-mark {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  width: 56px;
+  height: 56px;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--map-accent) 38%, rgba(247,244,237,0.12));
+  border-radius: 10px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.08), transparent),
+    color-mix(in srgb, var(--map-accent) 22%, #101113);
+  box-shadow:
+    color-mix(in srgb, var(--map-accent) 34%, transparent) 0 0 28px -8px,
+    rgba(0,0,0,0.42) 0 16px 28px -18px;
+  color: color-mix(in srgb, var(--map-accent) 58%, white 32%);
+  font-family: var(--font-label);
+  font-size: 18px;
+  font-weight: 850;
+  letter-spacing: 0;
+}
+
+.map-preview-fallback-name {
+  position: absolute;
+  right: 12px;
+  bottom: 16px;
+  left: 12px;
+  z-index: 1;
+  overflow: hidden;
+  color: color-mix(in srgb, var(--ink) 70%, var(--map-accent) 30%);
+  font-family: var(--font-label);
+  font-size: 11px;
+  font-weight: 760;
+  letter-spacing: 0;
+  text-overflow: ellipsis;
+  text-shadow: rgba(0,0,0,0.55) 0 1px 8px;
+  white-space: nowrap;
 }
 
 .map-card-meta {
@@ -9751,17 +9723,32 @@ summary.bl-profile-brawlers-row {
   }
 
   .bl-profile-title h1 {
-    display: block;
-    font-size: 23px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    column-gap: 8px;
+    row-gap: 4px;
+    font-size: 22px;
+    line-height: 1.1;
   }
 
-  .bl-profile-title h1 > span {
-    display: block;
-    margin-top: 5px;
+  .bl-profile-name {
+    flex: 1 1 100%;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .bl-profile-tag {
+    flex: 0 0 auto;
   }
 
   .bl-profile-region {
+    flex: 0 0 auto;
     display: inline-flex;
+    width: auto;
+    align-self: center;
   }
 
   .bl-profile-actions {
@@ -9792,7 +9779,39 @@ summary.bl-profile-brawlers-row {
   }
 
   .bl-profile-brawlers-board {
+    overflow-x: visible;
     padding: 10px;
+  }
+
+  .bl-profile-brawlers-table {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .bl-profile-brawlers-head,
+  .bl-profile-brawlers-row {
+    grid-template-columns: 28px minmax(0, 1fr) 44px 62px 18px;
+    gap: 6px;
+  }
+
+  .bl-profile-brawlers-head,
+  .bl-profile-brawlers-row {
+    padding-inline: 6px;
+  }
+
+  .bl-profile-brawlers-head span:nth-child(n+5):nth-child(-n+10),
+  .bl-profile-brawlers-row > :nth-child(n+5):nth-child(-n+10) {
+    display: none;
+  }
+
+  .bl-profile-brawlers-name {
+    gap: 7px;
+  }
+
+  .bl-profile-brawlers-name img,
+  .bl-profile-brawlers-all-mark {
+    width: 32px;
+    height: 32px;
   }
 
   .bl-profile-summary-grid {

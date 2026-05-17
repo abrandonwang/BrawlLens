@@ -5,7 +5,7 @@ export default function MapsIndexLoading() {
   return (
     <main className="bl-tier-shell">
       <TierlistSubNav active="maps" />
-      <div className="dpm-page-shell">
+      <div className="bl-tier-content">
         <section className="bl-tier-intro-card" aria-labelledby="maps-loading-title">
           <h1 id="maps-loading-title">Maps</h1>
           <div className="bl-tier-analyzed">

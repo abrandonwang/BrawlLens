@@ -50,6 +50,7 @@ interface ClubEnrichment {
   topMember?: ClubMemberSummary | null
   totalPrestige?: number | null
   prestigeCoverage?: number
+  prestigeLoaded?: boolean
 }
 
 const PAGE_SIZE = 50
@@ -97,6 +98,8 @@ export default function ClubsClient({ allData }: { allData: RegionData[] }) {
   const visibleClubs = useMemo(() => [...filtered.slice(0, 3), ...paginated], [filtered, paginated])
   const visibleTags = useMemo(() => visibleClubs.map(club => leaderboardTagKey(club.club_tag)), [visibleClubs])
   const visibleTagKey = visibleTags.join(",")
+  const podiumTags = useMemo(() => filtered.slice(0, 3).map(club => leaderboardTagKey(club.club_tag)), [filtered])
+  const podiumTagKey = podiumTags.join(",")
 
   useEffect(() => {
     const tags = visibleTags.filter(tag => !apiEnrichments[tag])
@@ -108,7 +111,7 @@ export default function ClubsClient({ allData }: { allData: RegionData[] }) {
         const response = await fetch("/api/leaderboards/club-enrichment", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ tags }),
+          body: JSON.stringify({ tags, includePrestige: false }),
           signal: controller.signal,
         })
         if (!response.ok) return
@@ -127,6 +130,39 @@ export default function ClubsClient({ allData }: { allData: RegionData[] }) {
     void loadEnrichments()
     return () => controller.abort()
   }, [visibleTagKey, visibleTags, apiEnrichments])
+
+  useEffect(() => {
+    const tags = podiumTags.filter(tag => {
+      const enrichment = apiEnrichments[tag]
+      return enrichment && !enrichment.prestigeLoaded
+    })
+    if (!tags.length) return
+
+    const controller = new AbortController()
+    async function loadPodiumPrestige() {
+      try {
+        const response = await fetch("/api/leaderboards/club-enrichment", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tags, includePrestige: true }),
+          signal: controller.signal,
+        })
+        if (!response.ok) return
+
+        const data = await response.json() as { clubs?: Record<string, ClubEnrichment> }
+        if (data.clubs) {
+          setApiEnrichments(prev => ({ ...prev, ...data.clubs }))
+        }
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          console.error("Club leaderboard prestige request failed:", error)
+        }
+      }
+    }
+
+    void loadPodiumPrestige()
+    return () => controller.abort()
+  }, [podiumTagKey, podiumTags, apiEnrichments])
 
   return (
     <LeaderboardPageShell active="clubs">

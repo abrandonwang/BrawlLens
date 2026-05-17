@@ -42,6 +42,7 @@ export default function MapsPageClient() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const [spotlightTopBrawler, setSpotlightTopBrawler] = useState<{ id: number; name: string; picks: number; winRate: number } | null>(null)
+  const [spotlightBrawlerLoaded, setSpotlightBrawlerLoaded] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [modeOpen, setModeOpen] = useState(false)
   const [mapImageLookup, setMapImageLookup] = useState<Map<string, string>>(new Map())
@@ -130,6 +131,7 @@ export default function MapsPageClient() {
 
   useEffect(() => {
     setSpotlightTopBrawler(null)
+    setSpotlightBrawlerLoaded(false)
     fetch("/api/brawlers/stats")
       .then(r => r.ok ? r.json() : null)
       .then(d => {
@@ -140,13 +142,14 @@ export default function MapsPageClient() {
         if (top && top.winRate != null) setSpotlightTopBrawler({ id: top.id, name: top.name, picks: top.picks, winRate: top.winRate })
       })
       .catch(() => {})
+      .finally(() => setSpotlightBrawlerLoaded(true))
   }, [])
 
   return (
     <>
       <main className="bl-tier-shell">
         <TierlistSubNav active="maps" />
-        <div className="dpm-page-shell">
+        <div className="bl-tier-content">
         <section className="bl-tier-intro-card" aria-labelledby="maps-title">
           <h1 id="maps-title">Maps</h1>
           <div className="bl-tier-analyzed">
@@ -162,7 +165,7 @@ export default function MapsPageClient() {
             <span className="mt-2 block text-[var(--lb-text-2)]">
               Most popular map: <strong className="font-semibold text-[var(--lb-text)]">{spotlightMap ? `${spotlightMap.name} (${getModeName(spotlightMap.mode)}, ${formatFullNumber(spotlightMap.battles)} battles)` : "Loading..."}</strong>
               <span aria-hidden="true"> · </span>
-              Best brawler: <strong className="font-semibold text-[var(--lb-text)]">{spotlightTopBrawler ? `${formatBrawlerName(spotlightTopBrawler.name)} ${spotlightTopBrawler.winRate.toFixed(1)}%` : "-"}</strong>
+              Best brawler: <strong className="font-semibold text-[var(--lb-text)]">{spotlightTopBrawler ? `${formatBrawlerName(spotlightTopBrawler.name)} ${spotlightTopBrawler.winRate.toFixed(1)}%` : spotlightBrawlerLoaded ? "Unavailable" : "Loading..."}</strong>
             </span>
           </p>
         </section>

@@ -304,7 +304,7 @@ export default function SearchOverlay() {
         const payload = await response.json() as RemoteSearchPayload
         setRemoteSearch(payload)
         setRemoteState("ready")
-      } catch (error) {
+      } catch {
         if (!controller.signal.aborted) {
           setRemoteSearch(null)
           setRemoteState("error")

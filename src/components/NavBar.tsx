@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
-import { ChevronDown, ChevronLeft, ChevronRight, Menu, Search, Sparkles, X } from "lucide-react";
+import { ChevronDown, ChevronRight, Menu, Search, Sparkles, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import AssistantPopup from "./AssistantPopup";
@@ -24,6 +24,7 @@ type NavPanelItem = {
 const browseItems: NavPanelItem[] = [
   { label: "Brawlers", href: "/brawlers", description: "Stats and abilities" },
   { label: "Maps", href: "/meta", description: "Modes and matchups" },
+  { label: "Guides", href: "/guides", description: "Strategies and progression" },
 ];
 
 const leaderboardItems: NavPanelItem[] = [
@@ -41,13 +42,11 @@ const accountMenuItems = [
 const rootMenuLinks = [
   { label: "Lensboard", href: "/", description: "Custom data workspace" },
   { label: "Leaderboards", href: "/leaderboards/players", description: "Rankings" },
-  { label: "Guides", href: "/guides", description: "Data wiki" },
 ];
 
 const loginButtonClass =
   "bl-nav-login-button inline-flex h-9 cursor-pointer items-center gap-2 whitespace-nowrap rounded-[8px] px-4 text-[13px] font-black leading-none outline-none max-[420px]:px-3"
 
-type MenuPanel = "root" | "browse";
 type DesktopPanel = "browse" | "leaderboards";
 type LoginState = "idle" | "sending" | "sent" | "error";
 type AuthMode = "signup" | "login";
@@ -117,7 +116,6 @@ export default function NavBar() {
   const [pendingAssistantQuery, setPendingAssistantQuery] = useState<string | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [menuClosing, setMenuClosing] = useState(false);
-  const [menuPanel, setMenuPanel] = useState<MenuPanel>("root");
   const [desktopPanel, setDesktopPanel] = useState<DesktopPanel | null>(null);
   const [hoverDesktopPanel, setHoverDesktopPanel] = useState<DesktopPanel | null>(null);
   const [suppressedDesktopPanel, setSuppressedDesktopPanel] = useState<DesktopPanel | null>(null);
@@ -164,7 +162,6 @@ export default function NavBar() {
     menuCloseTimerRef.current = window.setTimeout(() => {
       setIsMenuOpen(false);
       setMenuClosing(false);
-      setMenuPanel("root");
       menuCloseTimerRef.current = null;
     }, 260);
   }, [isMenuOpen, menuClosing]);
@@ -356,7 +353,6 @@ export default function NavBar() {
       closeMenu();
       return;
     }
-    setMenuPanel("root");
     setIsAccountMenuOpen(false);
     setIsMenuOpen(true);
   }
@@ -547,7 +543,7 @@ export default function NavBar() {
   const accountLabel = isSignedIn ? accountName ?? "Account" : "Log in";
   const isLeaderboardsRoute = pathname.startsWith("/leaderboards");
   const isPlayerRoute = pathname.startsWith("/player/");
-  const isTierlistRoute = pathname === "/brawlers" || pathname.startsWith("/brawlers/") || pathname === "/meta" || pathname.startsWith("/meta/");
+  const isTierlistRoute = pathname === "/brawlers" || pathname.startsWith("/brawlers/") || pathname === "/meta" || pathname.startsWith("/meta/") || pathname === "/guides" || pathname.startsWith("/guides/");
   const isGuidesRoute = pathname === "/guides" || pathname.startsWith("/guides/");
   const isNavFlowRoute = isLeaderboardsRoute || isPlayerRoute || isTierlistRoute || isGuidesRoute;
   const browseActive = browseItems.some(item => item.href && isDesktopItemActive(pathname, item.href));
@@ -662,17 +658,6 @@ export default function NavBar() {
               <ChevronDown size={13} strokeWidth={2.25} className="nav-trigger-arrow ml-0.5 transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]" />
             </button>
           </div>
-          <Link
-            href="/guides"
-            className={navTextClass(isGuidesRoute)}
-            onClick={() => {
-              setDesktopPanel(null);
-              setHoverDesktopPanel(null);
-              setSuppressedDesktopPanel(null);
-            }}
-          >
-            Guides
-          </Link>
           <div
             className="nav-browse-panel fixed top-[58px] w-[540px] max-xl:w-[500px]"
             data-open={visibleDesktopPanel ? "true" : undefined}
@@ -689,7 +674,7 @@ export default function NavBar() {
               >
                 <div className="h-full w-1/2 shrink-0 p-0">
                   <div className="px-3 pt-2.5 pb-2">
-                    <p className="m-0 text-[12px] font-semibold text-[#f4f5f7]">Browse</p>
+                    <p className="m-0 text-[12px] font-semibold text-[#f4f5f7]">Tierlist &amp; Brawlers</p>
                   </div>
                   <div className="grid grid-cols-2 gap-1.5 pt-1.5">
                     {browseItems.map(item => {
@@ -823,7 +808,7 @@ export default function NavBar() {
               <button
                 type="button"
                 onClick={() => setIsAccountMenuOpen(open => !open)}
-                className="inline-flex h-[34px] min-w-[76px] max-w-[220px] shrink-0 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-full border border-white/[0.14] bg-[#171a20] px-3.5 text-[14px] font-bold leading-none text-[#d9dbe1] outline-none shadow-[rgba(255,255,255,0.07)_0_0.5px_0_0_inset] transition-colors duration-150 hover:border-white/[0.22] hover:bg-[#1f232b] hover:text-white focus-visible:ring-1 focus-visible:ring-white/[0.18] max-[540px]:max-w-[180px] max-[430px]:max-w-[132px] max-[420px]:px-3"
+                className={`relative z-[142] inline-flex h-[34px] min-w-[76px] max-w-[220px] shrink-0 cursor-pointer items-center justify-center gap-2 whitespace-nowrap border px-3.5 text-[14px] font-bold leading-none outline-none transition-colors duration-150 focus-visible:ring-1 focus-visible:ring-white/[0.18] max-[540px]:max-w-[180px] max-[430px]:max-w-[132px] max-[420px]:px-3 ${isAccountMenuOpen ? "rounded-t-[17px] rounded-b-none border-white/[0.08] border-b-[#0b0f12] bg-[#0b0f12] text-white shadow-[rgba(255,255,255,0.08)_0_0.5px_0_0_inset]" : "rounded-full border-white/[0.14] bg-[#171a20] text-[#d9dbe1] shadow-[rgba(255,255,255,0.07)_0_0.5px_0_0_inset] hover:border-white/[0.22] hover:bg-[#1f232b] hover:text-white"}`}
                 aria-haspopup="menu"
                 aria-expanded={isAccountMenuOpen}
                 title={accountLabel}
@@ -834,7 +819,7 @@ export default function NavBar() {
               {isAccountMenuOpen && (
                 <div
                   role="menu"
-                  className="absolute right-0 top-[calc(100%+9px)] z-[140] w-[278px] origin-top-right rounded-[12px] border border-white/[0.08] bg-[#0b0f12] p-1.5 text-[#f4f5f7] shadow-[0_24px_64px_-36px_rgba(0,0,0,0.95),rgba(255,255,255,0.08)_0_0.5px_0_0_inset] animate-[accountMenuIn_0.16s_cubic-bezier(0.16,1,0.3,1)_both]"
+                  className="absolute right-0 top-[calc(100%-1px)] z-[140] w-[278px] origin-top-right rounded-[12px] rounded-tr-none border border-white/[0.08] bg-[#0b0f12] p-1.5 pt-2 text-[#f4f5f7] shadow-[0_24px_64px_-36px_rgba(0,0,0,0.95),rgba(255,255,255,0.08)_0_0.5px_0_0_inset] animate-[accountMenuIn_0.16s_cubic-bezier(0.16,1,0.3,1)_both]"
                 >
                   <div className="px-2.5 py-2.5">
                     <p className="m-0 truncate text-[14px] font-semibold leading-tight text-[#f4f5f7]">{accountLabel}</p>
@@ -875,21 +860,21 @@ export default function NavBar() {
           )}
           <button
             type="button"
-            className="relative grid size-9 cursor-pointer place-items-center rounded-md border-0 bg-transparent p-0 text-[#9ca1aa] outline-none hover:text-white focus-visible:outline-none lg:hidden"
+            className="relative grid size-[34px] cursor-pointer place-items-center rounded-full border border-white/[0.10] bg-[#12151a] p-0 text-[#f4f5f7] outline-none shadow-[rgba(255,255,255,0.06)_0_0.5px_0_0_inset] transition-colors duration-150 hover:border-[#8bd7ff]/40 hover:bg-[#171a20] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8bd7ff]/35 lg:hidden"
             onClick={toggleMenu}
             aria-label={isMenuOpen ? "Close navigation menu" : "Open navigation menu"}
             aria-expanded={isMenuOpen}
           >
             <Menu
-              size={20}
-              strokeWidth={1.8}
-              className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transition-[opacity,transform] duration-150 ${isMenuOpen ? "scale-95 opacity-0" : "scale-100 opacity-100"}`}
+              size={16}
+              strokeWidth={2.4}
+              className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transition-[opacity,transform] duration-150 ${isMenuOpen ? "scale-90 opacity-0" : "scale-100 opacity-100"}`}
               aria-hidden="true"
             />
             <X
-              size={20}
-              strokeWidth={1.8}
-              className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transition-[opacity,transform] duration-150 ${isMenuOpen ? "scale-100 opacity-100" : "scale-95 opacity-0"}`}
+              size={16}
+              strokeWidth={2.4}
+              className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transition-[opacity,transform] duration-150 ${isMenuOpen ? "scale-100 opacity-100" : "scale-90 opacity-0"}`}
               aria-hidden="true"
             />
           </button>
@@ -898,116 +883,100 @@ export default function NavBar() {
 
       {menuVisible && (
         <div
-          className="fixed inset-x-0 top-[60px] bottom-0 z-[90] flex flex-col bg-[#07090a] px-4 pt-0 pb-5 text-[#f4f5f7] lg:hidden"
+          className="fixed inset-x-0 top-[60px] bottom-0 z-[90] flex flex-col overflow-y-auto bg-[#0a0c10] text-[#f4f5f7] lg:hidden"
           style={{
             animation: menuClosing
               ? "mobileMenuOut 0.34s cubic-bezier(0.4,0,1,1) forwards"
               : "mobileMenuIn 0.42s cubic-bezier(0.16,1,0.3,1) forwards",
           }}
         >
-          {menuPanel === "root" ? (
-            <div className="mobile-menu-list flex flex-1 flex-col">
-              <button
-                type="button"
-                onClick={() => setMenuPanel("browse")}
-                className={`mobile-menu-item flex min-h-[48px] w-full cursor-pointer items-center justify-between border-0 bg-transparent px-0 text-left text-[18px] text-[#f4f5f7] ${browseActive ? "font-semibold" : ""}`}
-                style={mobileItemStyle(0)}
-              >
-                <span>Browse</span>
-                <ChevronRight size={20} strokeWidth={1.8} />
-              </button>
-              {rootMenuLinks.map((item, index) => (
-                <Link
-                  key={item.label}
-                  href={item.href}
-                  onClick={closeMenu}
-                  className={`mobile-menu-item flex min-h-[48px] items-center justify-between text-[18px] text-[#f4f5f7] no-underline ${item.href && isRouteActive(pathname, item.href) ? "font-semibold" : ""}`}
-                  style={mobileItemStyle(index + 1)}
-                >
-                  <span>{item.label}</span>
-                  {item.href && isRouteActive(pathname, item.href) && <span className="text-[13px] font-normal text-[#68707b]">Current</span>}
-                </Link>
-              ))}
+          <div className="bl-mnav-grid pointer-events-none absolute inset-0 opacity-[0.55]" aria-hidden="true" />
+          <div className="relative flex flex-1 flex-col px-4 pt-4 pb-8">
+            <button
+              type="button"
+              onClick={() => openSearchOverlay()}
+              className="mobile-menu-item flex h-11 w-full cursor-pointer items-center gap-2.5 rounded-[10px] border border-white/[0.08] bg-[#12151a] px-3.5 text-left text-[13.5px] font-semibold text-[#8f96a1] shadow-[rgba(255,255,255,0.05)_0_0.5px_0_0_inset] outline-none transition-colors duration-150 hover:border-[#8bd7ff]/35 hover:text-[#f4f5f7]"
+              style={mobileItemStyle(0)}
+            >
+              <Search size={15} strokeWidth={2.2} className="shrink-0 text-[#8f96a1]" aria-hidden="true" />
+              <span className="flex-1 truncate">Search player tag, brawler, map...</span>
+              <kbd className="hidden rounded-[4px] border border-white/[0.10] bg-[#0a0c10] px-1.5 py-0.5 font-mono text-[10px] font-bold text-[#8f96a1] sm:inline-flex">⌘K</kbd>
+            </button>
+
+            <p className="mobile-menu-item mt-6 mb-2 px-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#68707b]" style={mobileItemStyle(1)}>
+              Navigate
+            </p>
+            <div className="flex flex-col gap-1">
+              {rootMenuLinks.map((item, index) => {
+                const active = isRouteActive(pathname, item.href);
+                return (
+                  <Link
+                    key={item.label}
+                    href={item.href}
+                    onClick={closeMenu}
+                    className={`mobile-menu-item relative flex items-center justify-between gap-3 rounded-[10px] border px-3.5 py-3 no-underline transition-colors duration-150 ${active ? "border-[#8bd7ff]/30 bg-[#8bd7ff]/[0.08]" : "border-white/[0.06] bg-[#10131a] hover:border-white/[0.12] hover:bg-[#141821]"}`}
+                    style={mobileItemStyle(index + 2)}
+                  >
+                    {active && <span className="absolute inset-y-2 left-0 w-[3px] rounded-r-full bg-[#8bd7ff]" aria-hidden="true" />}
+                    <span className="min-w-0">
+                      <span className={`block text-[15px] font-bold leading-tight ${active ? "text-[#8bd7ff]" : "text-[#f4f5f7]"}`}>{item.label}</span>
+                      <span className="mt-0.5 block text-[12px] leading-snug text-[#8f96a1]">{item.description}</span>
+                    </span>
+                    <ChevronRight size={16} strokeWidth={2} className={`shrink-0 ${active ? "text-[#8bd7ff]" : "text-[#68707b]"}`} aria-hidden="true" />
+                  </Link>
+                );
+              })}
             </div>
-          ) : (
-            <div className="mobile-menu-list flex flex-1 flex-col overflow-y-auto pt-5">
-              <button
-                type="button"
-                onClick={() => setMenuPanel("root")}
-                className="mobile-menu-item mb-7 inline-flex h-8 w-fit cursor-pointer appearance-none items-center gap-2 rounded-none border-0 bg-transparent p-0 text-[14px] font-medium text-[#8f96a1] shadow-none outline-none transition-colors hover:text-[#f4f5f7] focus:text-[#f4f5f7] focus:outline-none focus-visible:outline-none"
-                style={mobileItemStyle(0)}
-              >
-                <ChevronLeft size={17} strokeWidth={1.9} />
-                Back
-              </button>
 
-              <p className="mobile-menu-item m-0 mb-5 text-[14px] text-[#8f96a1]" style={mobileItemStyle(1)}>Browse</p>
+            <p className="mobile-menu-item mt-6 mb-2 px-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#68707b]" style={mobileItemStyle(rootMenuLinks.length + 2)}>
+              Browse
+            </p>
+            <div className="grid grid-cols-2 gap-1.5">
               {browseItems.map((item, index) => {
-                if (item.action === "assistant") {
-                  return (
-                    <button
-                      key={item.label}
-                      type="button"
-                      onClick={openAssistantFromNav}
-                      className="mobile-menu-item mb-6 block cursor-pointer border-0 bg-transparent p-0 text-left font-[inherit] text-[#f4f5f7]"
-                      style={mobileItemStyle(index + 2)}
-                    >
-                      <span className="inline-flex items-center gap-2 text-[18px] font-semibold leading-tight text-[#f4f5f7]">
-                        <span>{item.label}</span>
-                        <Sparkles size={15} strokeWidth={1.9} className="shrink-0 text-[#f0d373]" aria-hidden="true" />
-                      </span>
-                      <span className="mt-1 block text-[14px] leading-snug text-[#8f96a1]">{item.description}</span>
-                    </button>
-                  );
-                }
-
-                if (!item.href || item.disabled) {
-                  return (
-                    <div
-                      key={item.label}
-                      aria-disabled="true"
-                      className="mobile-menu-item mb-6 block text-[#68707b] opacity-75"
-                      style={mobileItemStyle(index + 2)}
-                    >
-                      <span className="flex items-center justify-between gap-3 text-[18px] font-semibold leading-tight text-[#8f96a1]">
-                        <span>{item.label}</span>
-                        {item.badge && <span className="rounded-full border border-white/[0.08] px-2 py-0.5 text-[11px] font-medium leading-4 text-[#8f96a1]">{item.badge}</span>}
-                      </span>
-                      <span className="mt-1 block text-[14px] leading-snug text-[#68707b]">{item.description}</span>
-                    </div>
-                  );
-                }
-
+                if (!item.href) return null;
+                const active = isRouteActive(pathname, item.href);
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
                     onClick={closeMenu}
-                    className="mobile-menu-item mb-6 block text-[#f4f5f7] no-underline"
-                    style={mobileItemStyle(index + 2)}
+                    className={`mobile-menu-item flex flex-col gap-1 rounded-[10px] border px-3 py-3 no-underline transition-colors duration-150 ${active ? "border-[#8bd7ff]/30 bg-[#8bd7ff]/[0.08]" : "border-white/[0.06] bg-[#10131a] hover:border-white/[0.12] hover:bg-[#141821]"}`}
+                    style={mobileItemStyle(rootMenuLinks.length + 3 + index)}
                   >
-                    <span className="block text-[18px] font-semibold leading-tight text-[#f4f5f7]">{item.label}</span>
-                    <span className="mt-1 block text-[14px] leading-snug text-[#8f96a1]">{item.description}</span>
+                    <span className={`text-[14px] font-bold leading-tight ${active ? "text-[#8bd7ff]" : "text-[#f4f5f7]"}`}>{item.label}</span>
+                    <span className="text-[11.5px] leading-snug text-[#8f96a1]">{item.description}</span>
                   </Link>
                 );
               })}
             </div>
-          )}
+
+            <p className="mobile-menu-item mt-6 mb-2 px-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[#68707b]" style={mobileItemStyle(rootMenuLinks.length + browseItems.length + 3)}>
+              Leaderboards
+            </p>
+            <div className="flex flex-col gap-1">
+              {leaderboardItems.map((item, index) => {
+                if (!item.href) return null;
+                const active = isDesktopItemActive(pathname, item.href);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={closeMenu}
+                    className={`mobile-menu-item flex items-center justify-between gap-3 rounded-[10px] border px-3.5 py-2.5 no-underline transition-colors duration-150 ${active ? "border-[#8bd7ff]/30 bg-[#8bd7ff]/[0.08]" : "border-white/[0.06] bg-[#10131a] hover:border-white/[0.12] hover:bg-[#141821]"}`}
+                    style={mobileItemStyle(rootMenuLinks.length + browseItems.length + 4 + index)}
+                  >
+                    <span className="min-w-0">
+                      <span className={`block text-[14px] font-bold leading-tight ${active ? "text-[#8bd7ff]" : "text-[#f4f5f7]"}`}>{item.label}</span>
+                      <span className="mt-0.5 block text-[11.5px] leading-snug text-[#8f96a1]">{item.description}</span>
+                    </span>
+                    <ChevronRight size={15} strokeWidth={2} className={`shrink-0 ${active ? "text-[#8bd7ff]" : "text-[#68707b]"}`} aria-hidden="true" />
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
         </div>
       )}
-
-      <button
-        type="button"
-        onClick={isAssistantOpen ? () => setIsAssistantOpen(false) : openAssistantFromNav}
-        className="bl-ai-bookmark"
-        data-open={isAssistantOpen ? "true" : undefined}
-        aria-label={isAssistantOpen ? "Close BrawlLens AI assistant" : "Open BrawlLens AI assistant"}
-        aria-expanded={isAssistantOpen}
-        title="BrawlLens AI assistant"
-      >
-        <Sparkles size={16} strokeWidth={1.9} aria-hidden="true" />
-        <span>Ask AI</span>
-      </button>
 
       {isLoginOpen && (
         <div

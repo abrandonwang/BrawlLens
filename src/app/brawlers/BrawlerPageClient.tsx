@@ -7,7 +7,7 @@ import { ArrowDown, ArrowUp, ChevronDown, Search } from "lucide-react"
 import type { CatalogBrawlerStats } from "@/components/BrawlerCatalog"
 import HelpTooltip from "@/components/HelpTooltip"
 import { BrawlImage } from "@/components/BrawlImage"
-import { EmptyState } from "@/components/PolishStates"
+import { EmptyState, SkeletonBlock } from "@/components/PolishStates"
 import TierlistSubNav from "@/components/TierlistSubNav"
 import { BUFFIES } from "@/data/buffies"
 import { winRateColor } from "@/lib/tiers"
@@ -142,6 +142,7 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
   const [catalogSortDir, setCatalogSortDir] = useState<"asc" | "desc">("desc")
   const [search, setSearch] = useState("")
   const [catalogStats, setCatalogStats] = useState<Record<number, CatalogBrawlerStats>>({})
+  const [catalogStatsLoaded, setCatalogStatsLoaded] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [sortOpen, setSortOpen] = useState(false)
   const [rarityOpen, setRarityOpen] = useState(false)
@@ -160,10 +161,12 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
   }, [])
 
   useEffect(() => {
+    setCatalogStatsLoaded(false)
     fetch("/api/brawlers/stats")
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d?.stats) setCatalogStats(d.stats) })
       .catch(() => {})
+      .finally(() => setCatalogStatsLoaded(true))
   }, [])
 
   useEffect(() => {
@@ -211,7 +214,11 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
 
   const rarities = RARITY_ORDER.filter(name => brawlers.some(b => b.rarity.name === name))
   const filteredCount = filteredBrawlers.length
-  const analyzedLabel = totalAnalyzedGames > 0 ? formatInteger(totalAnalyzedGames) : formatInteger(brawlers.length)
+  const analyzedLabel = totalAnalyzedGames > 0
+    ? formatInteger(totalAnalyzedGames)
+    : catalogStatsLoaded
+      ? `${formatInteger(brawlers.length)} brawlers`
+      : "Loading..."
 
   return (
     <>
@@ -436,7 +443,26 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
                   <HeaderHelp label="Games" help="The raw tracked pick count used as the sample size for this brawler row." />
                 </div>
 
-                {filteredCount === 0 ? (
+                {!catalogStatsLoaded ? (
+                  Array.from({ length: 10 }).map((_, index) => (
+                    <div key={index} className="bl-tier-row" aria-hidden="true">
+                      <SkeletonBlock className="mx-auto h-4 w-5" />
+                      <span className="bl-tier-brawler-cell">
+                        <SkeletonBlock className="bl-tier-brawler-icon rounded-[5px]" />
+                        <span className="min-w-0 space-y-1.5">
+                          <SkeletonBlock className="h-3.5 w-28" />
+                          <SkeletonBlock className="h-2.5 w-16" />
+                        </span>
+                      </span>
+                      <SkeletonBlock className="h-3 w-16" />
+                      <SkeletonBlock className="h-3 w-16" />
+                      <SkeletonBlock className="mx-auto h-5 w-7" />
+                      <SkeletonBlock className="mx-auto h-3.5 w-16" />
+                      <SkeletonBlock className="mx-auto h-3.5 w-16" />
+                      <SkeletonBlock className="mx-auto h-3.5 w-20" />
+                    </div>
+                  ))
+                ) : filteredCount === 0 ? (
                   <div className="bl-tier-empty">
                     <EmptyState title="No brawlers found" description="Try a different search or clear the filters." />
                   </div>

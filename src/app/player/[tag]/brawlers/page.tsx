@@ -309,6 +309,11 @@ function BrawlerRow({ row, index }: { row: BrawlerTableRow; index: number }) {
         <span className="bl-profile-row-arrow" aria-hidden="true" />
       </summary>
       <div className="bl-profile-brawlers-extra">
+        <span>Trophies <b>{formatTrophyCount(row.brawler.trophies)}</b></span>
+        <span>Peak <b>{formatTrophyCount(row.brawler.highestTrophies)}</b></span>
+        <span>Power <b>P{row.brawler.power}</b></span>
+        <span>Rank <b>{row.brawler.rank}</b></span>
+        <span>Score <b>{score ?? "--"}</b></span>
         <span>Prestige <b>{row.brawler.prestigeLevel}</b></span>
         <span>Current streak <b>{row.brawler.currentWinStreak}</b></span>
         <span>Max streak <b>{row.brawler.maxWinStreak}</b></span>

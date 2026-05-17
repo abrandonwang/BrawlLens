@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, type ReactNode } from "react";
+import { useState, useEffect, useMemo, type CSSProperties, type ReactNode } from "react";
 import Link from "next/link";
 import { BrawlImage } from "@/components/BrawlImage";
 import HelpTooltip from "@/components/HelpTooltip";
@@ -39,18 +39,29 @@ function mapHref(name: string) {
   return `/meta/${encodeURIComponent(name)}`;
 }
 
-function MapPreview({ imageUrl, name, modeColor }: { imageUrl?: string; name: string; mode: string | null; modeColor?: string }) {
+function mapInitials(name: string) {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(part => part[0])
+    .join("")
+    .toUpperCase();
+}
+
+function MapPreview({ imageUrl, name, modeColor, priority = false }: { imageUrl?: string; name: string; mode: string | null; modeColor?: string; priority?: boolean }) {
   const [failed, setFailed] = useState(false);
   const [aspectRatio, setAspectRatio] = useState<string>("1 / 1");
+  const fallbackColor = modeColor || "var(--lb-accent, #8bd7ff)";
 
   if (!imageUrl || failed) {
     return (
       <div
-        className="map-preview-frame relative grid w-full place-items-center gap-2.5 p-[18px] text-center text-[var(--ink-4)]"
-        style={{ aspectRatio }}
+        className="map-preview-frame map-preview-fallback relative grid w-full place-items-center overflow-hidden p-[18px] text-center"
+        style={{ aspectRatio, "--map-accent": fallbackColor } as CSSProperties}
       >
-        <div className="size-10 rounded-lg opacity-30" style={{ background: modeColor || "var(--line)" }} />
-        <span className="max-w-full truncate text-[11px] font-semibold">{name}</span>
+        <div className="map-preview-fallback-mark" aria-hidden="true">{mapInitials(name)}</div>
+        <span className="map-preview-fallback-name">{name}</span>
       </div>
     );
   }
@@ -66,7 +77,7 @@ function MapPreview({ imageUrl, name, modeColor }: { imageUrl?: string; name: st
         fill
         sizes="(max-width: 520px) 50vw, 220px"
         className="block rounded-t-[5px] object-contain transition-[transform,filter] duration-200"
-        loading="lazy"
+        {...(priority ? { priority: true } : { loading: "lazy" as const })}
         onLoad={(event) => {
           const img = event.currentTarget;
           if (img.naturalWidth && img.naturalHeight) {
@@ -191,7 +202,7 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch,
       </div>
 
       <div className="mb-5 grid grid-cols-[repeat(auto-fill,minmax(170px,1fr))] gap-2 max-[520px]:grid-cols-2 max-[520px]:gap-2">
-        {paginatedMaps.map(map => {
+        {paginatedMaps.map((map, index) => {
           const imageUrl = mapImageLookup.get(map.name) ?? mapImageLookup.get(normalizeMapName(map.name));
           const isLive = rotationMapNames.has(map.name);
           const mode = getModeForMap(modes, map.name);
@@ -204,7 +215,7 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch,
               className="map-card group relative block w-full cursor-pointer overflow-hidden border border-[var(--line)] bg-[var(--panel)] p-0 text-left transition-[border-color,background] duration-150 hover:border-[var(--line-2)]"
             >
               <div className="relative z-[1] overflow-hidden rounded-t-[5px] bg-[var(--panel-2)]">
-                <MapPreview imageUrl={imageUrl} name={map.name} mode={mode} modeColor={modeColor} />
+                <MapPreview imageUrl={imageUrl} name={map.name} mode={mode} modeColor={modeColor} priority={mapPage === 0 && index < 6} />
                 {modeColor && (
                   <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, ${modeColor}, transparent)`, opacity: 0.6 }} />
                 )}
