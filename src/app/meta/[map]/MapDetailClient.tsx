@@ -232,18 +232,14 @@ export default function MapDetailClient({ mapName, imageUrl, modeName, totalBatt
             </div>
 
             <div className="bl-bd-title-block">
-              <h1><span>{mapName}</span> Map, Stats, Season 50</h1>
+              <h1>{mapName}</h1>
               <div className="bl-md-tags">
                 {isLive && <span className="bl-md-live">Live</span>}
                 {modeName && <span>{modeName}</span>}
-                <span>{formatFullNumber(totalBattles)} battles analyzed</span>
-                {mostPicked && <span>Most picked: {formatBrawlerName(mostPicked.name)}</span>}
+                <span>{formatFullNumber(totalBattles)} battles</span>
+                <span>{formatNum(brawlers.length)} brawlers tracked</span>
               </div>
             </div>
-
-            <p className="bl-bd-summary">
-              Brawler performance, pick volume, and win rates for {mapName}{modeName ? ` in ${modeName}` : ""}.
-            </p>
           </div>
         </div>
       </section>
@@ -251,55 +247,11 @@ export default function MapDetailClient({ mapName, imageUrl, modeName, totalBatt
       <div className="bl-lb-frame bl-bd-frame">
         <section className="bl-lb-board bl-bd-board">
           <section className="bl-bd-stat-strip" aria-label={`${mapName} stat summary`}>
-            <StatMetric value={formatFullNumber(totalBattles)} label="battles analyzed" help="Total battles is derived from tracked brawler pick rows for this map." />
-            <StatMetric value={formatPercent(avgWinRate)} label="avg winrate" color={avgWinRate != null ? winRateColor(avgWinRate) : undefined} help="Average win rate is calculated from total wins divided by total picks across tracked brawlers." />
-            <NamedStatMetric label="Best brawler" brawler={bestWinRate} detail={bestWinRate ? `${formatPercent(bestWinRate.winRate)} win rate` : "No sample"} help="Best brawler is the highest win-rate brawler after the current minimum games filter is applied." />
-            <NamedStatMetric label="Most picked" brawler={mostPicked} detail={mostPicked ? `${formatFullNumber(mostPicked.picks)} games` : "No sample"} help="Most picked is the brawler with the highest tracked pick count on this map, regardless of win rate." />
-            <StatMetric value={formatNum(brawlers.length)} label="brawlers tracked" help="This is the number of brawlers with tracked rows for this map before search and minimum-game filters." />
-          </section>
-
-          <section className="bl-md-snapshot-grid">
-            <div className="bl-bd-panel bl-md-snapshot-card">
-              <div className="bl-bd-panel-head">
-                <span>Map Read</span>
-                <small>{modeName ?? "All modes"}</small>
-              </div>
-              <div className="bl-md-map-read">
-                <div>
-                  <b>{isLive ? "Active rotation" : "Archive sample"}</b>
-                  <span>{isLive ? "This map is currently live, so matchup freshness is stronger." : "This map is analyzed from tracked ladder battle samples."}</span>
-                </div>
-                <div>
-                  <b>{formatFullNumber(minPicks)}+ game filter</b>
-                  <span>{filtered.length} brawlers clear the current sample threshold.</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="bl-bd-panel bl-md-snapshot-card">
-              <div className="bl-bd-panel-head">
-                <span>Signal Picks</span>
-                <small>sample adjusted</small>
-              </div>
-              <div className="bl-md-snapshot-stack">
-                <SnapshotBrawler label="Best win rate" brawler={bestWinRate} />
-                <SnapshotBrawler label="Most picked" brawler={mostPicked} />
-              </div>
-            </div>
-
-            <div className="bl-bd-panel bl-md-snapshot-card">
-              <div className="bl-bd-panel-head">
-                <span>Top Contenders</span>
-                <small>{formatFullNumber(minPicks)}+ games</small>
-              </div>
-              <div className="bl-lb-table-list bl-md-compact-list">
-                {topContenders.length ? topContenders.map((brawler, index) => (
-                  <CompactSignalRow key={brawler.brawlerId} brawler={brawler} rank={index + 1} />
-                )) : (
-                  <div className="bl-bd-empty">No contenders clear the sample threshold.</div>
-                )}
-              </div>
-            </div>
+            <StatMetric value={formatFullNumber(totalBattles)} label="battles" help="Total battles derived from tracked brawler pick rows for this map." />
+            <StatMetric value={formatPercent(avgWinRate)} label="avg winrate" color={avgWinRate != null ? winRateColor(avgWinRate) : undefined} help="Average win rate from total wins divided by total picks across tracked brawlers." />
+            <NamedStatMetric label="Best" brawler={bestWinRate} detail={bestWinRate ? `${formatPercent(bestWinRate.winRate)} WR` : "—"} help="Highest win-rate brawler after the minimum games filter." />
+            <NamedStatMetric label="Most picked" brawler={mostPicked} detail={mostPicked ? `${formatFullNumber(mostPicked.picks)} games` : "—"} help="Brawler with the highest tracked pick count on this map." />
+            <StatMetric value={filtered.length.toString()} label="above threshold" help={`Brawlers with ${formatFullNumber(minPicks)}+ tracked games on this map.`} />
           </section>
 
           <section className="bl-md-performance">
