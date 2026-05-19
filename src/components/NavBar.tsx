@@ -1038,18 +1038,6 @@ export default function NavBar() {
         </div>
       )}
 
-      {!isAssistantOpen && (
-        <button
-          type="button"
-          onClick={() => setIsAssistantOpen(true)}
-          className="fixed right-[22px] bottom-[22px] z-[190] grid size-[48px] cursor-pointer place-items-center rounded-full border border-[#eceae4] bg-[#fcfbf8] text-[#f0d373] shadow-[0_2px_8px_rgba(0,0,0,0.06),0_0_0_0.5px_rgba(0,0,0,0.04)] transition-all duration-200 hover:scale-110 hover:bg-[#f7f4ed] hover:shadow-[0_4px_16px_rgba(0,0,0,0.1),0_0_0_0.5px_rgba(0,0,0,0.06)] active:scale-95 max-[700px]:right-[14px] max-[700px]:bottom-[14px] max-[700px]:size-[44px]"
-          aria-label="Ask AI"
-          title="Ask AI"
-        >
-          <Sparkles size={18} strokeWidth={1.8} />
-        </button>
-      )}
-
       <AssistantPopup
         open={isAssistantOpen}
         onClose={() => setIsAssistantOpen(false)}

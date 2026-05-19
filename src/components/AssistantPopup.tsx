@@ -1,33 +1,33 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ChangeEvent } from "react"
-import { ArrowUp, Plus, Square, X } from "lucide-react"
+import { ArrowUp, RotateCcw, Square, X } from "lucide-react"
 import Link from "next/link"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import type { Components } from "react-markdown"
 
 const markdownComponents: Components = {
-  p: ({ children }) => <p className="mb-2.5 last:mb-0">{children}</p>,
-  strong: ({ children }) => <strong className="font-semibold text-[var(--ink)]">{children}</strong>,
-  em: ({ children }) => <em className="italic text-[var(--ink-3)]">{children}</em>,
-  h2: ({ children }) => <h2 className="mt-4 mb-1.5 text-[13px] font-semibold text-[var(--ink)] first:mt-0">{children}</h2>,
-  h3: ({ children }) => <h3 className="mt-3 mb-1 text-[12.5px] font-semibold text-[var(--ink-2)] first:mt-0">{children}</h3>,
-  ul: ({ children }) => <ul className="mb-2.5 space-y-1">{children}</ul>,
-  ol: ({ children }) => <ol className="mb-2.5 list-none space-y-1">{children}</ol>,
+  p: ({ children }) => <p className="bl-ai-p">{children}</p>,
+  strong: ({ children }) => <strong className="bl-ai-strong">{children}</strong>,
+  em: ({ children }) => <em className="bl-ai-em">{children}</em>,
+  h2: ({ children }) => <h2 className="bl-ai-h2">{children}</h2>,
+  h3: ({ children }) => <h3 className="bl-ai-h3">{children}</h3>,
+  ul: ({ children }) => <ul className="bl-ai-ul">{children}</ul>,
+  ol: ({ children }) => <ol className="bl-ai-ol">{children}</ol>,
   li: ({ children, ...props }) => {
     const ordered = (props as { ordered?: boolean }).ordered
     return (
-      <li className="flex gap-2 text-[13px]">
-        <span className={`mt-0.5 shrink-0 ${ordered ? "tabular-nums text-[var(--ink-4)]" : "text-[var(--ink-5)]"}`}>
+      <li className="bl-ai-li">
+        <span className={`bl-ai-li-marker ${ordered ? "bl-ai-li-ordered" : ""}`}>
           {ordered ? "" : "·"}
         </span>
-        <span className="flex-1">{children}</span>
+        <span className="bl-ai-li-content">{children}</span>
       </li>
     )
   },
   a: ({ href, children }) => (
-    <Link href={href ?? "/"} className="font-medium text-[var(--ink)] underline underline-offset-2 hover:opacity-80">
+    <Link href={href ?? "/"} className="bl-ai-link">
       {children}
     </Link>
   ),
@@ -35,28 +35,24 @@ const markdownComponents: Components = {
     const isBlock = className?.includes("language-")
     if (isBlock) {
       return (
-        <pre className="my-2 overflow-x-auto rounded-lg border border-[var(--line)] bg-[var(--panel-2)] px-3 py-2">
-          <code className="font-mono text-[11.5px] text-[var(--ink-2)]">{children}</code>
+        <pre className="bl-ai-pre">
+          <code className="bl-ai-code-block">{children}</code>
         </pre>
       )
     }
-    return <code className="rounded border border-[var(--line)] bg-[var(--panel-2)] px-1.5 py-0.5 font-mono text-[11.5px] text-[var(--ink)]">{children}</code>
+    return <code className="bl-ai-code-inline">{children}</code>
   },
   table: ({ children }) => (
-    <div className="my-2 overflow-x-auto rounded-lg border border-[var(--line)]">
-      <table className="w-full border-collapse text-[12px]">{children}</table>
+    <div className="bl-ai-table-wrap">
+      <table className="bl-ai-table">{children}</table>
     </div>
   ),
-  thead: ({ children }) => <thead className="bg-[var(--panel-2)]">{children}</thead>,
-  tbody: ({ children }) => <tbody className="divide-y divide-[var(--line)]">{children}</tbody>,
+  thead: ({ children }) => <thead className="bl-ai-thead">{children}</thead>,
+  tbody: ({ children }) => <tbody className="bl-ai-tbody">{children}</tbody>,
   tr: ({ children }) => <tr>{children}</tr>,
-  th: ({ children }) => (
-    <th className="whitespace-nowrap px-3 py-2 text-left text-[10px] font-semibold tracking-normal text-[var(--ink-4)]">{children}</th>
-  ),
-  td: ({ children }) => (
-    <td className="whitespace-nowrap px-3 py-2 text-[12px] text-[var(--ink-2)]">{children}</td>
-  ),
-  hr: () => <hr className="my-3 border-[var(--line)]" />,
+  th: ({ children }) => <th className="bl-ai-th">{children}</th>,
+  td: ({ children }) => <td className="bl-ai-td">{children}</td>,
+  hr: () => <hr className="bl-ai-hr" />,
 }
 
 interface Message {
@@ -69,9 +65,6 @@ const FALLBACK_SUGGESTIONS = [
   "Which map is most played this week?",
   "How is win rate calculated?",
 ]
-
-const iconButtonClass = "grid size-[26px] shrink-0 cursor-pointer place-items-center rounded-[5px] border border-[#eceae4] bg-[#f7f4ed] text-[rgba(28,28,28,0.46)] transition-[color,background,opacity,border-color] duration-150 hover:border-[rgba(28,28,28,0.15)] hover:bg-[#f3f1eb] hover:text-[#1c1c1c] disabled:cursor-default disabled:opacity-35 disabled:hover:border-[#eceae4] disabled:hover:bg-[#f7f4ed] disabled:hover:text-[rgba(28,28,28,0.46)]"
-const sendButtonClass = "grid size-7 shrink-0 cursor-pointer place-items-center rounded-[5px] border-0 bg-[#f0d373] text-[#171007] transition-[background,opacity] duration-150 disabled:cursor-default disabled:bg-[rgba(28,28,28,0.06)] disabled:text-[rgba(28,28,28,0.3)]"
 
 interface LandingData {
   player: { name: string; tag: string; trophies: number } | null
@@ -443,47 +436,42 @@ export default function AssistantPopup({ open, onClose, pendingQuery, onPendingC
 
   if (!open) return null
 
-  return (
-    <>
-      <div className="pointer-events-none fixed inset-0 z-[195] bg-transparent" onClick={onClose} aria-hidden="true" />
-      <div
-        ref={panelRef}
-        className="fixed right-[22px] bottom-[22px] z-[196] flex max-h-[min(640px,calc(100dvh-100px))] w-[410px] origin-bottom-right flex-col overflow-hidden rounded-[8px] border border-[#eceae4] bg-[#f7f4ed] text-[#1c1c1c] shadow-[0_34px_84px_-40px_rgba(0,0,0,0.12),rgba(0,0,0,0.06)_0_1px_3px_0] animate-[assistantPanelIn_0.24s_cubic-bezier(0.2,0,0,1)] max-[700px]:right-3 max-[700px]:bottom-3 max-[700px]:w-[calc(100vw-24px)] max-[700px]:max-w-[380px] max-[700px]:max-h-[min(560px,calc(100dvh-96px))] max-[700px]:rounded-[8px] max-[380px]:right-2 max-[380px]:bottom-2 max-[380px]:w-[calc(100vw-16px)] max-[380px]:max-h-[min(540px,calc(100dvh-80px))]"
-        role="dialog"
-        aria-label="BrawlLens assistant"
-        aria-modal="false"
-      >
-        <header className="flex items-center gap-2.5 border-b border-[#eceae4] bg-[#f7f4ed] py-[10px] pr-3 pl-3.5 max-[380px]:py-2.5 max-[380px]:pr-2.5 max-[380px]:pl-3">
-          <div className="flex min-w-0 flex-1 flex-col leading-[1.2]">
-            <span className="text-[13px] font-extrabold tracking-normal text-[#1c1c1c]">Ask AI</span>
-            <span className="mt-0.5 text-[10.5px] font-semibold text-[rgba(28,28,28,0.38)]">BrawlLens data chat</span>
-          </div>
-          <button
-            type="button"
-            className={iconButtonClass}
-            onClick={newChat}
-            aria-label="New chat"
-            disabled={messages.length === 0 && !streaming}
-            title="New chat"
-          >
-            <Plus size={14} strokeWidth={1.9} />
-          </button>
-          <button type="button" className={iconButtonClass} onClick={onClose} aria-label="Close assistant" title="Close">
-            <X size={14} strokeWidth={1.9} />
-          </button>
-        </header>
+  const hasMessages = messages.length > 0
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-4 pt-3.5 pb-1.5 [-webkit-overflow-scrolling:touch] max-[380px]:px-3 max-[380px]:pt-3 max-[380px]:pb-1">
-          {messages.length === 0 && (
-            <div className="flex flex-col items-start gap-1.5 px-1 pt-4 pb-[18px]">
-              <div className="text-[15px] font-extrabold tracking-normal text-[#1c1c1c]">What can I help with?</div>
-              <div className="flex w-full flex-col items-stretch gap-1.5">
+  return (
+    <div className="bl-ai-layer" onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
+      <div className="bl-ai-backdrop" />
+      <div ref={panelRef} className="bl-ai-panel" role="dialog" aria-label="BrawlLens AI" aria-modal="true">
+        {/* Header */}
+        <div className="bl-ai-header">
+          <div className="bl-ai-header-left">
+            <span className="bl-ai-title">AI</span>
+            <span className="bl-ai-subtitle">Ask anything about the meta</span>
+          </div>
+          <div className="bl-ai-header-actions">
+            {hasMessages && (
+              <button type="button" onClick={newChat} className="bl-ai-header-btn" aria-label="New chat" title="New chat">
+                <RotateCcw size={13} strokeWidth={2} />
+              </button>
+            )}
+            <button type="button" onClick={onClose} className="bl-ai-header-btn" aria-label="Close" title="Close">
+              <X size={14} strokeWidth={2} />
+            </button>
+          </div>
+        </div>
+
+        {/* Messages area */}
+        <div className="bl-ai-body">
+          {!hasMessages && (
+            <div className="bl-ai-empty">
+              <div className="bl-ai-empty-heading">What can I help with?</div>
+              <div className="bl-ai-suggestions">
                 {suggestions.map(s => (
                   <button
                     type="button"
                     key={s}
                     onClick={() => handleSuggestion(s)}
-                    className="block w-full cursor-pointer rounded-[5px] border border-[#eceae4] bg-[#f7f4ed] px-2.5 py-2 text-left font-inherit text-[12px] font-semibold text-[rgba(28,28,28,0.65)] transition-colors duration-150 hover:border-[rgba(28,28,28,0.15)] hover:bg-[#f3f1eb] hover:text-[#1c1c1c]"
+                    className="bl-ai-suggestion"
                   >
                     {s}
                   </button>
@@ -493,14 +481,14 @@ export default function AssistantPopup({ open, onClose, pendingQuery, onPendingC
           )}
 
           {messages.map((msg, i) => (
-            <div key={i} className={`mb-3 flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-              <div className={`max-w-[86%] break-words text-[13px] leading-normal tracking-normal ${msg.role === "user" ? "rounded-[8px_8px_3px_8px] bg-[#f0d373] px-3 py-2 font-semibold text-[#171007]" : "text-[rgba(28,28,28,0.65)]"}`}>
+            <div key={i} className={`bl-ai-msg ${msg.role === "user" ? "bl-ai-msg-user" : "bl-ai-msg-assistant"}`}>
+              <div className={`bl-ai-msg-bubble ${msg.role === "user" ? "bl-ai-bubble-user" : "bl-ai-bubble-assistant"}`}>
                 {msg.role === "assistant" ? (
                   streaming && i === messages.length - 1 && msg.content === "" ? (
-                    <div className="inline-flex items-center gap-1 py-1.5">
-                      <span className="size-[5px] rounded-full bg-[var(--ink-4)] animate-[assistantDot_1.05s_ease-in-out_infinite]" />
-                      <span className="size-[5px] rounded-full bg-[var(--ink-4)] animate-[assistantDot_1.05s_ease-in-out_0.12s_infinite]" />
-                      <span className="size-[5px] rounded-full bg-[var(--ink-4)] animate-[assistantDot_1.05s_ease-in-out_0.24s_infinite]" />
+                    <div className="bl-ai-dots">
+                      <span />
+                      <span />
+                      <span />
                     </div>
                   ) : (
                     <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>{msg.content}</ReactMarkdown>
@@ -515,41 +503,31 @@ export default function AssistantPopup({ open, onClose, pendingQuery, onPendingC
           <div ref={bottomRef} />
         </div>
 
-        <div className="shrink-0 border-t border-[#eceae4] bg-[#f7f4ed] px-3 pt-2.5 pb-3 max-[380px]:px-2.5 max-[380px]:pt-2 max-[380px]:pb-2.5">
-          <div className="flex items-end gap-2 rounded-[6px] border border-[#eceae4] bg-[#f7f4ed] py-[6px] pr-[6px] pl-3 transition-colors duration-150 focus-within:border-[#f0d373]/35">
+        {/* Input */}
+        <div className="bl-ai-input-area">
+          <div className="bl-ai-input-row">
             <textarea
               ref={textareaRef}
               rows={1}
               value={userInput}
               onChange={handleInput}
               onKeyDown={handleKeyDown}
-              placeholder="Ask anything…"
-              className="max-h-[140px] min-w-0 flex-1 resize-none overflow-y-auto border-0 bg-transparent py-1.5 font-inherit text-[13px] font-semibold leading-[1.45] text-[#1c1c1c] outline-none appearance-none placeholder:text-[rgba(28,28,28,0.34)]"
+              placeholder="Ask anything..."
+              className="bl-ai-textarea"
             />
             {streaming ? (
-              <button
-                type="button"
-                onClick={stopStreaming}
-                className={sendButtonClass}
-                aria-label="Stop"
-                title="Stop"
-              >
+              <button type="button" onClick={stopStreaming} className="bl-ai-send" aria-label="Stop">
                 <Square size={11} strokeWidth={0} fill="currentColor" />
               </button>
             ) : (
-              <button
-                type="button"
-                onClick={handleSubmit}
-                disabled={!userInput.trim()}
-                className={sendButtonClass}
-                aria-label="Send"
-              >
-                <ArrowUp size={13} strokeWidth={2.2} />
+              <button type="button" onClick={handleSubmit} disabled={!userInput.trim()} className="bl-ai-send" aria-label="Send">
+                <ArrowUp size={14} strokeWidth={2.4} />
               </button>
             )}
           </div>
+          <span className="bl-ai-hint">Press Esc to close</span>
         </div>
       </div>
-    </>
+    </div>
   )
 }
