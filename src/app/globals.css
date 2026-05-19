@@ -4394,9 +4394,10 @@ body:has(.bl-bd-shell) .bl-lb-subnav-wrap {
   right: 2px;
   bottom: 0;
   left: 2px;
-  height: 3px;
+  height: 2.5px;
   border-radius: 999px 999px 0 0;
-  background: var(--lb-accent);
+  background: #2563eb;
+  box-shadow: 0 0 8px rgba(37, 99, 235, 0.45);
 }
 
 .bl-lb-tab-disabled {
@@ -7231,8 +7232,8 @@ body:has(.bl-bd-shell) .bl-lb-subnav-wrap {
   right: -18px;
   width: min(720px, 52vw);
   max-height: 250px;
-  opacity: 0.86;
-  mix-blend-mode: screen;
+  opacity: 0.18;
+  mix-blend-mode: multiply;
   transform: translateY(-50%);
 }
 
@@ -11609,7 +11610,7 @@ html :is(
 :root,
 html.landing-bg,
 html.home-landing-bg {
-  --lovable-highlight: #1f4f9a;
+  --lovable-highlight: #2563eb;
   --lb-accent: #1f4f9a;
   --lb-blue: #1f4f9a;
   --lb-lavender: #1f4f9a;
@@ -11761,7 +11762,8 @@ body > nav .nav-trigger-arrow {
 .bl-lb-tab-active::after,
 .bl-profile-tab-active::after,
 .bl-account-tab.is-active::after {
-  background: var(--lovable-highlight) !important;
+  background: #2563eb !important;
+  box-shadow: 0 0 8px rgba(37, 99, 235, 0.45) !important;
 }
 
 .bl-preview-tier,
@@ -12753,15 +12755,20 @@ html.home-landing-bg {
 }
 
 .bl-pro-hero-logo {
-  opacity: 0.18 !important;
-  filter: grayscale(1) brightness(0) !important;
+  opacity: 0.12 !important;
+  filter: grayscale(0.6) !important;
   mix-blend-mode: multiply !important;
 }
 
-.bl-pro-hero[data-team="crazy-raccoons"] .bl-pro-hero-logo,
+.bl-pro-hero[data-team="crazy-raccoons"] .bl-pro-hero-logo {
+  opacity: 0.18 !important;
+  filter: none !important;
+  mix-blend-mode: multiply !important;
+}
+
 .bl-pro-hero[data-team="zeta"] .bl-pro-hero-logo {
-  opacity: 0.16 !important;
-  filter: grayscale(1) brightness(0) !important;
+  opacity: 0.14 !important;
+  filter: grayscale(0.4) !important;
   mix-blend-mode: multiply !important;
 }
 
@@ -12819,9 +12826,9 @@ html.home-landing-bg {
 
 .bl-pro-view-tab-active,
 .bl-pro-segment-active {
-  border-color: rgba(31,79,154,0.24) !important;
-  background: rgba(31,79,154,0.09) !important;
-  color: var(--lovable-highlight) !important;
+  border-color: rgba(37,99,235,0.24) !important;
+  background: rgba(37,99,235,0.07) !important;
+  color: #2563eb !important;
 }
 
 .bl-pro-overview-row,
