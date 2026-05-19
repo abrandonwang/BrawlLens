@@ -505,14 +505,14 @@ export default function AccountClient() {
                   </SettingsRow>
                 </SettingsSection>
 
-                <SettingsSection title="Lensboard">
+                <SettingsSection title="Saved workspace">
                   <SettingsRow title="Saved panels" description="Number of panels saved to this account.">
                     <ValueBox>{user.dashboardWidgets?.length ? `${user.dashboardWidgets.length} panels` : "Local defaults"}</ValueBox>
                   </SettingsRow>
                   <SettingsRow title="Layout" description="Workspace arrangement mode.">
                     <ValueBox>Editable grid</ValueBox>
                   </SettingsRow>
-                  <SettingsRow title="Reset Lensboard" description="Restore the default panel set.">
+                  <SettingsRow title="Reset workspace" description="Restore the default panel set.">
                     <ActionButton>Reset</ActionButton>
                   </SettingsRow>
                 </SettingsSection>

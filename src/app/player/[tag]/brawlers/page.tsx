@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { createClient } from "@supabase/supabase-js"
+import { ChevronDown } from "lucide-react"
 import { BrawlImage, brawlerIconUrl } from "@/components/BrawlImage"
 import { cleanEnv } from "@/lib/env"
 import { formatBrawlerName } from "@/lib/format"
@@ -368,15 +369,9 @@ export default async function PlayerBrawlersPage({
   const roster = [...(player.brawlers ?? [])].sort((a, b) => b.trophies - a.trophies)
   const scopedBattles = mode === "all" ? recentBattles : recentBattles.filter(item => modeBucket(item) === mode)
   const rows = buildRows(roster, scopedBattles, player, tag).filter(row => matchesBrawlerFilter(row.brawler, filter))
-  const recentWins = scopedBattles.filter(item => battleOutcome(item) === "win").length
-  const recentLosses = scopedBattles.filter(item => battleOutcome(item) === "loss").length
-  const recentTotal = recentWins + recentLosses
-  const recentSwing = scopedBattles.reduce((sum, item) => sum + (item.battle?.trophyChange ?? 0), 0)
-  const power11Count = roster.filter(brawler => brawler.power >= 11).length
-  const rank7Count = roster.filter(brawler => brawler.rank >= 7).length
-  const allOutcomes = scopedBattles.map(battleOutcome).slice(0, 5)
-  const allScore = recentTotal ? Math.max(0, Math.min(100, Math.round(50 + (winRate(recentWins, recentTotal) - 50) * 0.55 + (recentSwing / Math.max(1, scopedBattles.length)) * 4 + Math.min(scopedBattles.length, 12)))) : null
   const regionLabel = leaderboardRecord?.region === "global" ? "ALL" : leaderboardRecord?.region ?? "ALL"
+  const activeBrawlerFilter = brawlerFilters.find(option => option.value === filter) ?? brawlerFilters[0]
+  const activeModeFilter = modeFilters.find(option => option.value === mode) ?? modeFilters[0]
 
   return (
     <main className="bl-lb-shell bl-profile-shell">
@@ -392,31 +387,37 @@ export default async function PlayerBrawlersPage({
       <div className="bl-lb-frame bl-profile-frame">
         <section className="bl-lb-board bl-profile-board bl-profile-brawlers-board" id="brawlers">
           <div className="bl-profile-brawlers-toolbar">
-            <div className="bl-profile-brawlers-filterset" aria-label="Brawler filter">
-              {brawlerFilters.map(option => (
-                <Link
-                  key={option.value}
-                  href={filterHref(tag, option.value, mode)}
-                  className={filter === option.value ? "is-active" : ""}
-                  prefetch={false}
-                >
-                  {option.label}
-                </Link>
-              ))}
-            </div>
             <h2>Season stats</h2>
-            <div className="bl-profile-brawlers-filterset bl-profile-brawlers-modes" aria-label="Mode filter">
-              {modeFilters.map(option => (
-                <Link
-                  key={option.value}
-                  href={filterHref(tag, filter, option.value)}
-                  className={mode === option.value ? "is-active" : ""}
-                  prefetch={false}
-                >
-                  {option.label}
-                </Link>
-              ))}
-            </div>
+            <details className="bl-profile-brawlers-dropdown">
+              <summary className="bl-profile-brawlers-filter-trigger" aria-label="Brawler table filters">
+                <span>{activeBrawlerFilter.label} / {activeModeFilter.label}</span>
+                <ChevronDown size={15} aria-hidden="true" />
+              </summary>
+              <div className="bl-profile-brawlers-menu">
+                <span className="bl-profile-brawlers-menu-label">Brawlers</span>
+                {brawlerFilters.map(option => (
+                  <Link
+                    key={option.value}
+                    href={filterHref(tag, option.value, mode)}
+                    className={filter === option.value ? "is-active" : ""}
+                    prefetch={false}
+                  >
+                    {option.label}
+                  </Link>
+                ))}
+                <span className="bl-profile-brawlers-menu-label">Modes</span>
+                {modeFilters.map(option => (
+                  <Link
+                    key={option.value}
+                    href={filterHref(tag, filter, option.value)}
+                    className={mode === option.value ? "is-active" : ""}
+                    prefetch={false}
+                  >
+                    {option.label}
+                  </Link>
+                ))}
+              </div>
+            </details>
           </div>
 
           <div className="bl-profile-brawlers-table">
@@ -432,31 +433,6 @@ export default async function PlayerBrawlersPage({
               <span>Score</span>
               <span>Last 5</span>
               <span />
-            </div>
-
-            <div className="bl-profile-brawlers-row-shell bl-profile-brawlers-row-all">
-              <div className="bl-profile-brawlers-row">
-                <span className="bl-profile-brawlers-rank">*</span>
-                <span className="bl-profile-brawlers-name">
-                  <span className="bl-profile-brawlers-all-mark">*</span>
-                  <span>
-                    <strong>All Brawlers</strong>
-                    <small>{roster.length} unlocked · {power11Count} P11</small>
-                  </span>
-                </span>
-                <strong>{scopedBattles.length}</strong>
-                <span className={`bl-profile-brawlers-wr ${recentTotal ? winRateTone(winRate(recentWins, recentTotal)) : ""}`}>
-                  <b>{recentTotal ? `${winRate(recentWins, recentTotal)}%` : "--"}</b>
-                  <small>{recentWins}W - {recentLosses}L</small>
-                </span>
-                <strong>{formatTrophyCount(player.trophies)}</strong>
-                <strong>{formatTrophyCount(player.highestTrophies)}</strong>
-                <strong>{power11Count}</strong>
-                <strong>{rank7Count}</strong>
-                <span className={`bl-profile-brawlers-score ${scoreTone(allScore)}`}>{allScore ?? "--"}</span>
-                <OutcomeChips outcomes={allOutcomes} />
-                <span />
-              </div>
             </div>
 
             {rows.map((row, index) => (

@@ -98,7 +98,7 @@ function getTier(stat: CatalogBrawlerStats | undefined) {
   if (winRate == null || picks < 10) return { label: "-", color: "var(--lb-text-4)" }
   if (winRate >= 58) return { label: "S+", color: "#f0d373" }
   if (winRate >= 54) return { label: "S", color: "#b99cff" }
-  if (winRate >= 51) return { label: "A", color: "#8bd7ff" }
+  if (winRate >= 51) return { label: "A", color: "#2563eb" }
   if (winRate >= 48) return { label: "B", color: "#cbd0dc" }
   if (winRate >= 45) return { label: "C", color: "#ff9f6e" }
   return { label: "D", color: "#ef6a6a" }

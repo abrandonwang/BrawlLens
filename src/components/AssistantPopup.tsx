@@ -70,8 +70,8 @@ const FALLBACK_SUGGESTIONS = [
   "How is win rate calculated?",
 ]
 
-const iconButtonClass = "grid size-[26px] shrink-0 cursor-pointer place-items-center rounded-[5px] border border-white/[0.08] bg-[#15171d] text-[rgba(247,244,237,0.54)] transition-[color,background,opacity,border-color] duration-150 hover:border-white/[0.14] hover:bg-[#1b1d22] hover:text-[#f7f4ed] disabled:cursor-default disabled:opacity-35 disabled:hover:border-white/[0.08] disabled:hover:bg-[#15171d] disabled:hover:text-[rgba(247,244,237,0.54)]"
-const sendButtonClass = "grid size-7 shrink-0 cursor-pointer place-items-center rounded-[5px] border-0 bg-[#f0d373] text-[#171007] transition-[background,opacity] duration-150 disabled:cursor-default disabled:bg-white/[0.10] disabled:text-[rgba(247,244,237,0.34)]"
+const iconButtonClass = "grid size-[26px] shrink-0 cursor-pointer place-items-center rounded-[5px] border border-[#eceae4] bg-[#f7f4ed] text-[rgba(28,28,28,0.46)] transition-[color,background,opacity,border-color] duration-150 hover:border-[rgba(28,28,28,0.15)] hover:bg-[#f3f1eb] hover:text-[#1c1c1c] disabled:cursor-default disabled:opacity-35 disabled:hover:border-[#eceae4] disabled:hover:bg-[#f7f4ed] disabled:hover:text-[rgba(28,28,28,0.46)]"
+const sendButtonClass = "grid size-7 shrink-0 cursor-pointer place-items-center rounded-[5px] border-0 bg-[#f0d373] text-[#171007] transition-[background,opacity] duration-150 disabled:cursor-default disabled:bg-[rgba(28,28,28,0.06)] disabled:text-[rgba(28,28,28,0.3)]"
 
 interface LandingData {
   player: { name: string; tag: string; trophies: number } | null
@@ -448,15 +448,15 @@ export default function AssistantPopup({ open, onClose, pendingQuery, onPendingC
       <div className="pointer-events-none fixed inset-0 z-[195] bg-transparent" onClick={onClose} aria-hidden="true" />
       <div
         ref={panelRef}
-        className="fixed right-[22px] bottom-[22px] z-[196] flex max-h-[min(640px,calc(100dvh-100px))] w-[410px] origin-bottom-right flex-col overflow-hidden rounded-[8px] border border-white/[0.08] bg-[#0b0c0f] text-[#f7f4ed] shadow-[0_34px_84px_-40px_rgba(0,0,0,0.95),rgba(255,255,255,0.06)_0_1px_0_0_inset] animate-[assistantPanelIn_0.24s_cubic-bezier(0.2,0,0,1)] max-[700px]:right-3 max-[700px]:bottom-3 max-[700px]:w-[calc(100vw-24px)] max-[700px]:max-w-[380px] max-[700px]:max-h-[min(560px,calc(100dvh-96px))] max-[700px]:rounded-[8px] max-[380px]:right-2 max-[380px]:bottom-2 max-[380px]:w-[calc(100vw-16px)] max-[380px]:max-h-[min(540px,calc(100dvh-80px))]"
+        className="fixed right-[22px] bottom-[22px] z-[196] flex max-h-[min(640px,calc(100dvh-100px))] w-[410px] origin-bottom-right flex-col overflow-hidden rounded-[8px] border border-[#eceae4] bg-[#f7f4ed] text-[#1c1c1c] shadow-[0_34px_84px_-40px_rgba(0,0,0,0.12),rgba(0,0,0,0.06)_0_1px_3px_0] animate-[assistantPanelIn_0.24s_cubic-bezier(0.2,0,0,1)] max-[700px]:right-3 max-[700px]:bottom-3 max-[700px]:w-[calc(100vw-24px)] max-[700px]:max-w-[380px] max-[700px]:max-h-[min(560px,calc(100dvh-96px))] max-[700px]:rounded-[8px] max-[380px]:right-2 max-[380px]:bottom-2 max-[380px]:w-[calc(100vw-16px)] max-[380px]:max-h-[min(540px,calc(100dvh-80px))]"
         role="dialog"
         aria-label="BrawlLens assistant"
         aria-modal="false"
       >
-        <header className="flex items-center gap-2.5 border-b border-white/[0.08] bg-[#15171d] py-[10px] pr-3 pl-3.5 max-[380px]:py-2.5 max-[380px]:pr-2.5 max-[380px]:pl-3">
+        <header className="flex items-center gap-2.5 border-b border-[#eceae4] bg-[#f7f4ed] py-[10px] pr-3 pl-3.5 max-[380px]:py-2.5 max-[380px]:pr-2.5 max-[380px]:pl-3">
           <div className="flex min-w-0 flex-1 flex-col leading-[1.2]">
-            <span className="text-[13px] font-extrabold tracking-normal text-[#f7f4ed]">Ask AI</span>
-            <span className="mt-0.5 text-[10.5px] font-semibold text-[rgba(247,244,237,0.44)]">BrawlLens data chat</span>
+            <span className="text-[13px] font-extrabold tracking-normal text-[#1c1c1c]">Ask AI</span>
+            <span className="mt-0.5 text-[10.5px] font-semibold text-[rgba(28,28,28,0.38)]">BrawlLens data chat</span>
           </div>
           <button
             type="button"
@@ -476,14 +476,14 @@ export default function AssistantPopup({ open, onClose, pendingQuery, onPendingC
         <div className="min-h-0 flex-1 overflow-y-auto px-4 pt-3.5 pb-1.5 [-webkit-overflow-scrolling:touch] max-[380px]:px-3 max-[380px]:pt-3 max-[380px]:pb-1">
           {messages.length === 0 && (
             <div className="flex flex-col items-start gap-1.5 px-1 pt-4 pb-[18px]">
-              <div className="text-[15px] font-extrabold tracking-normal text-[#f7f4ed]">What can I help with?</div>
+              <div className="text-[15px] font-extrabold tracking-normal text-[#1c1c1c]">What can I help with?</div>
               <div className="flex w-full flex-col items-stretch gap-1.5">
                 {suggestions.map(s => (
                   <button
                     type="button"
                     key={s}
                     onClick={() => handleSuggestion(s)}
-                    className="block w-full cursor-pointer rounded-[5px] border border-white/[0.08] bg-[#15171d] px-2.5 py-2 text-left font-inherit text-[12px] font-semibold text-[rgba(247,244,237,0.72)] transition-colors duration-150 hover:border-white/[0.14] hover:bg-[#1b1d22] hover:text-[#f7f4ed]"
+                    className="block w-full cursor-pointer rounded-[5px] border border-[#eceae4] bg-[#f7f4ed] px-2.5 py-2 text-left font-inherit text-[12px] font-semibold text-[rgba(28,28,28,0.65)] transition-colors duration-150 hover:border-[rgba(28,28,28,0.15)] hover:bg-[#f3f1eb] hover:text-[#1c1c1c]"
                   >
                     {s}
                   </button>
@@ -494,7 +494,7 @@ export default function AssistantPopup({ open, onClose, pendingQuery, onPendingC
 
           {messages.map((msg, i) => (
             <div key={i} className={`mb-3 flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-              <div className={`max-w-[86%] break-words text-[13px] leading-normal tracking-normal ${msg.role === "user" ? "rounded-[8px_8px_3px_8px] bg-[#f0d373] px-3 py-2 font-semibold text-[#171007]" : "text-[rgba(247,244,237,0.74)]"}`}>
+              <div className={`max-w-[86%] break-words text-[13px] leading-normal tracking-normal ${msg.role === "user" ? "rounded-[8px_8px_3px_8px] bg-[#f0d373] px-3 py-2 font-semibold text-[#171007]" : "text-[rgba(28,28,28,0.65)]"}`}>
                 {msg.role === "assistant" ? (
                   streaming && i === messages.length - 1 && msg.content === "" ? (
                     <div className="inline-flex items-center gap-1 py-1.5">
@@ -515,8 +515,8 @@ export default function AssistantPopup({ open, onClose, pendingQuery, onPendingC
           <div ref={bottomRef} />
         </div>
 
-        <div className="shrink-0 border-t border-white/[0.08] bg-[#0b0c0f] px-3 pt-2.5 pb-3 max-[380px]:px-2.5 max-[380px]:pt-2 max-[380px]:pb-2.5">
-          <div className="flex items-end gap-2 rounded-[6px] border border-white/[0.08] bg-[#15171d] py-[6px] pr-[6px] pl-3 transition-colors duration-150 focus-within:border-[#f0d373]/35">
+        <div className="shrink-0 border-t border-[#eceae4] bg-[#f7f4ed] px-3 pt-2.5 pb-3 max-[380px]:px-2.5 max-[380px]:pt-2 max-[380px]:pb-2.5">
+          <div className="flex items-end gap-2 rounded-[6px] border border-[#eceae4] bg-[#f7f4ed] py-[6px] pr-[6px] pl-3 transition-colors duration-150 focus-within:border-[#f0d373]/35">
             <textarea
               ref={textareaRef}
               rows={1}
@@ -524,7 +524,7 @@ export default function AssistantPopup({ open, onClose, pendingQuery, onPendingC
               onChange={handleInput}
               onKeyDown={handleKeyDown}
               placeholder="Ask anything…"
-              className="max-h-[140px] min-w-0 flex-1 resize-none overflow-y-auto border-0 bg-transparent py-1.5 font-inherit text-[13px] font-semibold leading-[1.45] text-[#f7f4ed] outline-none appearance-none placeholder:text-[rgba(247,244,237,0.38)]"
+              className="max-h-[140px] min-w-0 flex-1 resize-none overflow-y-auto border-0 bg-transparent py-1.5 font-inherit text-[13px] font-semibold leading-[1.45] text-[#1c1c1c] outline-none appearance-none placeholder:text-[rgba(28,28,28,0.34)]"
             />
             {streaming ? (
               <button

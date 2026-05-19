@@ -64,7 +64,7 @@ function getPreviewTier(winRate: number | null | undefined, picks: number) {
   if (winRate == null || Number.isNaN(winRate) || picks < 10) return { label: "-", color: "rgba(247, 244, 237, 0.46)" }
   if (winRate >= 58) return { label: "S+", color: "#f0d373" }
   if (winRate >= 54) return { label: "S", color: "#b99cff" }
-  if (winRate >= 51) return { label: "A", color: "#8bd7ff" }
+  if (winRate >= 51) return { label: "A", color: "#2563eb" }
   if (winRate >= 48) return { label: "B", color: "#cbd0dc" }
   if (winRate >= 45) return { label: "C", color: "#ff9f6e" }
   return { label: "D", color: "#ef6a6a" }

@@ -8,7 +8,7 @@ import { sanitizePlayerTag } from "@/lib/validation"
 type SetupState = "syncing" | "ready" | "saving" | "error"
 
 const regions = ["Global", "NA", "EU", "ASIA", "KR", "BR", "DE"]
-const goals = ["Track profile", "Build Lensboard", "Study map meta", "Use Brawl AI"]
+const goals = ["Track profile", "Study map meta", "Follow leaderboards", "Use Brawl AI"]
 
 export default function AuthSetupClient() {
   const router = useRouter()
@@ -17,7 +17,7 @@ export default function AuthSetupClient() {
   const [step, setStep] = useState(0)
   const [playerTag, setPlayerTag] = useState("")
   const [region, setRegion] = useState("Global")
-  const [selectedGoals, setSelectedGoals] = useState<string[]>(["Track profile", "Build Lensboard"])
+  const [selectedGoals, setSelectedGoals] = useState<string[]>(["Track profile", "Study map meta"])
 
   const cleanTag = useMemo(() => sanitizePlayerTag(playerTag), [playerTag])
   const canContinue = step !== 0 || Boolean(cleanTag)
@@ -88,12 +88,12 @@ export default function AuthSetupClient() {
   }
 
   return (
-    <div className="fixed inset-0 z-[220] flex items-center justify-center bg-black/55 px-4 py-6 animate-[modalOverlayIn_0.18s_ease-out_both]">
+    <div className="fixed inset-0 z-[220] flex items-center justify-center bg-[#f7f4ed]/55 px-4 py-6 animate-[modalOverlayIn_0.18s_ease-out_both]">
       <section
         role="dialog"
         aria-modal="true"
         aria-labelledby="setup-title"
-        className="w-full max-w-[500px] rounded-[16px] border border-white/[0.10] bg-[#101419] p-5 text-[var(--ink)] shadow-[0_34px_92px_-44px_rgba(0,0,0,0.95),rgba(255,255,255,0.08)_0_0.5px_0_0_inset] animate-[modalSheetIn_0.24s_cubic-bezier(0.16,1,0.3,1)_both] max-[460px]:p-4"
+        className="w-full max-w-[500px] rounded-[16px] border border-[#eceae4] bg-[var(--panel)] p-5 text-[var(--ink)] shadow-[0_34px_92px_-44px_rgba(0,0,0,0.12),rgba(0,0,0,0.06)_0_1px_3px_0] animate-[modalSheetIn_0.24s_cubic-bezier(0.16,1,0.3,1)_both] max-[460px]:p-4"
       >
         <div className="mb-5 flex items-start justify-between gap-4">
           <div className="min-w-0">
@@ -111,7 +111,7 @@ export default function AuthSetupClient() {
         {state === "syncing" && (
           <div className="rounded-[12px] border border-[var(--line)] bg-[var(--panel-2)] p-4">
             <p className="m-0 text-[15px] font-semibold text-[var(--ink)]">Confirming your account...</p>
-            <p className="mt-1 mb-0 text-[13px] leading-relaxed text-[var(--ink-3)]">The Lensboard is loading behind this setup step.</p>
+            <p className="mt-1 mb-0 text-[13px] leading-relaxed text-[var(--ink-3)]">BrawlLens is loading behind this setup step.</p>
           </div>
         )}
 
@@ -162,7 +162,7 @@ export default function AuthSetupClient() {
             {step === 1 && (
               <div>
                 <h2 className="m-0 text-[18px] leading-tight font-semibold text-[var(--ink)]">Choose defaults</h2>
-                <p className="mt-1.5 mb-0 text-[13px] leading-relaxed text-[var(--ink-3)]">These seed the first Lensboard panels.</p>
+                <p className="mt-1.5 mb-0 text-[13px] leading-relaxed text-[var(--ink-3)]">These personalize your BrawlLens defaults.</p>
                 <div className="mt-4 grid gap-2 sm:grid-cols-2">
                   {goals.map(goal => (
                     <button
@@ -184,7 +184,7 @@ export default function AuthSetupClient() {
 
             {step === 2 && (
               <div>
-                <h2 className="m-0 text-[18px] leading-tight font-semibold text-[var(--ink)]">Your Lensboard is ready!</h2>
+                <h2 className="m-0 text-[18px] leading-tight font-semibold text-[var(--ink)]">BrawlLens is ready.</h2>
               </div>
             )}
 
@@ -203,7 +203,7 @@ export default function AuthSetupClient() {
                 disabled={!canContinue || state === "saving"}
                 className="inline-flex h-10 cursor-pointer items-center rounded-lg border-0 bg-[var(--ink)] px-4 text-[13px] font-semibold text-[var(--ink-on)] shadow-[var(--shadow-lift)] disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {state === "saving" ? "Saving..." : step === 2 ? "Open Lensboard" : "Continue"}
+                {state === "saving" ? "Saving..." : step === 2 ? "Open BrawlLens" : "Continue"}
               </button>
             </div>
           </>

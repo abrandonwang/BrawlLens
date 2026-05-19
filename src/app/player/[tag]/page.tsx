@@ -947,7 +947,6 @@ export default async function PlayerProfile({ params }: { params: Promise<{ tag:
                 <BrawlerPerformanceRow key={stat.key} stat={stat} />
               ))}
             </div>
-            <Link href="#brawlers" className="bl-profile-card-action">All</Link>
           </section>
 
           <section className="bl-profile-panel">
