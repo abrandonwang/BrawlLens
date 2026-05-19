@@ -449,7 +449,7 @@ export default function SearchOverlay() {
       <button className="bl-search-modal-backdrop" type="button" aria-label="Close search" onClick={close} />
       <div className="bl-search-modal">
         <form onSubmit={submit} className="bl-search-modal-form">
-          <Search size={16} strokeWidth={2.2} aria-hidden="true" />
+          <Search size={16} strokeWidth={2.2} className="bl-search-modal-icon" aria-hidden="true" />
           <input
             ref={inputRef}
             value={query}
@@ -460,9 +460,6 @@ export default function SearchOverlay() {
             autoComplete="off"
             aria-label="Search player name, tag, club, brawler, or pro team"
           />
-          <button type="submit" aria-label="Search">
-            <Search size={16} strokeWidth={2.2} />
-          </button>
         </form>
         <div className="bl-search-modal-help" data-state={remoteState}>{statusText}</div>
         <div className="bl-search-modal-results">
