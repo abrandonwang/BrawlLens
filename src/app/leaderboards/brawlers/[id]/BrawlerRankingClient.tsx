@@ -35,14 +35,14 @@ export default function BrawlerRankingClient({ data, brawlerName }: { data: Play
 
   return (
     <main className="flex-1 px-8 pt-6 pb-16 lg:px-12">
-      <Link href="/leaderboards/brawlers" className="inline-flex items-center gap-1.5 text-xs text-zinc-400 dark:text-white/50 hover:text-zinc-700 dark:hover:text-white/60 transition-colors mb-6">
+      <Link href="/leaderboards/brawlers" className="inline-flex items-center gap-1.5 text-xs text-zinc-400 dark:text-[#1c1c1c]/50 hover:text-zinc-700 dark:hover:text-[#1c1c1c]/60 transition-colors mb-6">
         <ArrowLeft size={12} /> Brawler Rankings
       </Link>
-      <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-zinc-900 dark:text-white mb-2">{brawlerName}</h1>
-      <p className="text-sm text-zinc-500 dark:text-white/40 mb-10">Top 200 global players ranked for {brawlerName}.</p>
+      <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-zinc-900 dark:text-[#1c1c1c] mb-2">{brawlerName}</h1>
+      <p className="text-sm text-zinc-500 dark:text-[#1c1c1c]/40 mb-10">Top 200 global players ranked for {brawlerName}.</p>
 
       <div className="space-y-1">
-        <div className="grid grid-cols-[52px_1fr_auto_auto_24px] gap-4 px-5 py-2 text-[10px] font-semibold tracking-[0.08em] text-zinc-400 uppercase dark:text-white/50 max-md:hidden">
+        <div className="grid grid-cols-[52px_1fr_auto_auto_24px] gap-4 px-5 py-2 text-[10px] font-semibold tracking-[0.08em] text-zinc-400 uppercase dark:text-[#1c1c1c]/50 max-md:hidden">
           <span>#</span>
           <span>Player</span>
           <span className="hidden sm:block">Club</span>
@@ -61,11 +61,11 @@ export default function BrawlerRankingClient({ data, brawlerName }: { data: Play
             </span>
 
             <div className="min-w-0">
-              <p className="text-base font-semibold text-zinc-900 truncate dark:text-white">{player.player_name}</p>
-              <p className="text-xs text-zinc-400 tabular-nums dark:text-white/45">{player.player_tag}</p>
+              <p className="text-base font-semibold text-zinc-900 truncate dark:text-[#1c1c1c]">{player.player_name}</p>
+              <p className="text-xs text-zinc-400 tabular-nums dark:text-[#1c1c1c]/45">{player.player_tag}</p>
             </div>
 
-            <span className="hidden max-w-[160px] truncate text-sm text-zinc-400 sm:block dark:text-white/50 max-md:hidden">
+            <span className="hidden max-w-[160px] truncate text-sm text-zinc-400 sm:block dark:text-[#1c1c1c]/50 max-md:hidden">
               {player.club_name ?? "-"}
             </span>
 
@@ -75,7 +75,7 @@ export default function BrawlerRankingClient({ data, brawlerName }: { data: Play
               </span>
             </div>
 
-            <ArrowRight size={14} className="text-zinc-400 transition-transform group-hover:translate-x-0.5 group-hover:text-zinc-600 dark:text-white/50 max-md:hidden" />
+            <ArrowRight size={14} className="text-zinc-400 transition-transform group-hover:translate-x-0.5 group-hover:text-zinc-600 dark:text-[#1c1c1c]/50 max-md:hidden" />
           </Link>
         ))}
       </div>
@@ -85,7 +85,7 @@ export default function BrawlerRankingClient({ data, brawlerName }: { data: Play
           <button
             onClick={() => setPage(p => p - 1)}
             disabled={page === 0}
-            className="w-7 h-7 flex items-center justify-center text-zinc-400 hover:text-zinc-900 hover:bg-black/5 disabled:opacity-30 disabled:cursor-not-allowed transition-colors rounded dark:text-white/40 dark:hover:text-white dark:hover:bg-white/5"
+            className="w-7 h-7 flex items-center justify-center text-zinc-400 hover:text-zinc-900 hover:bg-[#f7f4ed]/5 disabled:opacity-30 disabled:cursor-not-allowed transition-colors rounded dark:text-[#1c1c1c]/40 dark:hover:text-[#1c1c1c] dark:hover:bg-white/5"
           >
             <ChevronLeft size={14} />
           </button>
@@ -96,8 +96,8 @@ export default function BrawlerRankingClient({ data, brawlerName }: { data: Play
               onClick={() => setPage(idx)}
               className={`w-7 h-7 text-xs font-semibold rounded transition-colors ${
                 idx === page
-                  ? "bg-red-500 text-white dark:bg-[var(--accent)] dark:text-black"
-                  : "text-zinc-400 hover:text-zinc-900 hover:bg-black/5 dark:text-white/40 dark:hover:text-white dark:hover:bg-white/5"
+                  ? "bg-red-500 text-[#1c1c1c] dark:bg-[var(--accent)] dark:text-black"
+                  : "text-zinc-400 hover:text-zinc-900 hover:bg-[#f7f4ed]/5 dark:text-[#1c1c1c]/40 dark:hover:text-[#1c1c1c] dark:hover:bg-white/5"
               }`}
             >
               {idx + 1}
@@ -107,16 +107,16 @@ export default function BrawlerRankingClient({ data, brawlerName }: { data: Play
           <button
             onClick={() => setPage(p => p + 1)}
             disabled={page === totalPages - 1}
-            className="w-7 h-7 flex items-center justify-center text-zinc-400 hover:text-zinc-900 hover:bg-black/5 disabled:opacity-30 disabled:cursor-not-allowed transition-colors rounded dark:text-white/40 dark:hover:text-white dark:hover:bg-white/5"
+            className="w-7 h-7 flex items-center justify-center text-zinc-400 hover:text-zinc-900 hover:bg-[#f7f4ed]/5 disabled:opacity-30 disabled:cursor-not-allowed transition-colors rounded dark:text-[#1c1c1c]/40 dark:hover:text-[#1c1c1c] dark:hover:bg-white/5"
           >
             <ChevronRight size={14} />
           </button>
         </div>
       )}
 
-      <div className="mt-16 border border-black/[0.08] dark:border-white/[0.08] bg-black/[0.02] dark:bg-white/[0.02] p-8 max-w-2xl mx-auto text-center">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 dark:text-white/50 mb-4">About Brawler Rankings</p>
-        <p className="text-sm text-zinc-500 dark:text-white/40 leading-relaxed">
+      <div className="mt-16 border border-black/[0.08] dark:border-[#eceae4] bg-[#f7f4ed]/[0.02] dark:bg-white/[0.02] p-8 max-w-2xl mx-auto text-center">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 dark:text-[#1c1c1c]/50 mb-4">About Brawler Rankings</p>
+        <p className="text-sm text-zinc-500 dark:text-[#1c1c1c]/40 leading-relaxed">
           Brawler rankings show the top 200 global players for {brawlerName}. Rankings are updated every 30 minutes using real-time data. Click any player to view their full profile.
         </p>
       </div>
