@@ -1,10 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
-import { ChevronDown, Search, Sparkles, X } from "lucide-react";
+import { ChevronDown, Search, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import AssistantPopup from "./AssistantPopup";
 import BrandMark from "./BrandMark";
 import SearchOverlay from "./SearchOverlay";
 import { lockBodyScroll } from "@/lib/bodyScrollLock";
@@ -16,7 +15,6 @@ type NavPanelItem = {
   label: string;
   href?: string;
   description: string;
-  action?: "assistant";
   disabled?: boolean;
   badge?: string;
 };
@@ -117,8 +115,6 @@ function internalRedirectPath(value: string | null) {
 export default function NavBar() {
   const pathname = usePathname();
   const router = useRouter();
-  const [isAssistantOpen, setIsAssistantOpen] = useState(false);
-  const [pendingAssistantQuery, setPendingAssistantQuery] = useState<string | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [menuClosing, setMenuClosing] = useState(false);
   const [desktopPanel, setDesktopPanel] = useState<DesktopPanel | null>(null);
@@ -299,16 +295,6 @@ export default function NavBar() {
     window.addEventListener("pointerdown", onPointerDown);
     return () => window.removeEventListener("pointerdown", onPointerDown);
   }, [isAccountMenuOpen]);
-
-  useEffect(() => {
-    function onOpenAssistant(e: Event) {
-      const detail = (e as CustomEvent<{ query?: string }>).detail;
-      setIsAssistantOpen(true);
-      if (detail?.query) setPendingAssistantQuery(detail.query);
-    }
-    window.addEventListener("brawllens:open-assistant", onOpenAssistant);
-    return () => window.removeEventListener("brawllens:open-assistant", onOpenAssistant);
-  }, []);
 
   useEffect(() => {
     function onOpenLogin(e: Event) {
@@ -503,14 +489,6 @@ export default function NavBar() {
     void sendAuthRequest();
   }
 
-  function openAssistantFromNav() {
-    closeMenu();
-    setDesktopPanel(null);
-    setHoverDesktopPanel(null);
-    setSuppressedDesktopPanel(null);
-    setIsAssistantOpen(true);
-  }
-
   function submitNavSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const query = navSearch.trim();
@@ -563,7 +541,7 @@ export default function NavBar() {
   const desktopPanelIndex = renderedDesktopPanel === "leaderboards" ? 1 : 0;
   const navPositionClass = "relative z-[100]";
   const navTextClass = (active: boolean) =>
-    `relative inline-flex h-[60px] items-center rounded-none border-0 bg-transparent px-0 text-[14px] font-semibold leading-none tracking-[-0.005em] no-underline outline-none transition-colors duration-150 text-[#1c1c1c] hover:text-[#1c1c1c] focus-visible:text-[#1c1c1c] ${isNavFlowRoute && active ? "after:absolute after:right-0 after:bottom-[10px] after:left-0 after:h-[3px] after:rounded-full after:bg-[#1f4f9a] after:content-['']" : ""}`;
+    `relative inline-flex h-[60px] items-center rounded-none border-0 bg-transparent px-0 text-[14px] font-semibold leading-none tracking-[-0.005em] no-underline outline-none transition-colors duration-150 text-[#1c1c1c] hover:text-[#1c1c1c] focus-visible:text-[#1c1c1c] ${isNavFlowRoute && active ? "after:absolute after:right-0 after:bottom-[10px] after:left-0 after:h-[2.5px] after:rounded-full after:bg-[#2563eb] after:shadow-[0_0_8px_rgba(37,99,235,0.45)] after:content-['']" : ""}`;
 
   useEffect(() => {
     document.documentElement.classList.toggle("leaderboards-nav-flow", isLeaderboardsRoute);
@@ -661,25 +639,6 @@ export default function NavBar() {
                   <div className="grid grid-cols-2 gap-1.5 pt-1.5">
                     {browseItems.map(item => {
                       const active = visibleDesktopPanel === "browse" && item.href ? isRouteActive(pathname, item.href) : false;
-
-                      if (item.action === "assistant") {
-                        return (
-                          <button
-                            key={item.label}
-                            type="button"
-                            onClick={openAssistantFromNav}
-                            className="flex min-h-[58px] cursor-pointer items-start justify-between gap-3 rounded-[10px] border-0 bg-transparent px-3 py-2.5 text-left font-[inherit] text-[#1c1c1c] transition-colors duration-200 hover:bg-[rgba(28,28,28,0.04)]"
-                          >
-                            <span className="min-w-0">
-                              <span className="inline-flex items-center gap-1.5 text-[14px] font-semibold leading-tight text-[#1c1c1c]">
-                                <span className="truncate">{item.label}</span>
-                                <Sparkles size={14} strokeWidth={1.9} className="shrink-0 text-[#f0d373]" aria-hidden="true" />
-                              </span>
-                              <span className="mt-1 block text-[12px] leading-snug text-[#5f5f5d]">{item.description}</span>
-                            </span>
-                          </button>
-                        );
-                      }
 
                       if (!item.href || item.disabled) {
                         return (
@@ -785,6 +744,16 @@ export default function NavBar() {
         </form>
 
         <div className="relative z-10 ml-auto flex min-w-0 shrink-0 items-center justify-end gap-2 max-[430px]:gap-1.5">
+          <button
+            type="button"
+            onClick={() => openSearchOverlay()}
+            className="bl-nav-search-compact xl:hidden"
+            aria-label="Open search"
+            title="Search"
+          >
+            <Search size={16} strokeWidth={2.2} aria-hidden="true" />
+            <span className="bl-nav-search-compact-label">Search</span>
+          </button>
           {isSignedIn ? (
             <div ref={accountMenuRef} className="relative shrink-0">
               <button
@@ -897,34 +866,34 @@ export default function NavBar() {
 
       {isLoginOpen && (
         <div
-          className="fixed inset-0 z-[220] flex items-center justify-center bg-black/72 px-4 py-6 backdrop-blur-[2px] animate-[modalOverlayIn_0.18s_ease-out_both]"
+          className="fixed inset-0 z-[220] flex items-start justify-center bg-[rgba(28,28,28,0.18)] px-4 pt-[min(14vh,120px)] pb-6 backdrop-blur-[6px] animate-[modalOverlayIn_0.18s_ease-out_both]"
           onClick={() => setIsLoginOpen(false)}
         >
           <section
             role="dialog"
             aria-modal="true"
             aria-labelledby="login-modal-title"
-            className="w-full max-w-[390px] rounded-[8px] border border-[#eceae4] bg-[#f7f4ed] px-5 py-5 text-[#1c1c1c] shadow-[0_34px_92px_-44px_rgba(0,0,0,0.12),rgba(0,0,0,0.06)_0_1px_3px_0] animate-[modalSheetIn_0.24s_cubic-bezier(0.16,1,0.3,1)_both] max-[460px]:px-4 max-[460px]:py-4"
+            className="w-full max-w-[400px] rounded-[16px] border border-[#eceae4] bg-[#fcfbf8] px-6 py-6 text-[#1c1c1c] shadow-[0_24px_80px_-12px_rgba(0,0,0,0.12),0_0_0_0.5px_rgba(0,0,0,0.03)] animate-[modalSheetIn_0.24s_cubic-bezier(0.16,1,0.3,1)_both] max-[460px]:px-5 max-[460px]:py-5 max-[460px]:rounded-[12px]"
             onClick={event => event.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
-                <h2 id="login-modal-title" className="m-0 text-[22px] font-extrabold leading-none tracking-normal text-[#1c1c1c]">{authMode === "signup" ? "Create account" : "Log in"}</h2>
-                <p className="mt-2 mb-0 text-[12px] leading-snug text-[rgba(28,28,28,0.5)]">
+                <h2 id="login-modal-title" className="m-0 text-[20px] font-bold leading-none tracking-[-0.01em] text-[#1c1c1c]">{authMode === "signup" ? "Create account" : "Log in"}</h2>
+                <p className="mt-2 mb-0 text-[12.5px] leading-snug text-[rgba(28,28,28,0.42)]">
                   {authMode === "signup" ? "Create a BrawlLens account for saved setup." : "Access your BrawlLens account."}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setIsLoginOpen(false)}
-                className="grid size-8 shrink-0 cursor-pointer place-items-center rounded-[6px] border border-[#eceae4] bg-[#f7f4ed] text-[rgba(28,28,28,0.46)] transition-colors hover:border-[#eceae4] hover:bg-[#fcfbf8] hover:text-[#1c1c1c]"
+                className="grid size-[28px] shrink-0 cursor-pointer place-items-center rounded-[6px] border-0 bg-transparent text-[rgba(28,28,28,0.35)] transition-colors hover:bg-[rgba(28,28,28,0.05)] hover:text-[#1c1c1c]"
                 aria-label="Close login"
               >
-                <X size={16} strokeWidth={2} />
+                <X size={15} strokeWidth={2} />
               </button>
             </div>
 
-            <div className="mt-5 grid grid-cols-2 rounded-[5px] border border-[#eceae4] bg-[#f7f4ed] p-1">
+            <div className="mt-5 grid grid-cols-2 rounded-[8px] border border-[#eceae4] bg-[#f7f4ed] p-[3px]">
               {[
                 { id: "signup" as const, label: "Create" },
                 { id: "login" as const, label: "Log in" },
@@ -933,7 +902,7 @@ export default function NavBar() {
                   key={item.id}
                   type="button"
                   onClick={() => setAuthMode(item.id)}
-                  className={`h-8 cursor-pointer rounded-[4px] border-0 text-[12px] font-extrabold outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[#2563eb]/25 ${authMode === item.id ? "bg-[#2563eb] text-[#061018]" : "bg-transparent text-[rgba(28,28,28,0.46)] hover:text-[#1c1c1c]"}`}
+                  className={`h-[32px] cursor-pointer rounded-[6px] border-0 text-[12.5px] font-semibold outline-none transition-all duration-150 focus-visible:ring-2 focus-visible:ring-[#2563eb]/25 ${authMode === item.id ? "bg-[#fcfbf8] text-[#1c1c1c] shadow-[0_1px_3px_rgba(0,0,0,0.06),0_0_0_0.5px_rgba(0,0,0,0.04)]" : "bg-transparent text-[rgba(28,28,28,0.4)] hover:text-[rgba(28,28,28,0.65)]"}`}
                 >
                   {item.label}
                 </button>
@@ -942,9 +911,9 @@ export default function NavBar() {
 
             {loginState === "sent" && authMode === "signup" ? (
               <div className="mt-6">
-                <div className="rounded-[6px] border border-[#eceae4] bg-[#f7f4ed] px-4 py-4">
+                <div className="rounded-[10px] border border-[#eceae4] bg-[#f7f4ed] px-4 py-4">
                   <p className="m-0 text-[14px] font-bold text-[#1c1c1c]">Check your inbox</p>
-                  <p className="mt-1 mb-0 text-[12px] leading-relaxed text-[rgba(28,28,28,0.55)]">
+                  <p className="mt-1.5 mb-0 text-[12.5px] leading-relaxed text-[rgba(28,28,28,0.5)]">
                     We sent a setup link to <strong className="font-semibold text-[#1c1c1c]">{loginEmail}</strong>. It opens BrawlLens setup.
                   </p>
                 </div>
@@ -952,7 +921,7 @@ export default function NavBar() {
                   type="button"
                   onClick={() => void sendAuthRequest({ resend: true })}
                   disabled={loginResending}
-                  className="mt-3 inline-flex h-10 w-full cursor-pointer items-center justify-center rounded-[5px] border border-[#eceae4] bg-[#f7f4ed] px-4 text-[13px] font-bold text-[#1c1c1c] transition-colors hover:bg-[#fcfbf8] disabled:cursor-wait disabled:opacity-60"
+                  className="mt-3 inline-flex h-[42px] w-full cursor-pointer items-center justify-center rounded-[8px] border border-[#eceae4] bg-transparent px-4 text-[13px] font-semibold text-[#1c1c1c] transition-colors hover:bg-[rgba(28,28,28,0.025)] disabled:cursor-wait disabled:opacity-60"
                 >
                   {loginResending ? "Sending again..." : "Didn't receive an email? Resend"}
                 </button>
@@ -960,7 +929,7 @@ export default function NavBar() {
             ) : (
               <form onSubmit={submitLogin} className="mt-6">
                 <label className="block">
-                  <span className="mb-2 block text-[12px] font-bold text-[#1c1c1c]">Email</span>
+                  <span className="mb-2 block text-[12px] font-semibold text-[rgba(28,28,28,0.55)]">Email</span>
                   <input
                     ref={loginInputRef}
                     type="email"
@@ -973,7 +942,7 @@ export default function NavBar() {
                         setLoginError(null);
                       }
                     }}
-                    className="h-10 w-full rounded-[5px] border border-[#eceae4] bg-[#f7f4ed] px-3 text-[13px] font-semibold text-[#1c1c1c] outline-none transition-colors placeholder:text-[rgba(28,28,28,0.3)] focus:border-[#2563eb]/45"
+                    className="h-[42px] w-full rounded-[8px] border border-[#eceae4] bg-[#f7f4ed] px-3.5 text-[13.5px] font-medium text-[#1c1c1c] outline-none transition-colors placeholder:text-[rgba(28,28,28,0.28)] focus:border-[rgba(28,28,28,0.2)]"
                     placeholder="you@example.com"
                   />
                   {authMode === "signup" && (
@@ -985,8 +954,8 @@ export default function NavBar() {
                     </div>
                   )}
                 </label>
-                <label className="mt-3 block">
-                  <span className="mb-2 block text-[12px] font-bold text-[#1c1c1c]">Password</span>
+                <label className="mt-4 block">
+                  <span className="mb-2 block text-[12px] font-semibold text-[rgba(28,28,28,0.55)]">Password</span>
                   <input
                     type="password"
                     required
@@ -1000,7 +969,7 @@ export default function NavBar() {
                         setLoginError(null);
                       }
                     }}
-                    className="h-10 w-full rounded-[5px] border border-[#eceae4] bg-[#f7f4ed] px-3 text-[13px] font-semibold text-[#1c1c1c] outline-none transition-colors placeholder:text-[rgba(28,28,28,0.3)] focus:border-[#2563eb]/45"
+                    className="h-[42px] w-full rounded-[8px] border border-[#eceae4] bg-[#f7f4ed] px-3.5 text-[13.5px] font-medium text-[#1c1c1c] outline-none transition-colors placeholder:text-[rgba(28,28,28,0.28)] focus:border-[rgba(28,28,28,0.2)]"
                     placeholder="8+ characters, include a number"
                   />
                   {authMode === "signup" && (
@@ -1018,7 +987,7 @@ export default function NavBar() {
                 <button
                   type="submit"
                   disabled={!canSubmitLogin}
-                  className="mt-3 inline-flex h-10 w-full cursor-pointer items-center justify-center rounded-[5px] border-0 bg-[#2563eb] px-4 text-[13px] font-extrabold text-[#061018] shadow-[rgba(255,255,255,0.4)_0_1px_0_0_inset] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-45"
+                  className="mt-5 inline-flex h-[42px] w-full cursor-pointer items-center justify-center rounded-[8px] border-0 bg-[#1c1c1c] px-4 text-[13px] font-semibold text-[#f7f4ed] transition-opacity hover:opacity-85 disabled:cursor-not-allowed disabled:opacity-35"
                 >
                   {loginState === "sending" ? (authMode === "login" ? "Logging in..." : "Sending...") : authMode === "login" ? "Log in" : "Create account"}
                 </button>
@@ -1026,24 +995,18 @@ export default function NavBar() {
             )}
 
             {loginError && (loginState === "error" || loginState === "sent") && (
-              <p className="mt-4 mb-0 rounded-[5px] border border-[#eceae4] bg-[#f7f4ed] px-3 py-2.5 text-[12px] leading-relaxed text-[rgba(28,28,28,0.65)]">
+              <p className="mt-4 mb-0 rounded-[8px] border border-[#eceae4] bg-[#f7f4ed] px-3.5 py-2.5 text-[12px] leading-relaxed text-[rgba(28,28,28,0.6)]">
                 {loginError}
               </p>
             )}
 
-            <p className="mt-5 mb-0 text-[11px] leading-relaxed text-[rgba(28,28,28,0.4)]">
-              By continuing, you agree to the <Link href="/privacy" onClick={() => setIsLoginOpen(false)} className="text-[#1c1c1c] underline underline-offset-4">Privacy Policy</Link>.
+            <p className="mt-5 mb-0 text-center text-[11px] leading-relaxed text-[rgba(28,28,28,0.3)]">
+              By continuing, you agree to the <Link href="/privacy" onClick={() => setIsLoginOpen(false)} className="text-[rgba(28,28,28,0.5)] underline underline-offset-3 hover:text-[#1c1c1c]">Privacy Policy</Link>.
             </p>
           </section>
         </div>
       )}
 
-      <AssistantPopup
-        open={isAssistantOpen}
-        onClose={() => setIsAssistantOpen(false)}
-        pendingQuery={pendingAssistantQuery}
-        onPendingConsumed={() => setPendingAssistantQuery(null)}
-      />
       <SearchOverlay />
     </>
   );

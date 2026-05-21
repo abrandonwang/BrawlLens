@@ -1,13 +1,36 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ChangeEvent } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Search } from "lucide-react"
+import { Search, ArrowUp, Square } from "lucide-react"
+import ReactMarkdown from "react-markdown"
+import remarkGfm from "remark-gfm"
+import type { Components } from "react-markdown"
 import { BrawlImage, brawlerIconUrl, profileIconUrl } from "@/components/BrawlImage"
+import { lockBodyScroll } from "@/lib/bodyScrollLock"
 import { clubBadgeUrl, clubDetailHref, playerProfileHref } from "@/lib/leaderboardUtils"
 import { sanitizePlayerTag } from "@/lib/validation"
 
+/* ── AI markdown ── */
+const mdComponents: Components = {
+  p: ({ children }) => <p className="bl-cmd-p">{children}</p>,
+  strong: ({ children }) => <strong className="bl-cmd-strong">{children}</strong>,
+  em: ({ children }) => <em className="bl-cmd-em">{children}</em>,
+  h2: ({ children }) => <h2 className="bl-cmd-h2">{children}</h2>,
+  h3: ({ children }) => <h3 className="bl-cmd-h3">{children}</h3>,
+  ul: ({ children }) => <ul className="bl-cmd-ul">{children}</ul>,
+  ol: ({ children }) => <ol className="bl-cmd-ol">{children}</ol>,
+  li: ({ children }) => <li className="bl-cmd-li">{children}</li>,
+  a: ({ href, children }) => <Link href={href ?? "/"} className="bl-cmd-link">{children}</Link>,
+  code: ({ children, className }) => {
+    if (className?.includes("language-")) return <pre className="bl-cmd-pre"><code>{children}</code></pre>
+    return <code className="bl-cmd-code">{children}</code>
+  },
+  hr: () => <hr className="bl-cmd-hr" />,
+}
+
+/* ── Search types ── */
 type SearchItemKind = "player" | "club" | "brawler" | "team" | "page"
 
 type SearchItem = {
@@ -61,6 +84,59 @@ type RemoteSearchPayload = {
 
 type RemoteSearchState = "idle" | "loading" | "ready" | "error"
 
+interface AiMessage {
+  role: "user" | "assistant"
+  content: string
+}
+
+/* ── Page context for AI ── */
+function compactText(value: string, maxLength = 220) {
+  const text = value.replace(/\s+/g, " ").trim()
+  return text.length > maxLength ? `${text.slice(0, maxLength - 1).trim()}…` : text
+}
+
+function uniqueCompact(values: string[], limit: number) {
+  const seen = new Set<string>()
+  const next: string[] = []
+  for (const value of values) {
+    const compact = compactText(value)
+    if (!compact || seen.has(compact)) continue
+    seen.add(compact)
+    next.push(compact)
+    if (next.length >= limit) break
+  }
+  return next
+}
+
+function isElementVisible(element: Element) {
+  if (!(element instanceof HTMLElement)) return true
+  const rect = element.getBoundingClientRect()
+  const style = window.getComputedStyle(element)
+  return rect.width > 0 && rect.height > 0 && style.display !== "none" && style.visibility !== "hidden"
+}
+
+function textFromElement(element: Element, maxLength = 220) {
+  return compactText(element.textContent ?? "", maxLength)
+}
+
+function collectPageContext() {
+  if (typeof window === "undefined" || typeof document === "undefined") return null
+  const root = document.querySelector("main") ?? document.body
+  if (!root) return null
+  const textClone = root.cloneNode(true) as Element
+  textClone.querySelectorAll("script, style, noscript, nav, [role='dialog'], input, textarea").forEach(node => node.remove())
+  const headings = uniqueCompact(Array.from(root.querySelectorAll("h1, h2, h3")).filter(isElementVisible).map(h => textFromElement(h, 140)), 12)
+  const stats = uniqueCompact(Array.from(root.querySelectorAll("[data-ai-context], .bl-bd-stat, .bl-md-kpi, .bl-map-hero-pill, .bl-lb-podium-card, .bl-profile-stat, .bl-card-stat, .bl-tier-card-stat")).filter(isElementVisible).map(n => textFromElement(n, 180)), 24)
+  const links = Array.from(root.querySelectorAll<HTMLAnchorElement>("a[href]")).filter(isElementVisible).map(l => ({ text: textFromElement(l, 90), href: l.href })).filter(l => l.text).slice(0, 28)
+  const tables = Array.from(root.querySelectorAll("table")).filter(isElementVisible).slice(0, 4).map(t => {
+    const headers = uniqueCompact(Array.from(t.querySelectorAll("thead th, thead td")).map(c => textFromElement(c, 90)), 10)
+    const rows = Array.from(t.querySelectorAll("tbody tr, tr")).filter(isElementVisible).slice(0, 12).map(r => Array.from(r.querySelectorAll("th, td")).map(c => textFromElement(c, 90)).filter(Boolean)).filter(r => r.length > 0)
+    return { caption: t.querySelector("caption") ? textFromElement(t.querySelector("caption")!, 140) : undefined, headers, rows }
+  }).filter(t => t.headers.length > 0 || t.rows.length > 0)
+  return { url: window.location.href, path: `${window.location.pathname}${window.location.search}`, title: document.title, headings, stats, tables, links, visibleText: compactText(textClone.textContent ?? "", 4200) }
+}
+
+/* ── Static data ── */
 const RECENT_SEARCH_KEY = "brawllens:recent-searches:v1"
 
 const searchGroups: { label: string; items: SearchItem[] }[] = [
@@ -94,6 +170,7 @@ const searchGroups: { label: string; items: SearchItem[] }[] = [
   },
 ]
 
+/* ── Helpers ── */
 function formatNumber(value: number | null | undefined) {
   return typeof value === "number" ? value.toLocaleString("en-US") : null
 }
@@ -127,16 +204,7 @@ function playerItemFromRemote(player: RemotePlayer, fallbackTag?: string): Searc
     trophies ? `${trophies} trophies` : null,
     clubName ?? null,
   ].filter(Boolean).join(" · ")
-
-  return {
-    title: name,
-    subtitle,
-    href: playerProfileHref(tag),
-    kind: "player",
-    playerTag: tag,
-    iconId: player.iconId ?? null,
-    badge: typeof player.rank === "number" ? `#${player.rank}` : "Player",
-  }
+  return { title: name, subtitle, href: playerProfileHref(tag), kind: "player", playerTag: tag, iconId: player.iconId ?? null, badge: typeof player.rank === "number" ? `#${player.rank}` : "Player" }
 }
 
 function clubItemFromRemote(club: RemoteClub, fallbackTag?: string): SearchItem | null {
@@ -145,60 +213,28 @@ function clubItemFromRemote(club: RemoteClub, fallbackTag?: string): SearchItem 
   const name = club.name ?? club.club_name ?? `#${tag}`
   const trophies = formatNumber(club.trophies)
   const members = club.memberCount ?? club.member_count
-  const subtitle = [
-    `#${tag}`,
-    trophies ? `${trophies} trophies` : null,
-    typeof members === "number" ? `${members} members` : null,
-  ].filter(Boolean).join(" · ")
-
-  return {
-    title: name,
-    subtitle,
-    href: clubDetailHref(tag),
-    kind: "club",
-    clubBadgeId: club.badgeId ?? null,
-    badge: typeof club.rank === "number" ? `#${club.rank}` : "Club",
-  }
+  const subtitle = [`#${tag}`, trophies ? `${trophies} trophies` : null, typeof members === "number" ? `${members} members` : null].filter(Boolean).join(" · ")
+  return { title: name, subtitle, href: clubDetailHref(tag), kind: "club", clubBadgeId: club.badgeId ?? null, badge: typeof club.rank === "number" ? `#${club.rank}` : "Club" }
 }
 
 function fallbackPlayerItem(query: string): SearchItem | null {
   const trimmed = query.trim()
   if (!trimmed) return null
   const tag = sanitizePlayerTag(trimmed)
-  if (tag) {
-    return {
-      title: `#${tag}`,
-      subtitle: "Open player profile",
-      href: playerProfileHref(tag),
-      kind: "player",
-      playerTag: tag,
-      badge: "Player",
-    }
-  }
-  return {
-    title: trimmed,
-    subtitle: "Search player leaderboard",
-    href: `/leaderboards/players?search=${encodeURIComponent(trimmed)}`,
-    kind: "player",
-    badge: "Players",
-  }
+  if (tag) return { title: `#${tag}`, subtitle: "Open player profile", href: playerProfileHref(tag), kind: "player", playerTag: tag, badge: "Player" }
+  return { title: trimmed, subtitle: "Search player leaderboard", href: `/leaderboards/players?search=${encodeURIComponent(trimmed)}`, kind: "player", badge: "Players" }
 }
 
 function loadRecentSearches(): SearchItem[] {
   try {
     const parsed = JSON.parse(window.localStorage.getItem(RECENT_SEARCH_KEY) ?? "[]") as SearchItem[]
-    return parsed
-      .filter(item => item?.href && item?.title && (item.kind === "player" || item.kind === "club"))
-      .slice(0, 5)
-  } catch {
-    return []
-  }
+    return parsed.filter(item => item?.href && item?.title && (item.kind === "player" || item.kind === "club")).slice(0, 5)
+  } catch { return [] }
 }
 
 async function resolveSearchDestination(query: string) {
   const trimmed = query.trim()
   if (!trimmed) return null
-
   const playerTag = sanitizePlayerTag(trimmed)
   if (playerTag) {
     try {
@@ -208,12 +244,9 @@ async function resolveSearchDestination(query: string) {
         if (payload.tagMatches?.player) return playerProfileHref(playerTag)
         if (payload.tagMatches?.club) return clubDetailHref(playerTag)
       }
-    } catch {
-      // Keep the keystroke path fast even if live search cannot resolve the tag.
-    }
+    } catch { /* fast path */ }
     return playerProfileHref(playerTag)
   }
-
   const normalized = trimmed.toLowerCase()
   if (normalized.includes("club")) return "/leaderboards/clubs"
   if (normalized.includes("brawler") || normalized.includes("tier") || normalized.includes("build")) return "/brawlers"
@@ -221,8 +254,19 @@ async function resolveSearchDestination(query: string) {
   return `/leaderboards/players?search=${encodeURIComponent(trimmed)}`
 }
 
+const AI_TRIGGERS = /^(what|why|how|who|which|where|when|is|are|should|can|does|will|compare|summarize|explain|tell|give|best|worst|top|rank|recommend)\b/i
+
+function isAiQuery(q: string) {
+  return AI_TRIGGERS.test(q.trim()) || q.trim().endsWith("?")
+}
+
+/* ── Component ── */
+type Mode = "search" | "ai"
+
 export default function SearchOverlay() {
   const router = useRouter()
+
+  /* Search state */
   const [query, setQuery] = useState("")
   const [open, setOpen] = useState(false)
   const [closing, setClosing] = useState(false)
@@ -233,8 +277,22 @@ export default function SearchOverlay() {
   const inputRef = useRef<HTMLInputElement>(null)
   const closeTimerRef = useRef<number | null>(null)
 
+  /* AI state */
+  const [mode, setMode] = useState<Mode>("search")
+  const [aiMessages, setAiMessages] = useState<AiMessage[]>([])
+  const [aiInput, setAiInput] = useState("")
+  const [aiStreaming, setAiStreaming] = useState(false)
+  const aiInputRef = useRef<HTMLTextAreaElement>(null)
+  const aiBottomRef = useRef<HTMLDivElement>(null)
+  const aiAbortRef = useRef<AbortController | null>(null)
+
   const visible = open || closing
   const trimmedQuery = query.trim()
+
+  useEffect(() => {
+    if (!visible) return
+    return lockBodyScroll()
+  }, [visible])
 
   const close = useCallback(() => {
     if (!open || closing) return
@@ -246,9 +304,15 @@ export default function SearchOverlay() {
     }, 180)
   }, [closing, open])
 
+  /* Reset mode on open */
   useEffect(() => {
-    setRecentItems(loadRecentSearches())
-  }, [])
+    if (open) {
+      setMode("search")
+      setQuery("")
+    }
+  }, [open])
+
+  useEffect(() => { setRecentItems(loadRecentSearches()) }, [])
 
   useEffect(() => {
     function onOpenSearch(event: Event) {
@@ -261,16 +325,38 @@ export default function SearchOverlay() {
       setClosing(false)
       setOpen(true)
     }
-
     window.addEventListener("brawllens:open-search", onOpenSearch)
     return () => window.removeEventListener("brawllens:open-search", onOpenSearch)
   }, [])
 
+  /* Also listen for open-assistant events */
+  useEffect(() => {
+    function onOpenAssistant(event: Event) {
+      const detail = (event as CustomEvent<{ query?: string }>).detail
+      if (closeTimerRef.current !== null) {
+        window.clearTimeout(closeTimerRef.current)
+        closeTimerRef.current = null
+      }
+      setClosing(false)
+      setOpen(true)
+      setMode("ai")
+      setQuery("")
+      if (detail?.query) {
+        setAiInput(detail.query)
+      }
+    }
+    window.addEventListener("brawllens:open-assistant", onOpenAssistant)
+    return () => window.removeEventListener("brawllens:open-assistant", onOpenAssistant)
+  }, [])
+
   useEffect(() => {
     if (!open) return
-    const id = window.setTimeout(() => inputRef.current?.focus(), 80)
+    const id = window.setTimeout(() => {
+      if (mode === "ai") aiInputRef.current?.focus()
+      else inputRef.current?.focus()
+    }, 80)
     return () => window.clearTimeout(id)
-  }, [open])
+  }, [open, mode])
 
   useEffect(() => {
     if (!visible) return
@@ -281,152 +367,88 @@ export default function SearchOverlay() {
     return () => window.removeEventListener("keydown", onKeyDown)
   }, [close, visible])
 
+  /* Remote search */
   useEffect(() => {
-    if (!open || trimmedQuery.length < 2) {
+    if (!open || mode !== "search" || trimmedQuery.length < 2) {
       setRemoteSearch(null)
       setRemoteState("idle")
       return
     }
-
     const controller = new AbortController()
     const timer = window.setTimeout(async () => {
       setRemoteState("loading")
       try {
-        const response = await fetch(`/api/search?q=${encodeURIComponent(trimmedQuery)}`, {
-          cache: "no-store",
-          signal: controller.signal,
-        })
-        if (!response.ok) {
-          setRemoteSearch(null)
-          setRemoteState("error")
-          return
-        }
+        const response = await fetch(`/api/search?q=${encodeURIComponent(trimmedQuery)}`, { cache: "no-store", signal: controller.signal })
+        if (!response.ok) { setRemoteSearch(null); setRemoteState("error"); return }
         const payload = await response.json() as RemoteSearchPayload
         setRemoteSearch(payload)
         setRemoteState("ready")
-      } catch {
-        if (!controller.signal.aborted) {
-          setRemoteSearch(null)
-          setRemoteState("error")
-        }
-      }
+      } catch { if (!controller.signal.aborted) { setRemoteSearch(null); setRemoteState("error") } }
     }, 180)
+    return () => { controller.abort(); window.clearTimeout(timer) }
+  }, [open, mode, trimmedQuery])
 
-    return () => {
-      controller.abort()
-      window.clearTimeout(timer)
-    }
-  }, [open, trimmedQuery])
-
+  /* Search groups */
   const visibleSearchGroups = useMemo(() => {
     const normalized = trimmedQuery.toLowerCase()
     const tag = sanitizePlayerTag(trimmedQuery)
-
-    if (!normalized) {
-      return [
-        ...(recentItems.length ? [{ label: "Recent", items: recentItems }] : []),
-        ...searchGroups,
-      ]
-    }
-
-    const staticPlayerItems = searchGroups
-      .find(group => group.label === "Players")
-      ?.items.filter(item => itemMatches(item, normalized)) ?? []
-    const staticGroups = searchGroups
-      .filter(group => group.label !== "Players")
-      .map(group => ({
-        ...group,
-        items: group.items.filter(item => itemMatches(item, normalized)),
-      }))
-      .filter(group => group.items.length > 0)
-
+    if (!normalized) return [...(recentItems.length ? [{ label: "Recent", items: recentItems }] : []), ...searchGroups]
+    const staticPlayerItems = searchGroups.find(g => g.label === "Players")?.items.filter(i => itemMatches(i, normalized)) ?? []
+    const staticGroups = searchGroups.filter(g => g.label !== "Players").map(g => ({ ...g, items: g.items.filter(i => itemMatches(i, normalized)) })).filter(g => g.items.length > 0)
     const remotePlayerItems = uniqueItems([
       remoteSearch?.tagMatches?.player ? playerItemFromRemote(remoteSearch.tagMatches.player, tag ?? undefined) : null,
-      ...(remoteSearch?.players ?? []).map(player => playerItemFromRemote(player)),
+      ...(remoteSearch?.players ?? []).map(p => playerItemFromRemote(p)),
       ...staticPlayerItems,
       fallbackPlayerItem(trimmedQuery),
-    ].filter((item): item is SearchItem => Boolean(item)))
-
+    ].filter((i): i is SearchItem => Boolean(i)))
     const remoteClubItems = uniqueItems([
       remoteSearch?.tagMatches?.club ? clubItemFromRemote(remoteSearch.tagMatches.club, tag ?? undefined) : null,
-      ...(remoteSearch?.clubs ?? []).map(club => clubItemFromRemote(club)),
-      tag && remoteState === "ready" && !remoteSearch?.tagMatches?.club
-        ? {
-            title: `#${tag}`,
-            subtitle: "Search club leaderboard",
-            href: `/leaderboards/clubs?search=${encodeURIComponent(tag)}`,
-            kind: "club" as const,
-            badge: "Club",
-          }
-        : null,
-    ].filter((item): item is SearchItem => Boolean(item)))
-
-    return [
-      { label: "Players", items: remotePlayerItems },
-      ...(remoteClubItems.length ? [{ label: "Clubs", items: remoteClubItems }] : []),
-      ...staticGroups,
-    ].filter(group => group.items.length > 0)
+      ...(remoteSearch?.clubs ?? []).map(c => clubItemFromRemote(c)),
+      tag && remoteState === "ready" && !remoteSearch?.tagMatches?.club ? { title: `#${tag}`, subtitle: "Search club leaderboard", href: `/leaderboards/clubs?search=${encodeURIComponent(tag)}`, kind: "club" as const, badge: "Club" } : null,
+    ].filter((i): i is SearchItem => Boolean(i)))
+    return [{ label: "Players", items: remotePlayerItems }, ...(remoteClubItems.length ? [{ label: "Clubs", items: remoteClubItems }] : []), ...staticGroups].filter(g => g.items.length > 0)
   }, [recentItems, remoteSearch, remoteState, trimmedQuery])
 
-  const primaryResult = useMemo(
-    () => visibleSearchGroups.flatMap(group => group.items)[0] ?? null,
-    [visibleSearchGroups],
-  )
+  const primaryResult = useMemo(() => visibleSearchGroups.flatMap(g => g.items)[0] ?? null, [visibleSearchGroups])
 
+  /* Player icon loading */
   useEffect(() => {
-    if (!open) return
-    const tags = visibleSearchGroups
-      .flatMap(group => group.items)
-      .map(item => item.playerTag)
-      .filter((tag): tag is string => Boolean(tag && !playerIcons[tag]))
-
+    if (!open || mode !== "search") return
+    const tags = visibleSearchGroups.flatMap(g => g.items).map(i => i.playerTag).filter((t): t is string => Boolean(t && !playerIcons[t]))
     if (!tags.length) return
     let cancelled = false
-
     async function loadIcons() {
       const entries = await Promise.all(tags.map(async tag => {
         try {
-          const response = await fetch(`/api/player?tag=${encodeURIComponent(tag)}`)
-          if (!response.ok) return null
-          const profile = await response.json() as { icon?: { id?: number } }
-          return profile.icon?.id ? [tag, profile.icon.id] as const : null
-        } catch {
-          return null
-        }
+          const r = await fetch(`/api/player?tag=${encodeURIComponent(tag)}`)
+          if (!r.ok) return null
+          const p = await r.json() as { icon?: { id?: number } }
+          return p.icon?.id ? [tag, p.icon.id] as const : null
+        } catch { return null }
       }))
-
       if (cancelled) return
-      setPlayerIcons(current => ({
-        ...current,
-        ...Object.fromEntries(entries.filter((entry): entry is readonly [string, number] => Boolean(entry))),
-      }))
+      setPlayerIcons(c => ({ ...c, ...Object.fromEntries(entries.filter((e): e is readonly [string, number] => Boolean(e))) }))
     }
-
     loadIcons()
-    return () => {
-      cancelled = true
-    }
-  }, [open, playerIcons, visibleSearchGroups])
+    return () => { cancelled = true }
+  }, [open, mode, playerIcons, visibleSearchGroups])
 
   function rememberSearchItem(item: SearchItem) {
     if (item.kind !== "player" && item.kind !== "club") return
-    const stored: SearchItem = {
-      title: item.title,
-      subtitle: item.subtitle,
-      href: item.href,
-      kind: item.kind,
-      playerTag: item.playerTag,
-      iconId: item.iconId ?? null,
-      clubBadgeId: item.clubBadgeId ?? null,
-      badge: item.badge,
-    }
+    const stored: SearchItem = { title: item.title, subtitle: item.subtitle, href: item.href, kind: item.kind, playerTag: item.playerTag, iconId: item.iconId ?? null, clubBadgeId: item.clubBadgeId ?? null, badge: item.badge }
     const next = uniqueItems([stored, ...recentItems]).slice(0, 5)
     setRecentItems(next)
     window.localStorage.setItem(RECENT_SEARCH_KEY, JSON.stringify(next))
   }
 
-  async function submit(event: FormEvent<HTMLFormElement>) {
+  async function submitSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    if (mode === "search" && isAiQuery(trimmedQuery)) {
+      setMode("ai")
+      setAiInput("")
+      sendAiMessage(trimmedQuery)
+      return
+    }
     const destination = primaryResult?.href ?? await resolveSearchDestination(query)
     if (!destination) return
     if (primaryResult) rememberSearchItem(primaryResult)
@@ -434,77 +456,163 @@ export default function SearchOverlay() {
     router.push(destination)
   }
 
-  const statusText = useMemo(() => {
-    if (!trimmedQuery) return recentItems.length ? "Recent profiles and quick jumps" : "Players, brawlers, clubs, teams"
-    if (remoteState === "loading") return sanitizePlayerTag(trimmedQuery) ? `Resolving #${sanitizePlayerTag(trimmedQuery)}` : "Searching players"
-    if (remoteState === "error") return "Live search is unavailable; local shortcuts remain ready"
-    if (!primaryResult) return "No matching result"
-    return primaryResult.kind === "player" ? "Player match ready" : `${primaryResult.badge ?? "Result"} match ready`
-  }, [primaryResult, recentItems.length, remoteState, trimmedQuery])
+  /* ── AI logic ── */
+  const sendAiMessage = useCallback(async (content: string) => {
+    const userMsg: AiMessage = { role: "user", content }
+    const history = [...aiMessages, userMsg]
+    setAiMessages(history)
+    setAiStreaming(true)
+    setAiMessages([...history, { role: "assistant", content: "" }])
+    const controller = new AbortController()
+    aiAbortRef.current = controller
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: history, pageContext: collectPageContext() }),
+        signal: controller.signal,
+      })
+      if (!res.ok) { setAiMessages([...history, { role: "assistant", content: "Something went wrong." }]); setAiStreaming(false); return }
+      const reader = res.body!.getReader()
+      const decoder = new TextDecoder()
+      let fullText = ""
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        fullText += decoder.decode(value, { stream: true })
+        setAiMessages([...history, { role: "assistant", content: fullText }])
+      }
+    } catch (e) {
+      if ((e as Error).name !== "AbortError") setAiMessages([...history, { role: "assistant", content: "Stream interrupted." }])
+    }
+    setAiStreaming(false)
+    aiAbortRef.current = null
+  }, [aiMessages])
+
+  function handleAiSubmit() {
+    const q = aiInput.trim()
+    if (!q || aiStreaming) return
+    setAiInput("")
+    if (aiInputRef.current) aiInputRef.current.style.height = "auto"
+    sendAiMessage(q)
+  }
+
+  function handleAiKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleAiSubmit() }
+  }
+
+  function handleAiInput(e: ChangeEvent<HTMLTextAreaElement>) {
+    setAiInput(e.target.value)
+    const el = e.target
+    el.style.height = "auto"
+    el.style.height = `${Math.min(el.scrollHeight, 120)}px`
+  }
+
+  useEffect(() => {
+    if (aiMessages.length) aiBottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" })
+  }, [aiMessages])
 
   if (!visible) return null
 
   return (
-    <div className={`bl-search-modal-layer ${closing ? "is-closing" : ""}`} role="dialog" aria-modal="true" aria-label="Search BrawlLens">
-      <button className="bl-search-modal-backdrop" type="button" aria-label="Close search" onClick={close} />
-      <div className="bl-search-modal">
-        <form onSubmit={submit} className="bl-search-modal-form">
-          <input
-            ref={inputRef}
-            value={query}
-            onChange={event => setQuery(event.target.value)}
-            placeholder="Search player name, tag, club, brawler..."
-            autoCapitalize="characters"
-            spellCheck={false}
-            autoComplete="off"
-            aria-label="Search player name, tag, club, brawler, or pro team"
-          />
-          <button type="submit" aria-label="Search">
-            <Search size={17} strokeWidth={2.4} />
-          </button>
-        </form>
-        <div className="bl-search-modal-help" data-state={remoteState}>{statusText}</div>
-        <div className="bl-search-modal-results">
-          {visibleSearchGroups.map(group => (
-            <section key={group.label} className="bl-search-result-group">
-              <h3>{group.label}</h3>
-              {group.items.map(item => {
-                const iconId = item.iconId ?? (item.playerTag ? playerIcons[item.playerTag] : null)
-                return (
-                  <Link
-                    key={`${group.label}-${item.kind}-${item.href}-${item.title}`}
-                    href={item.href}
-                    className="bl-search-result-row"
-                    onClick={() => {
-                      rememberSearchItem(item)
-                      close()
-                    }}
-                  >
-                    <span className={`bl-search-result-icon bl-search-result-icon-${item.kind}`}>
-                      {item.imageId ? (
-                        <BrawlImage src={brawlerIconUrl(item.imageId)} alt="" width={36} height={36} sizes="36px" />
-                      ) : iconId ? (
-                        <BrawlImage src={profileIconUrl(iconId)} alt="" width={36} height={36} sizes="36px" />
-                      ) : item.clubBadgeId ? (
-                        <BrawlImage src={clubBadgeUrl(item.clubBadgeId)} alt="" width={36} height={36} sizes="36px" />
-                      ) : item.logoUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={item.logoUrl} alt="" className={item.logoClassName} />
-                      ) : (
-                        <span>{item.title.slice(0, 1)}</span>
-                      )}
-                    </span>
-                    <span className="bl-search-result-copy">
-                      <strong>{item.title}</strong>
-                      <small>{item.subtitle}</small>
-                    </span>
-                    {item.badge && <em className="bl-search-result-badge">{item.badge}</em>}
-                  </Link>
-                )
-              })}
-            </section>
-          ))}
+    <div className={`bl-cmd-layer ${closing ? "is-closing" : ""}`} role="dialog" aria-modal="true" aria-label="Search & AI">
+      <button className="bl-cmd-backdrop" type="button" aria-label="Close" onClick={close} />
+      <div className="bl-cmd-panel">
+        {/* Mode toggle */}
+        <div className="bl-cmd-tabs">
+          <button type="button" className={`bl-cmd-tab ${mode === "search" ? "bl-cmd-tab-active" : ""}`} onClick={() => setMode("search")}>Search</button>
+          <button type="button" className={`bl-cmd-tab ${mode === "ai" ? "bl-cmd-tab-active" : ""}`} onClick={() => { setMode("ai"); setTimeout(() => aiInputRef.current?.focus(), 60) }}>Brawl AI</button>
         </div>
+
+        {mode === "search" ? (
+          /* ── Search mode ── */
+          <>
+            <form onSubmit={submitSearch} className="bl-cmd-form">
+              <Search size={15} strokeWidth={2.2} className="bl-cmd-search-icon" aria-hidden="true" />
+              <input
+                ref={inputRef}
+                value={query}
+                onChange={e => setQuery(e.target.value)}
+                placeholder="Search players, brawlers, clubs..."
+                autoCapitalize="characters"
+                spellCheck={false}
+                autoComplete="off"
+              />
+            </form>
+            <div className="bl-cmd-results">
+              {visibleSearchGroups.map(group => (
+                <section key={group.label} className="bl-cmd-group">
+                  <h3>{group.label}</h3>
+                  {group.items.map(item => {
+                    const iconId = item.iconId ?? (item.playerTag ? playerIcons[item.playerTag] : null)
+                    return (
+                      <Link
+                        key={`${group.label}-${item.kind}-${item.href}-${item.title}`}
+                        href={item.href}
+                        className="bl-cmd-row"
+                        onClick={() => { rememberSearchItem(item); close() }}
+                      >
+                        <span className={`bl-cmd-icon bl-cmd-icon-${item.kind}`}>
+                          {item.imageId ? <BrawlImage src={brawlerIconUrl(item.imageId)} alt="" width={32} height={32} sizes="32px" />
+                            : iconId ? <BrawlImage src={profileIconUrl(iconId)} alt="" width={32} height={32} sizes="32px" />
+                            : item.clubBadgeId ? <BrawlImage src={clubBadgeUrl(item.clubBadgeId)} alt="" width={32} height={32} sizes="32px" />
+                            : item.logoUrl ? <img src={item.logoUrl} alt="" className={item.logoClassName} />
+                            : <span>{item.title.slice(0, 1)}</span>}
+                        </span>
+                        <span className="bl-cmd-copy">
+                          <strong>{item.title}</strong>
+                          <small>{item.subtitle}</small>
+                        </span>
+                        {item.badge && <em className="bl-cmd-badge">{item.badge}</em>}
+                      </Link>
+                    )
+                  })}
+                </section>
+              ))}
+            </div>
+          </>
+        ) : (
+          /* ── AI mode ── */
+          <>
+            <div className="bl-cmd-ai-body">
+              {aiMessages.length === 0 && (
+                <div className="bl-cmd-ai-empty">Ask anything about the meta, brawlers, or maps.</div>
+              )}
+              {aiMessages.map((msg, i) => (
+                <div key={i} className={`bl-cmd-ai-msg ${msg.role === "user" ? "bl-cmd-ai-user" : "bl-cmd-ai-bot"}`}>
+                  {msg.role === "assistant" ? (
+                    aiStreaming && i === aiMessages.length - 1 && msg.content === "" ? (
+                      <span className="bl-cmd-ai-dots"><span /><span /><span /></span>
+                    ) : (
+                      <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>{msg.content}</ReactMarkdown>
+                    )
+                  ) : msg.content}
+                  <div ref={i === aiMessages.length - 1 ? aiBottomRef : undefined} />
+                </div>
+              ))}
+            </div>
+            <div className="bl-cmd-ai-input">
+              <textarea
+                ref={aiInputRef}
+                rows={1}
+                value={aiInput}
+                onChange={handleAiInput}
+                onKeyDown={handleAiKeyDown}
+                placeholder="Ask anything..."
+                className="bl-cmd-ai-textarea"
+              />
+              {aiStreaming ? (
+                <button type="button" onClick={() => aiAbortRef.current?.abort()} className="bl-cmd-ai-send" aria-label="Stop">
+                  <Square size={10} strokeWidth={0} fill="currentColor" />
+                </button>
+              ) : (
+                <button type="button" onClick={handleAiSubmit} disabled={!aiInput.trim()} className="bl-cmd-ai-send" aria-label="Send">
+                  <ArrowUp size={13} strokeWidth={2.4} />
+                </button>
+              )}
+            </div>
+          </>
+        )}
       </div>
     </div>
   )

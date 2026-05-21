@@ -128,8 +128,8 @@ function abilityItemsFor(brawler: Brawler): AbilityItem[] {
 function StatMetric({ value, label, detail, color }: { value: string; label: string; detail?: string; color?: string }) {
   return (
     <div className="bl-bd-stat">
-      <strong style={color ? { color } : undefined}>{value}</strong>
       <span>{label}</span>
+      <strong style={color ? { color } : undefined}>{value}</strong>
       {detail && <em>{detail}</em>}
     </div>
   )
@@ -253,8 +253,8 @@ export default function BrawlerDetailClient({ brawler }: { brawler: Brawler }) {
   const displayRank = rank >= 0 ? rank + 1 : null
   const pickRate = totalCatalogPicks > 0 && selectedCatalog ? (selectedCatalog.picks / totalCatalogPicks) * 100 : null
   const tier = selectedWinRate != null ? getTierInfo(selectedWinRate) : null
-  const topMaps = stats?.maps?.slice(0, 2) ?? []
-  const topModes = stats?.modes?.slice(0, 2) ?? []
+  const topMaps = stats?.maps?.slice(0, 5) ?? []
+  const topModes = stats?.modes?.slice(0, 5) ?? []
   const bestMapName = topMaps[0]?.map ?? selectedCatalog?.bestMap?.name ?? null
   const bestMode = topModes[0] ?? null
   const hyper = HYPERCHARGES[brawler.id]
@@ -312,15 +312,14 @@ export default function BrawlerDetailClient({ brawler }: { brawler: Brawler }) {
             </div>
 
             <div className="bl-bd-title-block">
-              <h1><span>{formatBrawlerName(brawler.name)}</span> Build, Stats, Season 50</h1>
-              <div className="bl-bd-abilities" aria-label={`${brawler.name} abilities`}>
-                {abilities.length ? abilities.map(ability => <AbilityBadge key={ability.key} ability={ability} />) : (
-                  <span className="bl-bd-muted">Ability data unavailable</span>
-                )}
-              </div>
+              <h1>{formatBrawlerName(brawler.name)}</h1>
+              <p className="bl-bd-summary">{summary}</p>
             </div>
-
-            <p className="bl-bd-summary">{summary}</p>
+          </div>
+          <div className="bl-bd-abilities" aria-label={`${brawler.name} abilities`}>
+            {abilities.length ? abilities.map(ability => <AbilityBadge key={ability.key} ability={ability} />) : (
+              <span className="bl-bd-muted">Ability data unavailable</span>
+            )}
           </div>
         </div>
       </section>
@@ -339,23 +338,23 @@ export default function BrawlerDetailClient({ brawler }: { brawler: Brawler }) {
                 <StatMetric value={compactNumber(selectedPicks)} label="games analyzed" />
               </section>
 
-              <section className="bl-bd-main-grid">
-                <div className="bl-bd-panel bl-bd-build-panel">
-                  <div className="bl-bd-panel-head">
-                    <span>Recommended Builds</span>
-                    <small>from available kit data</small>
-                  </div>
-                  <div className="bl-bd-build-grid">
-                    {builds.map(build => <BuildCell key={build.title} {...build} />)}
-                  </div>
-                  {hyper && (
-                    <div className="bl-bd-hyper-note">
-                      <Bolt size={14} />
-                      <span><b>{hyper.name}</b> adds {hyper.speedBoost}% speed, {hyper.damageBoost}% damage, and {hyper.shieldBoost}% shield during Hypercharge.</span>
-                    </div>
-                  )}
+              <div className="bl-bd-panel bl-bd-build-panel">
+                <div className="bl-bd-panel-head">
+                  <span>Recommended Builds</span>
+                  <small>from available kit data</small>
                 </div>
+                <div className="bl-bd-build-grid">
+                  {builds.map(build => <BuildCell key={build.title} {...build} />)}
+                </div>
+                {hyper && (
+                  <div className="bl-bd-hyper-note">
+                    <Bolt size={14} />
+                    <span><b>{hyper.name}</b> adds {hyper.speedBoost}% speed, {hyper.damageBoost}% damage, and {hyper.shieldBoost}% shield during Hypercharge.</span>
+                  </div>
+                )}
+              </div>
 
+              <section className="bl-bd-two-col">
                 <div className="bl-bd-panel">
                   <div className="bl-bd-panel-head">
                     <span>Best Maps</span>
@@ -370,7 +369,7 @@ export default function BrawlerDetailClient({ brawler }: { brawler: Brawler }) {
 
                 <div className="bl-bd-panel">
                   <div className="bl-bd-panel-head">
-                    <span>Mode Profile</span>
+                    <span>Mode Performance</span>
                     <small>{compactNumber(selectedPicks)} games</small>
                   </div>
                   <div className="bl-bd-mode-list">
