@@ -280,30 +280,30 @@ body > nav .nav-wordmark {
 }
 
 .bl-nav-login-button {
-  border: 1px solid rgba(28, 28, 28, 0.11);
-  background: var(--panel);
-  color: rgba(28, 28, 28, 0.86);
+  border: 1px solid rgba(28, 28, 28, 0.82);
+  background: #1c1c1c;
+  color: #fcfbf8;
   box-shadow:
-    rgba(255, 255, 255, 0.045) 0 1px 0 0 inset,
-    rgba(0, 0, 0, 0.42) 0 10px 24px -18px;
+    rgba(255, 255, 255, 0.12) 0 1px 0 0 inset,
+    rgba(0, 0, 0, 0.28) 0 10px 24px -18px;
   transition: transform 150ms ease, background-color 150ms ease, border-color 150ms ease, color 150ms ease, box-shadow 150ms ease;
 }
 
 .bl-nav-login-button:hover {
-  border-color: rgba(139, 215, 255, 0.28);
-  background: var(--panel);
-  color: #1c1c1c;
+  border-color: #111111;
+  background: #111111;
+  color: #ffffff;
   box-shadow:
-    rgba(28, 28, 28, 0.04) 0 1px 0 0 inset,
-    rgba(0, 0, 0, 0.44) 0 12px 26px -18px,
-    rgba(139, 215, 255, 0.12) 0 0 18px;
+    rgba(255, 255, 255, 0.14) 0 1px 0 0 inset,
+    rgba(0, 0, 0, 0.34) 0 12px 26px -18px;
 }
 
 .bl-nav-login-button:active {
   transform: translateY(1px);
+  background: #0f0f0f;
   box-shadow:
-    rgba(28, 28, 28, 0.03) 0 1px 0 0 inset,
-    rgba(0, 0, 0, 0.34) 0 8px 18px -16px;
+    rgba(255, 255, 255, 0.08) 0 1px 0 0 inset,
+    rgba(0, 0, 0, 0.28) 0 8px 18px -16px;
 }
 
 .bl-nav-login-button:focus-visible {
