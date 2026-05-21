@@ -49,7 +49,6 @@ function formatFullNumber(value: number) {
 function StatMetric({ value, label, detail, color, help }: { value: string; label: string; detail?: string; color?: string; help?: string }) {
   return (
     <div className="bl-bd-stat">
-      <strong style={color ? { color } : undefined}>{value}</strong>
       <span className="bl-help-label bl-help-label-center">
         <span>{label}</span>
         {help && (
@@ -58,6 +57,7 @@ function StatMetric({ value, label, detail, color, help }: { value: string; labe
           </HelpTooltip>
         )}
       </span>
+      <strong style={color ? { color } : undefined}>{value}</strong>
       {detail && <em>{detail}</em>}
     </div>
   )

@@ -128,8 +128,8 @@ function abilityItemsFor(brawler: Brawler): AbilityItem[] {
 function StatMetric({ value, label, detail, color }: { value: string; label: string; detail?: string; color?: string }) {
   return (
     <div className="bl-bd-stat">
-      <strong style={color ? { color } : undefined}>{value}</strong>
       <span>{label}</span>
+      <strong style={color ? { color } : undefined}>{value}</strong>
       {detail && <em>{detail}</em>}
     </div>
   )

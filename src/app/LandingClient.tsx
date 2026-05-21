@@ -254,13 +254,15 @@ export default function LandingClient() {
 
         <div className="bl-landing-track">
           <p className="bl-landing-line">Real ladder data for players, brawlers, maps, and upgrade decisions.</p>
-          <form className={`bl-landing-search-form${landingQuery ? " has-value" : ""}`} onSubmit={submitLandingSearch}>
+          <form className={`bl-landing-search-form${landingQuery ? " has-value" : ""}`} onSubmit={submitLandingSearch} onClick={() => openSearch()}>
             <input
               value={landingQuery}
               onChange={event => setLandingQuery(event.target.value)}
+              onFocus={() => openSearch()}
               aria-label="Search BrawlLens"
               autoComplete="off"
               spellCheck={false}
+              readOnly
             />
             <span className="bl-landing-search-placeholder" aria-hidden="true">
               Type a player tag, brawler, map, or club...

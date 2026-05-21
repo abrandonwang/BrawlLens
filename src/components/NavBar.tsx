@@ -1,10 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
-import { ChevronDown, Search, Sparkles, X } from "lucide-react";
+import { ChevronDown, Search, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import AssistantPopup from "./AssistantPopup";
 import BrandMark from "./BrandMark";
 import SearchOverlay from "./SearchOverlay";
 import { lockBodyScroll } from "@/lib/bodyScrollLock";
@@ -16,7 +15,6 @@ type NavPanelItem = {
   label: string;
   href?: string;
   description: string;
-  action?: "assistant";
   disabled?: boolean;
   badge?: string;
 };
@@ -117,8 +115,6 @@ function internalRedirectPath(value: string | null) {
 export default function NavBar() {
   const pathname = usePathname();
   const router = useRouter();
-  const [isAssistantOpen, setIsAssistantOpen] = useState(false);
-  const [pendingAssistantQuery, setPendingAssistantQuery] = useState<string | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [menuClosing, setMenuClosing] = useState(false);
   const [desktopPanel, setDesktopPanel] = useState<DesktopPanel | null>(null);
@@ -299,16 +295,6 @@ export default function NavBar() {
     window.addEventListener("pointerdown", onPointerDown);
     return () => window.removeEventListener("pointerdown", onPointerDown);
   }, [isAccountMenuOpen]);
-
-  useEffect(() => {
-    function onOpenAssistant(e: Event) {
-      const detail = (e as CustomEvent<{ query?: string }>).detail;
-      setIsAssistantOpen(true);
-      if (detail?.query) setPendingAssistantQuery(detail.query);
-    }
-    window.addEventListener("brawllens:open-assistant", onOpenAssistant);
-    return () => window.removeEventListener("brawllens:open-assistant", onOpenAssistant);
-  }, []);
 
   useEffect(() => {
     function onOpenLogin(e: Event) {
@@ -503,14 +489,6 @@ export default function NavBar() {
     void sendAuthRequest();
   }
 
-  function openAssistantFromNav() {
-    closeMenu();
-    setDesktopPanel(null);
-    setHoverDesktopPanel(null);
-    setSuppressedDesktopPanel(null);
-    setIsAssistantOpen(true);
-  }
-
   function submitNavSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const query = navSearch.trim();
@@ -640,13 +618,6 @@ export default function NavBar() {
               <ChevronDown size={13} strokeWidth={2.25} className="nav-trigger-arrow ml-0.5 transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]" />
             </Link>
           </div>
-          <button
-            type="button"
-            onClick={openAssistantFromNav}
-            className="relative inline-flex h-[28px] cursor-pointer items-center rounded-[6px] border border-[#eceae4] bg-transparent px-[10px] text-[12px] font-bold tracking-[0.02em] text-[rgba(28,28,28,0.5)] transition-all duration-150 hover:border-[rgba(28,28,28,0.16)] hover:text-[#1c1c1c] hover:bg-[rgba(28,28,28,0.03)]"
-          >
-            AI
-          </button>
           <div
             className="nav-browse-panel fixed top-[58px] w-[540px] max-xl:w-[500px]"
             data-open={visibleDesktopPanel ? "true" : undefined}
@@ -668,25 +639,6 @@ export default function NavBar() {
                   <div className="grid grid-cols-2 gap-1.5 pt-1.5">
                     {browseItems.map(item => {
                       const active = visibleDesktopPanel === "browse" && item.href ? isRouteActive(pathname, item.href) : false;
-
-                      if (item.action === "assistant") {
-                        return (
-                          <button
-                            key={item.label}
-                            type="button"
-                            onClick={openAssistantFromNav}
-                            className="flex min-h-[58px] cursor-pointer items-start justify-between gap-3 rounded-[10px] border-0 bg-transparent px-3 py-2.5 text-left font-[inherit] text-[#1c1c1c] transition-colors duration-200 hover:bg-[rgba(28,28,28,0.04)]"
-                          >
-                            <span className="min-w-0">
-                              <span className="inline-flex items-center gap-1.5 text-[14px] font-semibold leading-tight text-[#1c1c1c]">
-                                <span className="truncate">{item.label}</span>
-                                <Sparkles size={14} strokeWidth={1.9} className="shrink-0 text-[#f0d373]" aria-hidden="true" />
-                              </span>
-                              <span className="mt-1 block text-[12px] leading-snug text-[#5f5f5d]">{item.description}</span>
-                            </span>
-                          </button>
-                        );
-                      }
 
                       if (!item.href || item.disabled) {
                         return (
@@ -792,6 +744,16 @@ export default function NavBar() {
         </form>
 
         <div className="relative z-10 ml-auto flex min-w-0 shrink-0 items-center justify-end gap-2 max-[430px]:gap-1.5">
+          <button
+            type="button"
+            onClick={() => openSearchOverlay()}
+            className="bl-nav-search-compact xl:hidden"
+            aria-label="Open search"
+            title="Search"
+          >
+            <Search size={16} strokeWidth={2.2} aria-hidden="true" />
+            <span className="bl-nav-search-compact-label">Search</span>
+          </button>
           {isSignedIn ? (
             <div ref={accountMenuRef} className="relative shrink-0">
               <button
@@ -1045,12 +1007,6 @@ export default function NavBar() {
         </div>
       )}
 
-      <AssistantPopup
-        open={isAssistantOpen}
-        onClose={() => setIsAssistantOpen(false)}
-        pendingQuery={pendingAssistantQuery}
-        onPendingConsumed={() => setPendingAssistantQuery(null)}
-      />
       <SearchOverlay />
     </>
   );

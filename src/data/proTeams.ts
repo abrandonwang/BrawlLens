@@ -210,7 +210,7 @@ export const proTeams: ProTeam[] = [
     flagCode: "jp",
     flagLabel: "Japan",
     accent: "#e43747",
-    logoUrl: "/team-logos/crazy-raccoons.webp",
+    logoUrl: "/team-logos/crazy-raccoons-transparent.png",
     logoBgFilter: "contrast(2.15) brightness(1.12) saturate(1.25)",
     sourceClubTag: "2VUVJUY0U",
     description: "Moya, Tensai, and Milkreo tracked from the public Crazy Raccoons roster, with the in-game club #2VUVJUY0U surfaced for Tensai.",
