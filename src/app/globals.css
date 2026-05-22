@@ -288,27 +288,21 @@ body > nav .nav-wordmark {
   border: 1px solid rgba(245, 244, 241, 0.82);
   background: #f5f4f1;
   color: #15151b;
-  box-shadow:
-    rgba(255, 255, 255, 0.12) 0 1px 0 0 inset,
-    rgba(0, 0, 0, 0.28) 0 10px 24px -18px;
+  box-shadow: none;
   transition: transform 150ms ease, background-color 150ms ease, border-color 150ms ease, color 150ms ease, box-shadow 150ms ease;
 }
 
 .bl-nav-login-button:hover {
-  border-color: #111111;
-  background: #111111;
+  border-color: #2f8ee8;
+  background: #1e73d8;
   color: #ffffff;
-  box-shadow:
-    rgba(255, 255, 255, 0.14) 0 1px 0 0 inset,
-    rgba(0, 0, 0, 0.34) 0 12px 26px -18px;
+  box-shadow: none;
 }
 
 .bl-nav-login-button:active {
-  transform: translateY(1px);
-  background: #0f0f0f;
-  box-shadow:
-    rgba(255, 255, 255, 0.08) 0 1px 0 0 inset,
-    rgba(0, 0, 0, 0.28) 0 8px 18px -16px;
+  transform: none;
+  background: #1e73d8;
+  box-shadow: none;
 }
 
 .bl-nav-login-button:focus-visible {
@@ -13105,16 +13099,16 @@ html.home-landing-bg body > nav .bl-nav-login-button span,
   border-color: transparent !important;
   background: var(--bt-blue) !important;
   color: #ffffff !important;
-  box-shadow: rgba(30, 115, 216, 0.40) 0 4px 14px -4px !important;
+  box-shadow: none !important;
 }
 
 body > nav .bl-nav-login-button:hover,
 html.home-landing-bg body > nav .bl-nav-login-button:hover,
 .bl-nav-login-button:hover {
   border-color: transparent !important;
-  background: var(--bt-blue-hot) !important;
+  background: var(--bt-blue) !important;
   color: #ffffff !important;
-  box-shadow: rgba(30, 115, 216, 0.55) 0 6px 18px -4px !important;
+  box-shadow: none !important;
 }
 
 body > nav form[role="search"],
@@ -13902,7 +13896,8 @@ body > nav .bl-nav-login-button span {
 
 .bl-nav-login-button:hover,
 body > nav .bl-nav-login-button:hover {
-  background: var(--bt-blue-hover) !important;
+  background: var(--bt-blue) !important;
+  box-shadow: none !important;
 }
 
 .bl-landing-search-form {
@@ -14041,4 +14036,33 @@ html body .mobile-menu-item[class*="bg-[#1e73d8]"] {
   background: #1e73d8 !important;
   color: #ffffff !important;
   box-shadow: none !important;
+}
+
+/* Final user-requested polish: stable login hover, transparent favicon, desktop-only lower landing cards. */
+html body > nav .bl-nav-login-button,
+html body > nav .bl-nav-login-button:hover,
+html body > nav .bl-nav-login-button:active,
+html body > nav .bl-nav-login-button:focus-visible,
+html body > nav .bl-nav-login-button span,
+html body > nav .bl-nav-login-button:hover span,
+html body .bl-nav-login-button,
+html body .bl-nav-login-button:hover,
+html body .bl-nav-login-button:active,
+html body .bl-nav-login-button:focus-visible,
+html body .bl-nav-login-button span,
+html body .bl-nav-login-button:hover span {
+  border-color: #2f8ee8 !important;
+  background: #1e73d8 !important;
+  color: #ffffff !important;
+  text-decoration: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  filter: none !important;
+  transform: none !important;
+}
+
+@media (min-width: 901px) {
+  html.home-landing-bg .bl-landing-showcase {
+    transform: translateY(clamp(150px, 18vh, 260px)) !important;
+  }
 }
