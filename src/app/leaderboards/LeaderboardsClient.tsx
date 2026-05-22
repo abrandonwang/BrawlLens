@@ -176,7 +176,7 @@ export default function LeaderboardsClient({
 
       <LeaderboardHero
         title="Players Leaderboard"
-        description={`Track the highest-ranked accounts across ${regionData?.label ?? "Global"} with recent battle context, profile icons, and the brawlers carrying each top player's push. Rankings stay ordered by BrawlLens snapshots while the featured cards pull fresh profile and battle-log details from the Brawl Stars API.`}
+        description={`Top players in ${regionData?.label ?? "Global"} ranked by trophies — ${(regionData?.players?.length ?? 0).toLocaleString()} accounts tracked.`}
       />
 
       <LeaderboardBoard>

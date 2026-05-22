@@ -178,8 +178,8 @@ export default function BrawlerDetail({ brawler }: { brawler: Brawler }) {
                         <GlowCard variant={hcVariant}>
                             <div className="p-3">
                                 <div className="flex items-start gap-3 mb-3">
-                                    <div className="w-7 h-7 rounded-md bg-[#a855f7]/15 border border-[#a855f7]/30 flex items-center justify-center shrink-0">
-                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a855f7" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <div className="w-7 h-7 rounded-md bg-[#2f8ee8]/15 border border-[#2f8ee8]/30 flex items-center justify-center shrink-0">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2f8ee8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                                             <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
                                         </svg>
                                     </div>
@@ -195,7 +195,7 @@ export default function BrawlerDetail({ brawler }: { brawler: Brawler }) {
                                         <p className="text-xs text-zinc-500 leading-relaxed dark:text-white/75">{hcDesc}</p>
                                     </div>
                                 </div>
-                                <div className="flex flex-wrap gap-2 pt-3 border-t border-[#a855f7]/15">
+                                <div className="flex flex-wrap gap-2 pt-3 border-t border-[#2f8ee8]/15">
                                     <span className="text-[10px] font-semibold px-2 py-1 rounded bg-red-500/10 text-red-500 dark:bg-red-500/15">
                                         +{hypercharge.damageBoost}% Damage
                                     </span>

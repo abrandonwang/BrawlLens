@@ -170,7 +170,7 @@ export default function ClubsClient({ allData }: { allData: RegionData[] }) {
 
       <LeaderboardHero
         title="Clubs Leaderboard"
-        description={`Compare the highest-ranked clubs in ${regionData?.label ?? "Global"} with member counts, average pressure, and recent BrawlLens update timing packed into a compact ladder view. The podium highlights the top three once, while the table continues from the next ranked club.`}
+        description={`Top clubs in ${regionData?.label ?? "Global"} ranked by total trophies — ${(regionData?.clubs?.length ?? 0).toLocaleString()} clubs tracked.`}
       />
 
       <LeaderboardBoard>

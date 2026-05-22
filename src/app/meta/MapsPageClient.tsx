@@ -179,7 +179,7 @@ export default function MapsPageClient() {
           toolbar={(
             <div className="grid grid-cols-[minmax(240px,320px)_auto] items-center gap-3 max-md:grid-cols-1">
               <div className="relative max-md:w-full">
-                <div className="flex h-[34px] items-center gap-2 rounded-[4px] border border-[#eceae4] bg-[#f7f4ed] px-3 text-[var(--ink)] transition-colors focus-within:border-[rgba(28,28,28,0.15)] focus-within:bg-[#fcfbf8]">
+                <div className="flex h-[34px] items-center gap-2 rounded-[4px] border border-[#26262d] bg-[#0d0d11] px-3 text-[var(--ink)] transition-colors focus-within:border-[rgba(245,244,241,0.15)] focus-within:bg-[#15151b]">
                   <Search size={13} className="shrink-0 text-[var(--ink-4)]" />
                   <input
                     ref={searchInputRef}
@@ -187,14 +187,14 @@ export default function MapsPageClient() {
                     onChange={e => { setMapSearch(e.target.value); setSearchOpen(true) }}
                     onFocus={() => setSearchOpen(true)}
                     placeholder="Search maps"
-                    className="w-full border-0 bg-transparent font-inherit text-[12px] font-semibold tracking-normal text-[var(--ink)] outline-none placeholder:text-[rgba(28,28,28,0.38)]"
+                    className="w-full border-0 bg-transparent font-inherit text-[12px] font-semibold tracking-normal text-[var(--ink)] outline-none placeholder:text-[rgba(245,244,241,0.38)]"
                   />
                 </div>
 
                 {searchOpen && searchMatches.length > 0 && (
                   <div
                     ref={searchDropdownRef}
-                    className="absolute top-[calc(100%+8px)] right-0 left-0 z-50 max-h-[280px] overflow-y-auto rounded-[6px] border border-[#eceae4] bg-[#f7f4ed] p-1 shadow-[0_18px_42px_rgba(0,0,0,0.08)]"
+                    className="absolute top-[calc(100%+8px)] right-0 left-0 z-50 max-h-[280px] overflow-y-auto rounded-[6px] border border-[#26262d] bg-[#0d0d11] p-1 shadow-[0_18px_42px_rgba(0,0,0,0.08)]"
                   >
                     {searchMatches.slice(0, 12).map(m => {
                       const imageUrl = mapImageLookup.get(m.name) ?? mapImageLookup.get(normalizeMapName(m.name))

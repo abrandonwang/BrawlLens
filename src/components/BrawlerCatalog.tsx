@@ -56,7 +56,7 @@ export default function BrawlerCatalog({ brawlers, stats, selectedForCompare, on
             return (
               <article
                 key={brawler.id}
-                className="group relative block w-full min-w-0 overflow-hidden rounded-[5px] border border-[#eceae4] bg-[#fcfbf8] p-1.5 text-left no-underline shadow-[rgba(0,0,0,0.04)_0_1px_3px_0] transition-colors duration-150 hover:border-[rgba(28,28,28,0.15)] hover:bg-[#f3f1eb]"
+                className="group relative block w-full min-w-0 overflow-hidden rounded-[5px] border border-[#26262d] bg-[#15151b] p-1.5 text-left no-underline shadow-[rgba(0,0,0,0.04)_0_1px_3px_0] transition-colors duration-150 hover:border-[rgba(245,244,241,0.15)] hover:bg-[#f3f1eb]"
                 style={{
                   height: CARD_HEIGHT,
                   animationDelay: `${Math.min(index * 8, 90)}ms`,
@@ -68,7 +68,7 @@ export default function BrawlerCatalog({ brawlers, stats, selectedForCompare, on
                   aria-label={`${compareSelected ? "Remove" : "Add"} ${brawler.name} comparison`}
                   aria-pressed={compareSelected}
                   onClick={() => onToggleCompare(brawler)}
-                  className={`absolute top-2 right-2 z-30 grid size-5 place-items-center rounded-[5px] border transition ${compareSelected ? "border-[#f0d373] bg-[#f0d373] text-[#171007]" : "border-[#eceae4] bg-[#f7f4ed] text-[var(--ink-2)] hover:border-[rgba(28,28,28,0.2)] hover:text-[var(--ink)]"}`}
+                  className={`absolute top-2 right-2 z-30 grid size-5 place-items-center rounded-[5px] border transition ${compareSelected ? "border-[#f0d373] bg-[#f0d373] text-[#171007]" : "border-[#26262d] bg-[#0d0d11] text-[var(--ink-2)] hover:border-[rgba(245,244,241,0.2)] hover:text-[var(--ink)]"}`}
                 >
                   {compareSelected ? <Check size={10} /> : <Plus size={10} />}
                 </button>
@@ -78,12 +78,12 @@ export default function BrawlerCatalog({ brawlers, stats, selectedForCompare, on
                   className="block h-full w-full cursor-pointer border-0 bg-transparent p-0 text-left"
                   aria-label={`Open ${brawler.name}`}
                 >
-                <span className="absolute top-2 left-2 z-20 flex h-5 max-w-[calc(100%-40px)] items-center truncate rounded-[5px] border border-[#eceae4] bg-[#f7f4ed] px-2 text-[9.5px] font-semibold leading-none text-[var(--ink-2)]">
+                <span className="absolute top-2 left-2 z-20 flex h-5 max-w-[calc(100%-40px)] items-center truncate rounded-[5px] border border-[#26262d] bg-[#0d0d11] px-2 text-[9.5px] font-semibold leading-none text-[var(--ink-2)]">
                   {brawler.class.name === "Unknown" ? brawler.rarity.name : brawler.class.name}
                 </span>
 
                 <div className="relative grid h-[104px] place-items-center rounded-[5px] bg-[var(--panel-2)] px-2 pt-7 pb-1">
-                  <div className="relative z-10 size-[84px] overflow-hidden rounded-[5px] border border-[#eceae4] bg-[#f7f4ed] transition-transform duration-150 group-hover:scale-[1.015]">
+                  <div className="relative z-10 size-[84px] overflow-hidden rounded-[5px] border border-[#26262d] bg-[#0d0d11] transition-transform duration-150 group-hover:scale-[1.015]">
                     <BrawlImage
                       className="size-full object-cover object-center"
                       src={brawler.imageUrl2}

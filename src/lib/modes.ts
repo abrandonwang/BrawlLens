@@ -5,7 +5,7 @@ export interface ModeMeta {
 
 export const MODE_CONFIG: Record<string, ModeMeta> = {
   brawlBall:    { label: "Brawl Ball",    color: "#3B5BDB" },
-  gemGrab:      { label: "Gem Grab",      color: "#7E22CE" },
+  gemGrab:      { label: "Gem Grab",      color: "#1E73D8" },
   knockout:     { label: "Knockout",      color: "#A16207" },
   bounty:       { label: "Bounty",        color: "#15803D" },
   heist:        { label: "Heist",         color: "#DC2626" },
@@ -16,13 +16,13 @@ export const MODE_CONFIG: Record<string, ModeMeta> = {
   soloShowdown: { label: "Showdown",      color: "#15803D" },
   duoShowdown:  { label: "Duo SD",        color: "#0F766E" },
   trioShowdown: { label: "Trio SD",       color: "#0F766E" },
-  payload:      { label: "Payload",       color: "#5B21B6" },
+  payload:      { label: "Payload",       color: "#155BAD" },
   basketBrawl:  { label: "Basket Brawl",  color: "#B45309" },
   volleyBrawl:  { label: "Volley Brawl",  color: "#A16207" },
   botDrop:      { label: "Bot Drop",      color: "#636E72" },
   hunters:      { label: "Hunters",       color: "#B91C1C" },
   trophyEscape: { label: "Trophy Escape", color: "#0E7490" },
-  paintBrawl:   { label: "Paint Brawl",   color: "#6D28D9" },
+  paintBrawl:   { label: "Paint Brawl",   color: "#2F8EE8" },
   wipeout5V5:   { label: "5v5 Wipeout",   color: "#0F766E" },
 }
 

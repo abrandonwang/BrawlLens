@@ -75,7 +75,7 @@ export const professionalTeamCards: FeatureCard[] = [
     flagCode: "jp",
     flagLabel: "Japan",
     href: "/leaderboards/pro/zeta",
-    accent: "#d8d1ff",
+    accent: "#d5efff",
     logoUrl: "/team-logos/zeta-transparent.png",
     logoBgFilter: "grayscale(1) brightness(0)",
     logoBgOpacity: "0.2",
@@ -497,6 +497,21 @@ export function EmptyLeaderboardState({
   )
 }
 
+function pagerItems(current: number, total: number): Array<number | "…"> {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i)
+  const last = total - 1
+  const set = new Set<number>([0, last, current])
+  if (current - 1 > 0) set.add(current - 1)
+  if (current + 1 < last) set.add(current + 1)
+  const sorted = [...set].sort((a, b) => a - b)
+  const items: Array<number | "…"> = []
+  for (let i = 0; i < sorted.length; i++) {
+    if (i > 0 && sorted[i] - sorted[i - 1] > 1) items.push("…")
+    items.push(sorted[i])
+  }
+  return items
+}
+
 export function Pager({
   page,
   totalPages,
@@ -507,6 +522,7 @@ export function Pager({
   onChange: (page: number) => void
 }) {
   if (totalPages <= 1) return null
+  const items = pagerItems(page, totalPages)
 
   return (
     <nav className="bl-lb-pager" aria-label="Leaderboard pages">
@@ -518,17 +534,21 @@ export function Pager({
       >
         <ChevronLeft size={15} />
       </button>
-      {Array.from({ length: totalPages }, (_, idx) => (
-        <button
-          key={idx}
-          type="button"
-          onClick={() => onChange(idx)}
-          className={idx === page ? "bl-lb-page-active" : ""}
-          aria-current={idx === page ? "page" : undefined}
-        >
-          {idx + 1}
-        </button>
-      ))}
+      {items.map((item, idx) =>
+        item === "…" ? (
+          <span key={`gap-${idx}`} className="bl-lb-page-gap" aria-hidden="true">…</span>
+        ) : (
+          <button
+            key={item}
+            type="button"
+            onClick={() => onChange(item)}
+            className={item === page ? "bl-lb-page-active" : ""}
+            aria-current={item === page ? "page" : undefined}
+          >
+            {item + 1}
+          </button>
+        ),
+      )}
       <button
         type="button"
         onClick={() => onChange(page + 1)}

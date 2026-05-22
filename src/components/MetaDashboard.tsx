@@ -52,7 +52,7 @@ function mapInitials(name: string) {
 function MapPreview({ imageUrl, name, modeColor, priority = false }: { imageUrl?: string; name: string; mode: string | null; modeColor?: string; priority?: boolean }) {
   const [failed, setFailed] = useState(false);
   const [aspectRatio, setAspectRatio] = useState<string>("1 / 1");
-  const fallbackColor = modeColor || "var(--lb-accent, #2563eb)";
+  const fallbackColor = modeColor || "var(--lb-accent, #1e73d8)";
 
   if (!imageUrl || failed) {
     return (
@@ -179,7 +179,7 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch,
 
   return (
     <div className="relative pt-1">
-      <div className="mb-3 rounded-[5px] border border-[#eceae4] bg-[var(--panel)] px-4 py-3 shadow-[rgba(0,0,0,0.06)_0_1px_3px_0]">
+      <div className="mb-3 rounded-[5px] border border-[#26262d] bg-[var(--panel)] px-4 py-3 shadow-[rgba(0,0,0,0.06)_0_1px_3px_0]">
         <div className="flex items-center justify-between gap-3 max-[720px]:flex-col max-[720px]:items-stretch">
           <div className="min-w-0 flex-1">{toolbar}</div>
           <div className="flex shrink-0 flex-nowrap items-center justify-end gap-1.5 max-[720px]:justify-start">
@@ -188,7 +188,7 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch,
               onClick={() => setLiveOnly(v => !v)}
               disabled={!liveOnly && liveCountAll === 0}
               aria-pressed={liveOnly}
-              className={`inline-flex min-h-8 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-[5px] border px-3 text-[12px] font-semibold tracking-normal transition-colors max-[420px]:px-2 max-[420px]:text-[10px] disabled:cursor-default disabled:opacity-40 ${liveOnly ? "border-[var(--win-line)] bg-[var(--win-soft)] text-[var(--win)]" : "border-[var(--line)] bg-[#f7f4ed] text-[var(--ink-3)] hover:text-[var(--ink)]"}`}
+              className={`inline-flex min-h-8 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-[5px] border px-3 text-[12px] font-semibold tracking-normal transition-colors max-[420px]:px-2 max-[420px]:text-[10px] disabled:cursor-default disabled:opacity-40 ${liveOnly ? "border-[var(--win-line)] bg-[var(--win-soft)] text-[var(--win)]" : "border-[var(--line)] bg-[#0d0d11] text-[var(--ink-3)] hover:text-[var(--ink)]"}`}
             >
               <span className={`size-1.5 rounded-full ${liveOnly ? "bg-[var(--win)]" : "bg-[var(--ink-4)]"}`} />
               {liveOnly ? `${liveCount.toLocaleString()} live · on` : `${liveCountAll.toLocaleString()} live`}
@@ -196,7 +196,7 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch,
             <HelpTooltip label="Live maps explained" align="left">
               Live maps come from the current rotation feed. Turning this on filters the grid to maps active right now.
             </HelpTooltip>
-            <span className="inline-flex min-h-8 items-center whitespace-nowrap rounded-[5px] border border-[var(--line)] bg-[#f7f4ed] px-3 text-[12px] font-semibold tracking-normal text-[var(--ink-3)] max-[420px]:px-2 max-[420px]:text-[10px]">Page {mapPage + 1} of {mapTotalPages}</span>
+            <span className="inline-flex min-h-8 items-center whitespace-nowrap rounded-[5px] border border-[var(--line)] bg-[#0d0d11] px-3 text-[12px] font-semibold tracking-normal text-[var(--ink-3)] max-[420px]:px-2 max-[420px]:text-[10px]">Page {mapPage + 1} of {mapTotalPages}</span>
           </div>
         </div>
       </div>

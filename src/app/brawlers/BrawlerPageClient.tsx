@@ -96,12 +96,12 @@ function getTier(stat: CatalogBrawlerStats | undefined) {
   const winRate = stat?.winRate
   const picks = stat?.picks ?? 0
   if (winRate == null || picks < 10) return { label: "-", color: "var(--lb-text-4)" }
-  if (winRate >= 58) return { label: "S+", color: "#f0d373" }
-  if (winRate >= 54) return { label: "S", color: "#b99cff" }
-  if (winRate >= 51) return { label: "A", color: "#2563eb" }
-  if (winRate >= 48) return { label: "B", color: "#cbd0dc" }
-  if (winRate >= 45) return { label: "C", color: "#ff9f6e" }
-  return { label: "D", color: "#ef6a6a" }
+  if (winRate >= 58) return { label: "S+", color: "#f5d75e" }
+  if (winRate >= 54) return { label: "S", color: "#a9e4ff" }
+  if (winRate >= 51) return { label: "A", color: "#5aa6ff" }
+  if (winRate >= 48) return { label: "B", color: "#d8dde6" }
+  if (winRate >= 45) return { label: "C", color: "#ffb38a" }
+  return { label: "D", color: "#ff7878" }
 }
 
 function hasRecentBuffs(brawler: Brawler) {

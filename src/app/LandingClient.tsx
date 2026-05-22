@@ -3,8 +3,8 @@
 import { useEffect, useState, type FormEvent } from "react"
 import Link from "next/link"
 import { ArrowRight } from "lucide-react"
-import BrandMark from "@/components/BrandMark"
 import { BrawlImage, brawlerIconUrl, profileIconUrl } from "@/components/BrawlImage"
+import AnimatedGradient from "@/components/AnimatedGradient"
 import { formatTrophies } from "@/lib/format"
 import { leaderboardRegionShort } from "@/lib/leaderboardRegions"
 import { getModeName } from "@/lib/modes"
@@ -61,13 +61,13 @@ type MapPreviewRow = {
 }
 
 function getPreviewTier(winRate: number | null | undefined, picks: number) {
-  if (winRate == null || Number.isNaN(winRate) || picks < 10) return { label: "-", color: "rgba(247, 244, 237, 0.46)" }
-  if (winRate >= 58) return { label: "S+", color: "#f0d373" }
-  if (winRate >= 54) return { label: "S", color: "#b99cff" }
-  if (winRate >= 51) return { label: "A", color: "#2563eb" }
-  if (winRate >= 48) return { label: "B", color: "#cbd0dc" }
-  if (winRate >= 45) return { label: "C", color: "#ff9f6e" }
-  return { label: "D", color: "#ef6a6a" }
+  if (winRate == null || Number.isNaN(winRate) || picks < 10) return { label: "-", color: "#69758d" }
+  if (winRate >= 58) return { label: "S+", color: "#f5d75e" }
+  if (winRate >= 54) return { label: "S", color: "#a9e4ff" }
+  if (winRate >= 51) return { label: "A", color: "#5aa6ff" }
+  if (winRate >= 48) return { label: "B", color: "#d8dde6" }
+  if (winRate >= 45) return { label: "C", color: "#ffb38a" }
+  return { label: "D", color: "#ff7878" }
 }
 
 function formatPercent(value: number | null | undefined) {
@@ -247,9 +247,10 @@ export default function LandingClient() {
 
   return (
     <main className="bl-landing-shell">
+      <AnimatedGradient />
       <section className="bl-landing-stage" aria-label="BrawlLens search">
         <div className="bl-landing-brand-wrap">
-          <BrandMark size="md" className="bl-landing-wordmark" />
+          <h1 className="bl-landing-text-logo">BrawlLens</h1>
         </div>
 
         <div className="bl-landing-track">

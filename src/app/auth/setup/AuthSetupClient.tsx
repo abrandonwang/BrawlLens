@@ -88,12 +88,12 @@ export default function AuthSetupClient() {
   }
 
   return (
-    <div className="fixed inset-0 z-[220] flex items-center justify-center bg-[#f7f4ed]/55 px-4 py-6 animate-[modalOverlayIn_0.18s_ease-out_both]">
+    <div className="fixed inset-0 z-[220] flex items-center justify-center bg-[#0d0d11]/55 px-4 py-6 animate-[modalOverlayIn_0.18s_ease-out_both]">
       <section
         role="dialog"
         aria-modal="true"
         aria-labelledby="setup-title"
-        className="w-full max-w-[500px] rounded-[16px] border border-[#eceae4] bg-[var(--panel)] p-5 text-[var(--ink)] shadow-[0_34px_92px_-44px_rgba(0,0,0,0.12),rgba(0,0,0,0.06)_0_1px_3px_0] animate-[modalSheetIn_0.24s_cubic-bezier(0.16,1,0.3,1)_both] max-[460px]:p-4"
+        className="w-full max-w-[500px] rounded-[16px] border border-[#26262d] bg-[var(--panel)] p-5 text-[var(--ink)] shadow-[0_34px_92px_-44px_rgba(0,0,0,0.12),rgba(0,0,0,0.06)_0_1px_3px_0] animate-[modalSheetIn_0.24s_cubic-bezier(0.16,1,0.3,1)_both] max-[460px]:p-4"
       >
         <div className="mb-5 flex items-start justify-between gap-4">
           <div className="min-w-0">

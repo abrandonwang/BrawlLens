@@ -327,7 +327,7 @@ export const proTeams: ProTeam[] = [
     name: "ZETA",
     flagCode: "jp",
     flagLabel: "Japan",
-    accent: "#d8d1ff",
+    accent: "#d5efff",
     logoUrl: "/team-logos/zeta-transparent.png",
     sourceClubTag: "80LV0JCRR",
     description: "Sitetampo, Sizuku, and Battoman/Batman tracked from ZETA DIVISION, including the public ZETA club #80LV0JCRR.",
