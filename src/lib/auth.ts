@@ -75,14 +75,6 @@ function metadataEntitlements(metadata: Metadata): string[] {
   return value.filter((entry): entry is string => typeof entry === "string")
 }
 
-function metadataArray(metadata: Metadata, keys: string[]): unknown[] | undefined {
-  for (const key of keys) {
-    const value = metadata[key]
-    if (Array.isArray(value)) return value
-  }
-  return undefined
-}
-
 function metadataSetup(metadata: Metadata): PremiumUser["accountSetup"] {
   const value = metadata.brawllens_setup
   if (typeof value !== "object" || value === null || Array.isArray(value)) return null
@@ -164,7 +156,6 @@ async function premiumUserFromAccessToken(token: string): Promise<PremiumUser | 
     email: data.user.email,
     displayName,
     accountSetup,
-    dashboardWidgets: metadataArray(metadata, ["lensboard_layout", "lensboard_widgets"]),
     role,
     subscriptionTier,
     subscriptionStatus,

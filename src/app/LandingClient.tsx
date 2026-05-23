@@ -1,13 +1,32 @@
 "use client"
 
-import { useEffect, useState, type FormEvent } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ChangeEvent, type FormEvent, type KeyboardEvent } from "react"
 import Link from "next/link"
-import { ArrowRight } from "lucide-react"
+import { ArrowRight, ArrowUp, X } from "lucide-react"
+import { PulsingBorder } from "@paper-design/shaders-react"
+import ReactMarkdown from "react-markdown"
+import remarkGfm from "remark-gfm"
+import type { Components } from "react-markdown"
 import { BrawlImage, brawlerIconUrl, profileIconUrl } from "@/components/BrawlImage"
-import AnimatedGradient from "@/components/AnimatedGradient"
 import { formatTrophies } from "@/lib/format"
 import { leaderboardRegionShort } from "@/lib/leaderboardRegions"
 import { getModeName } from "@/lib/modes"
+
+const DATA_TOPICS = ["players", "brawlers", "maps", "upgrades"]
+const LANDING_PROMPT_BORDER_COLORS = ["#0dc1fd", "#d915ef", "#ff3f2ecc"]
+const LANDING_PROMPT_LAYER_STYLE: CSSProperties = { zIndex: 2 }
+const LANDING_CHAT_BODY_LAYER_STYLE: CSSProperties = { position: "relative", zIndex: 2 }
+
+const landingMarkdownComponents: Components = {
+  p: ({ children }) => <p className="bl-landing-chat-p">{children}</p>,
+  strong: ({ children }) => <strong className="bl-landing-chat-strong">{children}</strong>,
+  em: ({ children }) => <em className="bl-landing-chat-em">{children}</em>,
+  ul: ({ children }) => <ul className="bl-landing-chat-list">{children}</ul>,
+  ol: ({ children }) => <ol className="bl-landing-chat-list">{children}</ol>,
+  li: ({ children }) => <li className="bl-landing-chat-li">{children}</li>,
+  a: ({ href, children }) => <Link href={href ?? "/"} className="bl-landing-chat-link">{children}</Link>,
+  code: ({ children }) => <code className="bl-landing-chat-code">{children}</code>,
+}
 
 type LandingPlayer = {
   rank: number
@@ -60,12 +79,17 @@ type MapPreviewRow = {
   best: MapBrawlerPreview | null
 }
 
+type LandingChatMessage = {
+  role: "user" | "assistant"
+  content: string
+}
+
 function getPreviewTier(winRate: number | null | undefined, picks: number) {
   if (winRate == null || Number.isNaN(winRate) || picks < 10) return { label: "-", color: "#69758d" }
   if (winRate >= 58) return { label: "S+", color: "#f5d75e" }
-  if (winRate >= 54) return { label: "S", color: "#a9e4ff" }
-  if (winRate >= 51) return { label: "A", color: "#5aa6ff" }
-  if (winRate >= 48) return { label: "B", color: "#d8dde6" }
+  if (winRate >= 54) return { label: "S", color: "#a78bff" }
+  if (winRate >= 51) return { label: "A", color: "#7dd3fc" }
+  if (winRate >= 48) return { label: "B", color: "#e2e6ee" }
   if (winRate >= 45) return { label: "C", color: "#ffb38a" }
   return { label: "D", color: "#ff7878" }
 }
@@ -98,12 +122,88 @@ export default function LandingClient() {
   const [tierPreview, setTierPreview] = useState<TierPreviewRow[]>([])
   const [mapPreview, setMapPreview] = useState<MapPreviewRow[]>([])
   const [landingQuery, setLandingQuery] = useState("")
+  const [typedTopic, setTypedTopic] = useState("")
+  const [typedTopicIndex, setTypedTopicIndex] = useState(0)
+  const [typewriterPhase, setTypewriterPhase] = useState<"typing" | "hold" | "deleting">("typing")
+  const [landingChatMessages, setLandingChatMessages] = useState<LandingChatMessage[]>([])
+  const [landingChatExpanded, setLandingChatExpanded] = useState(false)
+  const [landingChatStreaming, setLandingChatStreaming] = useState(false)
+  const landingChatAbortRef = useRef<AbortController | null>(null)
+  const landingChatBottomRef = useRef<HTMLDivElement>(null)
+  const landingPromptResetRef = useRef<number | null>(null)
   const activeRegion = leaderRegions.find(region => region.code === activeLeaderboardRegion) ?? leaderRegions[0]
+  const landingPromptHasValue = landingQuery.trim().length > 0
+  const landingPromptBorderStyle = useMemo<CSSProperties>(() => ({
+    position: "absolute",
+    inset: 0,
+    zIndex: 1,
+    boxSizing: "border-box",
+    width: "100%",
+    height: "100%",
+    borderRadius: "inherit",
+    pointerEvents: "none",
+    opacity: landingChatExpanded ? 0.8 : 1,
+    transition: "opacity 260ms ease",
+  }), [landingChatExpanded])
 
   useEffect(() => {
     document.documentElement.classList.add("landing-bg", "home-landing-bg")
     return () => document.documentElement.classList.remove("landing-bg", "home-landing-bg")
   }, [])
+
+  useEffect(() => {
+    return () => {
+      landingChatAbortRef.current?.abort()
+      if (landingPromptResetRef.current) window.clearTimeout(landingPromptResetRef.current)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setTypedTopic(DATA_TOPICS[0])
+      return
+    }
+
+    const topic = DATA_TOPICS[typedTopicIndex]
+    let timeout = 82
+
+    if (typewriterPhase === "typing") {
+      if (typedTopic.length < topic.length) {
+        timeout = 76
+      } else {
+        timeout = 980
+      }
+    } else if (typewriterPhase === "hold") {
+      timeout = 820
+    } else {
+      timeout = 38
+    }
+
+    const timer = window.setTimeout(() => {
+      if (typewriterPhase === "typing") {
+        if (typedTopic.length < topic.length) {
+          setTypedTopic(topic.slice(0, typedTopic.length + 1))
+        } else {
+          setTypewriterPhase("hold")
+        }
+        return
+      }
+
+      if (typewriterPhase === "hold") {
+        setTypewriterPhase("deleting")
+        return
+      }
+
+      if (typedTopic.length > 0) {
+        setTypedTopic(topic.slice(0, typedTopic.length - 1))
+      } else {
+        setTypedTopicIndex(index => (index + 1) % DATA_TOPICS.length)
+        setTypewriterPhase("typing")
+      }
+    }, timeout)
+
+    return () => window.clearTimeout(timer)
+  }, [typedTopic, typedTopicIndex, typewriterPhase])
 
   useEffect(() => {
     let cancelled = false
@@ -236,41 +336,176 @@ export default function LandingClient() {
     }
   }, [])
 
-  function openSearch(query = "") {
-    window.dispatchEvent(new CustomEvent("brawllens:open-search", { detail: { query } }))
-  }
+  useEffect(() => {
+    if (landingChatExpanded) {
+      landingChatBottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" })
+    }
+  }, [landingChatExpanded, landingChatMessages])
+
+  const sendLandingMessage = useCallback(async (content: string) => {
+    const trimmed = content.trim()
+    if (!trimmed || landingChatStreaming) return
+
+    if (landingPromptResetRef.current) {
+      window.clearTimeout(landingPromptResetRef.current)
+      landingPromptResetRef.current = null
+    }
+
+    const userMessage: LandingChatMessage = { role: "user", content: trimmed }
+    const history = [...landingChatMessages, userMessage]
+    setLandingChatExpanded(true)
+    setLandingQuery("")
+    setLandingChatMessages([...history, { role: "assistant", content: "" }])
+    setLandingChatStreaming(true)
+
+    const controller = new AbortController()
+    landingChatAbortRef.current = controller
+
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: history,
+          pageContext: {
+            url: window.location.href,
+            path: window.location.pathname,
+            title: document.title,
+            headings: ["BrawlLens"],
+            visibleText: "BrawlLens landing page with leaderboard, tier list, and map meta previews.",
+          },
+        }),
+        signal: controller.signal,
+      })
+
+      if (!response.ok || !response.body) {
+        setLandingChatMessages([...history, { role: "assistant", content: "Sorry, I’m having trouble connecting right now. Please try again in a moment." }])
+        return
+      }
+
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let fullText = ""
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        fullText += decoder.decode(value, { stream: true })
+        setLandingChatMessages([...history, { role: "assistant", content: fullText }])
+      }
+    } catch (error) {
+      if ((error as Error).name !== "AbortError") {
+        setLandingChatMessages([...history, { role: "assistant", content: "Sorry, I’m having trouble connecting right now. Please try again in a moment." }])
+      }
+    } finally {
+      setLandingChatStreaming(false)
+      landingChatAbortRef.current = null
+    }
+  }, [landingChatMessages, landingChatStreaming])
 
   function submitLandingSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    openSearch(landingQuery)
+    void sendLandingMessage(landingQuery)
+  }
+
+  function handleLandingPromptKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault()
+      void sendLandingMessage(landingQuery)
+    }
+  }
+
+  function handleLandingPromptChange(event: ChangeEvent<HTMLTextAreaElement>) {
+    setLandingQuery(event.target.value)
+  }
+
+  function closeLandingChat() {
+    landingChatAbortRef.current?.abort()
+    setLandingChatStreaming(false)
+    setLandingChatExpanded(false)
+    setLandingQuery("")
+    landingPromptResetRef.current = window.setTimeout(() => {
+      setLandingChatMessages([])
+      landingPromptResetRef.current = null
+    }, 320)
   }
 
   return (
     <main className="bl-landing-shell">
-      <AnimatedGradient />
       <section className="bl-landing-stage" aria-label="BrawlLens search">
         <div className="bl-landing-brand-wrap">
-          <h1 className="bl-landing-text-logo">BrawlLens</h1>
+          <h1 className="bl-landing-text-logo" data-text="BrawlLens">BrawlLens</h1>
         </div>
 
         <div className="bl-landing-track">
-          <p className="bl-landing-line">Real ladder data for players, brawlers, maps, and upgrade decisions.</p>
-          <form className={`bl-landing-search-form${landingQuery ? " has-value" : ""}`} onSubmit={submitLandingSearch} onClick={() => openSearch()}>
-            <input
-              value={landingQuery}
-              onChange={event => setLandingQuery(event.target.value)}
-              onFocus={() => openSearch()}
-              aria-label="Search BrawlLens"
-              autoComplete="off"
-              spellCheck={false}
-              readOnly
+          <p className="bl-landing-line" aria-live="polite">
+            Data for <span className="bl-landing-typeword">{typedTopic || "\u00a0"}</span>
+          </p>
+          <form
+            className={`bl-landing-prompt-form${landingPromptHasValue ? " has-value" : ""}${landingChatExpanded ? " is-expanded" : ""}${landingChatStreaming ? " is-streaming" : ""}`}
+            onSubmit={submitLandingSearch}
+          >
+            <PulsingBorder
+              aria-hidden="true"
+              className="bl-landing-prompt-border-shader"
+              style={landingPromptBorderStyle}
+              colors={LANDING_PROMPT_BORDER_COLORS}
+              colorBack="#00000000"
+              roundness={landingChatExpanded ? 0.1 : 0.32}
+              thickness={0.1}
+              softness={0.75}
+              intensity={0.2}
+              bloom={0.25}
+              spots={4}
+              spotSize={0.5}
+              pulse={0.25}
+              smoke={0.3}
+              smokeSize={0.6}
+              speed={1}
+              scale={1}
             />
-            <span className="bl-landing-search-placeholder" aria-hidden="true">
-              Type a player tag, brawler, map, or club...
-            </span>
-            <button type="submit" aria-label="Search">
-              <ArrowRight size={21} strokeWidth={2.8} aria-hidden="true" />
-            </button>
+            {landingChatExpanded && (
+              <>
+                <button type="button" className="bl-landing-chat-close" aria-label="Close chat" onClick={closeLandingChat}>
+                  <X size={18} strokeWidth={2.4} aria-hidden="true" />
+                </button>
+                <div className="bl-landing-chat-body" style={LANDING_CHAT_BODY_LAYER_STYLE} aria-live="polite">
+                  {landingChatMessages.map((message, index) => (
+                    <div key={index} className={`bl-landing-chat-message is-${message.role}`}>
+                      <div className="bl-landing-chat-bubble">
+                        {message.role === "assistant" ? (
+                          landingChatStreaming && index === landingChatMessages.length - 1 && message.content === "" ? (
+                            <span className="bl-landing-chat-dots" aria-label="Thinking"><span /><span /><span /></span>
+                          ) : (
+                            <ReactMarkdown remarkPlugins={[remarkGfm]} components={landingMarkdownComponents}>{message.content}</ReactMarkdown>
+                          )
+                        ) : message.content}
+                      </div>
+                    </div>
+                  ))}
+                  <div ref={landingChatBottomRef} />
+                </div>
+              </>
+            )}
+            <div className="bl-landing-prompt-inputbar" style={LANDING_PROMPT_LAYER_STYLE}>
+              <textarea
+                value={landingQuery}
+                onChange={handleLandingPromptChange}
+                onKeyDown={handleLandingPromptKeyDown}
+                aria-label="Landing prompt"
+                autoComplete="off"
+                placeholder="Tell us what you're looking for..."
+                rows={landingChatExpanded ? 1 : 3}
+                spellCheck={false}
+              />
+              <button type="submit" aria-label="Send message" disabled={!landingQuery.trim() || landingChatStreaming}>
+                {landingChatStreaming ? (
+                  <span className="bl-landing-send-pulse" aria-hidden="true" />
+                ) : (
+                  <ArrowUp size={18} strokeWidth={2.7} aria-hidden="true" />
+                )}
+              </button>
+            </div>
           </form>
         </div>
       </section>

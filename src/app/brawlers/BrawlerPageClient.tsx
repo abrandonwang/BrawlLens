@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { ArrowDown, ArrowUp, ChevronDown, Search } from "lucide-react"
-import type { CatalogBrawlerStats } from "@/components/BrawlerCatalog"
 import HelpTooltip from "@/components/HelpTooltip"
 import { BrawlImage } from "@/components/BrawlImage"
 import { EmptyState, SkeletonBlock } from "@/components/PolishStates"
@@ -25,6 +24,15 @@ function sanitizeColor(color: string): string {
 }
 
 type CatalogSort = "name" | "winRate" | "picks" | "recentBuffs"
+
+interface CatalogBrawlerStats {
+  picks: number
+  wins: number
+  winRate: number | null
+  mapCount: number
+  histogram: number[]
+  bestMap: { name: string; mode: string; winRate: number; picks: number } | null
+}
 
 const CATALOG_SORT_OPTIONS: { value: CatalogSort; label: string; description: string }[] = [
   { value: "winRate", label: "Win rate", description: "Highest first" },
@@ -97,9 +105,9 @@ function getTier(stat: CatalogBrawlerStats | undefined) {
   const picks = stat?.picks ?? 0
   if (winRate == null || picks < 10) return { label: "-", color: "var(--lb-text-4)" }
   if (winRate >= 58) return { label: "S+", color: "#f5d75e" }
-  if (winRate >= 54) return { label: "S", color: "#a9e4ff" }
-  if (winRate >= 51) return { label: "A", color: "#5aa6ff" }
-  if (winRate >= 48) return { label: "B", color: "#d8dde6" }
+  if (winRate >= 54) return { label: "S", color: "#a78bff" }
+  if (winRate >= 51) return { label: "A", color: "#7dd3fc" }
+  if (winRate >= 48) return { label: "B", color: "#e2e6ee" }
   if (winRate >= 45) return { label: "C", color: "#ffb38a" }
   return { label: "D", color: "#ff7878" }
 }

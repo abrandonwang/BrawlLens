@@ -91,31 +91,6 @@ function HeaderHelp({ label, help }: { label: string; help: string }) {
   )
 }
 
-function SnapshotBrawler({ label, brawler }: { label: string; brawler: BrawlerStat | null }) {
-  if (!brawler) {
-    return (
-      <div className="bl-md-snapshot-empty">
-        <span>{label}</span>
-        <b>No sample</b>
-      </div>
-    )
-  }
-
-  const tier = getTierInfo(brawler.winRate)
-
-  return (
-    <Link href={brawlerHref(brawler.brawlerId)} className="bl-md-snapshot-brawler">
-      <BrawlImage src={brawlerIconUrl(brawler.brawlerId)} alt={brawler.name} width={54} height={54} className="size-[54px] object-contain" sizes="54px" />
-      <span>
-        <em>{label}</em>
-        <b>{formatBrawlerName(brawler.name)}</b>
-      </span>
-      <strong style={{ color: winRateColor(brawler.winRate) }}>{formatPercent(brawler.winRate)}</strong>
-      <span className="bl-tier-tier bl-md-snapshot-tier" style={{ color: tier.color }}>{tier.label}</span>
-    </Link>
-  )
-}
-
 function MapBrawlerRow({ brawler, rank }: { brawler: BrawlerStat; rank: number }) {
   const tier = getTierInfo(brawler.winRate)
 
@@ -186,7 +161,6 @@ export default function MapDetailClient({ mapName, imageUrl, modeName, totalBatt
       .sort((a, b) => (b.winRate * 0.7 + Math.log10(b.picks + 1) * 8) - (a.winRate * 0.7 + Math.log10(a.picks + 1) * 8))
       .slice(0, 8)
   }, [brawlers, minPicks])
-  const topContenders = useMemo(() => [...brawlers].filter(b => b.picks >= minPicks).sort((a, b) => b.winRate - a.winRate).slice(0, 3), [brawlers, minPicks])
   const totalPicks = brawlers.reduce((sum, brawler) => sum + brawler.picks, 0)
   const totalWins = brawlers.reduce((sum, brawler) => sum + brawler.wins, 0)
   const avgWinRate = totalPicks > 0 ? (totalWins / totalPicks) * 100 : null

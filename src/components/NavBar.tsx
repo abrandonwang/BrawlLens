@@ -48,7 +48,7 @@ const mobileMenuLinks = [
 ] as const;
 
 const loginButtonClass =
-  "bl-nav-login-button inline-flex h-9 cursor-pointer items-center gap-2 whitespace-nowrap rounded-[8px] px-4 text-[13px] font-black leading-none outline-none max-[420px]:px-3"
+  "bl-nav-login-button inline-flex h-[36px] cursor-pointer items-center gap-2 whitespace-nowrap rounded-[10px] px-3.5 text-[14px] font-semibold leading-none outline-none"
 
 type DesktopPanel = "browse" | "leaderboards";
 type LoginState = "idle" | "sending" | "sent" | "error";
@@ -129,7 +129,6 @@ export default function NavBar() {
   const [authMode, setAuthMode] = useState<AuthMode>("signup");
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
-  const [navSearch, setNavSearch] = useState("");
   const [loginState, setLoginState] = useState<LoginState>("idle");
   const [loginResending, setLoginResending] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
@@ -142,7 +141,17 @@ export default function NavBar() {
   const desktopHoverTimerRef = useRef<number | null>(null);
   const loginInputRef = useRef<HTMLInputElement>(null);
   const [desktopPanelLeft, setDesktopPanelLeft] = useState(190);
+  const [isScrolled, setIsScrolled] = useState(false);
   const bodyScrollLocked = isMenuOpen || menuClosing || isLoginOpen;
+
+  useEffect(() => {
+    function onScroll() {
+      setIsScrolled(window.scrollY > 8);
+    }
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const applyAccountUser = useCallback((user: PremiumUser | null) => {
     setIsSignedIn(Boolean(user));
@@ -183,7 +192,6 @@ export default function NavBar() {
     setDesktopPanel(null);
     setHoverDesktopPanel(null);
     setSuppressedDesktopPanel(null);
-    setNavSearch("");
     window.dispatchEvent(new CustomEvent("brawllens:open-search", { detail: { query } }));
   }, [closeMenu]);
 
@@ -191,6 +199,11 @@ export default function NavBar() {
     if (!bodyScrollLocked) return;
     return lockBodyScroll();
   }, [bodyScrollLocked]);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("bl-auth-open", isLoginOpen);
+    return () => document.documentElement.classList.remove("bl-auth-open");
+  }, [isLoginOpen]);
 
   useEffect(() => {
     if (previousPathnameRef.current !== pathname) {
@@ -489,12 +502,6 @@ export default function NavBar() {
     void sendAuthRequest();
   }
 
-  function submitNavSearch(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const query = navSearch.trim();
-    openSearchOverlay(query);
-  }
-
   function signOut() {
     setIsAccountMenuOpen(false);
     setIsSignedIn(false);
@@ -538,10 +545,12 @@ export default function NavBar() {
   const menuVisible = isMenuOpen || menuClosing;
   const visibleDesktopPanel = desktopPanel ?? hoverDesktopPanel;
   const renderedDesktopPanel = visibleDesktopPanel ?? lastDesktopPanel;
-  const desktopPanelIndex = renderedDesktopPanel === "leaderboards" ? 1 : 0;
+  const desktopPanelContent = renderedDesktopPanel === "leaderboards"
+    ? { items: leaderboardItems, viewAllHref: "/leaderboards/players" }
+    : { items: browseItems, viewAllHref: "/brawlers" };
   const navPositionClass = "relative z-[100]";
   const navTextClass = (active: boolean) =>
-    `relative inline-flex h-[60px] items-center rounded-none border-0 bg-transparent px-0 text-[14px] font-semibold leading-none tracking-[-0.005em] no-underline outline-none transition-colors duration-150 text-[#f5f4f1] hover:text-[#f5f4f1] focus-visible:text-[#f5f4f1] ${isNavFlowRoute && active ? "after:absolute after:right-0 after:bottom-[10px] after:left-0 after:h-[2.5px] after:rounded-full after:bg-[#1e73d8] after:shadow-[0_0_8px_rgba(30, 115, 216, 0.45)] after:content-['']" : ""}`;
+    `relative inline-flex h-[36px] items-center rounded-full border-0 px-3 text-[13px] font-semibold leading-none tracking-[-0.005em] no-underline outline-none transition-colors duration-150 text-[rgba(245,244,241,0.78)] hover:text-[#f5f4f1] hover:bg-[rgba(245,244,241,0.06)] focus-visible:text-[#f5f4f1] ${active ? "text-[#f5f4f1] bg-[rgba(124,92,255,0.14)]" : ""}`;
 
   useEffect(() => {
     document.documentElement.classList.toggle("leaderboards-nav-flow", isLeaderboardsRoute);
@@ -572,27 +581,29 @@ export default function NavBar() {
 
   return (
     <>
-      <nav className={`${navPositionClass} flex h-[60px] w-full items-center bg-transparent px-6 text-[#f5f4f1] max-lg:px-4 max-[430px]:px-3`}>
-        <Link href="/" className="relative z-10 inline-flex h-[60px] shrink-0 items-center whitespace-nowrap text-[#f5f4f1] no-underline" aria-label="BrawlLens home">
-          <BrandMark size="md" showWordmark={false} />
-          <span className="sr-only">BrawlLens</span>
+      <nav
+        className="bl-nav-pill fixed left-1/2 top-4 z-[100] -translate-x-1/2 w-[70vw] max-w-[1200px] overflow-hidden rounded-[20px] border border-solid border-[rgba(245,244,241,0.10)] bg-[rgba(13,13,17,0.92)] text-[#f5f4f1] shadow-[0_18px_44px_-22px_rgba(0,0,0,0.55)] backdrop-blur-xl backdrop-saturate-150 max-lg:w-[calc(100%-20px)]"
+        onMouseLeave={() => {
+          setHoverDesktopPanel(null);
+          setDesktopPanel(null);
+          setSuppressedDesktopPanel(null);
+        }}
+      >
+        <div className="flex h-[60px] items-center px-5 max-lg:px-4">
+        <Link href="/" className="relative z-10 inline-flex h-full shrink-0 items-center whitespace-nowrap text-[#f5f4f1] no-underline" aria-label="BrawlLens home">
+          <BrandMark size="sm" showWordmark={true} />
         </Link>
 
-        <div ref={desktopNavRef} className="relative z-10 ml-[40px] hidden h-[60px] min-w-0 items-center gap-[26px] lg:flex">
+        <div ref={desktopNavRef} className="relative z-10 ml-10 hidden h-full min-w-0 items-center gap-1 lg:flex">
           <div
-            ref={browseTriggerRef}
             className="nav-popover relative"
             data-open={visibleDesktopPanel === "browse" ? "true" : undefined}
-            data-suppressed={suppressedDesktopPanel === "browse" ? "true" : undefined}
+            onPointerEnter={() => openHoverDesktopPanel("browse")}
             onMouseEnter={() => openHoverDesktopPanel("browse")}
-            onMouseLeave={() => {
-              clearSuppressedDesktopPanel("browse");
-              scheduleHoverDesktopClose("browse");
-            }}
           >
             <Link
               href="/brawlers"
-              onClick={() => { setDesktopPanel(null); setHoverDesktopPanel(null); setSuppressedDesktopPanel(null); }}
+              onClick={() => { setDesktopPanel(null); setHoverDesktopPanel(null); }}
               className={`${navTextClass(browseActive)} cursor-pointer gap-1.5`}
             >
               Tierlist &amp; Brawlers
@@ -602,158 +613,32 @@ export default function NavBar() {
           <div
             className="nav-popover relative"
             data-open={visibleDesktopPanel === "leaderboards" ? "true" : undefined}
-            data-suppressed={suppressedDesktopPanel === "leaderboards" ? "true" : undefined}
+            onPointerEnter={() => openHoverDesktopPanel("leaderboards")}
             onMouseEnter={() => openHoverDesktopPanel("leaderboards")}
-            onMouseLeave={() => {
-              clearSuppressedDesktopPanel("leaderboards");
-              scheduleHoverDesktopClose("leaderboards");
-            }}
           >
             <Link
               href="/leaderboards/players"
-              onClick={() => { setDesktopPanel(null); setHoverDesktopPanel(null); setSuppressedDesktopPanel(null); }}
+              onClick={() => { setDesktopPanel(null); setHoverDesktopPanel(null); }}
               className={`${navTextClass(leaderboardsActive)} cursor-pointer gap-1.5`}
             >
               Leaderboards
               <ChevronDown size={13} strokeWidth={2.25} className="nav-trigger-arrow ml-0.5 transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]" />
             </Link>
           </div>
-          <div
-            className="nav-browse-panel fixed top-[58px] w-[540px] max-xl:w-[500px]"
-            data-open={visibleDesktopPanel ? "true" : undefined}
-            style={{ left: desktopPanelLeft }}
-            onMouseEnter={clearDesktopHoverTimer}
-            onMouseLeave={() => {
-              if (visibleDesktopPanel) scheduleHoverDesktopClose(visibleDesktopPanel);
-            }}
-          >
-            <div className="h-[206px] overflow-hidden rounded-[14px] border border-[#26262d] bg-[#0d0d11] p-2 text-[#f5f4f1] shadow-[0_28px_70px_-38px_rgba(0,0,0,0.12),rgba(0,0,0,0.04)_0_0.5px_0_0_inset]">
-              <div
-                className="nav-panel-track flex h-full w-[200%]"
-                style={{ transform: `translateX(-${desktopPanelIndex * 50}%)` }}
-              >
-                <div className="h-full w-1/2 shrink-0 p-0">
-                  <div className="px-3 pt-2.5 pb-2">
-                    <p className="m-0 text-[12px] font-semibold text-[#f5f4f1]">Tierlist &amp; Brawlers</p>
-                  </div>
-                  <div className="grid grid-cols-2 gap-1.5 pt-1.5">
-                    {browseItems.map(item => {
-                      const active = visibleDesktopPanel === "browse" && item.href ? isRouteActive(pathname, item.href) : false;
-
-                      if (!item.href || item.disabled) {
-                        return (
-                          <div
-                            key={item.label}
-                            aria-disabled="true"
-                            className="flex min-h-[58px] items-start justify-between gap-3 rounded-[10px] px-3 py-2.5 text-[rgba(245,244,241,0.34)] opacity-75"
-                          >
-                            <span className="min-w-0">
-                              <span className="block truncate text-[14px] font-semibold leading-tight text-[#5f5f5d]">{item.label}</span>
-                              <span className="mt-1 block text-[12px] leading-snug text-[rgba(245,244,241,0.34)]">{item.description}</span>
-                            </span>
-                            {item.badge && (
-                              <span className="mt-0.5 shrink-0 rounded-full border border-[#26262d] px-2 py-0.5 text-[10px] font-medium leading-4 text-[#5f5f5d]">
-                                {item.badge}
-                              </span>
-                            )}
-                          </div>
-                        );
-                      }
-
-                      return (
-                        <Link
-                          key={item.href}
-                          href={item.href}
-                          onClick={() => {
-                            setDesktopPanel(null);
-                            setHoverDesktopPanel(null);
-                            setSuppressedDesktopPanel(null);
-                          }}
-                          className={`flex min-h-[58px] items-start gap-3 rounded-[10px] px-3 py-2.5 text-inherit no-underline transition-colors duration-200 ${active ? "bg-[#1e73d8] text-white shadow-[rgba(255,255,255,0.25)_0_1px_0_inset]" : "text-[#f5f4f1] hover:bg-[rgba(245,244,241,0.04)]"}`}
-                        >
-                          <span className="min-w-0">
-                            <span className={`block truncate text-[14px] font-semibold leading-tight ${active ? "text-white" : "text-[#f5f4f1]"}`}>{item.label}</span>
-                            <span className={`mt-1 block text-[12px] leading-snug ${active ? "text-white/85" : "text-[#5f5f5d]"}`}>{item.description}</span>
-                          </span>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                </div>
-                <div className="h-full w-1/2 shrink-0 p-0">
-                  <div className="px-3 pt-2.5 pb-2">
-                    <p className="m-0 text-[12px] font-semibold text-[#f5f4f1]">Leaderboards</p>
-                  </div>
-                  <div className="grid grid-cols-2 gap-1.5 pt-1.5">
-                    {leaderboardItems.map(item => {
-                      if (!item.href || item.disabled) {
-                        return (
-                          <div
-                            key={item.label}
-                            aria-disabled="true"
-                            className="flex min-h-[58px] min-w-0 items-start justify-between gap-3 rounded-[10px] px-3 py-2.5 text-[rgba(245,244,241,0.34)] opacity-75"
-                          >
-                            <span className="min-w-0">
-                              <span className="block truncate text-[14px] font-semibold leading-tight text-[#5f5f5d]">{item.label}</span>
-                              <span className="mt-1 block text-[12px] leading-snug text-[rgba(245,244,241,0.34)]">{item.description}</span>
-                            </span>
-                          </div>
-                        );
-                      }
-                      const active = visibleDesktopPanel === "leaderboards" && isDesktopItemActive(pathname, item.href);
-                      return (
-                        <Link
-                          key={item.href}
-                          href={item.href}
-                          onClick={() => {
-                            setDesktopPanel(null);
-                            setHoverDesktopPanel(null);
-                            setSuppressedDesktopPanel(null);
-                          }}
-                          className={`flex min-h-[58px] min-w-0 items-start justify-between gap-3 rounded-[10px] px-3 py-2.5 text-inherit no-underline transition-colors duration-200 ${active ? "bg-[#1e73d8] text-white shadow-[rgba(255,255,255,0.25)_0_1px_0_inset]" : "text-[#f5f4f1] hover:bg-[rgba(245,244,241,0.04)]"}`}
-                        >
-                          <span className="min-w-0">
-                            <span className={`block truncate text-[14px] font-semibold leading-tight ${active ? "text-white" : "text-[#f5f4f1]"}`}>{item.label}</span>
-                            <span className={`mt-1 block text-[12px] leading-snug ${active ? "text-white/85" : "text-[#5f5f5d]"}`}>{item.description}</span>
-                          </span>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
 
-        <form
-          role="search"
-          onSubmit={submitNavSearch}
-          onClick={() => openSearchOverlay()}
-          className="relative z-10 ml-7 hidden h-[34px] w-[min(35vw,470px)] min-w-[270px] max-w-[470px] items-center rounded-full border border-[#26262d] bg-[#0d0d11] px-3 text-[#f5f4f1] shadow-[rgba(0,0,0,0.04)_0_0.5px_0_0_inset] transition-colors duration-150 focus-within:border-[rgba(245,244,241,0.15)] focus-within:bg-[#15151b] xl:flex"
-        >
-          <Search size={17} strokeWidth={2} className="mr-2 shrink-0 text-[#5f5f5d]" aria-hidden="true" />
-          <input
-            value={navSearch}
-            onChange={event => setNavSearch(event.target.value)}
-            onFocus={() => openSearchOverlay()}
-            className="h-full min-w-0 flex-1 border-0 bg-transparent p-0 text-[13px] font-semibold leading-none text-[#f5f4f1] outline-none placeholder:text-[#5f5f5d]"
-            placeholder="Search player tag, brawler, map..."
-            aria-label="Search BrawlLens"
-          />
-        </form>
-
-        <div className="relative z-10 ml-auto flex min-w-0 shrink-0 items-center justify-end gap-2 max-[430px]:gap-1.5">
+        <div className="relative z-10 ml-auto hidden min-w-0 shrink-0 items-center justify-end gap-2 lg:flex">
           <button
             type="button"
             onClick={() => openSearchOverlay()}
-            className="bl-nav-search-compact xl:hidden"
+            className="inline-flex h-[36px] items-center gap-2 rounded-[10px] border-0 bg-[rgba(245,244,241,0.06)] px-3.5 text-[rgba(245,244,241,0.78)] outline-none transition-colors hover:bg-[rgba(245,244,241,0.10)] hover:text-[#f5f4f1]"
             aria-label="Open search"
-            title="Search"
+            title="Search (⌘K)"
           >
-            <Search size={16} strokeWidth={2.2} aria-hidden="true" />
-            <span className="bl-nav-search-compact-label">Search</span>
+            <Search size={14} strokeWidth={2} aria-hidden="true" />
+            <span className="text-[14px] font-medium leading-none tracking-[-0.01em]">⌘K</span>
           </button>
+          <span aria-hidden="true" className="h-5 w-px bg-[rgba(245,244,241,0.12)]" />
           {isSignedIn ? (
             <div ref={accountMenuRef} className="relative shrink-0">
               <button
@@ -809,25 +694,70 @@ export default function NavBar() {
               <span>{accountLabel}</span>
             </button>
           )}
-          <button
-            type="button"
-            className="bl-nav-menu-button relative grid size-[34px] cursor-pointer place-items-center rounded-full border border-[#26262d] bg-[#0d0d11] p-0 text-[#f5f4f1] outline-none shadow-[rgba(0,0,0,0.03)_0_0.5px_0_0_inset] transition-colors duration-150 hover:border-[#1e73d8]/40 hover:bg-[#15151b] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1e73d8]/35 lg:hidden"
-            onClick={toggleMenu}
-            aria-label={isMenuOpen ? "Close navigation menu" : "Open navigation menu"}
-            aria-expanded={isMenuOpen}
-          >
-            <span className="bl-nav-menu-icon" aria-hidden="true">
-              <span />
-              <span />
-              <span />
-            </span>
-          </button>
+        </div>
+        <button
+          type="button"
+          className="bl-nav-menu-button relative ml-auto grid size-[34px] cursor-pointer place-items-center rounded-full border-0 bg-[rgba(245,244,241,0.06)] p-0 text-[#f5f4f1] outline-none transition-colors duration-150 hover:bg-[rgba(245,244,241,0.10)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7c5cff]/35 lg:hidden"
+          onClick={toggleMenu}
+          aria-label={isMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+          aria-expanded={isMenuOpen}
+        >
+          <span className="bl-nav-menu-icon" aria-hidden="true">
+            <span />
+            <span />
+            <span />
+          </span>
+        </button>
+        </div>
+        <div
+          className={`hidden overflow-hidden transition-[max-height,opacity,transform] duration-[640ms] ease-[cubic-bezier(0.16,1,0.3,1)] lg:block ${visibleDesktopPanel ? "max-h-[320px] opacity-100 translate-y-0" : "max-h-0 opacity-0 -translate-y-2"}`}
+        >
+          <div className="px-5 pb-5 pt-1">
+            <div className="grid grid-cols-3 gap-4 px-0">
+              {desktopPanelContent.items.map(item => {
+                if (!item.href || item.disabled) {
+                  return (
+                    <div
+                      key={item.label}
+                      aria-disabled="true"
+                      className="rounded-[12px] px-3 py-2 opacity-60"
+                    >
+                      <p className="m-0 text-[14px] font-semibold leading-tight text-[rgba(245,244,241,0.4)]">{item.label}</p>
+                      <p className="mt-1 mb-0 text-[12px] leading-snug text-[rgba(245,244,241,0.32)]">{item.description}</p>
+                    </div>
+                  );
+                }
+                const active = item.href ? isRouteActive(pathname, item.href) : false;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => {
+                      setDesktopPanel(null);
+                      setHoverDesktopPanel(null);
+                    }}
+                    className={`group block rounded-[12px] px-3 py-2 text-inherit no-underline transition-colors duration-150 ${active ? "bg-[rgba(124,92,255,0.10)]" : "hover:bg-[rgba(245,244,241,0.04)]"}`}
+                  >
+                    <p className={`m-0 text-[14px] font-semibold leading-tight ${active ? "text-[#a78bff]" : "text-[#f5f4f1]"}`}>{item.label}</p>
+                    <p className="mt-1 mb-0 text-[12px] leading-snug text-[rgba(245,244,241,0.5)]">{item.description}</p>
+                  </Link>
+                );
+              })}
+            </div>
+            <Link
+              href={desktopPanelContent.viewAllHref}
+              onClick={() => { setDesktopPanel(null); setHoverDesktopPanel(null); }}
+              className="mt-3 inline-flex items-center gap-1 px-3 text-[12.5px] font-semibold text-[rgba(245,244,241,0.6)] no-underline transition-colors hover:text-[#f5f4f1]"
+            >
+              View all <span aria-hidden="true">→</span>
+            </Link>
+          </div>
         </div>
       </nav>
 
       {menuVisible && (
         <div
-          className="bl-mobile-menu fixed inset-x-0 top-[60px] bottom-0 z-[90] overflow-y-auto bg-[#0d0d11] text-[#f5f4f1] lg:hidden"
+          className="bl-mobile-menu fixed inset-x-0 top-[72px] bottom-0 z-[90] overflow-y-auto bg-[#0d0d11] text-[#f5f4f1] lg:hidden"
           style={{
             animation: menuClosing
               ? "mobileMenuOut 0.34s cubic-bezier(0.4,0,1,1) forwards"
@@ -856,35 +786,32 @@ export default function NavBar() {
       )}
 
       {isLoginOpen && (
-        <div
-          className="fixed inset-0 z-[220] flex items-start justify-center bg-[rgba(8,8,12,0.68)] px-4 pt-[min(14vh,120px)] pb-6 backdrop-blur-[6px] animate-[modalOverlayIn_0.18s_ease-out_both]"
-          onClick={() => setIsLoginOpen(false)}
-        >
+        <div className="bl-auth-layer">
+          <button className="bl-auth-backdrop backdrop-blur-[64px]" type="button" aria-label="Close login" onClick={() => setIsLoginOpen(false)} />
           <section
             role="dialog"
             aria-modal="true"
             aria-labelledby="login-modal-title"
-            className="w-full max-w-[400px] rounded-[16px] border border-[#26262d] bg-[#15151b] px-6 py-6 text-[#f5f4f1] shadow-[0_24px_80px_-12px_rgba(0,0,0,0.12),0_0_0_0.5px_rgba(0,0,0,0.03)] animate-[modalSheetIn_0.24s_cubic-bezier(0.16,1,0.3,1)_both] max-[460px]:px-5 max-[460px]:py-5 max-[460px]:rounded-[12px]"
-            onClick={event => event.stopPropagation()}
+            className="bl-auth-panel"
           >
-            <div className="flex items-start justify-between gap-4">
-              <div className="min-w-0">
-                <h2 id="login-modal-title" className="m-0 text-[20px] font-bold leading-none tracking-[-0.01em] text-[#f5f4f1]">{authMode === "signup" ? "Create account" : "Log in"}</h2>
-                <p className="mt-2 mb-0 text-[12.5px] leading-snug text-[rgba(245,244,241,0.42)]">
-                  {authMode === "signup" ? "Create a BrawlLens account for saved setup." : "Access your BrawlLens account."}
-                </p>
+            <div className="bl-auth-head">
+              <div className="bl-auth-title-row">
+                <div key={authMode} className="bl-auth-title-copy">
+                  <h2 id="login-modal-title">{authMode === "signup" ? "Create account" : "Log in"}</h2>
+                  <p>{authMode === "signup" ? "Save your setup and BrawlLens profile." : "Welcome back to BrawlLens."}</p>
+                </div>
               </div>
               <button
                 type="button"
                 onClick={() => setIsLoginOpen(false)}
-                className="grid size-[28px] shrink-0 cursor-pointer place-items-center rounded-[6px] border-0 bg-transparent text-[rgba(245,244,241,0.35)] transition-colors hover:bg-[rgba(245,244,241,0.05)] hover:text-[#f5f4f1]"
+                className="bl-auth-close"
                 aria-label="Close login"
               >
                 <X size={15} strokeWidth={2} />
               </button>
             </div>
 
-            <div className="mt-5 grid grid-cols-2 rounded-[8px] border border-[#26262d] bg-[#0d0d11] p-[3px]">
+            <div className={`bl-auth-tabs ${authMode === "login" ? "is-login" : "is-create"}`}>
               {[
                 { id: "signup" as const, label: "Create" },
                 { id: "login" as const, label: "Log in" },
@@ -893,106 +820,104 @@ export default function NavBar() {
                   key={item.id}
                   type="button"
                   onClick={() => setAuthMode(item.id)}
-                  className={`h-[32px] cursor-pointer rounded-[6px] border-0 text-[12.5px] font-semibold outline-none transition-all duration-150 focus-visible:ring-2 focus-visible:ring-[#1e73d8]/25 ${authMode === item.id ? "bg-[#15151b] text-[#f5f4f1] shadow-[0_1px_3px_rgba(0,0,0,0.06),0_0_0_0.5px_rgba(0,0,0,0.04)]" : "bg-transparent text-[rgba(245,244,241,0.4)] hover:text-[rgba(245,244,241,0.65)]"}`}
+                  className={authMode === item.id ? "is-active" : ""}
                 >
                   {item.label}
                 </button>
               ))}
             </div>
 
-            {loginState === "sent" && authMode === "signup" ? (
-              <div className="mt-6">
-                <div className="rounded-[10px] border border-[#26262d] bg-[#0d0d11] px-4 py-4">
-                  <p className="m-0 text-[14px] font-bold text-[#f5f4f1]">Check your inbox</p>
-                  <p className="mt-1.5 mb-0 text-[12.5px] leading-relaxed text-[rgba(245,244,241,0.5)]">
-                    We sent a setup link to <strong className="font-semibold text-[#f5f4f1]">{loginEmail}</strong>. It opens BrawlLens setup.
-                  </p>
+            <div className={`bl-auth-mode-body ${authMode === "login" ? "is-login" : "is-create"}`}>
+              {loginState === "sent" && authMode === "signup" ? (
+                <div className="bl-auth-sent">
+                  <div className="bl-auth-sent-card">
+                    <p>Check your inbox</p>
+                    <small>
+                      We sent a setup link to <strong className="font-semibold text-[#f5f4f1]">{loginEmail}</strong>. It opens BrawlLens setup.
+                    </small>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => void sendAuthRequest({ resend: true })}
+                    disabled={loginResending}
+                    className="bl-auth-secondary"
+                  >
+                    {loginResending ? "Sending again..." : "Didn't receive an email? Resend"}
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => void sendAuthRequest({ resend: true })}
-                  disabled={loginResending}
-                  className="mt-3 inline-flex h-[42px] w-full cursor-pointer items-center justify-center rounded-[8px] border border-[#26262d] bg-transparent px-4 text-[13px] font-semibold text-[#f5f4f1] transition-colors hover:bg-[rgba(245,244,241,0.025)] disabled:cursor-wait disabled:opacity-60"
-                >
-                  {loginResending ? "Sending again..." : "Didn't receive an email? Resend"}
-                </button>
-              </div>
-            ) : (
-              <form onSubmit={submitLogin} className="mt-6">
-                <label className="block">
-                  <span className="mb-2 block text-[12px] font-semibold text-[rgba(245,244,241,0.55)]">Email</span>
-                  <input
-                    ref={loginInputRef}
-                    type="email"
-                    required
-                    value={loginEmail}
-                    onChange={event => {
-                      setLoginEmail(event.target.value);
-                      if (loginState !== "sending") {
-                        setLoginState("idle");
-                        setLoginError(null);
-                      }
-                    }}
-                    className="h-[42px] w-full rounded-[8px] border border-[#26262d] bg-[#0d0d11] px-3.5 text-[13.5px] font-medium text-[#f5f4f1] outline-none transition-colors placeholder:text-[rgba(245,244,241,0.28)] focus:border-[rgba(245,244,241,0.2)]"
-                    placeholder="you@example.com"
-                  />
-                  {authMode === "signup" && (
-                    <div className={`mt-2 flex items-center gap-2 text-[11px] leading-none ${loginEmailStatus === "valid" ? "text-[var(--ink)]" : loginEmailStatus === "idle" || loginEmailStatus === "checking" ? "text-[var(--ink-4)]" : "text-[var(--ink-2)]"}`}>
-                      <span className={`grid size-3.5 place-items-center rounded-full border text-[9px] ${loginEmailStatus === "valid" ? "border-[var(--ink)] bg-[var(--ink)] text-[var(--ink-on)]" : loginEmailStatus === "checking" ? "animate-pulse border-[var(--line-2)] bg-[var(--line)] text-transparent" : loginEmailStatus === "idle" ? "border-[var(--line-2)] text-transparent" : "border-[var(--ink-2)] text-[var(--ink-2)]"}`}>
+              ) : (
+                <form onSubmit={submitLogin} className="bl-auth-form">
+                  <label className="bl-auth-field">
+                    <span>Email</span>
+                    <input
+                      ref={loginInputRef}
+                      type="email"
+                      required
+                      value={loginEmail}
+                      onChange={event => {
+                        setLoginEmail(event.target.value);
+                        if (loginState !== "sending") {
+                          setLoginState("idle");
+                          setLoginError(null);
+                        }
+                      }}
+                      className="bl-auth-control"
+                      placeholder="you@example.com"
+                    />
+                    <div className={`bl-auth-helper bl-auth-helper-${loginEmailStatus} ${authMode === "login" ? "is-hidden" : ""}`} aria-live={authMode === "signup" ? "polite" : "off"}>
+                      <span className="bl-auth-rule-dot" aria-hidden="true">
                         {loginEmailStatus === "valid" ? "✓" : loginEmailStatus === "invalid" || loginEmailStatus === "format" ? "!" : ""}
                       </span>
-                      {loginEmailMessage}
+                      <span>{loginEmailMessage}</span>
                     </div>
-                  )}
-                </label>
-                <label className="mt-4 block">
-                  <span className="mb-2 block text-[12px] font-semibold text-[rgba(245,244,241,0.55)]">Password</span>
-                  <input
-                    type="password"
-                    required
-                    minLength={8}
-                    pattern="(?=.*[0-9]).{8,}"
-                    value={loginPassword}
-                    onChange={event => {
-                      setLoginPassword(event.target.value);
-                      if (loginState !== "sending") {
-                        setLoginState("idle");
-                        setLoginError(null);
-                      }
-                    }}
-                    className="h-[42px] w-full rounded-[8px] border border-[#26262d] bg-[#0d0d11] px-3.5 text-[13.5px] font-medium text-[#f5f4f1] outline-none transition-colors placeholder:text-[rgba(245,244,241,0.28)] focus:border-[rgba(245,244,241,0.2)]"
-                    placeholder="8+ characters, include a number"
-                  />
-                  {authMode === "signup" && (
-                    <div className="mt-2 grid gap-1">
+                  </label>
+                  <label className="bl-auth-field">
+                    <span>Password</span>
+                    <input
+                      type="password"
+                      required
+                      minLength={8}
+                      pattern="(?=.*[0-9]).{8,}"
+                      value={loginPassword}
+                      onChange={event => {
+                        setLoginPassword(event.target.value);
+                        if (loginState !== "sending") {
+                          setLoginState("idle");
+                          setLoginError(null);
+                        }
+                      }}
+                      className="bl-auth-control"
+                      placeholder="8+ characters, include a number"
+                    />
+                    <div className={`bl-auth-rules ${authMode === "login" ? "is-hidden" : ""}`}>
                       {loginPasswordRules.map(rule => (
-                        <div key={rule.label} className={`flex items-center gap-2 text-[11px] leading-none ${rule.passed ? "text-[var(--ink)]" : "text-[var(--ink-4)]"}`}>
-                          <span className={`grid size-3.5 place-items-center rounded-full border text-[9px] ${rule.passed ? "border-[var(--ink)] bg-[var(--ink)] text-[var(--ink-on)]" : "border-[var(--line-2)] text-transparent"}`}>✓</span>
-                          {rule.label}
+                        <div key={rule.label} className={rule.passed ? "is-passed" : ""}>
+                          <span className="bl-auth-rule-dot" aria-hidden="true">{rule.passed ? "✓" : ""}</span>
+                          <span>{rule.label}</span>
                         </div>
                       ))}
                     </div>
-                  )}
-                </label>
+                  </label>
 
-                <button
-                  type="submit"
-                  disabled={!canSubmitLogin}
-                  className="mt-5 inline-flex h-[42px] w-full cursor-pointer items-center justify-center rounded-[8px] border-0 bg-[#f5f4f1] px-4 text-[13px] font-semibold text-[#0d0d11] transition-opacity hover:opacity-85 disabled:cursor-not-allowed disabled:opacity-35"
-                >
-                  {loginState === "sending" ? (authMode === "login" ? "Logging in..." : "Sending...") : authMode === "login" ? "Log in" : "Create account"}
-                </button>
-              </form>
-            )}
+                  <button
+                    type="submit"
+                    disabled={!canSubmitLogin}
+                    className="bl-auth-submit"
+                  >
+                    {loginState === "sending" ? (authMode === "login" ? "Logging in..." : "Sending...") : authMode === "login" ? "Log in" : "Create account"}
+                  </button>
+                </form>
+              )}
+            </div>
 
             {loginError && (loginState === "error" || loginState === "sent") && (
-              <p className="mt-4 mb-0 rounded-[8px] border border-[#26262d] bg-[#0d0d11] px-3.5 py-2.5 text-[12px] leading-relaxed text-[rgba(245,244,241,0.6)]">
+              <p className="bl-auth-error" role="alert">
                 {loginError}
               </p>
             )}
 
-            <p className="mt-5 mb-0 text-center text-[11px] leading-relaxed text-[rgba(245,244,241,0.3)]">
-              By continuing, you agree to the <Link href="/privacy" onClick={() => setIsLoginOpen(false)} className="text-[rgba(245,244,241,0.5)] underline underline-offset-3 hover:text-[#f5f4f1]">Privacy Policy</Link>.
+            <p className="bl-auth-legal">
+              By continuing, you agree to the <Link href="/privacy" onClick={() => setIsLoginOpen(false)}>Privacy Policy</Link>.
             </p>
           </section>
         </div>

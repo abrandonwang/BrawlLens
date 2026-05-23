@@ -50,7 +50,7 @@ function setupLinkEmail(email: string, actionLink: string) {
   const html = `
     <div style="margin:0;background:#080b10;padding:32px 18px;font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#f4f6fb;">
       <div style="margin:0 auto;max-width:440px;border:1px solid rgba(255,255,255,0.1);border-radius:16px;background:#101419;padding:28px;box-shadow:0 28px 72px rgba(0,0,0,0.42);">
-        <div style="height:34px;width:34px;border-radius:10px;background:conic-gradient(from 120deg,#f97316,#ec4899,#5bbdff,#3b82f6,#14b8d6,#f97316);"></div>
+        <div style="height:34px;width:34px;border-radius:10px;background:conic-gradient(from 120deg,#f97316,#ec4899,#a78bff,#3b82f6,#14b8d6,#f97316);"></div>
         <h1 style="margin:24px 0 8px;font-size:28px;line-height:1.05;font-weight:700;letter-spacing:-0.03em;color:#f4f6fb;">Set up BrawlLens</h1>
         <p style="margin:0 0 22px;color:#a7adba;font-size:14px;line-height:1.55;">Confirm ${safeEmail}, connect your Brawl Stars account, and take the quick site walkthrough.</p>
         <a href="${safeLink}" style="display:block;border-radius:10px;background:#202632;color:#f7f8ff;text-align:center;text-decoration:none;padding:13px 16px;font-size:14px;font-weight:650;">Finish setup</a>

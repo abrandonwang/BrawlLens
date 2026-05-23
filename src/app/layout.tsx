@@ -38,7 +38,7 @@ export default function RootLayout({
       >
         <TopLoader />
         <NavBar />
-        <div className="app-main-shell flex-1 flex flex-col">
+        <div className="app-main-shell flex-1 flex flex-col pt-[40px]">
           {children}
         </div>
         <Footer />

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ChangeEvent } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Search, ArrowUp, Square } from "lucide-react"
+import { Search, ArrowUp, ArrowRight, History, Square } from "lucide-react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import type { Components } from "react-markdown"
@@ -45,6 +45,7 @@ type SearchItem = {
   logoUrl?: string
   logoClassName?: string
   badge?: string
+  lastUsedAt?: string
 }
 
 type RemotePlayer = {
@@ -228,8 +229,17 @@ function fallbackPlayerItem(query: string): SearchItem | null {
 function loadRecentSearches(): SearchItem[] {
   try {
     const parsed = JSON.parse(window.localStorage.getItem(RECENT_SEARCH_KEY) ?? "[]") as SearchItem[]
-    return parsed.filter(item => item?.href && item?.title && (item.kind === "player" || item.kind === "club")).slice(0, 5)
+    return parsed
+      .filter(item => item?.href && item?.title && (item.kind === "player" || item.kind === "club"))
+      .map(item => ({ ...item, lastUsedAt: item.lastUsedAt ?? new Date().toISOString() }))
+      .slice(0, 5)
   } catch { return [] }
+}
+
+function formatRecentDate(value: string | undefined) {
+  const date = value ? new Date(value) : new Date()
+  if (Number.isNaN(date.getTime())) return ""
+  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(date)
 }
 
 async function resolveSearchDestination(query: string) {
@@ -288,6 +298,11 @@ export default function SearchOverlay() {
 
   const visible = open || closing
   const trimmedQuery = query.trim()
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("bl-cmd-open", visible)
+    return () => document.documentElement.classList.remove("bl-cmd-open")
+  }, [visible])
 
   useEffect(() => {
     if (!visible) return
@@ -392,7 +407,7 @@ export default function SearchOverlay() {
   const visibleSearchGroups = useMemo(() => {
     const normalized = trimmedQuery.toLowerCase()
     const tag = sanitizePlayerTag(trimmedQuery)
-    if (!normalized) return [...(recentItems.length ? [{ label: "Recent", items: recentItems }] : []), ...searchGroups]
+    if (!normalized) return recentItems.length ? [{ label: "Recent", items: recentItems }] : []
     const staticPlayerItems = searchGroups.find(g => g.label === "Players")?.items.filter(i => itemMatches(i, normalized)) ?? []
     const staticGroups = searchGroups.filter(g => g.label !== "Players").map(g => ({ ...g, items: g.items.filter(i => itemMatches(i, normalized)) })).filter(g => g.items.length > 0)
     const remotePlayerItems = uniqueItems([
@@ -435,7 +450,7 @@ export default function SearchOverlay() {
 
   function rememberSearchItem(item: SearchItem) {
     if (item.kind !== "player" && item.kind !== "club") return
-    const stored: SearchItem = { title: item.title, subtitle: item.subtitle, href: item.href, kind: item.kind, playerTag: item.playerTag, iconId: item.iconId ?? null, clubBadgeId: item.clubBadgeId ?? null, badge: item.badge }
+    const stored: SearchItem = { title: item.title, subtitle: item.subtitle, href: item.href, kind: item.kind, playerTag: item.playerTag, iconId: item.iconId ?? null, clubBadgeId: item.clubBadgeId ?? null, badge: item.badge, lastUsedAt: new Date().toISOString() }
     const next = uniqueItems([stored, ...recentItems]).slice(0, 5)
     setRecentItems(next)
     window.localStorage.setItem(RECENT_SEARCH_KEY, JSON.stringify(next))
@@ -516,7 +531,7 @@ export default function SearchOverlay() {
 
   return (
     <div className={`bl-cmd-layer ${closing ? "is-closing" : ""}`} role="dialog" aria-modal="true" aria-label="Search & AI">
-      <button className="bl-cmd-backdrop" type="button" aria-label="Close" onClick={close} />
+      <button className="bl-cmd-backdrop backdrop-blur-[64px]" type="button" aria-label="Close" onClick={close} />
       <div className="bl-cmd-panel">
         {/* Mode toggle */}
         <div className="bl-cmd-tabs">
@@ -533,29 +548,36 @@ export default function SearchOverlay() {
                 ref={inputRef}
                 value={query}
                 onChange={e => setQuery(e.target.value)}
-                placeholder="Search players, brawlers, clubs..."
+                placeholder="Search by tags, name or descriptions"
                 autoCapitalize="characters"
                 spellCheck={false}
                 autoComplete="off"
               />
+              <button type="submit" aria-label="Submit search">
+                <ArrowRight size={16} strokeWidth={2.2} aria-hidden="true" />
+              </button>
             </form>
             <div className="bl-cmd-results">
               {visibleSearchGroups.map(group => (
                 <section key={group.label} className="bl-cmd-group">
                   <h3>{group.label}</h3>
                   {group.items.map(item => {
+                    const isRecent = group.label === "Recent"
                     const iconId = item.iconId ?? (item.playerTag ? playerIcons[item.playerTag] : null)
                     return (
                       <Link
                         key={`${group.label}-${item.kind}-${item.href}-${item.title}`}
                         href={item.href}
-                        className="bl-cmd-row"
+                        className={`bl-cmd-row ${isRecent ? "bl-cmd-row-recent" : ""}`}
                         onClick={() => { rememberSearchItem(item); close() }}
                       >
                         <span className={`bl-cmd-icon bl-cmd-icon-${item.kind}`}>
-                          {item.imageId ? <BrawlImage src={brawlerIconUrl(item.imageId)} alt="" width={32} height={32} sizes="32px" />
+                          {isRecent ? <History size={15} strokeWidth={2.2} aria-hidden="true" />
+                            : item.imageId ? <BrawlImage src={brawlerIconUrl(item.imageId)} alt="" width={32} height={32} sizes="32px" />
                             : iconId ? <BrawlImage src={profileIconUrl(iconId)} alt="" width={32} height={32} sizes="32px" />
                             : item.clubBadgeId ? <BrawlImage src={clubBadgeUrl(item.clubBadgeId)} alt="" width={32} height={32} sizes="32px" />
+                            // External team logo URLs can be outside the configured Next image domains.
+                            // eslint-disable-next-line @next/next/no-img-element
                             : item.logoUrl ? <img src={item.logoUrl} alt="" className={item.logoClassName} />
                             : <span>{item.title.slice(0, 1)}</span>}
                         </span>
@@ -563,6 +585,7 @@ export default function SearchOverlay() {
                           <strong>{item.title}</strong>
                           <small>{item.subtitle}</small>
                         </span>
+                        {isRecent && <time className="bl-cmd-recent-date" dateTime={item.lastUsedAt}>{formatRecentDate(item.lastUsedAt)}</time>}
                         {item.badge && <em className="bl-cmd-badge">{item.badge}</em>}
                       </Link>
                     )

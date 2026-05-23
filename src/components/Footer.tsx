@@ -10,7 +10,8 @@ const footerLinks: { label: string; href: string }[] = [
 export default function Footer() {
   const pathname = usePathname()
   if (pathname.startsWith("/account")) return null
-  const isLandingPage = pathname === "/"
+  if (pathname === "/") return null
+  const isLandingPage = false
 
   return (
     <footer
@@ -29,7 +30,7 @@ export default function Footer() {
             <Link
               key={`${link.label}-${link.href}`}
               href={link.href}
-              className="whitespace-nowrap text-[#f5f4f1] no-underline transition-colors duration-150 hover:text-[#1e73d8]"
+              className="whitespace-nowrap text-[#f5f4f1] no-underline transition-colors duration-150 hover:text-[#7c5cff]"
             >
               {link.label}
             </Link>

@@ -500,21 +500,6 @@ export default function AccountClient() {
                   <SettingsRow title="Motion" description="Animations and interaction transitions.">
                     <ValueBox>Enabled</ValueBox>
                   </SettingsRow>
-                  <SettingsRow title="Modal background" description="How overlays treat the page behind them.">
-                    <ValueBox>Dim only</ValueBox>
-                  </SettingsRow>
-                </SettingsSection>
-
-                <SettingsSection title="Saved workspace">
-                  <SettingsRow title="Saved panels" description="Number of panels saved to this account.">
-                    <ValueBox>{user.dashboardWidgets?.length ? `${user.dashboardWidgets.length} panels` : "Local defaults"}</ValueBox>
-                  </SettingsRow>
-                  <SettingsRow title="Layout" description="Workspace arrangement mode.">
-                    <ValueBox>Editable grid</ValueBox>
-                  </SettingsRow>
-                  <SettingsRow title="Reset workspace" description="Restore the default panel set.">
-                    <ActionButton>Reset</ActionButton>
-                  </SettingsRow>
                 </SettingsSection>
 
                 <SettingsSection title="Privacy and data">
