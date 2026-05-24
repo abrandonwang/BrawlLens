@@ -1,4 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title">
+  <title id="title">Lens mark</title>
   <defs>
     <linearGradient id="lens-gradient" x1="24" y1="18" x2="110" y2="112" gradientUnits="userSpaceOnUse">
       <stop stop-color="#8EA0FF"/>

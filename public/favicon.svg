@@ -1,11 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <circle cx="32" cy="32" r="18" fill="none" stroke="url(#ring)" stroke-width="11"/>
-  <path d="M24 19a7 4 0 0 1 9-3" fill="none" stroke="#e5f6ff" stroke-width="3" stroke-linecap="round" opacity=".36"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
   <defs>
-    <linearGradient id="ring" x1="16" y1="14" x2="49" y2="52" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#a9e4ff"/>
-      <stop offset=".5" stop-color="#5abaff"/>
-      <stop offset="1" stop-color="#1e73d8"/>
+    <linearGradient id="lens-gradient" x1="24" y1="18" x2="110" y2="112" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8EA0FF"/>
+      <stop offset="1" stop-color="#7C5CFF"/>
     </linearGradient>
   </defs>
+  <path
+    fill="url(#lens-gradient)"
+    d="M50 6C58.8 6 66 13.2 66 22V72C66 80.8 58.8 88 50 88C41.2 88 34 80.8 34 72V22C34 13.2 41.2 6 50 6Z"
+  />
+  <path
+    fill="url(#lens-gradient)"
+    fill-rule="evenodd"
+    d="M76 34C99.2 34 118 52.8 118 76C118 99.2 99.2 118 76 118C52.8 118 34 99.2 34 76C34 52.8 52.8 34 76 34ZM76 56C65 56 56 65 56 76C56 87 65 96 76 96C87 96 96 87 96 76C96 65 87 56 76 56Z"
+  />
+  <circle cx="76" cy="76" r="20" fill="#0D0D11"/>
+  <circle cx="69" cy="69" r="4" fill="#F5F4F1" opacity=".72"/>
 </svg>

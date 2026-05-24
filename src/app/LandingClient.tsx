@@ -94,6 +94,18 @@ function getPreviewTier(winRate: number | null | undefined, picks: number) {
   return { label: "D", color: "#ff7878" }
 }
 
+function getPreviewWinRateColor(winRate: number | null | undefined) {
+  if (winRate == null || Number.isNaN(winRate)) return "rgba(245, 244, 241, 0.72)"
+  if (winRate >= 60) return "#f5d75e"
+  if (winRate >= 50) return "#a78bff"
+  if (winRate >= 45) return "#7dd3fc"
+  return "#ff7878"
+}
+
+function previewWinRateStyle(winRate: number | null | undefined): CSSProperties {
+  return { "--preview-win-color": getPreviewWinRateColor(winRate) } as CSSProperties
+}
+
 function formatPercent(value: number | null | undefined) {
   if (value == null || Number.isNaN(value)) return "-"
   return `${value.toFixed(1)}%`
@@ -568,7 +580,7 @@ export default function LandingClient() {
                 </Link>
                 <strong className="bl-preview-tier" style={{ color: row.tier.color }}>{row.tier.label}</strong>
                 <span className="bl-preview-rate">
-                  <strong>{formatPercent(row.winRate)}</strong>
+                  <strong style={previewWinRateStyle(row.winRate)}>{formatPercent(row.winRate)}</strong>
                 </span>
                 <strong className="bl-preview-pick">{formatPercent(row.pickRate)}</strong>
               </div>
@@ -601,7 +613,7 @@ export default function LandingClient() {
                     </>
                   ) : "-"}
                 </span>
-                <strong className="bl-preview-map-win">{row.best ? `${row.best.winRate.toFixed(1)}%` : "-"}</strong>
+                <strong className="bl-preview-map-win" style={previewWinRateStyle(row.best?.winRate)}>{row.best ? `${row.best.winRate.toFixed(1)}%` : "-"}</strong>
               </Link>
             ))}
           </div>

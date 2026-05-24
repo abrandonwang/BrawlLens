@@ -272,6 +272,7 @@ function isAiQuery(q: string) {
 
 /* ── Component ── */
 type Mode = "search" | "ai"
+const SEARCH_OVERLAY_EXIT_MS = 180
 
 export default function SearchOverlay() {
   const router = useRouter()
@@ -300,9 +301,9 @@ export default function SearchOverlay() {
   const trimmedQuery = query.trim()
 
   useEffect(() => {
-    document.documentElement.classList.toggle("bl-cmd-open", visible)
+    document.documentElement.classList.toggle("bl-cmd-open", open)
     return () => document.documentElement.classList.remove("bl-cmd-open")
-  }, [visible])
+  }, [open])
 
   useEffect(() => {
     if (!visible) return
@@ -316,7 +317,7 @@ export default function SearchOverlay() {
     closeTimerRef.current = window.setTimeout(() => {
       setClosing(false)
       closeTimerRef.current = null
-    }, 180)
+    }, SEARCH_OVERLAY_EXIT_MS)
   }, [closing, open])
 
   /* Reset mode on open */

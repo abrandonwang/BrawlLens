@@ -1,3 +1,5 @@
+import Image from "next/image"
+
 type BrandMarkProps = {
   className?: string
   size?: "sm" | "md"
@@ -8,7 +10,7 @@ export default function BrandMark({ className = "", size = "sm", showWordmark = 
   return (
     <span className={`bl-brand-mark bl-brand-mark-${size} ${className}`} aria-hidden="true">
       <span className="bl-brand-glyph">
-        <span className="bl-brand-glyph-core" />
+        <Image className="bl-brand-logo" src="/brawllens-mark.svg" alt="" width={52} height={34} priority unoptimized />
       </span>
       {showWordmark && <span className="bl-brand-word nav-wordmark">BrawlLens</span>}
     </span>
