@@ -25,6 +25,7 @@ interface AggregateResult {
   playerCount: number;
   mapRows: number;
   brawlerRows: number;
+  brawlerSnapshotRows: number;
   skippedDuplicate: boolean;
 }
 
@@ -45,6 +46,18 @@ async function rpcMerge<T extends object>(
     if (error) throw new Error(`${fn} rpc failed: ${error.message}`);
   }
   return rows.length;
+}
+
+async function snapshotBrawlerStatsDaily(supabase: SupabaseClient) {
+  const { data, error } = await supabase.rpc("snapshot_brawler_stats_daily", {});
+  if (!error) return Number(data ?? 0);
+
+  if (/could not find the function|does not exist|schema cache/i.test(error.message)) {
+    console.warn(`Daily brawler snapshot skipped: ${error.message}`);
+    return 0;
+  }
+
+  throw new Error(`snapshot_brawler_stats_daily rpc failed: ${error.message}`);
 }
 
 async function ensureFlushLedger(localPg: Pool) {
@@ -85,6 +98,7 @@ export async function aggregateAndFlushStats(
       playerCount: batch.playerCount,
       mapRows: 0,
       brawlerRows: 0,
+      brawlerSnapshotRows: 0,
       skippedDuplicate: false,
     };
   }
@@ -101,6 +115,7 @@ export async function aggregateAndFlushStats(
       playerCount: batch.playerCount,
       mapRows: 0,
       brawlerRows: 0,
+      brawlerSnapshotRows: 0,
       skippedDuplicate: true,
     };
   }
@@ -139,6 +154,7 @@ export async function aggregateAndFlushStats(
 
   const pushedMapRows = await rpcMerge(supabase, "merge_map_stats", mapRows);
   const pushedBrawlerRows = await rpcMerge(supabase, "merge_brawler_stats", brawlerRows);
+  const brawlerSnapshotRows = await snapshotBrawlerStatsDaily(supabase);
 
   await localPg.query(
     "INSERT INTO aggregation_flushes (batch_id, battle_count, player_count) VALUES ($1, $2, $3)",
@@ -152,6 +168,7 @@ export async function aggregateAndFlushStats(
     playerCount: batch.playerCount,
     mapRows: pushedMapRows,
     brawlerRows: pushedBrawlerRows,
+    brawlerSnapshotRows,
     skippedDuplicate: false,
   };
 }

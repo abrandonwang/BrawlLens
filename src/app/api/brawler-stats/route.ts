@@ -24,8 +24,9 @@ export async function GET(request: Request) {
   const totalPicks = data.reduce((s, r) => s + Number(r.picks), 0)
   const totalWins = data.reduce((s, r) => s + Number(r.wins), 0)
   const avgWinRate = totalPicks > 0 ? (totalWins / totalPicks) * 100 : null
+  const minMapPicks = Math.max(20, Math.ceil(totalPicks * 0.03))
   const allMaps = data
-    .filter(r => Number(r.picks) >= 20)
+    .filter(r => Number(r.picks) >= minMapPicks)
     .sort((a, b) => Number(b.win_rate) - Number(a.win_rate))
     .map(r => ({
       map: r.map,

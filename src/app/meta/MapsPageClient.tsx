@@ -7,7 +7,6 @@ import { ChevronDown, Search } from "lucide-react"
 import HelpTooltip from "@/components/HelpTooltip"
 import MetaDashboard from "@/components/MetaDashboard"
 import { BrawlImage } from "@/components/BrawlImage"
-import TierlistSubNav from "@/components/TierlistSubNav"
 import { formatBrawlerName, normalizeMapName } from "@/lib/format"
 import { getModeName } from "@/lib/modes"
 import { useClickOutside } from "@/lib/useClickOutside"
@@ -148,7 +147,6 @@ export default function MapsPageClient() {
   return (
     <>
       <main className="bl-tier-shell">
-        <TierlistSubNav active="maps" />
         <div className="bl-tier-content">
         <section className="bl-tier-intro-card" aria-labelledby="maps-title">
           <h1 id="maps-title">Maps</h1>

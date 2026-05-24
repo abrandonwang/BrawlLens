@@ -1,4 +1,3 @@
-import TierlistSubNav from "@/components/TierlistSubNav"
 import { SkeletonBlock } from "@/components/PolishStates"
 import { LeaderboardPanel, TableHead } from "@/app/leaderboards/LeaderboardDpmShell"
 
@@ -28,8 +27,6 @@ function CompactRows({ rows = 3 }: { rows?: number }) {
 export default function Loading() {
   return (
     <main className="bl-bd-shell bl-md-shell">
-      <TierlistSubNav active="maps" />
-
       <section className="bl-bd-hero">
         <div className="bl-bd-hero-inner">
           <div className="bl-bd-identity bl-md-identity">

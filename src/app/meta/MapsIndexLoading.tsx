@@ -1,10 +1,8 @@
-import TierlistSubNav from "@/components/TierlistSubNav"
 import { MapGridSkeleton, SkeletonBlock } from "@/components/PolishStates"
 
 export default function MapsIndexLoading() {
   return (
     <main className="bl-tier-shell">
-      <TierlistSubNav active="maps" />
       <div className="bl-tier-content">
         <section className="bl-tier-intro-card" aria-labelledby="maps-loading-title">
           <h1 id="maps-loading-title">Maps</h1>

@@ -38,6 +38,9 @@ async function main() {
   } else if (result.aggregated) {
     console.log(`  Added ${result.mapRows} map stat increments to Supabase.`);
     console.log(`  Added ${result.brawlerRows} brawler stat increments to Supabase.`);
+    if (result.brawlerSnapshotRows > 0) {
+      console.log(`  Wrote ${result.brawlerSnapshotRows} brawler snapshot rows for daily deltas.`);
+    }
     console.log(`  Aggregated ${result.battleCount} battles / ${result.playerCount} player rows.`);
     console.log("  Local raw tables truncated.");
   }

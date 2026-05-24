@@ -1,13 +1,13 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, type CSSProperties } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
+import { PulsingBorder } from "@paper-design/shaders-react"
 import { ArrowDown, ArrowUp, ChevronDown, Search } from "lucide-react"
 import HelpTooltip from "@/components/HelpTooltip"
 import { BrawlImage } from "@/components/BrawlImage"
 import { EmptyState, SkeletonBlock } from "@/components/PolishStates"
-import TierlistSubNav from "@/components/TierlistSubNav"
 import { BUFFIES } from "@/data/buffies"
 import { winRateColor } from "@/lib/tiers"
 import { useClickOutside } from "@/lib/useClickOutside"
@@ -23,18 +23,21 @@ function sanitizeColor(color: string): string {
   return match ? match[0] : "#888"
 }
 
-type CatalogSort = "name" | "winRate" | "picks" | "recentBuffs"
+type CatalogSort = "metaScore" | "name" | "winRate" | "picks" | "recentBuffs"
+type DropdownHeightState = Record<"rarity" | "class" | "sort" | "search", number>
 
 interface CatalogBrawlerStats {
   picks: number
   wins: number
   winRate: number | null
+  winRateDeltaDay?: number | null
   mapCount: number
   histogram: number[]
   bestMap: { name: string; mode: string; winRate: number; picks: number } | null
 }
 
 const CATALOG_SORT_OPTIONS: { value: CatalogSort; label: string; description: string }[] = [
+  { value: "metaScore", label: "Meta score", description: "Confidence-adjusted" },
   { value: "winRate", label: "Win rate", description: "Highest first" },
   { value: "picks", label: "Picks", description: "Most played" },
   { value: "name", label: "Name", description: "A to Z" },
@@ -42,10 +45,24 @@ const CATALOG_SORT_OPTIONS: { value: CatalogSort; label: string; description: st
 ]
 
 const DEFAULT_SORT_DIRECTIONS: Record<CatalogSort, "asc" | "desc"> = {
+  metaScore: "desc",
   winRate: "desc",
   picks: "desc",
   name: "asc",
   recentBuffs: "desc",
+}
+
+const TIER_HERO_BORDER_COLORS = ["#7c5cff", "#5aeed0", "#ff6099", "#f5d75e", "#7c5cff"]
+const TIER_HERO_BORDER_STYLE: CSSProperties = {
+  position: "absolute",
+  inset: 0,
+  zIndex: 1,
+  boxSizing: "border-box",
+  width: "100%",
+  height: "100%",
+  borderRadius: "inherit",
+  pointerEvents: "none",
+  opacity: 0.88,
 }
 
 const BRAWLER_CLASS_OVERRIDES_BY_ID: Record<number, string> = {
@@ -100,15 +117,51 @@ function formatPercent(value: number | null | undefined, digits = 1) {
   return `${value.toFixed(digits)}%`
 }
 
-function getTier(stat: CatalogBrawlerStats | undefined) {
-  const winRate = stat?.winRate
-  const picks = stat?.picks ?? 0
-  if (winRate == null || picks < 10) return { label: "-", color: "var(--lb-text-4)" }
-  if (winRate >= 58) return { label: "S+", color: "#f5d75e" }
-  if (winRate >= 54) return { label: "S", color: "#a78bff" }
-  if (winRate >= 51) return { label: "A", color: "#7dd3fc" }
-  if (winRate >= 48) return { label: "B", color: "#e2e6ee" }
-  if (winRate >= 45) return { label: "C", color: "#ffb38a" }
+function formatSignedPercent(value: number | null | undefined, digits = 1) {
+  if (value == null || Number.isNaN(value)) return ""
+  return `${value >= 0 ? "+" : ""}${value.toFixed(digits)}%`
+}
+
+function formatCompact(value: number | null | undefined) {
+  if (value == null || Number.isNaN(value)) return "-"
+  return new Intl.NumberFormat("en-US", {
+    notation: "compact",
+    maximumFractionDigits: 1,
+  }).format(value)
+}
+
+function getWilsonLowerBound(stat: CatalogBrawlerStats) {
+  const n = stat.picks
+  const p = stat.wins / n
+  const z = 1.96
+  const z2 = z * z
+  const denominator = 1 + z2 / n
+  const center = p + z2 / (2 * n)
+  const margin = z * Math.sqrt((p * (1 - p) + z2 / (4 * n)) / n)
+
+  return Math.max(0, Math.min(1, (center - margin) / denominator))
+}
+
+function getMetaScore(stat: CatalogBrawlerStats | undefined, totalAnalyzedGames = 0) {
+  if (!stat || stat.winRate == null || stat.picks < 10 || stat.wins < 0) return null
+
+  const confidenceWinRate = getWilsonLowerBound(stat) * 100
+  const sampleScore = Math.min(1, Math.log10(stat.picks + 1) / 6) * 9
+  const coverageScore = Math.min(1, stat.mapCount / 16) * 8
+  const pickShare = totalAnalyzedGames > 0 ? stat.picks / totalAnalyzedGames : 0
+  const demandScore = Math.min(1, pickShare * 12) * 5
+
+  return Math.max(0, Math.min(100, confidenceWinRate * 0.78 + sampleScore + coverageScore + demandScore))
+}
+
+function getTier(stat: CatalogBrawlerStats | undefined, totalAnalyzedGames = 0) {
+  const score = getMetaScore(stat, totalAnalyzedGames)
+  if (score == null) return { label: "-", color: "var(--lb-text-4)" }
+  if (score >= 64) return { label: "S+", color: "#f5d75e" }
+  if (score >= 60) return { label: "S", color: "#a78bff" }
+  if (score >= 56) return { label: "A", color: "#7dd3fc" }
+  if (score >= 52) return { label: "B", color: "#e2e6ee" }
+  if (score >= 48) return { label: "C", color: "#ffb38a" }
   return { label: "D", color: "#ff7878" }
 }
 
@@ -123,6 +176,15 @@ function formatFilterLabel(name: string) {
 
 function brawlerHref(id: number) {
   return `/brawlers/${id}`
+}
+
+function browserSupportsWebGL() {
+  try {
+    const canvas = document.createElement("canvas")
+    return Boolean(canvas.getContext("webgl") || canvas.getContext("experimental-webgl"))
+  } catch {
+    return false
+  }
 }
 
 function getBrawlerClassName(brawler: Brawler) {
@@ -143,18 +205,36 @@ function HeaderHelp({ label, help }: { label: string; help: string }) {
   )
 }
 
+function HeroSignal({ label, value, detail }: { label: string; value: string; detail?: string }) {
+  return (
+    <span className="bl-tier-hero-signal">
+      <span>{label}</span>
+      <strong>{value}</strong>
+      {detail && <em>{detail}</em>}
+    </span>
+  )
+}
+
 export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] }) {
   const [activeRarity, setActiveRarity] = useState<string | null>(null)
   const [activeClass, setActiveClass] = useState<string | null>(null)
-  const [catalogSort, setCatalogSort] = useState<CatalogSort>("winRate")
+  const [catalogSort, setCatalogSort] = useState<CatalogSort>("metaScore")
   const [catalogSortDir, setCatalogSortDir] = useState<"asc" | "desc">("desc")
   const [search, setSearch] = useState("")
   const [catalogStats, setCatalogStats] = useState<Record<number, CatalogBrawlerStats>>({})
   const [catalogStatsLoaded, setCatalogStatsLoaded] = useState(false)
+  const [heroShaderReady, setHeroShaderReady] = useState(false)
+  const [tableScrollHint, setTableScrollHint] = useState({ left: false, right: false })
   const [searchOpen, setSearchOpen] = useState(false)
   const [sortOpen, setSortOpen] = useState(false)
   const [rarityOpen, setRarityOpen] = useState(false)
   const [classOpen, setClassOpen] = useState(false)
+  const [dropdownMaxHeights, setDropdownMaxHeights] = useState<DropdownHeightState>({
+    rarity: 318,
+    class: 318,
+    sort: 318,
+    search: 318,
+  })
   const searchParams = useSearchParams()
   const router = useRouter()
   const searchInputRef = useRef<HTMLInputElement>(null)
@@ -162,10 +242,15 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
   const sortDropdownRef = useRef<HTMLDivElement>(null)
   const rarityDropdownRef = useRef<HTMLDivElement>(null)
   const classDropdownRef = useRef<HTMLDivElement>(null)
+  const tableScrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     document.documentElement.classList.add("landing-bg")
     return () => document.documentElement.classList.remove("landing-bg")
+  }, [])
+
+  useEffect(() => {
+    setHeroShaderReady(browserSupportsWebGL())
   }, [])
 
   useEffect(() => {
@@ -189,11 +274,6 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
   const classes = Array.from(new Set(brawlers.map(getBrawlerClassName).filter(name => name !== "Unclassified"))).sort()
   const selectedSortOption = CATALOG_SORT_OPTIONS.find(option => option.value === catalogSort) ?? CATALOG_SORT_OPTIONS[0]
   const totalAnalyzedGames = Object.values(catalogStats).reduce((total, stat) => total + (stat?.picks ?? 0), 0)
-  const averageWinRate = (() => {
-    const values = Object.values(catalogStats).filter(stat => stat.winRate != null && stat.picks > 0)
-    if (values.length === 0) return null
-    return values.reduce((total, stat) => total + (stat.winRate ?? 0), 0) / values.length
-  })()
   const filteredBrawlers = brawlers
     .filter(b => {
       const matchesRarity = !activeRarity || b.rarity.name === activeRarity
@@ -203,6 +283,9 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
     })
     .sort((a, b) => {
       const direction = catalogSortDir === "asc" ? 1 : -1
+      if (catalogSort === "metaScore") {
+        return ((getMetaScore(catalogStats[a.id], totalAnalyzedGames) ?? -1) - (getMetaScore(catalogStats[b.id], totalAnalyzedGames) ?? -1)) * direction || a.name.localeCompare(b.name)
+      }
       if (catalogSort === "winRate") {
         return ((catalogStats[a.id]?.winRate ?? -1) - (catalogStats[b.id]?.winRate ?? -1)) * direction || a.name.localeCompare(b.name)
       }
@@ -215,6 +298,30 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
       return a.name.localeCompare(b.name) * direction
     })
 
+  const brawlerSignals = brawlers
+    .map(brawler => {
+      const stat = catalogStats[brawler.id]
+      return {
+        brawler,
+        stat,
+        metaScore: getMetaScore(stat, totalAnalyzedGames),
+        tier: getTier(stat, totalAnalyzedGames),
+      }
+    })
+    .filter(item => item.stat?.picks && item.metaScore != null)
+    .sort((a, b) => (b.metaScore ?? -1) - (a.metaScore ?? -1))
+  const topPerformer = brawlerSignals[0]
+  const mostPicked = brawlerSignals.length
+    ? [...brawlerSignals].sort((a, b) => (b.stat?.picks ?? 0) - (a.stat?.picks ?? 0))[0]
+    : null
+  const mostImproved = brawlerSignals
+    .filter(item => {
+      const delta = item.stat?.winRateDeltaDay
+      return delta != null && Number.isFinite(delta) && delta > 0
+    })
+    .sort((a, b) => (b.stat?.winRateDeltaDay ?? 0) - (a.stat?.winRateDeltaDay ?? 0))[0] ?? null
+  const signalLeaders = brawlerSignals.slice(0, 3)
+
   useClickOutside([searchDropdownRef, searchInputRef], () => setSearchOpen(false), searchOpen)
   useClickOutside(sortDropdownRef, () => setSortOpen(false), sortOpen)
   useClickOutside(rarityDropdownRef, () => setRarityOpen(false), rarityOpen)
@@ -222,37 +329,211 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
 
   const rarities = RARITY_ORDER.filter(name => brawlers.some(b => b.rarity.name === name))
   const filteredCount = filteredBrawlers.length
+
+  useEffect(() => {
+    const getBelowMaxHeight = (trigger: Element | null, fallback = 318) => {
+      if (!trigger) return fallback
+
+      const triggerRect = trigger.getBoundingClientRect()
+      const viewportInset = 12
+      const spaceBelow = Math.floor(window.innerHeight - triggerRect.bottom - viewportInset)
+
+      return Math.max(72, Math.min(fallback, spaceBelow))
+    }
+
+    let frame = 0
+    const updateDropdownHeights = () => {
+      if (frame) window.cancelAnimationFrame(frame)
+      frame = window.requestAnimationFrame(() => {
+        setDropdownMaxHeights(current => {
+          const next: DropdownHeightState = { ...current }
+
+          if (rarityOpen) {
+            next.rarity = getBelowMaxHeight(rarityDropdownRef.current?.querySelector(".bl-tier-selector") ?? null, 318)
+          }
+          if (classOpen) {
+            next.class = getBelowMaxHeight(classDropdownRef.current?.querySelector(".bl-tier-selector") ?? null, 318)
+          }
+          if (sortOpen) {
+            next.sort = getBelowMaxHeight(sortDropdownRef.current?.querySelector(".bl-tier-selector") ?? null, 240)
+          }
+          if (searchOpen && searchTerm.length > 0) {
+            next.search = getBelowMaxHeight(searchInputRef.current?.closest(".bl-tier-search") ?? null, 318)
+          }
+
+          return Object.keys(next).every(key =>
+            next[key as keyof DropdownHeightState] === current[key as keyof DropdownHeightState]
+          ) ? current : next
+        })
+        frame = 0
+      })
+    }
+
+    updateDropdownHeights()
+    window.addEventListener("resize", updateDropdownHeights)
+    window.addEventListener("scroll", updateDropdownHeights, true)
+
+    return () => {
+      if (frame) window.cancelAnimationFrame(frame)
+      window.removeEventListener("resize", updateDropdownHeights)
+      window.removeEventListener("scroll", updateDropdownHeights, true)
+    }
+  }, [rarityOpen, classOpen, sortOpen, searchOpen, searchTerm])
+
+  useEffect(() => {
+    const scroller = tableScrollRef.current
+    if (!scroller) return
+
+    let frame = 0
+    const updateScrollHint = () => {
+      if (frame) window.cancelAnimationFrame(frame)
+      frame = window.requestAnimationFrame(() => {
+        const maxScrollLeft = Math.max(0, scroller.scrollWidth - scroller.clientWidth)
+        const next = {
+          left: scroller.scrollLeft > 4,
+          right: scroller.scrollLeft < maxScrollLeft - 4,
+        }
+
+        setTableScrollHint(current =>
+          current.left === next.left && current.right === next.right ? current : next
+        )
+        frame = 0
+      })
+    }
+
+    updateScrollHint()
+    scroller.addEventListener("scroll", updateScrollHint, { passive: true })
+    window.addEventListener("resize", updateScrollHint)
+
+    const resizeObserver = typeof ResizeObserver !== "undefined"
+      ? new ResizeObserver(updateScrollHint)
+      : null
+    resizeObserver?.observe(scroller)
+    if (scroller.firstElementChild) resizeObserver?.observe(scroller.firstElementChild)
+
+    return () => {
+      if (frame) window.cancelAnimationFrame(frame)
+      scroller.removeEventListener("scroll", updateScrollHint)
+      window.removeEventListener("resize", updateScrollHint)
+      resizeObserver?.disconnect()
+    }
+  }, [catalogStatsLoaded, filteredCount])
+
   const analyzedLabel = totalAnalyzedGames > 0
     ? formatInteger(totalAnalyzedGames)
     : catalogStatsLoaded
       ? `${formatInteger(brawlers.length)} brawlers`
       : "Loading..."
-
   return (
     <>
       <main className="bl-tier-shell">
-        <TierlistSubNav active="brawlers" />
         <div className="bl-tier-content">
-          <section className="bl-tier-intro-card" aria-labelledby="brawlers-title">
-            <h1 id="brawlers-title">Brawlers Tierlist: Season 50</h1>
-            <div className="bl-tier-analyzed">
-              <span>BRAWLERS ANALYZED</span>
-              <strong>{analyzedLabel}</strong>
-              <HelpTooltip label="How BrawlLens calculates brawler stats">
-                This count comes from the current tracked brawler dataset. Rankings use win rate, pick volume, and
-                small-sample guardrails rather than a hand-written tier list.
-              </HelpTooltip>
+          <section className="bl-tier-hero" aria-labelledby="brawlers-title">
+            {heroShaderReady && (
+              <PulsingBorder
+                aria-hidden="true"
+                className="bl-tier-hero-border-shader"
+                style={TIER_HERO_BORDER_STYLE}
+                colors={TIER_HERO_BORDER_COLORS}
+                colorBack="#00000000"
+                roundness={0.08}
+                thickness={0.08}
+                softness={0.72}
+                intensity={0.22}
+                bloom={0.22}
+                spots={5}
+                spotSize={0.48}
+                pulse={0.22}
+                smoke={0.28}
+                smokeSize={0.64}
+                speed={0.82}
+                scale={1}
+              />
+            )}
+            <div className="bl-tier-hero-copy">
+              <h1 id="brawlers-title">Brawlers Tierlist: <span>Season 50</span></h1>
+              <div className="bl-tier-analyzed">
+                <span>GAMES ANALYZED</span>
+                <strong>{analyzedLabel}</strong>
+                <HelpTooltip label="How BrawlLens calculates brawler stats">
+                  This count comes from the current tracked brawler dataset. Rankings use a Wilson confidence score,
+                  win rate, pick volume, and map coverage rather than a hand-written tier list.
+                </HelpTooltip>
+              </div>
+              <div className="bl-tier-hero-signals" aria-label="Brawler tierlist model summary">
+                <HeroSignal
+                  label="Best Brawler:"
+                  value={topPerformer ? topPerformer.brawler.name : "-"}
+                />
+                <HeroSignal
+                  label="Most Played:"
+                  value={mostPicked ? mostPicked.brawler.name : "-"}
+                />
+                <HeroSignal
+                  label="Most Improved:"
+                  value={mostImproved ? mostImproved.brawler.name : "Building baseline"}
+                  detail={formatSignedPercent(mostImproved?.stat?.winRateDeltaDay)}
+                />
+              </div>
             </div>
-            <p>
-              Compare tracked brawler performance with compact rankings based on win rate, pick volume, and current
-              roster filters.
-            </p>
+
+            <div className="bl-tier-signal-card" aria-label="Top brawler signals">
+              <div className="bl-tier-signal-head">
+                <span>Meta leaders</span>
+                <small>Weighted model score</small>
+              </div>
+              <div className="bl-tier-signal-list">
+                {signalLeaders.length ? signalLeaders.map((item, index) => (
+                  <Link key={item.brawler.id} href={brawlerHref(item.brawler.id)} className="bl-tier-signal-row">
+                    <span className="bl-tier-signal-rank">{index + 1}</span>
+                    <BrawlImage
+                      src={item.brawler.imageUrl2}
+                      alt={item.brawler.name}
+                      width={34}
+                      height={34}
+                      className="bl-tier-signal-avatar"
+                      sizes="34px"
+                      priority={index < 3}
+                    />
+                    <span className="bl-tier-signal-name">
+                      <strong>{item.brawler.name}</strong>
+                      <small>{item.stat ? `${formatPercent(item.stat.winRate)} WR · ${formatCompact(item.stat.picks)} games` : "No sample"}</small>
+                    </span>
+                    <span className="bl-tier-signal-tier" style={{ color: item.tier.color }}>{item.tier.label}</span>
+                  </Link>
+                )) : (
+                  <div className="bl-tier-signal-empty">Loading signals...</div>
+                )}
+              </div>
+            </div>
           </section>
 
           <section className="bl-tier-board" aria-label="Brawler tierlist">
             <div className="bl-tier-toolbar">
               <div className="bl-tier-selector-group">
-                <div ref={rarityDropdownRef} className="bl-tier-selector-wrap">
+                <div
+                  ref={rarityDropdownRef}
+                  className="bl-tier-selector-wrap"
+                  onPointerEnter={event => {
+                    if (event.pointerType !== "mouse") return
+                    setRarityOpen(true)
+                    setClassOpen(false)
+                    setSortOpen(false)
+                    setSearchOpen(false)
+                  }}
+                  onPointerLeave={event => {
+                    if (event.pointerType === "mouse") setRarityOpen(false)
+                  }}
+                  onFocus={() => {
+                    setRarityOpen(true)
+                    setClassOpen(false)
+                    setSortOpen(false)
+                    setSearchOpen(false)
+                  }}
+                  onBlur={event => {
+                    if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setRarityOpen(false)
+                  }}
+                >
                   <button
                     type="button"
                     className="bl-tier-selector"
@@ -267,7 +548,11 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
                     <span>{activeRarity ?? "All rarities"}</span>
                     <ChevronDown size={14} className={rarityOpen ? "rotate-180" : ""} />
                   </button>
-                  <div className={`bl-tier-menu bl-tier-menu-list ${rarityOpen ? "is-open" : ""}`} role="listbox">
+                  <div
+                    className={`bl-tier-menu bl-tier-menu-list ${rarityOpen ? "is-open" : ""}`}
+                    role="listbox"
+                    style={{ maxHeight: dropdownMaxHeights.rarity }}
+                  >
                     {rarities.map(rarity => {
                       const active = activeRarity === rarity
                       return (
@@ -301,7 +586,29 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
                   </div>
                 </div>
 
-                <div ref={classDropdownRef} className="bl-tier-selector-wrap">
+                <div
+                  ref={classDropdownRef}
+                  className="bl-tier-selector-wrap"
+                  onPointerEnter={event => {
+                    if (event.pointerType !== "mouse") return
+                    setClassOpen(true)
+                    setRarityOpen(false)
+                    setSortOpen(false)
+                    setSearchOpen(false)
+                  }}
+                  onPointerLeave={event => {
+                    if (event.pointerType === "mouse") setClassOpen(false)
+                  }}
+                  onFocus={() => {
+                    setClassOpen(true)
+                    setRarityOpen(false)
+                    setSortOpen(false)
+                    setSearchOpen(false)
+                  }}
+                  onBlur={event => {
+                    if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setClassOpen(false)
+                  }}
+                >
                   <button
                     type="button"
                     className="bl-tier-selector"
@@ -316,7 +623,11 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
                     <span>{activeClass ? formatFilterLabel(activeClass) : "All classes"}</span>
                     <ChevronDown size={14} className={classOpen ? "rotate-180" : ""} />
                   </button>
-                  <div className={`bl-tier-menu bl-tier-menu-list ${classOpen ? "is-open" : ""}`} role="listbox">
+                  <div
+                    className={`bl-tier-menu bl-tier-menu-list ${classOpen ? "is-open" : ""}`}
+                    role="listbox"
+                    style={{ maxHeight: dropdownMaxHeights.class }}
+                  >
                     {classes.map(name => {
                       const active = activeClass === name
                       return (
@@ -350,7 +661,29 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
                   </div>
                 </div>
 
-                <div ref={sortDropdownRef} className="bl-tier-selector-wrap">
+                <div
+                  ref={sortDropdownRef}
+                  className="bl-tier-selector-wrap"
+                  onPointerEnter={event => {
+                    if (event.pointerType !== "mouse") return
+                    setSortOpen(true)
+                    setRarityOpen(false)
+                    setClassOpen(false)
+                    setSearchOpen(false)
+                  }}
+                  onPointerLeave={event => {
+                    if (event.pointerType === "mouse") setSortOpen(false)
+                  }}
+                  onFocus={() => {
+                    setSortOpen(true)
+                    setRarityOpen(false)
+                    setClassOpen(false)
+                    setSearchOpen(false)
+                  }}
+                  onBlur={event => {
+                    if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setSortOpen(false)
+                  }}
+                >
                   <button
                     type="button"
                     className="bl-tier-selector"
@@ -369,7 +702,11 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
                     }
                     <ChevronDown size={14} className={sortOpen ? "rotate-180" : ""} />
                   </button>
-                  <div className={`bl-tier-menu bl-tier-menu-list ${sortOpen ? "is-open" : ""}`} role="listbox">
+                  <div
+                    className={`bl-tier-menu bl-tier-menu-list ${sortOpen ? "is-open" : ""}`}
+                    role="listbox"
+                    style={{ maxHeight: dropdownMaxHeights.sort }}
+                  >
                     {CATALOG_SORT_OPTIONS.map(option => {
                       const active = catalogSort === option.value
                       return (
@@ -407,12 +744,30 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
                 <input
                   ref={searchInputRef}
                   value={search}
-                  onChange={e => { setSearch(e.target.value); setSearchOpen(true) }}
-                  onFocus={() => setSearchOpen(true)}
+                  onChange={e => {
+                    const nextSearch = e.target.value
+                    setSearch(nextSearch)
+                    setSearchOpen(nextSearch.trim().length > 0)
+                    setRarityOpen(false)
+                    setClassOpen(false)
+                    setSortOpen(false)
+                  }}
+                  onFocus={() => {
+                    setSearchOpen(search.trim().length > 0)
+                    setRarityOpen(false)
+                    setClassOpen(false)
+                    setSortOpen(false)
+                  }}
+                  aria-label="Search brawlers"
+                  autoComplete="off"
                   placeholder="Search brawler..."
                 />
-                {searchOpen && searchMatches.length > 0 && (
-                  <div ref={searchDropdownRef} className="bl-tier-search-menu">
+                {searchOpen && searchTerm.length > 0 && searchMatches.length > 0 && (
+                  <div
+                    ref={searchDropdownRef}
+                    className="bl-tier-search-menu"
+                    style={{ maxHeight: dropdownMaxHeights.search }}
+                  >
                     {searchMatches.slice(0, 12).map(brawler => (
                       <Link
                         key={brawler.id}
@@ -438,17 +793,18 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
               </div>
             </div>
 
-            <div className="bl-tier-table-scroll">
-              <div className="bl-tier-table">
+            <div className={`bl-tier-table-scroll-shell ${tableScrollHint.left ? "has-scroll-left" : ""} ${tableScrollHint.right ? "has-scroll-right" : ""}`}>
+              <div ref={tableScrollRef} className="bl-tier-table-scroll">
+                <div className="bl-tier-table">
                 <div className="bl-tier-table-head" role="row">
                   <span>Rank</span>
                   <span>Brawler</span>
-                  <span>Rarity</span>
-                  <span>Class</span>
-                  <HeaderHelp label="Tier" help="Tier is derived from tracked win rate with a minimum sample guardrail, so tiny lucky samples do not jump to the top." />
+                  <HeaderHelp label="Tier" help="Tier is derived from the confidence-adjusted meta score, so tiny lucky samples do not jump to the top." />
+                  <HeaderHelp label="Meta score" help="Weighted score built from confidence-adjusted win rate, pick volume, map coverage, and pick share." />
                   <HeaderHelp label="Winrate" help="Wins divided by tracked picks for that brawler across the eligible map dataset." />
                   <HeaderHelp label="Pickrate" help="This brawler's tracked picks divided by the total tracked brawler picks in the current dataset." />
-                  <HeaderHelp label="Games" help="The raw tracked pick count used as the sample size for this brawler row." />
+                  <HeaderHelp label="Best map" help="Highest tracked map win rate after requiring at least 3% of this brawler's total plays on that map." />
+                  <HeaderHelp label="Sample" help="Raw tracked games for this brawler in the current dataset." />
                 </div>
 
                 {!catalogStatsLoaded ? (
@@ -462,11 +818,11 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
                           <SkeletonBlock className="h-2.5 w-16" />
                         </span>
                       </span>
-                      <SkeletonBlock className="h-3 w-16" />
-                      <SkeletonBlock className="h-3 w-16" />
                       <SkeletonBlock className="mx-auto h-5 w-7" />
+                      <SkeletonBlock className="mx-auto h-3.5 w-14" />
                       <SkeletonBlock className="mx-auto h-3.5 w-16" />
                       <SkeletonBlock className="mx-auto h-3.5 w-16" />
+                      <SkeletonBlock className="h-3.5 w-28" />
                       <SkeletonBlock className="mx-auto h-3.5 w-20" />
                     </div>
                   ))
@@ -479,14 +835,15 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
                     const stat = catalogStats[brawler.id]
                     const winRate = stat?.winRate ?? null
                     const pickRate = totalAnalyzedGames > 0 && stat?.picks ? (stat.picks / totalAnalyzedGames) * 100 : null
-                    const winDelta = averageWinRate != null && winRate != null ? winRate - averageWinRate : null
-                    const tier = getTier(stat)
+                    const winDelta = stat?.winRateDeltaDay ?? null
+                    const tier = getTier(stat, totalAnalyzedGames)
                     const className = getBrawlerClassName(brawler)
+                    const metaScore = getMetaScore(stat, totalAnalyzedGames)
                     return (
                       <Link
                         key={brawler.id}
                         href={brawlerHref(brawler.id)}
-                        className="bl-tier-row"
+                        className={`bl-tier-row ${index < 3 ? "is-podium" : ""}`}
                       >
                         <span className="bl-tier-rank">{index + 1}</span>
                         <span className="bl-tier-brawler-cell">
@@ -501,25 +858,30 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
                           />
                           <span className="min-w-0">
                             <strong>{brawler.name}</strong>
+                            <small>{brawler.rarity.name} · {formatFilterLabel(className)}</small>
                           </span>
                         </span>
-                        <span className="bl-tier-rarity">{brawler.rarity.name}</span>
-                        <span className="bl-tier-muted">{formatFilterLabel(className)}</span>
                         <span className="bl-tier-tier" style={{ color: tier.color }}>{tier.label}</span>
+                        <span className="bl-tier-score">{metaScore == null ? "-" : metaScore.toFixed(1)}</span>
                         <span className="bl-tier-metric">
                           <strong style={{ color: winRate != null ? winRateColor(winRate) : "var(--lb-text-4)" }}>{formatPercent(winRate)}</strong>
-                          <small className={winDelta != null && winDelta < 0 ? "is-negative" : "is-positive"}>
-                            {winDelta == null ? "-" : `${winDelta >= 0 ? "+" : ""}${winDelta.toFixed(1)}%`}
-                          </small>
+                          {winDelta != null && <small className="is-delta">{`${winDelta >= 0 ? "+" : ""}${winDelta.toFixed(1)}%`}</small>}
                         </span>
                         <span className="bl-tier-metric">
                           <strong>{formatPercent(pickRate)}</strong>
                         </span>
-                        <span className="bl-tier-games">{formatInteger(stat?.picks)}</span>
+                        <span className="bl-tier-best-map">
+                          <strong>{stat?.bestMap?.name ?? "-"}</strong>
+                          {stat?.bestMap && <small>{stat.bestMap.mode} · {formatPercent(stat.bestMap.winRate)} WR</small>}
+                        </span>
+                        <span className="bl-tier-sample">
+                          <strong>{formatInteger(stat?.picks)}</strong>
+                        </span>
                       </Link>
                     )
                   })
                 )}
+                </div>
               </div>
             </div>
           </section>

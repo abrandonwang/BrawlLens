@@ -6,7 +6,6 @@ import Link from "next/link"
 import { BrawlImage, brawlerIconUrl } from "@/components/BrawlImage"
 import HelpTooltip from "@/components/HelpTooltip"
 import { EmptyState, StateButton, StateLink } from "@/components/PolishStates"
-import TierlistSubNav from "@/components/TierlistSubNav"
 import { LeaderboardPanel, RankCell, TableHead } from "@/app/leaderboards/LeaderboardDpmShell"
 import { formatBrawlerName, formatNum } from "@/lib/format"
 import { getTierInfo, winRateColor } from "@/lib/tiers"
@@ -183,8 +182,6 @@ export default function MapDetailClient({ mapName, imageUrl, modeName, totalBatt
 
   return (
     <main className="bl-bd-shell bl-md-shell">
-      <TierlistSubNav active="maps" />
-
       <section className="bl-bd-hero">
         <div className="bl-bd-hero-inner">
           <div className="bl-bd-identity bl-md-identity">

@@ -20,6 +20,7 @@ type Row = {
 
 const MIN_TOTAL_PICKS = 500
 const MIN_MAP_PICKS = 20
+const MIN_MAP_PICK_SHARE = 0.03
 
 function getVolumeScore(picks: number, maxPicks: number) {
   if (maxPicks <= 0) return 0
@@ -90,10 +91,11 @@ export async function GET() {
   }
 
   const topId = top.id
+  const minBestMapPicks = Math.max(MIN_MAP_PICKS, Math.ceil(top.picks * MIN_MAP_PICK_SHARE))
   const bestMap = data
-    .filter(r => r.brawler_id === topId && Number(r.picks) >= MIN_MAP_PICKS)
+    .filter(r => r.brawler_id === topId && Number(r.picks) >= minBestMapPicks)
     .map(r => ({ map: r.map, mode: r.mode, winRate: Number(r.win_rate), picks: Number(r.picks) }))
-    .sort((a, b) => b.winRate - a.winRate)[0]
+    .sort((a, b) => (b.winRate - a.winRate) || (b.picks - a.picks))[0]
 
   const res = NextResponse.json({
     brawler: {

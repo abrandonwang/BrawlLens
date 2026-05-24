@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { Bolt } from "lucide-react"
 import { BrawlImage, brawlerIconUrl } from "@/components/BrawlImage"
-import TierlistSubNav from "@/components/TierlistSubNav"
 import { HYPERCHARGES } from "@/data/hypercharges"
 import { formatBrawlerName, formatNum } from "@/lib/format"
 import { getTierInfo, winRateColor } from "@/lib/tiers"
@@ -294,8 +293,6 @@ export default function BrawlerDetailClient({ brawler }: { brawler: Brawler }) {
 
   return (
     <main className="bl-bd-shell">
-      <TierlistSubNav active="brawlers" />
-
       <section className="bl-bd-hero">
         <div className="bl-bd-hero-inner">
           <div className="bl-bd-identity">

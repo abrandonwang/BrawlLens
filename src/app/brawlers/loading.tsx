@@ -1,15 +1,13 @@
-import TierlistSubNav from "@/components/TierlistSubNav"
 import { SkeletonBlock } from "@/components/PolishStates"
 
 export default function Loading() {
   return (
     <main className="bl-tier-shell">
-      <TierlistSubNav active="brawlers" />
       <div className="bl-tier-content">
         <section className="bl-tier-intro-card" aria-labelledby="brawlers-loading-title">
           <h1 id="brawlers-loading-title">Brawlers Tierlist</h1>
           <div className="bl-tier-analyzed">
-            <span>BRAWLERS ANALYZED</span>
+            <span>GAMES ANALYZED</span>
             <SkeletonBlock className="h-7 w-36" />
           </div>
           <div className="mx-auto mt-5 grid max-w-[660px] justify-items-center gap-2">
@@ -33,12 +31,12 @@ export default function Loading() {
               <div className="bl-tier-table-head" role="row">
                 <span>Rank</span>
                 <span>Brawler</span>
-                <span>Rarity</span>
-                <span>Class</span>
                 <span>Tier</span>
+                <span>Meta score</span>
                 <span>Winrate</span>
                 <span>Pickrate</span>
-                <span>Games</span>
+                <span>Best map</span>
+                <span>Sample</span>
               </div>
               {Array.from({ length: 10 }).map((_, index) => (
                 <div key={index} className="bl-tier-row" aria-hidden="true">
@@ -50,11 +48,11 @@ export default function Loading() {
                       <SkeletonBlock className="h-2.5 w-16" />
                     </span>
                   </span>
-                  <SkeletonBlock className="h-3 w-16" />
-                  <SkeletonBlock className="h-3 w-16" />
                   <SkeletonBlock className="mx-auto h-5 w-7" />
+                  <SkeletonBlock className="mx-auto h-3.5 w-14" />
                   <SkeletonBlock className="mx-auto h-3.5 w-16" />
                   <SkeletonBlock className="mx-auto h-3.5 w-16" />
+                  <SkeletonBlock className="h-3.5 w-28" />
                   <SkeletonBlock className="mx-auto h-3.5 w-20" />
                 </div>
               ))}

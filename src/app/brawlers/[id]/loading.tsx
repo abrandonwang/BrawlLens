@@ -1,11 +1,8 @@
-import TierlistSubNav from "@/components/TierlistSubNav"
 import { SkeletonBlock } from "@/components/PolishStates"
 
 export default function Loading() {
   return (
     <main className="bl-bd-shell">
-      <TierlistSubNav active="brawlers" />
-
       <section className="bl-bd-hero">
         <div className="bl-bd-hero-inner">
           <div className="bl-bd-identity">

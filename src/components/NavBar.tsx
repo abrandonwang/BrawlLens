@@ -135,23 +135,11 @@ export default function NavBar() {
   const [loginRedirectTo, setLoginRedirectTo] = useState<string | null>(null);
   const previousPathnameRef = useRef(pathname);
   const desktopNavRef = useRef<HTMLDivElement>(null);
-  const browseTriggerRef = useRef<HTMLDivElement>(null);
   const accountMenuRef = useRef<HTMLDivElement>(null);
   const menuCloseTimerRef = useRef<number | null>(null);
   const desktopHoverTimerRef = useRef<number | null>(null);
   const loginInputRef = useRef<HTMLInputElement>(null);
-  const [desktopPanelLeft, setDesktopPanelLeft] = useState(190);
-  const [isScrolled, setIsScrolled] = useState(false);
   const bodyScrollLocked = isMenuOpen || menuClosing || isLoginOpen;
-
-  useEffect(() => {
-    function onScroll() {
-      setIsScrolled(window.scrollY > 8);
-    }
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
 
   const applyAccountUser = useCallback((user: PremiumUser | null) => {
     setIsSignedIn(Boolean(user));
@@ -372,32 +360,10 @@ export default function NavBar() {
     }
   }
 
-  function updateDesktopPanelLeft() {
-    const trigger = browseTriggerRef.current;
-    if (!trigger) return;
-    const panelWidth = window.innerWidth < 1280 ? 500 : 540;
-    const triggerRect = trigger.getBoundingClientRect();
-    const nextLeft = Math.max(16, Math.min(triggerRect.left - 18, window.innerWidth - panelWidth - 16));
-    setDesktopPanelLeft(Math.round(nextLeft));
-  }
-
   function openHoverDesktopPanel(panel: DesktopPanel) {
     if (suppressedDesktopPanel === panel) return;
     clearDesktopHoverTimer();
-    updateDesktopPanelLeft();
     setHoverDesktopPanel(panel);
-  }
-
-  function scheduleHoverDesktopClose(panel: DesktopPanel) {
-    clearDesktopHoverTimer();
-    desktopHoverTimerRef.current = window.setTimeout(() => {
-      setHoverDesktopPanel(current => current === panel ? null : current);
-      desktopHoverTimerRef.current = null;
-    }, 560);
-  }
-
-  function clearSuppressedDesktopPanel(panel: DesktopPanel) {
-    setSuppressedDesktopPanel(current => current === panel ? null : current);
   }
 
   function isValidAccountPassword(password: string) {
@@ -517,9 +483,7 @@ export default function NavBar() {
   const accountLabel = isSignedIn ? accountName ?? "Account" : "Log in";
   const isLeaderboardsRoute = pathname.startsWith("/leaderboards");
   const isPlayerRoute = pathname.startsWith("/player/");
-  const isTierlistRoute = pathname === "/brawlers" || pathname.startsWith("/brawlers/") || pathname === "/meta" || pathname.startsWith("/meta/") || pathname === "/guides" || pathname.startsWith("/guides/");
-  const isGuidesRoute = pathname === "/guides" || pathname.startsWith("/guides/");
-  const isNavFlowRoute = isLeaderboardsRoute || isPlayerRoute || isTierlistRoute || isGuidesRoute;
+  const isTierlistRoute = pathname === "/brawlers" || pathname.startsWith("/brawlers/") || pathname === "/meta" || pathname.startsWith("/meta/");
   const browseActive = browseItems.some(item => item.href && isDesktopItemActive(pathname, item.href));
   const leaderboardsActive = isPlayerRoute || leaderboardItems.some(item => item.href && isDesktopItemActive(pathname, item.href));
   const loginEmailCheck = useEmailCheck(loginEmail, isLoginOpen && authMode === "signup");
@@ -543,12 +507,11 @@ export default function NavBar() {
   const loginPasswordValid = loginPasswordRules.every(rule => rule.passed);
   const canSubmitLogin = loginEmailReady && loginPasswordValid && loginState !== "sending";
   const menuVisible = isMenuOpen || menuClosing;
-  const visibleDesktopPanel = desktopPanel ?? hoverDesktopPanel;
+  const visibleDesktopPanel = hoverDesktopPanel ?? desktopPanel;
   const renderedDesktopPanel = visibleDesktopPanel ?? lastDesktopPanel;
   const desktopPanelContent = renderedDesktopPanel === "leaderboards"
-    ? { items: leaderboardItems, viewAllHref: "/leaderboards/players" }
-    : { items: browseItems, viewAllHref: "/brawlers" };
-  const navPositionClass = "relative z-[100]";
+    ? { items: leaderboardItems }
+    : { items: browseItems };
   const navTextClass = (active: boolean) =>
     `relative inline-flex h-[36px] items-center rounded-full border-0 px-3 text-[13px] font-semibold leading-none tracking-[-0.005em] no-underline outline-none transition-colors duration-150 text-[rgba(245,244,241,0.78)] hover:text-[#f5f4f1] hover:bg-[rgba(245,244,241,0.06)] focus-visible:text-[#f5f4f1] ${active ? "text-[#f5f4f1] bg-[rgba(124,92,255,0.14)]" : ""}`;
 
@@ -567,22 +530,10 @@ export default function NavBar() {
     if (visibleDesktopPanel) setLastDesktopPanel(visibleDesktopPanel);
   }, [visibleDesktopPanel]);
 
-  useEffect(() => {
-    if (!visibleDesktopPanel) return;
-    updateDesktopPanelLeft();
-
-    function onResize() {
-      updateDesktopPanelLeft();
-    }
-
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, [visibleDesktopPanel]);
-
   return (
     <>
       <nav
-        className="bl-nav-pill fixed left-1/2 top-4 z-[100] -translate-x-1/2 w-[70vw] max-w-[1200px] overflow-hidden rounded-[20px] border border-solid border-[rgba(245,244,241,0.10)] bg-[rgba(13,13,17,0.92)] text-[#f5f4f1] shadow-[0_18px_44px_-22px_rgba(0,0,0,0.55)] backdrop-blur-xl backdrop-saturate-150 max-lg:w-[calc(100%-20px)]"
+        className="bl-nav-pill fixed left-1/2 top-4 z-[500] -translate-x-1/2 w-[70vw] max-w-[1200px] overflow-visible rounded-[20px] border border-solid border-[rgba(245,244,241,0.10)] bg-[rgba(13,13,17,0.92)] text-[#f5f4f1] shadow-[0_18px_44px_-22px_rgba(0,0,0,0.55)] backdrop-blur-xl backdrop-saturate-150 max-lg:w-[calc(100%-20px)]"
         onMouseLeave={() => {
           setHoverDesktopPanel(null);
           setDesktopPanel(null);
@@ -607,7 +558,7 @@ export default function NavBar() {
               className={`${navTextClass(browseActive)} cursor-pointer gap-1.5`}
             >
               Tierlist &amp; Brawlers
-              <ChevronDown size={13} strokeWidth={2.25} className="nav-trigger-arrow ml-0.5 transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]" />
+              <ChevronDown size={13} strokeWidth={2.25} className="nav-trigger-arrow ml-0.5" />
             </Link>
           </div>
           <div
@@ -622,7 +573,7 @@ export default function NavBar() {
               className={`${navTextClass(leaderboardsActive)} cursor-pointer gap-1.5`}
             >
               Leaderboards
-              <ChevronDown size={13} strokeWidth={2.25} className="nav-trigger-arrow ml-0.5 transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]" />
+              <ChevronDown size={13} strokeWidth={2.25} className="nav-trigger-arrow ml-0.5" />
             </Link>
           </div>
         </div>
@@ -644,18 +595,18 @@ export default function NavBar() {
               <button
                 type="button"
                 onClick={() => setIsAccountMenuOpen(open => !open)}
-                className={`relative z-[142] inline-flex h-[34px] min-w-[76px] max-w-[220px] shrink-0 cursor-pointer items-center justify-center gap-2 whitespace-nowrap border px-3.5 text-[14px] font-bold leading-none outline-none transition-colors duration-150 focus-visible:ring-1 focus-visible:ring-[rgba(245,244,241,0.15)] max-[540px]:max-w-[180px] max-[430px]:max-w-[132px] max-[420px]:px-3 ${isAccountMenuOpen ? "rounded-t-[17px] rounded-b-none border-[#26262d] border-b-[#0d0d11] bg-[#0d0d11] text-[#f5f4f1] shadow-[rgba(0,0,0,0.04)_0_0.5px_0_0_inset]" : "rounded-full border-[#26262d] bg-[#15151b] text-[#f5f4f1] shadow-[rgba(0,0,0,0.04)_0_0.5px_0_0_inset] hover:border-[rgba(245,244,241,0.15)] hover:bg-[#15151b] hover:text-[#f5f4f1]"}`}
+                className={`bl-account-menu-button relative z-[620] inline-flex h-[36px] min-w-[76px] max-w-[220px] shrink-0 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-[10px] border-0 bg-[rgba(245,244,241,0.06)] px-3.5 text-[14px] font-semibold leading-none text-[rgba(245,244,241,0.78)] outline-none transition-colors duration-150 hover:bg-[rgba(245,244,241,0.10)] hover:text-[#f5f4f1] focus-visible:ring-1 focus-visible:ring-[rgba(245,244,241,0.15)] max-[540px]:max-w-[180px] max-[430px]:max-w-[132px] max-[420px]:px-3 ${isAccountMenuOpen ? "bg-[rgba(245,244,241,0.10)] text-[#f5f4f1]" : ""}`}
                 aria-haspopup="menu"
                 aria-expanded={isAccountMenuOpen}
                 title={accountLabel}
               >
                 <span className="block min-w-0 truncate leading-[1.35]">{accountLabel}</span>
-                <ChevronDown size={14} strokeWidth={2} className="shrink-0 text-[#5f5f5d] max-[430px]:hidden" />
+                <ChevronDown size={14} strokeWidth={2} className="bl-account-menu-arrow shrink-0 text-[#5f5f5d] max-[430px]:hidden" />
               </button>
               {isAccountMenuOpen && (
                 <div
                   role="menu"
-                  className="absolute right-0 top-[calc(100%-1px)] z-[140] w-[278px] origin-top-right rounded-[12px] rounded-tr-none border border-[#26262d] bg-[#0d0d11] p-1.5 pt-2 text-[#f5f4f1] shadow-[0_24px_64px_-36px_rgba(0,0,0,0.12),rgba(0,0,0,0.04)_0_0.5px_0_0_inset] animate-[accountMenuIn_0.16s_cubic-bezier(0.16,1,0.3,1)_both]"
+                  className="bl-account-menu-panel absolute right-0 top-[calc(100%+8px)] z-[630] w-[278px] origin-top-right rounded-[12px] border border-[#26262d] bg-[#0d0d11] p-1.5 pt-2 text-[#f5f4f1] shadow-[0_24px_64px_-36px_rgba(0,0,0,0.38),rgba(255,255,255,0.04)_0_0.5px_0_0_inset] animate-[accountMenuIn_0.16s_cubic-bezier(0.16,1,0.3,1)_both]"
                 >
                   <div className="px-2.5 py-2.5">
                     <p className="m-0 truncate text-[14px] font-semibold leading-tight text-[#f5f4f1]">{accountLabel}</p>
@@ -710,9 +661,9 @@ export default function NavBar() {
         </button>
         </div>
         <div
-          className={`hidden overflow-hidden transition-[max-height,opacity,transform] duration-[640ms] ease-[cubic-bezier(0.16,1,0.3,1)] lg:block ${visibleDesktopPanel ? "max-h-[320px] opacity-100 translate-y-0" : "max-h-0 opacity-0 -translate-y-2"}`}
+          className={`hidden overflow-hidden transition-[max-height,opacity,transform] duration-[640ms] ease-[cubic-bezier(0.16,1,0.3,1)] lg:block ${visibleDesktopPanel ? "max-h-[220px] opacity-100 translate-y-0" : "max-h-0 opacity-0 -translate-y-2"}`}
         >
-          <div className="px-5 pb-5 pt-1">
+          <div className="px-5 pb-4 pt-1">
             <div className="grid grid-cols-3 gap-4 px-0">
               {desktopPanelContent.items.map(item => {
                 if (!item.href || item.disabled) {
@@ -744,20 +695,13 @@ export default function NavBar() {
                 );
               })}
             </div>
-            <Link
-              href={desktopPanelContent.viewAllHref}
-              onClick={() => { setDesktopPanel(null); setHoverDesktopPanel(null); }}
-              className="mt-3 inline-flex items-center gap-1 px-3 text-[12.5px] font-semibold text-[rgba(245,244,241,0.6)] no-underline transition-colors hover:text-[#f5f4f1]"
-            >
-              View all <span aria-hidden="true">→</span>
-            </Link>
           </div>
         </div>
       </nav>
 
       {menuVisible && (
         <div
-          className="bl-mobile-menu fixed inset-x-0 top-[72px] bottom-0 z-[90] overflow-y-auto bg-[#0d0d11] text-[#f5f4f1] lg:hidden"
+          className="bl-mobile-menu fixed inset-0 z-[90] overflow-y-auto bg-[#0d0d11] text-[#f5f4f1] lg:hidden"
           style={{
             animation: menuClosing
               ? "mobileMenuOut 0.34s cubic-bezier(0.4,0,1,1) forwards"

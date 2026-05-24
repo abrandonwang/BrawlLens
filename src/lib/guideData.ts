@@ -62,6 +62,7 @@ export type GuideDataset = {
 
 const MIN_TOTAL_PICKS = 500
 const MIN_MAP_PICKS = 100
+const MIN_MAP_PICK_SHARE = 0.03
 
 function supabase() {
   return createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_KEY!)
@@ -121,7 +122,7 @@ async function loadGuideDataset(): Promise<GuideDataset> {
     strongMapPicks: number
     qualifyingMapPicks: number
     qualifyingMaps: number
-    bestMap: GuideBrawler["bestMap"]
+    mapCandidates: NonNullable<GuideBrawler["bestMap"]>[]
   }>()
 
   for (const row of statsResult.data) {
@@ -138,7 +139,7 @@ async function loadGuideDataset(): Promise<GuideDataset> {
       strongMapPicks: 0,
       qualifyingMapPicks: 0,
       qualifyingMaps: 0,
-      bestMap: null,
+      mapCandidates: [],
     }
 
     current.picks += picks
@@ -148,14 +149,12 @@ async function loadGuideDataset(): Promise<GuideDataset> {
       current.qualifyingMaps += 1
       current.qualifyingMapPicks += picks
       if (winRate >= 50) current.strongMapPicks += picks
-      if (!current.bestMap || winRate > current.bestMap.winRate) {
-        current.bestMap = {
-          name: row.map,
-          mode: modeLabel(row.mode),
-          winRate,
-          picks,
-        }
-      }
+      current.mapCandidates.push({
+        name: row.map,
+        mode: modeLabel(row.mode),
+        winRate,
+        picks,
+      })
     }
 
     aggregate.set(row.brawler_id, current)
@@ -170,6 +169,10 @@ async function loadGuideDataset(): Promise<GuideDataset> {
       const consistency = brawler.qualifyingMapPicks > 0
         ? (brawler.strongMapPicks / brawler.qualifyingMapPicks) * 100
         : winRate
+      const minBestMapPicks = Math.max(MIN_MAP_PICKS, Math.ceil(brawler.picks * MIN_MAP_PICK_SHARE))
+      const bestMap = brawler.mapCandidates
+        .filter(map => map.picks >= minBestMapPicks)
+        .sort((a, b) => (b.winRate - a.winRate) || (b.picks - a.picks))[0] ?? null
       const score = winRate * 0.66 + volumeScore(brawler.picks, maxPicks) * 0.2 + consistency * 0.14
 
       return {
@@ -185,7 +188,7 @@ async function loadGuideDataset(): Promise<GuideDataset> {
         score,
         consistency,
         mapCoverage: brawler.qualifyingMaps,
-        bestMap: brawler.bestMap,
+        bestMap,
       } satisfies GuideBrawler
     })
     .sort((a, b) => b.score - a.score)
