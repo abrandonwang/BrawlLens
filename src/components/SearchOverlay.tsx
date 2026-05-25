@@ -14,20 +14,20 @@ import { sanitizePlayerTag } from "@/lib/validation"
 
 /* ── AI markdown ── */
 const mdComponents: Components = {
-  p: ({ children }) => <p className="bl-cmd-p">{children}</p>,
-  strong: ({ children }) => <strong className="bl-cmd-strong">{children}</strong>,
-  em: ({ children }) => <em className="bl-cmd-em">{children}</em>,
-  h2: ({ children }) => <h2 className="bl-cmd-h2">{children}</h2>,
-  h3: ({ children }) => <h3 className="bl-cmd-h3">{children}</h3>,
-  ul: ({ children }) => <ul className="bl-cmd-ul">{children}</ul>,
-  ol: ({ children }) => <ol className="bl-cmd-ol">{children}</ol>,
-  li: ({ children }) => <li className="bl-cmd-li">{children}</li>,
-  a: ({ href, children }) => <Link href={href ?? "/"} className="bl-cmd-link">{children}</Link>,
+  p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+  strong: ({ children }) => <strong className="font-[720] text-[rgba(245,244,241,0.88)]">{children}</strong>,
+  em: ({ children }) => <em className="italic text-[rgba(245,244,241,0.52)]">{children}</em>,
+  h2: ({ children }) => <h2 className="mb-[5px] mt-3.5 text-[13px] font-[720] text-[rgba(245,244,241,0.84)] first:mt-0">{children}</h2>,
+  h3: ({ children }) => <h3 className="mb-1 mt-2.5 text-[12.5px] font-[680] text-[rgba(245,244,241,0.68)] first:mt-0">{children}</h3>,
+  ul: ({ children }) => <ul className="mb-2 flex flex-col gap-[3px]">{children}</ul>,
+  ol: ({ children }) => <ol className="mb-2 flex flex-col gap-[3px]">{children}</ol>,
+  li: ({ children }) => <li className="ml-4 list-item text-[13px]">{children}</li>,
+  a: ({ href, children }) => <Link href={href ?? "/"} className="font-[650] text-[var(--bt-blue-hot)] underline underline-offset-2 hover:opacity-75">{children}</Link>,
   code: ({ children, className }) => {
-    if (className?.includes("language-")) return <pre className="bl-cmd-pre"><code>{children}</code></pre>
-    return <code className="bl-cmd-code">{children}</code>
+    if (className?.includes("language-")) return <pre className="my-2 overflow-x-auto rounded-[8px] border border-[rgba(245,244,241,0.08)] bg-[rgba(245,244,241,0.035)] px-3 py-2.5 font-mono text-[11.5px] text-[rgba(245,244,241,0.62)]"><code>{children}</code></pre>
+    return <code className="rounded border border-[rgba(245,244,241,0.08)] bg-[rgba(245,244,241,0.04)] px-[5px] py-px font-mono text-[11.5px] text-[rgba(245,244,241,0.72)]">{children}</code>
   },
-  hr: () => <hr className="bl-cmd-hr" />,
+  hr: () => <hr className="my-2.5 border-0 border-t border-[rgba(245,244,241,0.08)]" />,
 }
 
 /* ── Search types ── */
@@ -273,6 +273,43 @@ function isAiQuery(q: string) {
 /* ── Component ── */
 type Mode = "search" | "ai"
 const SEARCH_OVERLAY_EXIT_MS = 180
+const cmdLayerClass = (closing: boolean) =>
+  `fixed inset-0 z-[300] flex items-start justify-center px-[18px] pb-[18px] pt-[clamp(118px,20vh,260px)] max-[560px]:p-2.5 max-[560px]:pt-[70px] ${closing ? "animate-[cmdLayerOut_180ms_ease_both]" : "animate-[cmdLayerIn_180ms_ease_both]"}`
+
+const cmdBackdropClass =
+  "bl-cmd-backdrop absolute inset-0 cursor-default overflow-hidden border-0 bg-[rgba(8,8,12,0.24)] backdrop-blur-[64px] [transform:translateZ(0)]"
+
+const cmdPanelClass = (closing: boolean) =>
+  `relative z-[1] flex w-[min(620px,calc(100vw-36px))] max-h-[min(540px,calc(100dvh-120px))] flex-col overflow-hidden rounded-[14px] border border-[rgba(255,255,255,0.10)] bg-[rgba(34,34,42,0.94)] shadow-[rgba(255,255,255,0.05)_0_0.5px_0_0_inset,0_24px_64px_-20px_rgba(0,0,0,0.55)] backdrop-blur-[12px] max-[560px]:w-[calc(100vw-20px)] max-[560px]:max-h-[calc(100dvh-92px)] max-[560px]:rounded-2xl ${closing ? "animate-[cmdPanelOut_180ms_ease_both]" : "animate-[cmdPanelIn_200ms_cubic-bezier(0.16,1,0.3,1)_both]"}`
+
+const cmdTabClass = (active: boolean) =>
+  `relative inline-flex h-[30px] min-w-[72px] cursor-pointer items-center justify-center rounded-full border-0 px-3.5 text-[12px] font-[720] tracking-normal outline-none transition-[background-color,color,box-shadow] duration-150 max-[560px]:min-w-[66px] ${active ? "bg-[#7c5cff] text-white shadow-none hover:bg-[#5b3fcc] focus-visible:bg-[#5b3fcc]" : "bg-transparent text-[rgba(245,244,241,0.46)] hover:text-[rgba(245,244,241,0.76)]"}`
+
+const cmdFormClass =
+  "grid h-12 min-h-12 grid-cols-[auto_minmax(0,1fr)_auto] items-center border-0 bg-transparent shadow-none transition-none focus-within:bg-[rgba(255,255,255,0.055)] focus-within:shadow-none focus-within:outline-none max-[560px]:mx-2.5 max-[560px]:mb-1 max-[560px]:mt-2 max-[560px]:h-[42px] max-[560px]:min-h-[42px]"
+
+const cmdInputClass =
+  "min-w-0 border-0 bg-transparent px-3 py-0 text-[15px] font-medium tracking-normal text-[#f5f4f1] shadow-none outline-none placeholder:text-[rgba(245,244,241,0.36)] placeholder:font-medium focus:border-0 focus:bg-transparent focus:shadow-none focus:outline-none max-[560px]:text-[13px] [font-family:var(--font-ui)]"
+
+const cmdSubmitClass =
+  "mr-3 grid size-8 cursor-pointer place-items-center rounded-[8px] border-0 bg-transparent text-[rgba(245,244,241,0.7)] outline-none transition-colors duration-150 hover:bg-[rgba(245,244,241,0.06)] hover:text-[#f5f4f1]"
+
+const cmdResultsClass =
+  "flex-1 overflow-y-auto border-t border-[rgba(255,255,255,0.06)] p-0 [scrollbar-width:none] empty:hidden [&::-webkit-scrollbar]:hidden max-[560px]:px-2 max-[560px]:pb-3"
+
+const cmdRowClass = (recent: boolean) =>
+  `grid items-center gap-3 border-0 bg-transparent text-[var(--bt-text-2)] no-underline shadow-none transition-colors duration-150 hover:border-0 hover:bg-[rgba(245,244,241,0.04)] hover:text-[#f5f4f1] hover:shadow-none hover:[transform:none] max-[560px]:grid-cols-[36px_minmax(0,1fr)] max-[560px]:px-2 max-[560px]:py-1.5 max-[560px]:min-h-[50px] ${recent ? "min-h-[54px] grid-cols-[22px_minmax(0,1fr)_auto] px-3.5 py-2" : "min-h-9 grid-cols-[22px_minmax(0,1fr)] px-3.5 py-1.5"}`
+
+const cmdIconClass =
+  "grid size-5 place-items-center overflow-hidden rounded bg-[rgba(245,244,241,0.06)] text-[11px] font-semibold text-[rgba(245,244,241,0.4)] shadow-none max-[560px]:size-8"
+
+const cmdIconImageClass = "size-5 object-cover max-[560px]:size-8"
+const cmdTeamLogoClass = "size-5 object-contain p-1 max-[560px]:size-8"
+const cmdCopyTitleClass = "block overflow-hidden text-ellipsis whitespace-nowrap text-[15px] font-medium leading-[1.2] tracking-normal text-[rgba(245,244,241,0.94)]"
+const cmdAiMessageClass = (role: AiMessage["role"]) =>
+  `mb-3.5 bg-[var(--bt-shell)] text-[var(--bt-text-2)] shadow-none ${role === "user" ? "text-[13.5px] font-[650] leading-[1.55]" : "text-[13px] font-[540] leading-[1.6]"}`
+const cmdAiSendClass =
+  "grid size-[26px] shrink-0 cursor-pointer place-items-center rounded-[8px] border-0 bg-[#7c5cff] text-white outline-none transition-colors duration-100 hover:bg-[#5b3fcc] focus-visible:bg-[#5b3fcc] disabled:cursor-default disabled:opacity-25"
 
 export default function SearchOverlay() {
   const router = useRouter()
@@ -531,20 +568,20 @@ export default function SearchOverlay() {
   if (!visible) return null
 
   return (
-    <div className={`bl-cmd-layer ${closing ? "is-closing" : ""}`} role="dialog" aria-modal="true" aria-label="Search & AI">
-      <button className="bl-cmd-backdrop backdrop-blur-[64px]" type="button" aria-label="Close" onClick={close} />
-      <div className="bl-cmd-panel">
+    <div className={cmdLayerClass(closing)} role="dialog" aria-modal="true" aria-label="Search & AI">
+      <button className={cmdBackdropClass} type="button" aria-label="Close" onClick={close} />
+      <div className={cmdPanelClass(closing)}>
         {/* Mode toggle */}
-        <div className="bl-cmd-tabs">
-          <button type="button" className={`bl-cmd-tab ${mode === "search" ? "bl-cmd-tab-active" : ""}`} onClick={() => setMode("search")}>Search</button>
-          <button type="button" className={`bl-cmd-tab ${mode === "ai" ? "bl-cmd-tab-active" : ""}`} onClick={() => { setMode("ai"); setTimeout(() => aiInputRef.current?.focus(), 60) }}>Brawl AI</button>
+        <div className="hidden">
+          <button type="button" className={cmdTabClass(mode === "search")} onClick={() => setMode("search")}>Search</button>
+          <button type="button" className={cmdTabClass(mode === "ai")} onClick={() => { setMode("ai"); setTimeout(() => aiInputRef.current?.focus(), 60) }}>Brawl AI</button>
         </div>
 
         {mode === "search" ? (
           /* ── Search mode ── */
           <>
-            <form onSubmit={submitSearch} className="bl-cmd-form">
-              <Search size={15} strokeWidth={2.2} className="bl-cmd-search-icon" aria-hidden="true" />
+            <form onSubmit={submitSearch} className={cmdFormClass}>
+              <Search size={15} strokeWidth={2.2} className="ml-3.5 shrink-0 text-[rgba(245,244,241,0.55)]" aria-hidden="true" />
               <input
                 ref={inputRef}
                 value={query}
@@ -553,15 +590,16 @@ export default function SearchOverlay() {
                 autoCapitalize="characters"
                 spellCheck={false}
                 autoComplete="off"
+                className={cmdInputClass}
               />
-              <button type="submit" aria-label="Submit search">
+              <button type="submit" aria-label="Submit search" className={cmdSubmitClass}>
                 <ArrowRight size={16} strokeWidth={2.2} aria-hidden="true" />
               </button>
             </form>
-            <div className="bl-cmd-results">
+            <div className={cmdResultsClass}>
               {visibleSearchGroups.map(group => (
-                <section key={group.label} className="bl-cmd-group">
-                  <h3>{group.label}</h3>
+                <section key={group.label} className="grid gap-0 py-1.5 first:mt-0">
+                  <h3 className="hidden">{group.label}</h3>
                   {group.items.map(item => {
                     const isRecent = group.label === "Recent"
                     const iconId = item.iconId ?? (item.playerTag ? playerIcons[item.playerTag] : null)
@@ -569,25 +607,25 @@ export default function SearchOverlay() {
                       <Link
                         key={`${group.label}-${item.kind}-${item.href}-${item.title}`}
                         href={item.href}
-                        className={`bl-cmd-row ${isRecent ? "bl-cmd-row-recent" : ""}`}
+                        className={cmdRowClass(isRecent)}
                         onClick={() => { rememberSearchItem(item); close() }}
                       >
-                        <span className={`bl-cmd-icon bl-cmd-icon-${item.kind}`}>
+                        <span className={cmdIconClass}>
                           {isRecent ? <History size={15} strokeWidth={2.2} aria-hidden="true" />
-                            : item.imageId ? <BrawlImage src={brawlerIconUrl(item.imageId)} alt="" width={32} height={32} sizes="32px" />
-                            : iconId ? <BrawlImage src={profileIconUrl(iconId)} alt="" width={32} height={32} sizes="32px" />
-                            : item.clubBadgeId ? <BrawlImage src={clubBadgeUrl(item.clubBadgeId)} alt="" width={32} height={32} sizes="32px" />
+                            : item.imageId ? <BrawlImage className={cmdIconImageClass} src={brawlerIconUrl(item.imageId)} alt="" width={32} height={32} sizes="32px" />
+                            : iconId ? <BrawlImage className={cmdIconImageClass} src={profileIconUrl(iconId)} alt="" width={32} height={32} sizes="32px" />
+                            : item.clubBadgeId ? <BrawlImage className={cmdIconImageClass} src={clubBadgeUrl(item.clubBadgeId)} alt="" width={32} height={32} sizes="32px" />
                             // External team logo URLs can be outside the configured Next image domains.
                             // eslint-disable-next-line @next/next/no-img-element
-                            : item.logoUrl ? <img src={item.logoUrl} alt="" className={item.logoClassName} />
+                            : item.logoUrl ? <img src={item.logoUrl} alt="" className={`${cmdTeamLogoClass} ${item.logoClassName ?? ""}`} />
                             : <span>{item.title.slice(0, 1)}</span>}
                         </span>
-                        <span className="bl-cmd-copy">
-                          <strong>{item.title}</strong>
-                          <small>{item.subtitle}</small>
+                        <span className="min-w-0">
+                          <strong className={cmdCopyTitleClass}>{item.title}</strong>
+                          <small className="hidden">{item.subtitle}</small>
                         </span>
-                        {isRecent && <time className="bl-cmd-recent-date" dateTime={item.lastUsedAt}>{formatRecentDate(item.lastUsedAt)}</time>}
-                        {item.badge && <em className="bl-cmd-badge">{item.badge}</em>}
+                        {isRecent && <time className="whitespace-nowrap text-[13px] font-medium leading-none text-[rgba(245,244,241,0.42)]" dateTime={item.lastUsedAt}>{formatRecentDate(item.lastUsedAt)}</time>}
+                        {item.badge && <em className="hidden">{item.badge}</em>}
                       </Link>
                     )
                   })}
@@ -598,15 +636,19 @@ export default function SearchOverlay() {
         ) : (
           /* ── AI mode ── */
           <>
-            <div className="bl-cmd-ai-body">
+            <div className="flex flex-1 flex-col overflow-y-auto px-5 pb-2.5 pt-[18px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden max-[560px]:px-3.5 max-[560px]:pb-1.5 max-[560px]:pt-3.5">
               {aiMessages.length === 0 && (
-                <div className="bl-cmd-ai-empty">Ask anything about the meta, brawlers, or maps.</div>
+                <div className="flex flex-1 items-center justify-center text-center text-[13px] font-[550] text-[rgba(245,244,241,0.36)]">Ask anything about the meta, brawlers, or maps.</div>
               )}
               {aiMessages.map((msg, i) => (
-                <div key={i} className={`bl-cmd-ai-msg ${msg.role === "user" ? "bl-cmd-ai-user" : "bl-cmd-ai-bot"}`}>
+                <div key={i} className={cmdAiMessageClass(msg.role)}>
                   {msg.role === "assistant" ? (
                     aiStreaming && i === aiMessages.length - 1 && msg.content === "" ? (
-                      <span className="bl-cmd-ai-dots"><span /><span /><span /></span>
+                      <span className="inline-flex gap-1 py-1.5">
+                        <span className="block size-1 animate-[cmdDotPulse_1s_ease_infinite] rounded-full bg-[rgba(91,63,204,0.42)]" />
+                        <span className="block size-1 animate-[cmdDotPulse_1s_ease_infinite] rounded-full bg-[rgba(91,63,204,0.42)] [animation-delay:0.12s]" />
+                        <span className="block size-1 animate-[cmdDotPulse_1s_ease_infinite] rounded-full bg-[rgba(91,63,204,0.42)] [animation-delay:0.24s]" />
+                      </span>
                     ) : (
                       <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>{msg.content}</ReactMarkdown>
                     )
@@ -615,7 +657,7 @@ export default function SearchOverlay() {
                 </div>
               ))}
             </div>
-            <div className="bl-cmd-ai-input">
+            <div className="mx-3.5 mb-3.5 flex items-center gap-2 rounded-full border border-[#26262d] bg-[rgba(0,0,0,0.18)] py-2 pl-4 pr-2.5 shadow-none focus-within:border-[var(--bt-line-2)] focus-within:bg-[rgba(255,255,255,0.055)] focus-within:shadow-none focus-within:outline-none max-[560px]:mx-2.5 max-[560px]:mb-2.5 max-[560px]:py-[9px] max-[560px]:pl-3 max-[560px]:pr-2.5">
               <textarea
                 ref={aiInputRef}
                 rows={1}
@@ -623,14 +665,14 @@ export default function SearchOverlay() {
                 onChange={handleAiInput}
                 onKeyDown={handleAiKeyDown}
                 placeholder="Ask anything..."
-                className="bl-cmd-ai-textarea"
+                className="min-h-5 max-h-[120px] flex-1 resize-none border-0 bg-transparent text-[13px] font-[560] leading-normal text-[rgba(245,244,241,0.88)] outline-0 placeholder:text-[rgba(245,244,241,0.38)] focus:shadow-none focus:outline-none [font-family:var(--font-ui)]"
               />
               {aiStreaming ? (
-                <button type="button" onClick={() => aiAbortRef.current?.abort()} className="bl-cmd-ai-send" aria-label="Stop">
+                <button type="button" onClick={() => aiAbortRef.current?.abort()} className={cmdAiSendClass} aria-label="Stop">
                   <Square size={10} strokeWidth={0} fill="currentColor" />
                 </button>
               ) : (
-                <button type="button" onClick={handleAiSubmit} disabled={!aiInput.trim()} className="bl-cmd-ai-send" aria-label="Send">
+                <button type="button" onClick={handleAiSubmit} disabled={!aiInput.trim()} className={cmdAiSendClass} aria-label="Send">
                   <ArrowUp size={13} strokeWidth={2.4} />
                 </button>
               )}

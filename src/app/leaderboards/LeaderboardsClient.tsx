@@ -28,6 +28,38 @@ import {
   SearchBox,
   TableHead,
   TableHeadHelp,
+  leaderboardAvatarClass,
+  leaderboardActionClass,
+  leaderboardBrawlerIconsClass,
+  leaderboardBrawlerIconsEmptyClass,
+  leaderboardBrawlerIconsRowClass,
+  leaderboardBrawlerMetricClass,
+  leaderboardBrawlerMetricCompactClass,
+  leaderboardBrawlerMetricEmptyClass,
+  leaderboardClubCellClass,
+  leaderboardMiniStatClass,
+  leaderboardMiniStatRightClass,
+  leaderboardNameClass,
+  leaderboardPodiumCardClass,
+  leaderboardPodiumFootClass,
+  leaderboardPodiumGridClass,
+  leaderboardPodiumIdentityClass,
+  leaderboardPodiumRankClass,
+  leaderboardPodiumRateClass,
+  leaderboardPodiumScoreClass,
+  leaderboardPodiumTopClass,
+  leaderboardRankStackClass,
+  leaderboardRowAvatarClass,
+  leaderboardRowClass,
+  leaderboardRowMainClass,
+  leaderboardRowMonoClass,
+  leaderboardRowNameClass,
+  leaderboardRowPlayerLinkClass,
+  leaderboardRowStatClass,
+  leaderboardRowSublineClass,
+  leaderboardSublineClass,
+  leaderboardTableListClass,
+  leaderboardToolbarActionsClass,
   professionalTeamCards,
   regionCode,
 } from "./LeaderboardDpmShell"
@@ -182,7 +214,7 @@ export default function LeaderboardsClient({
       <LeaderboardBoard>
         <LeaderboardToolbar>
           <SearchBox value={search} onChange={setSearch} placeholder="Search player, tag, or club" />
-          <div className="bl-lb-toolbar-actions">
+          <div className={leaderboardToolbarActionsClass}>
             <RegionPills regions={allData} activeRegion={activeRegion} onChange={setActiveRegion} />
           </div>
         </LeaderboardToolbar>
@@ -195,7 +227,7 @@ export default function LeaderboardsClient({
           />
         ) : (
           <>
-            <section aria-label="Top players" className="bl-lb-podium-grid">
+            <section aria-label="Top players" className={leaderboardPodiumGridClass}>
               {filtered.slice(0, 3).map(player => (
                 <PlayerPodiumCard
                   key={player.player_tag}
@@ -207,7 +239,7 @@ export default function LeaderboardsClient({
             </section>
 
             <LeaderboardPanel>
-              <TableHead className={`${playerTableGrid} bl-lb-player-table-head`}>
+              <TableHead className={`${playerTableGrid} [&>span:first-child]:text-center [&>span:nth-child(4)]:pl-2 [&>span:nth-child(4)]:text-left [&>span:nth-child(6)]:pl-2 [&>span:nth-child(6)]:text-left`}>
                 <span>Rank</span>
                 <span>Player</span>
                 <TableHeadHelp label="Trophies" help="Current trophy count from the leaderboard snapshot for the selected region." />
@@ -219,7 +251,7 @@ export default function LeaderboardsClient({
                 <TableHeadHelp label="World" help="The player's global trophy rank when BrawlLens can match the selected row to the global leaderboard." />
               </TableHead>
 
-              <div className="bl-lb-table-list">
+              <div className={leaderboardTableListClass}>
                 {paginated.map(player => (
                   <PlayerRankRow
                     key={`${activeRegion}-${player.player_tag}`}
@@ -251,27 +283,27 @@ function PlayerRankRow({
   const playerHref = playerProfileHref(player.player_tag)
 
   return (
-    <div className={`bl-lb-row bl-lb-player-row ${playerTableGrid}`}>
-      <div className="bl-lb-rank-stack">
+    <div className={`${leaderboardRowClass} ${playerTableGrid}`}>
+      <div className={leaderboardRankStackClass}>
         <RankCell rank={player.rank} />
         <span>{formatWorldRank(worldRank)}</span>
       </div>
-      <Link href={playerHref} className="bl-lb-identity bl-lb-player-link">
-        <PlayerAvatar name={player.player_name} rank={player.rank} iconId={enrichment?.iconId ?? null} />
-        <div className="bl-lb-row-main">
-          <div className="bl-lb-name">{player.player_name}</div>
-          <div className="bl-lb-subline">{player.player_tag}</div>
+      <Link href={playerHref} className={leaderboardRowPlayerLinkClass}>
+        <PlayerAvatar name={player.player_name} rank={player.rank} iconId={enrichment?.iconId ?? null} compact />
+        <div className={leaderboardRowMainClass}>
+          <div className={leaderboardRowNameClass}>{player.player_name}</div>
+          <div className={leaderboardRowSublineClass}>{player.player_tag}</div>
         </div>
       </Link>
-      <span className="bl-lb-row-stat">
+      <span className={leaderboardRowStatClass}>
         {formatTrophies(player.trophies)}
       </span>
       <ClubCell name={player.club_name} badgeId={enrichment?.clubBadgeId ?? null} />
-      <span className="bl-lb-row-mono">{formatStat(getTotalWins(enrichment))}</span>
+      <span className={leaderboardRowMonoClass}>{formatStat(getTotalWins(enrichment))}</span>
       <TopBrawlerIcons brawlers={enrichment?.topBrawlers ?? []} compact />
       <BrawlerMetric brawler={enrichment?.peakBrawler ?? enrichment?.topBrawlers?.[0] ?? null} valueKey="highestTrophies" compact />
-      <span className="bl-lb-row-mono">{formatPlainStat(enrichment?.totalPrestigeLevel)}</span>
-      <span className="bl-lb-row-mono">{formatWorldRank(worldRank)}</span>
+      <span className={leaderboardRowMonoClass}>{formatPlainStat(enrichment?.totalPrestigeLevel)}</span>
+      <span className={leaderboardRowMonoClass}>{formatWorldRank(worldRank)}</span>
     </div>
   )
 }
@@ -289,29 +321,29 @@ function PlayerPodiumCard({
   const playerHref = playerProfileHref(player.player_tag)
 
   return (
-    <div className="bl-lb-podium-card">
-      <div className="bl-lb-podium-top">
-        <span className="bl-lb-podium-rank">{player.rank}</span>
-        <Link href={playerHref} className="bl-lb-identity bl-lb-podium-identity bl-lb-player-link">
+    <div className={leaderboardPodiumCardClass}>
+      <div className={leaderboardPodiumTopClass}>
+        <span className={leaderboardPodiumRankClass(player.rank)}>{player.rank}</span>
+        <Link href={playerHref} className={leaderboardPodiumIdentityClass}>
           <PlayerAvatar name={player.player_name} rank={player.rank} iconId={enrichment?.iconId ?? null} />
-          <div className="bl-lb-row-main">
-            <div className="bl-lb-name">{player.player_name}</div>
-            <div className="bl-lb-subline">{player.club_name ?? "No club"}</div>
+          <div className={leaderboardRowMainClass}>
+            <div className={leaderboardNameClass}>{player.player_name}</div>
+            <div className={leaderboardSublineClass}>{player.club_name ?? "No club"}</div>
           </div>
         </Link>
-        <div className="bl-lb-podium-rate">
+        <div className={leaderboardPodiumRateClass}>
           <strong>{enrichment?.recentWinRate === null || enrichment?.recentWinRate === undefined ? "--" : `${enrichment.recentWinRate}%`}</strong>
           <span>recent wr</span>
         </div>
       </div>
-      <div className="bl-lb-podium-score">{formatTrophies(player.trophies)}</div>
-      <div className="bl-lb-podium-foot">
-        <div className="bl-lb-mini-stat">
+      <div className={leaderboardPodiumScoreClass}>{formatTrophies(player.trophies)}</div>
+      <div className={leaderboardPodiumFootClass}>
+        <div className={leaderboardMiniStatClass}>
           <strong>{formatStat(totalWins)}</strong>
           <span>wins</span>
         </div>
         <TopBrawlerIcons brawlers={enrichment?.topBrawlers ?? []} />
-        <div className="bl-lb-mini-stat bl-lb-mini-stat-right">
+        <div className={leaderboardMiniStatRightClass}>
           <strong>{regionCode(region)}</strong>
           <span>region</span>
         </div>
@@ -320,10 +352,10 @@ function PlayerPodiumCard({
   )
 }
 
-function PlayerAvatar({ name, rank, iconId }: { name: string; rank: number; iconId?: number | null }) {
+function PlayerAvatar({ name, rank, iconId, compact = false }: { name: string; rank: number; iconId?: number | null; compact?: boolean }) {
   const color = rank === 1 ? "#f2cf63" : rank === 2 ? "#d6dbe4" : rank === 3 ? "#c88b5a" : "#7d86ff"
   return (
-    <span className="bl-lb-avatar" style={{ color }}>
+    <span className={compact ? leaderboardRowAvatarClass : leaderboardAvatarClass} style={{ color }}>
       {iconId ? (
         <BrawlImage src={profileIconUrl(iconId)} alt="" width={44} height={44} sizes="44px" />
       ) : firstGlyph(name)}
@@ -333,7 +365,7 @@ function PlayerAvatar({ name, rank, iconId }: { name: string; rank: number; icon
 
 function ClubCell({ name, badgeId }: { name: string | null; badgeId?: number | null }) {
   return (
-    <span className="bl-lb-club-cell">
+    <span className={leaderboardClubCellClass}>
       {badgeId && (
         <BrawlImage src={clubBadgeUrl(badgeId)} alt="" width={24} height={24} sizes="24px" />
       )}
@@ -350,7 +382,7 @@ function TopBrawlerIcons({
   compact?: boolean
 }) {
   return (
-    <div className={`bl-lb-brawler-icons ${compact ? "bl-lb-brawler-icons-row" : ""}`} aria-label="Highest brawlers">
+    <div className={`${leaderboardBrawlerIconsClass} ${compact ? leaderboardBrawlerIconsRowClass : ""}`} aria-label="Highest brawlers">
       {brawlers.length ? brawlers.map(brawler => (
         <BrawlImage
           key={brawler.id}
@@ -361,7 +393,7 @@ function TopBrawlerIcons({
           sizes="30px"
         />
       )) : (
-        <span className="bl-lb-brawler-icons-empty">--</span>
+        <span className={leaderboardBrawlerIconsEmptyClass}>--</span>
       )}
     </div>
   )
@@ -376,11 +408,11 @@ function BrawlerMetric({
   valueKey: "trophies" | "highestTrophies"
   compact?: boolean
 }) {
-  if (!brawler) return <span className="bl-lb-brawler-metric bl-lb-brawler-metric-empty">--</span>
+  if (!brawler) return <span className={`${leaderboardBrawlerMetricClass} ${leaderboardBrawlerMetricEmptyClass}`}>--</span>
   const value = valueKey === "trophies" ? brawler.trophies : brawler.highestTrophies ?? brawler.trophies
 
   return (
-    <span className={`bl-lb-brawler-metric ${compact ? "bl-lb-brawler-metric-compact" : ""}`}>
+    <span className={`${leaderboardBrawlerMetricClass} ${compact ? leaderboardBrawlerMetricCompactClass : ""}`}>
       <BrawlImage src={brawlerIconUrl(brawler.id)} alt={brawler.name} width={24} height={24} sizes="24px" />
       <span>
         {!compact && <strong>{formatBrawlerLabel(brawler.name)}</strong>}
@@ -429,7 +461,7 @@ function DpmButton({
     <button
       type="button"
       onClick={onClick}
-      className="bl-lb-action"
+      className={leaderboardActionClass}
     >
       {children}
     </button>

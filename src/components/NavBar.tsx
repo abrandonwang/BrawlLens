@@ -9,7 +9,7 @@ import SearchOverlay from "./SearchOverlay";
 import { lockBodyScroll } from "@/lib/bodyScrollLock";
 import { authHeaders, clearAuthSession, clearServerSession, storeAuthSession } from "@/lib/clientAuth";
 import type { PremiumUser } from "@/lib/premium";
-import { isEmailFormatValid, useEmailCheck } from "@/lib/useEmailCheck";
+import { isEmailFormatValid, useEmailCheck, type EmailCheckStatus } from "@/lib/useEmailCheck";
 
 type NavPanelItem = {
   label: string;
@@ -37,18 +37,84 @@ const accountMenuItems = [
   { label: "Appearance", href: "/account?tab=appearance" },
 ] as const;
 
-const mobileMenuLinks = [
-  { label: "Home", href: "/" },
-  { label: "Brawlers", href: "/brawlers" },
-  { label: "Maps", href: "/meta" },
-  { label: "Players", href: "/leaderboards/players" },
-  { label: "Clubs", href: "/leaderboards/clubs" },
-  { label: "Brawler ranks", href: "/leaderboards/brawlers" },
-  { label: "Guides", href: "/guides" },
+type MobileMenuGroupKey = "tierlists" | "leaderboards" | "guides";
+
+const mobileMenuGroups: Array<{
+  key: MobileMenuGroupKey;
+  label: string;
+  items: Array<{ label: string; href: string }>;
+}> = [
+  {
+    key: "tierlists",
+    label: "Tierlists",
+    items: [
+      { label: "Brawlers", href: "/brawlers" },
+      { label: "Maps", href: "/meta" },
+    ],
+  },
+  {
+    key: "leaderboards",
+    label: "Leaderboards",
+    items: [
+      { label: "Players", href: "/leaderboards/players" },
+      { label: "Clubs", href: "/leaderboards/clubs" },
+      { label: "Brawler ranks", href: "/leaderboards/brawlers" },
+    ],
+  },
+  {
+    key: "guides",
+    label: "Guides",
+    items: [
+      { label: "Guide hub", href: "/guides" },
+      { label: "Progression", href: "/guides/progression" },
+      { label: "Brawler wiki", href: "/guides/brawlers" },
+      { label: "Map wiki", href: "/guides/maps" },
+    ],
+  },
 ] as const;
 
 const loginButtonClass =
-  "bl-nav-login-button inline-flex h-[36px] cursor-pointer items-center gap-2 whitespace-nowrap rounded-[10px] px-3.5 text-[14px] font-semibold leading-none outline-none"
+  "inline-flex h-[36px] cursor-pointer items-center gap-2 whitespace-nowrap rounded-[10px] border border-transparent bg-[#7c5cff] px-3.5 text-[14px] font-semibold leading-none text-white no-underline shadow-none outline-none transition-[transform,background-color,border-color,color,box-shadow] duration-150 [filter:none] [transform:none] hover:border-transparent hover:bg-[#7c5cff] hover:text-white hover:shadow-none hover:outline-none hover:[filter:none] hover:[transform:none] active:bg-[#7c5cff] active:shadow-none active:[transform:none] focus-visible:border-transparent focus-visible:bg-[#7c5cff] focus-visible:text-white focus-visible:shadow-none focus-visible:outline-none focus-visible:[filter:none] focus-visible:[transform:none]";
+
+const authLayerClass =
+  "fixed inset-0 z-[320] flex animate-[modalOverlayIn_180ms_ease_both] items-center justify-center px-[18px] py-6 max-[560px]:px-2.5 max-[560px]:py-5";
+
+const authBackdropClass =
+  "bl-auth-backdrop absolute inset-0 cursor-default overflow-hidden border-0 bg-[rgba(8,8,12,0.26)] backdrop-blur-[64px] [transform:translateZ(0)]";
+
+const authPanelClass =
+  "bl-auth-panel relative z-[1] w-[min(420px,calc(100vw-36px))] animate-[authPanelIn_220ms_cubic-bezier(0.16,1,0.3,1)_both] overflow-hidden rounded-[14px] border border-[rgba(255,255,255,0.10)] p-[22px] text-[#f5f4f1] shadow-[rgba(255,255,255,0.06)_0_0.5px_0_0_inset,0_24px_64px_-20px_rgba(0,0,0,0.58)] [background:linear-gradient(180deg,rgba(34,34,42,0.96),rgba(20,20,27,0.96)),rgba(22,22,29,0.96)] max-[560px]:w-[calc(100vw-20px)] max-[560px]:rounded-[12px] max-[560px]:p-[18px]";
+
+const authCloseClass =
+  "grid size-[30px] shrink-0 cursor-pointer place-items-center rounded-[8px] border-0 bg-transparent text-[rgba(245,244,241,0.42)] outline-none transition-colors duration-150 hover:bg-[rgba(245,244,241,0.06)] hover:text-[#f5f4f1] focus-visible:bg-[rgba(245,244,241,0.06)] focus-visible:text-[#f5f4f1]";
+
+const authTabButtonClass = (active: boolean) =>
+  `relative z-[1] h-[34px] cursor-pointer rounded-[7px] border-0 bg-transparent text-[12.5px] font-[680] outline-none transition-colors duration-[260ms] ${active ? "text-[#0d0d11] shadow-none hover:text-[#0d0d11] focus-visible:text-[#0d0d11]" : "text-[rgba(245,244,241,0.48)] hover:text-[rgba(245,244,241,0.78)] focus-visible:text-[rgba(245,244,241,0.78)]"}`;
+
+const authFieldLabelClass = "text-[12px] font-[660] leading-none text-[rgba(245,244,241,0.58)]";
+const authControlClass =
+  "h-11 w-full rounded-[10px] border border-[rgba(255,255,255,0.08)] bg-[rgba(8,8,12,0.50)] px-[13px] text-[13.5px] font-[560] leading-none text-[#f5f4f1] outline-none transition-[border-color,background-color,box-shadow] duration-150 placeholder:text-[rgba(245,244,241,0.30)] hover:border-[rgba(255,255,255,0.12)] hover:bg-[rgba(8,8,12,0.58)] focus:border-[rgba(167,139,255,0.46)] focus:bg-[rgba(8,8,12,0.66)] focus:shadow-[0_0_0_3px_rgba(124,92,255,0.12)] [font-family:var(--font-ui)]";
+
+const authHintBaseClass = "flex min-h-[15px] items-center gap-[7px] text-[11px] font-[560] leading-[1.2]";
+const authHintTransitionClass =
+  "[transition:max-height_520ms_cubic-bezier(0.22,1,0.36,1),opacity_260ms_ease,transform_520ms_cubic-bezier(0.22,1,0.36,1)]";
+
+function authHintToneClass(status: EmailCheckStatus) {
+  if (status === "valid") return "text-[rgba(245,244,241,0.82)]";
+  if (status === "format" || status === "invalid") return "text-[rgba(255,180,180,0.78)]";
+  return "text-[rgba(245,244,241,0.40)]";
+}
+
+function authRuleDotClass(status: EmailCheckStatus | "passed") {
+  const base = "grid size-3.5 shrink-0 place-items-center rounded-full border border-[rgba(245,244,241,0.16)] text-[9px] font-black leading-none text-transparent";
+  if (status === "passed" || status === "valid") return `${base} border-[#f5f4f1] bg-[#f5f4f1] text-[#0d0d11]`;
+  if (status === "format" || status === "invalid") return `${base} border-[rgba(255,180,180,0.55)] text-[rgba(255,180,180,0.9)]`;
+  if (status === "checking") return `${base} animate-[authDotPulse_900ms_ease-in-out_infinite]`;
+  return base;
+}
+
+const authActionBaseClass =
+  "inline-flex h-11 w-full cursor-pointer items-center justify-center rounded-[10px] text-[13px] font-[720] outline-none transition-[background-color,border-color,color,opacity] duration-150";
 
 type DesktopPanel = "browse" | "leaderboards";
 type LoginState = "idle" | "sending" | "sent" | "error";
@@ -74,6 +140,10 @@ function isDesktopItemActive(pathname: string, href: string) {
   const [, rawHash] = href.split("#");
   if (rawHash) return false;
   return isRouteActive(pathname, href);
+}
+
+function activeMobileMenuGroup(pathname: string): MobileMenuGroupKey | null {
+  return mobileMenuGroups.find(group => group.items.some(item => isRouteActive(pathname, item.href)))?.key ?? null;
 }
 
 function authErrorMessage(error: string | undefined, mode: AuthMode) {
@@ -117,6 +187,7 @@ export default function NavBar() {
   const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [menuClosing, setMenuClosing] = useState(false);
+  const [mobileOpenGroup, setMobileOpenGroup] = useState<MobileMenuGroupKey | null>(null);
   const [desktopPanel, setDesktopPanel] = useState<DesktopPanel | null>(null);
   const [hoverDesktopPanel, setHoverDesktopPanel] = useState<DesktopPanel | null>(null);
   const [suppressedDesktopPanel, setSuppressedDesktopPanel] = useState<DesktopPanel | null>(null);
@@ -144,11 +215,20 @@ export default function NavBar() {
   const applyAccountUser = useCallback((user: PremiumUser | null) => {
     setIsSignedIn(Boolean(user));
     setAccountEmail(user?.email ?? null);
-    setAccountName(
-      user?.accountSetup?.playerName
-        ?? user?.displayName
-        ?? (user?.accountSetup?.playerTag ? `#${user.accountSetup.playerTag}` : null)
-    );
+    const resolvedName = user?.accountSetup?.playerName
+      ?? user?.displayName
+      ?? (user?.accountSetup?.playerTag ? `#${user.accountSetup.playerTag}` : null);
+    setAccountName(resolvedName);
+
+    const tag = user?.accountSetup?.playerTag;
+    if (user && tag && !user.accountSetup?.playerName) {
+      fetch(`/api/player?tag=${encodeURIComponent(tag)}`, { cache: "no-store" })
+        .then(res => res.ok ? res.json() : null)
+        .then((player: { name?: string } | null) => {
+          if (player?.name) setAccountName(player.name);
+        })
+        .catch(() => {});
+    }
   }, []);
 
   const closeMenu = useCallback(() => {
@@ -160,6 +240,7 @@ export default function NavBar() {
     menuCloseTimerRef.current = window.setTimeout(() => {
       setIsMenuOpen(false);
       setMenuClosing(false);
+      setMobileOpenGroup(null);
       menuCloseTimerRef.current = null;
     }, 260);
   }, [isMenuOpen, menuClosing]);
@@ -346,6 +427,7 @@ export default function NavBar() {
       return;
     }
     setIsAccountMenuOpen(false);
+    setMobileOpenGroup(activeMobileMenuGroup(pathname) ?? "tierlists");
     setIsMenuOpen(true);
   }
 
@@ -533,7 +615,7 @@ export default function NavBar() {
   return (
     <>
       <nav
-        className="bl-nav-pill fixed left-1/2 top-4 z-[500] -translate-x-1/2 w-[70vw] max-w-[1200px] overflow-visible rounded-[20px] border border-solid border-[rgba(245,244,241,0.10)] bg-[rgba(13,13,17,0.92)] text-[#f5f4f1] shadow-[0_18px_44px_-22px_rgba(0,0,0,0.55)] backdrop-blur-xl backdrop-saturate-150 max-lg:w-[calc(100%-20px)]"
+        className={`fixed left-1/2 top-4 z-[500] w-[70vw] max-w-[1200px] -translate-x-1/2 overflow-visible rounded-[20px] border border-solid bg-[rgba(13,13,17,0.92)] text-[#f5f4f1] shadow-[0_18px_44px_-22px_rgba(0,0,0,0.55)] backdrop-blur-xl backdrop-saturate-150 [font-family:var(--font-ui)] max-lg:w-[calc(100%-20px)] ${menuVisible ? "border-transparent" : "border-[rgba(245,244,241,0.10)]"}`}
         onMouseLeave={() => {
           setHoverDesktopPanel(null);
           setDesktopPanel(null);
@@ -541,13 +623,13 @@ export default function NavBar() {
         }}
       >
         <div className="flex h-[60px] items-center px-5 max-lg:px-4">
-        <Link href="/" className="relative z-10 inline-flex h-full shrink-0 items-center whitespace-nowrap text-[#f5f4f1] no-underline" aria-label="BrawlLens home">
-          <BrandMark size="sm" showWordmark={true} />
-        </Link>
+          <Link href="/" className="relative z-10 inline-flex h-full shrink-0 items-center whitespace-nowrap text-[#f5f4f1] no-underline" aria-label="BrawlLens home">
+            <BrandMark size="sm" showWordmark={true} />
+          </Link>
 
         <div ref={desktopNavRef} className="relative z-10 ml-10 hidden h-full min-w-0 items-center gap-1 lg:flex">
           <div
-            className="nav-popover relative"
+            className="group/nav-popover nav-popover relative"
             data-open={visibleDesktopPanel === "browse" ? "true" : undefined}
             onPointerEnter={() => openHoverDesktopPanel("browse")}
             onMouseEnter={() => openHoverDesktopPanel("browse")}
@@ -558,11 +640,11 @@ export default function NavBar() {
               className={`${navTextClass(browseActive)} cursor-pointer gap-1.5`}
             >
               Tierlist &amp; Brawlers
-              <ChevronDown size={13} strokeWidth={2.25} className="nav-trigger-arrow ml-0.5" />
+              <ChevronDown size={13} strokeWidth={2.25} className={`ml-0.5 text-[var(--bt-text)] transition-transform duration-[340ms] ease-[cubic-bezier(0.16,1,0.3,1)] will-change-transform ${visibleDesktopPanel === "browse" ? "rotate-180" : "rotate-0"}`} />
             </Link>
           </div>
           <div
-            className="nav-popover relative"
+            className="group/nav-popover nav-popover relative"
             data-open={visibleDesktopPanel === "leaderboards" ? "true" : undefined}
             onPointerEnter={() => openHoverDesktopPanel("leaderboards")}
             onMouseEnter={() => openHoverDesktopPanel("leaderboards")}
@@ -573,7 +655,7 @@ export default function NavBar() {
               className={`${navTextClass(leaderboardsActive)} cursor-pointer gap-1.5`}
             >
               Leaderboards
-              <ChevronDown size={13} strokeWidth={2.25} className="nav-trigger-arrow ml-0.5" />
+              <ChevronDown size={13} strokeWidth={2.25} className={`ml-0.5 text-[var(--bt-text)] transition-transform duration-[340ms] ease-[cubic-bezier(0.16,1,0.3,1)] will-change-transform ${visibleDesktopPanel === "leaderboards" ? "rotate-180" : "rotate-0"}`} />
             </Link>
           </div>
         </div>
@@ -606,7 +688,7 @@ export default function NavBar() {
               {isAccountMenuOpen && (
                 <div
                   role="menu"
-                  className="bl-account-menu-panel absolute right-0 top-[calc(100%+8px)] z-[630] w-[278px] origin-top-right rounded-[12px] border border-[#26262d] bg-[#0d0d11] p-1.5 pt-2 text-[#f5f4f1] shadow-[0_24px_64px_-36px_rgba(0,0,0,0.38),rgba(255,255,255,0.04)_0_0.5px_0_0_inset] animate-[accountMenuIn_0.16s_cubic-bezier(0.16,1,0.3,1)_both]"
+                  className="bl-account-menu-panel absolute right-0 top-full z-[630] w-[278px] origin-top-right rounded-[12px] border border-[#26262d] bg-[#0d0d11] p-1.5 pt-2 text-[#f5f4f1] shadow-[0_24px_64px_-36px_rgba(0,0,0,0.38),rgba(255,255,255,0.04)_0_0.5px_0_0_inset] animate-[accountMenuIn_0.16s_cubic-bezier(0.16,1,0.3,1)_both]"
                 >
                   <div className="px-2.5 py-2.5">
                     <p className="m-0 truncate text-[14px] font-semibold leading-tight text-[#f5f4f1]">{accountLabel}</p>
@@ -646,17 +728,17 @@ export default function NavBar() {
             </button>
           )}
         </div>
-        <button
-          type="button"
-          className="bl-nav-menu-button relative ml-auto grid size-[34px] cursor-pointer place-items-center rounded-full border-0 bg-[rgba(245,244,241,0.06)] p-0 text-[#f5f4f1] outline-none transition-colors duration-150 hover:bg-[rgba(245,244,241,0.10)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7c5cff]/35 lg:hidden"
+          <button
+            type="button"
+            className="relative ml-auto grid size-[34px] cursor-pointer place-items-center overflow-hidden rounded-[8px] border-0 bg-[var(--bt-shell)] p-0 text-[var(--bt-text-2)] shadow-none outline-none transition-colors duration-150 hover:bg-[var(--bt-panel)] hover:text-[var(--bt-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7c5cff]/35 lg:hidden"
           onClick={toggleMenu}
           aria-label={isMenuOpen ? "Close navigation menu" : "Open navigation menu"}
           aria-expanded={isMenuOpen}
         >
-          <span className="bl-nav-menu-icon" aria-hidden="true">
-            <span />
-            <span />
-            <span />
+          <span className="relative block h-[14px] w-[18px]" aria-hidden="true">
+            <span className={`absolute left-0 block h-0.5 w-[18px] origin-center rounded-full bg-current transition-[top,opacity,transform] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] ${isMenuOpen ? "top-[6px] rotate-45" : "top-0"}`} />
+            <span className={`absolute left-0 top-[6px] block h-0.5 w-[18px] origin-center rounded-full bg-current transition-[top,opacity,transform] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] ${isMenuOpen ? "scale-x-[0.35] opacity-0" : "opacity-100"}`} />
+            <span className={`absolute left-0 block h-0.5 w-[18px] origin-center rounded-full bg-current transition-[top,opacity,transform] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] ${isMenuOpen ? "top-[6px] -rotate-45" : "top-[12px]"}`} />
           </span>
         </button>
         </div>
@@ -701,27 +783,56 @@ export default function NavBar() {
 
       {menuVisible && (
         <div
-          className="bl-mobile-menu fixed inset-0 z-[90] overflow-y-auto bg-[#0d0d11] text-[#f5f4f1] lg:hidden"
+          className="fixed inset-0 top-0 z-[90] min-h-dvh overflow-y-auto bg-[rgba(13,13,17,0.92)] text-[var(--bt-text)] shadow-none backdrop-blur-[18px] backdrop-saturate-[110%] lg:hidden"
           style={{
             animation: menuClosing
               ? "mobileMenuOut 0.34s cubic-bezier(0.4,0,1,1) forwards"
               : "mobileMenuIn 0.42s cubic-bezier(0.16,1,0.3,1) forwards",
           }}
         >
-          <nav className="mx-auto flex min-h-full w-full max-w-[520px] flex-col px-6 py-8" aria-label="Mobile navigation">
+          <nav className="mx-auto flex min-h-full w-full max-w-[520px] flex-col px-6 pb-8 pt-[104px]" aria-label="Mobile navigation">
             <div className="flex flex-col">
-              {mobileMenuLinks.map((item, index) => {
-                const active = isRouteActive(pathname, item.href);
+              {mobileMenuGroups.map((group, index) => {
+                const expanded = mobileOpenGroup === group.key;
+                const groupActive = group.items.some(item => isRouteActive(pathname, item.href));
                 return (
-                  <Link
-                    key={item.label}
-                    href={item.href}
-                    onClick={closeMenu}
-                    className={`bl-mobile-menu-link bl-mobile-menu-item ${active ? "is-active" : ""}`}
-                    style={{ animationDelay: menuClosing ? "0ms" : `${50 + index * 28}ms` }}
+                  <div
+                    key={group.key}
+                    className="animate-[mobileMenuItemIn_0.34s_cubic-bezier(0.16,1,0.3,1)_both] border-b border-[rgba(245,244,241,0.07)]"
+                    style={{ animationDelay: menuClosing ? "0ms" : `${50 + index * 34}ms` }}
                   >
-                    {item.label}
-                  </Link>
+                    <button
+                      type="button"
+                      className={`flex min-h-[58px] w-full cursor-pointer items-center justify-between border-0 bg-transparent p-0 text-left text-[22px] font-[680] leading-none outline-none transition-colors duration-150 hover:text-[#a78bff] focus-visible:text-[#a78bff] focus-visible:outline-none ${expanded || groupActive ? "text-[#a78bff]" : "text-[var(--bt-text-2)]"}`}
+                      aria-expanded={expanded}
+                      onClick={() => setMobileOpenGroup(current => current === group.key ? null : group.key)}
+                    >
+                      <span>{group.label}</span>
+                      <ChevronDown
+                        size={20}
+                        strokeWidth={2.2}
+                        className={`text-current transition-transform duration-200 ${expanded ? "rotate-180" : "rotate-0"}`}
+                        aria-hidden="true"
+                      />
+                    </button>
+                    {expanded && (
+                      <div className="grid gap-0 pb-3">
+                        {group.items.map(item => {
+                          const active = isRouteActive(pathname, item.href);
+                          return (
+                            <Link
+                              key={item.href}
+                              href={item.href}
+                              onClick={closeMenu}
+                              className={`flex min-h-[42px] items-center justify-start text-[17px] font-[620] leading-none no-underline outline-none transition-colors duration-150 hover:text-[#a78bff] focus-visible:text-[#a78bff] focus-visible:outline-none ${active ? "text-[#a78bff]" : "text-[rgba(245,244,241,0.62)]"}`}
+                            >
+                              {item.label}
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                 );
               })}
             </div>
@@ -730,32 +841,36 @@ export default function NavBar() {
       )}
 
       {isLoginOpen && (
-        <div className="bl-auth-layer">
-          <button className="bl-auth-backdrop backdrop-blur-[64px]" type="button" aria-label="Close login" onClick={() => setIsLoginOpen(false)} />
+        <div className={authLayerClass}>
+          <button className={authBackdropClass} type="button" aria-label="Close login" onClick={() => setIsLoginOpen(false)} />
           <section
             role="dialog"
             aria-modal="true"
             aria-labelledby="login-modal-title"
-            className="bl-auth-panel"
+            className={authPanelClass}
           >
-            <div className="bl-auth-head">
-              <div className="bl-auth-title-row">
-                <div key={authMode} className="bl-auth-title-copy">
-                  <h2 id="login-modal-title">{authMode === "signup" ? "Create account" : "Log in"}</h2>
-                  <p>{authMode === "signup" ? "Save your setup and BrawlLens profile." : "Welcome back to BrawlLens."}</p>
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <div key={authMode} className="min-w-0 animate-[authTitleIn_340ms_cubic-bezier(0.22,1,0.36,1)_both]">
+                  <h2 id="login-modal-title" className="m-0 text-[20px] font-[760] leading-none text-[#f5f4f1] max-[560px]:text-[19px]">
+                    {authMode === "signup" ? "Create account" : "Log in"}
+                  </h2>
+                  <p className="mb-0 mt-1.5 text-[12.5px] font-medium leading-[1.35] text-[rgba(245,244,241,0.46)] max-[560px]:max-w-[260px]">
+                    {authMode === "signup" ? "Save your setup and BrawlLens profile." : "Welcome back to BrawlLens."}
+                  </p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setIsLoginOpen(false)}
-                className="bl-auth-close"
+                className={authCloseClass}
                 aria-label="Close login"
               >
                 <X size={15} strokeWidth={2} />
               </button>
             </div>
 
-            <div className={`bl-auth-tabs ${authMode === "login" ? "is-login" : "is-create"}`}>
+            <div className={`bl-auth-tabs relative isolate mt-5 grid grid-cols-2 gap-[3px] overflow-hidden rounded-[10px] border border-[rgba(255,255,255,0.08)] bg-[rgba(8,8,12,0.45)] p-[3px] ${authMode === "login" ? "is-login" : ""}`}>
               {[
                 { id: "signup" as const, label: "Create" },
                 { id: "login" as const, label: "Log in" },
@@ -764,19 +879,19 @@ export default function NavBar() {
                   key={item.id}
                   type="button"
                   onClick={() => setAuthMode(item.id)}
-                  className={authMode === item.id ? "is-active" : ""}
+                  className={authTabButtonClass(authMode === item.id)}
                 >
                   {item.label}
                 </button>
               ))}
             </div>
 
-            <div className={`bl-auth-mode-body ${authMode === "login" ? "is-login" : "is-create"}`}>
+            <div className="animate-[authModeBodyIn_360ms_cubic-bezier(0.22,1,0.36,1)_both]">
               {loginState === "sent" && authMode === "signup" ? (
-                <div className="bl-auth-sent">
-                  <div className="bl-auth-sent-card">
-                    <p>Check your inbox</p>
-                    <small>
+                <div className="mt-5 grid gap-3">
+                  <div className="rounded-[12px] border border-[rgba(255,255,255,0.08)] bg-[rgba(8,8,12,0.42)] p-[15px]">
+                    <p className="m-0 text-[14px] font-[760] leading-[1.1] text-[#f5f4f1]">Check your inbox</p>
+                    <small className="mt-[7px] block text-[12.5px] font-medium leading-[1.45] text-[rgba(245,244,241,0.52)]">
                       We sent a setup link to <strong className="font-semibold text-[#f5f4f1]">{loginEmail}</strong>. It opens BrawlLens setup.
                     </small>
                   </div>
@@ -784,15 +899,15 @@ export default function NavBar() {
                     type="button"
                     onClick={() => void sendAuthRequest({ resend: true })}
                     disabled={loginResending}
-                    className="bl-auth-secondary"
+                    className={`${authActionBaseClass} border border-[rgba(255,255,255,0.08)] bg-[rgba(8,8,12,0.38)] text-[rgba(245,244,241,0.82)] hover:border-[rgba(255,255,255,0.14)] hover:bg-[rgba(245,244,241,0.055)] hover:text-[#f5f4f1] focus-visible:border-[rgba(255,255,255,0.14)] focus-visible:bg-[rgba(245,244,241,0.055)] focus-visible:text-[#f5f4f1] disabled:cursor-wait disabled:opacity-[0.58]`}
                   >
                     {loginResending ? "Sending again..." : "Didn't receive an email? Resend"}
                   </button>
                 </div>
               ) : (
-                <form onSubmit={submitLogin} className="bl-auth-form">
-                  <label className="bl-auth-field">
-                    <span>Email</span>
+                <form onSubmit={submitLogin} className="mt-5 grid gap-3.5">
+                  <label className="grid gap-2">
+                    <span className={authFieldLabelClass}>Email</span>
                     <input
                       ref={loginInputRef}
                       type="email"
@@ -805,18 +920,21 @@ export default function NavBar() {
                           setLoginError(null);
                         }
                       }}
-                      className="bl-auth-control"
+                      className={authControlClass}
                       placeholder="you@example.com"
                     />
-                    <div className={`bl-auth-helper bl-auth-helper-${loginEmailStatus} ${authMode === "login" ? "is-hidden" : ""}`} aria-live={authMode === "signup" ? "polite" : "off"}>
-                      <span className="bl-auth-rule-dot" aria-hidden="true">
+                    <div
+                      className={`${authHintBaseClass} ${authHintTransitionClass} overflow-hidden ${authHintToneClass(loginEmailStatus)} ${authMode === "login" ? "pointer-events-none max-h-0 -translate-y-1 opacity-0" : "max-h-[18px] translate-y-0 opacity-100"}`}
+                      aria-live={authMode === "signup" ? "polite" : "off"}
+                    >
+                      <span className={authRuleDotClass(loginEmailStatus)} aria-hidden="true">
                         {loginEmailStatus === "valid" ? "✓" : loginEmailStatus === "invalid" || loginEmailStatus === "format" ? "!" : ""}
                       </span>
                       <span>{loginEmailMessage}</span>
                     </div>
                   </label>
-                  <label className="bl-auth-field">
-                    <span>Password</span>
+                  <label className="grid gap-2">
+                    <span className={authFieldLabelClass}>Password</span>
                     <input
                       type="password"
                       required
@@ -830,13 +948,15 @@ export default function NavBar() {
                           setLoginError(null);
                         }
                       }}
-                      className="bl-auth-control"
+                      className={authControlClass}
                       placeholder="8+ characters, include a number"
                     />
-                    <div className={`bl-auth-rules ${authMode === "login" ? "is-hidden" : ""}`}>
+                    <div
+                      className={`grid gap-[5px] overflow-hidden ${authHintTransitionClass} ${authMode === "login" ? "pointer-events-none max-h-0 -translate-y-1 opacity-0" : "max-h-10 translate-y-0 opacity-100"}`}
+                    >
                       {loginPasswordRules.map(rule => (
-                        <div key={rule.label} className={rule.passed ? "is-passed" : ""}>
-                          <span className="bl-auth-rule-dot" aria-hidden="true">{rule.passed ? "✓" : ""}</span>
+                        <div key={rule.label} className={`${authHintBaseClass} ${rule.passed ? "text-[rgba(245,244,241,0.82)]" : "text-[rgba(245,244,241,0.40)]"}`}>
+                          <span className={authRuleDotClass(rule.passed ? "passed" : "idle")} aria-hidden="true">{rule.passed ? "✓" : ""}</span>
                           <span>{rule.label}</span>
                         </div>
                       ))}
@@ -846,7 +966,7 @@ export default function NavBar() {
                   <button
                     type="submit"
                     disabled={!canSubmitLogin}
-                    className="bl-auth-submit"
+                    className={`${authActionBaseClass} mt-0.5 border-0 bg-[#f5f4f1] text-[#0d0d11] hover:bg-[rgba(245,244,241,0.88)] focus-visible:bg-[rgba(245,244,241,0.88)] disabled:cursor-not-allowed disabled:opacity-[0.34]`}
                   >
                     {loginState === "sending" ? (authMode === "login" ? "Logging in..." : "Sending...") : authMode === "login" ? "Log in" : "Create account"}
                   </button>
@@ -855,13 +975,20 @@ export default function NavBar() {
             </div>
 
             {loginError && (loginState === "error" || loginState === "sent") && (
-              <p className="bl-auth-error" role="alert">
+              <p className="mb-0 mt-3.5 rounded-[10px] border border-[rgba(255,180,180,0.16)] bg-[rgba(255,102,102,0.055)] px-3 py-2.5 text-[12px] font-[560] leading-[1.45] text-[rgba(255,210,210,0.78)]" role="alert">
                 {loginError}
               </p>
             )}
 
-            <p className="bl-auth-legal">
-              By continuing, you agree to the <Link href="/privacy" onClick={() => setIsLoginOpen(false)}>Privacy Policy</Link>.
+            <p className="mb-0 mt-[18px] text-center text-[11px] font-medium leading-normal text-[rgba(245,244,241,0.32)]">
+              By continuing, you agree to the{" "}
+              <Link
+                href="/privacy"
+                onClick={() => setIsLoginOpen(false)}
+                className="text-[rgba(245,244,241,0.58)] underline underline-offset-[3px] hover:text-[#f5f4f1]"
+              >
+                Privacy Policy
+              </Link>.
             </p>
           </section>
         </div>

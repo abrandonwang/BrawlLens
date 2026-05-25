@@ -27,6 +27,32 @@ import {
   SearchBox,
   TableHead,
   TableHeadHelp,
+  leaderboardAvatarClass,
+  leaderboardActionClass,
+  leaderboardMiniStatCenterClass,
+  leaderboardMiniStatClass,
+  leaderboardMiniStatRightClass,
+  leaderboardNameClass,
+  leaderboardPodiumCardClass,
+  leaderboardPodiumFootClass,
+  leaderboardPodiumGridClass,
+  leaderboardPodiumIdentityClass,
+  leaderboardPodiumRankClass,
+  leaderboardPodiumRateClass,
+  leaderboardPodiumScoreClass,
+  leaderboardPodiumTopClass,
+  leaderboardRankStackClass,
+  leaderboardRowAvatarClass,
+  leaderboardRowClass,
+  leaderboardRowMainClass,
+  leaderboardRowMonoClass,
+  leaderboardRowMutedClass,
+  leaderboardRowNameClass,
+  leaderboardRowStatClass,
+  leaderboardRowSublineClass,
+  leaderboardSublineClass,
+  leaderboardTableListClass,
+  leaderboardToolbarActionsClass,
   professionalTeamCards,
 } from "../LeaderboardDpmShell"
 
@@ -176,7 +202,7 @@ export default function ClubsClient({ allData }: { allData: RegionData[] }) {
       <LeaderboardBoard>
         <LeaderboardToolbar>
           <SearchBox value={search} onChange={setSearch} placeholder="Search club or tag" name="club-leaderboard-search" />
-          <div className="bl-lb-toolbar-actions">
+          <div className={leaderboardToolbarActionsClass}>
             <RegionPills regions={allData} activeRegion={activeRegion} onChange={setActiveRegion} />
           </div>
         </LeaderboardToolbar>
@@ -189,7 +215,7 @@ export default function ClubsClient({ allData }: { allData: RegionData[] }) {
           />
         ) : (
           <>
-            <section aria-label="Top clubs" className="bl-lb-podium-grid">
+            <section aria-label="Top clubs" className={leaderboardPodiumGridClass}>
               {filtered.slice(0, 3).map(club => (
                 <ClubPodiumCard
                   key={club.club_tag}
@@ -201,7 +227,7 @@ export default function ClubsClient({ allData }: { allData: RegionData[] }) {
             </section>
 
             <LeaderboardPanel>
-              <TableHead className={`${clubTableGrid} bl-lb-club-table-head`}>
+              <TableHead className={`${clubTableGrid} min-w-[820px] [&>span:first-child]:text-center [&>span:nth-child(6)]:pl-2 [&>span:nth-child(6)]:text-left`}>
                 <span>Rank</span>
                 <span>Club</span>
                 <TableHeadHelp label="Trophies" help="Club trophy total from the selected leaderboard snapshot." />
@@ -214,7 +240,7 @@ export default function ClubsClient({ allData }: { allData: RegionData[] }) {
                 <TableHeadHelp label="Updated" help="How recently BrawlLens last updated this leaderboard row." />
               </TableHead>
 
-              <div className="bl-lb-table-list">
+              <div className={leaderboardTableListClass}>
                 {paginated.map(club => (
                   <ClubRankRow
                     key={`${activeRegion}-${club.club_tag}`}
@@ -246,28 +272,28 @@ function ClubRankRow({
   const avg = averageTrophies(club)
 
   return (
-    <div className={`bl-lb-row bl-lb-club-row ${clubTableGrid}`}>
-      <div className="bl-lb-rank-stack">
+    <div className={`${leaderboardRowClass} min-w-[820px] ${clubTableGrid}`}>
+      <div className={leaderboardRankStackClass}>
         <RankCell rank={club.rank} />
         <span>{formatWorldRank(worldRank)}</span>
       </div>
-      <Link href={clubDetailHref(club.club_tag)} className="bl-lb-identity bl-lb-identity-link">
-        <ClubAvatar name={club.club_name} rank={club.rank} badgeId={enrichment?.badgeId ?? null} />
-        <div className="bl-lb-row-main">
-          <div className="bl-lb-name">{club.club_name}</div>
-          <div className="bl-lb-subline">{club.club_tag}</div>
+      <Link href={clubDetailHref(club.club_tag)} className="flex min-w-0 items-center gap-2 rounded-[7px] text-inherit no-underline transition-opacity hover:opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-[rgba(142,213,255,0.42)]">
+        <ClubAvatar name={club.club_name} rank={club.rank} badgeId={enrichment?.badgeId ?? null} compact />
+        <div className={leaderboardRowMainClass}>
+          <div className={leaderboardRowNameClass}>{club.club_name}</div>
+          <div className={leaderboardRowSublineClass}>{club.club_tag}</div>
         </div>
       </Link>
-      <span className="bl-lb-row-stat">
+      <span className={leaderboardRowStatClass}>
         {formatTrophies(club.trophies)}
       </span>
-      <span className="bl-lb-row-mono">{club.member_count ?? "-"}</span>
-      <span className="bl-lb-row-mono">{formatTrophies(avg)}</span>
+      <span className={leaderboardRowMonoClass}>{club.member_count ?? "-"}</span>
+      <span className={leaderboardRowMonoClass}>{formatTrophies(avg)}</span>
       <TopMemberCell member={enrichment?.topMember ?? null} />
       <PrestigeCell value={enrichment?.totalPrestige} coverage={enrichment?.prestigeCoverage} members={club.member_count} />
-      <span className="bl-lb-row-mono">{formatLeaderShare(club, enrichment?.topMember)}</span>
-      <span className="bl-lb-row-mono">{formatWorldRank(worldRank)}</span>
-      <span suppressHydrationWarning className="bl-lb-row-muted">{formatRelativeTime(club.updated_at) || "Live"}</span>
+      <span className={leaderboardRowMonoClass}>{formatLeaderShare(club, enrichment?.topMember)}</span>
+      <span className={leaderboardRowMonoClass}>{formatWorldRank(worldRank)}</span>
+      <span suppressHydrationWarning className={leaderboardRowMutedClass}>{formatRelativeTime(club.updated_at) || "Live"}</span>
     </div>
   )
 }
@@ -282,32 +308,32 @@ function ClubPodiumCard({
   enrichment?: ClubEnrichment
 }) {
   return (
-    <div className="bl-lb-podium-card">
-      <div className="bl-lb-podium-top">
-        <span className="bl-lb-podium-rank">{club.rank}</span>
-        <Link href={clubDetailHref(club.club_tag)} className="bl-lb-identity bl-lb-identity-link bl-lb-podium-identity">
+    <div className={leaderboardPodiumCardClass}>
+      <div className={leaderboardPodiumTopClass}>
+        <span className={leaderboardPodiumRankClass(club.rank)}>{club.rank}</span>
+        <Link href={clubDetailHref(club.club_tag)} className={leaderboardPodiumIdentityClass}>
           <ClubAvatar name={club.club_name} rank={club.rank} badgeId={enrichment?.badgeId ?? null} />
-          <div className="bl-lb-row-main">
-            <div className="bl-lb-name">{club.club_name}</div>
-            <div className="bl-lb-subline">{club.club_tag}</div>
+          <div className={leaderboardRowMainClass}>
+            <div className={leaderboardNameClass}>{club.club_name}</div>
+            <div className={leaderboardSublineClass}>{club.club_tag}</div>
           </div>
         </Link>
-        <div className="bl-lb-podium-rate">
+        <div className={leaderboardPodiumRateClass}>
           <strong suppressHydrationWarning>{formatRelativeTime(club.updated_at) || "Live"}</strong>
           <span>updated</span>
         </div>
       </div>
-      <div className="bl-lb-podium-score">{formatTrophies(club.trophies)}</div>
-      <div className="bl-lb-podium-foot">
-        <div className="bl-lb-mini-stat">
+      <div className={leaderboardPodiumScoreClass}>{formatTrophies(club.trophies)}</div>
+      <div className={leaderboardPodiumFootClass}>
+        <div className={leaderboardMiniStatClass}>
           <strong>{club.member_count ?? "-"}</strong>
           <span>members</span>
         </div>
-        <div className="bl-lb-mini-stat bl-lb-mini-stat-center">
+        <div className={leaderboardMiniStatCenterClass}>
           <strong>{formatPlainStat(enrichment?.totalPrestige)}</strong>
           <span>total prestige</span>
         </div>
-        <div className="bl-lb-mini-stat bl-lb-mini-stat-right">
+        <div className={leaderboardMiniStatRightClass}>
           <strong>{formatWorldRank(worldRank)}</strong>
           <span>world</span>
         </div>
@@ -325,12 +351,12 @@ function PrestigeCell({
   coverage: number | undefined
   members: number | null
 }) {
-  if (typeof value !== "number") return <span className="bl-lb-row-mono">--</span>
+  if (typeof value !== "number") return <span className={leaderboardRowMonoClass}>--</span>
   const complete = typeof members === "number" && typeof coverage === "number" && coverage >= members
 
   return (
     <span
-      className="bl-lb-row-mono"
+      className={leaderboardRowMonoClass}
       title={complete ? "Total club prestige" : `Prestige loaded for ${coverage ?? 0}/${members ?? "?"} members`}
     >
       {formatPlainStat(value)}
@@ -339,20 +365,20 @@ function PrestigeCell({
 }
 
 function TopMemberCell({ member }: { member: ClubMemberSummary | null }) {
-  if (!member) return <span className="bl-lb-member-cell bl-lb-member-cell-empty">--</span>
+  if (!member) return <span className="pl-2 text-[11px] font-extrabold text-[var(--lb-text-4)] [font-family:var(--font-geist-mono,var(--font-jetbrains-mono),ui-monospace,monospace)] max-[560px]:text-[9px]">--</span>
 
   return (
-    <span className="bl-lb-member-cell">
+    <span className="flex min-w-0 items-center gap-1.5 overflow-hidden pl-2 text-[var(--lb-text-2)] [&_strong]:block [&_strong]:min-w-0 [&_strong]:overflow-hidden [&_strong]:text-ellipsis [&_strong]:whitespace-nowrap [&_strong]:text-[11px] [&_strong]:font-[780] [&_strong]:leading-none [&_strong]:text-[var(--lb-text)] [&_small]:mt-[3px] [&_small]:block [&_small]:min-w-0 [&_small]:overflow-hidden [&_small]:text-ellipsis [&_small]:whitespace-nowrap [&_small]:text-[9px] [&_small]:font-[760] [&_small]:leading-none [&_small]:text-[var(--lb-text-3)] [&_small]:[font-family:var(--font-geist-mono,var(--font-jetbrains-mono),ui-monospace,monospace)]">
       <strong>{member.name}</strong>
       <small>{typeof member.trophies === "number" ? formatFullNumber(member.trophies) : member.role ?? "--"}</small>
     </span>
   )
 }
 
-function ClubAvatar({ name, rank, badgeId }: { name: string; rank: number; badgeId?: number | null }) {
+function ClubAvatar({ name, rank, badgeId, compact = false }: { name: string; rank: number; badgeId?: number | null; compact?: boolean }) {
   const color = rank === 1 ? "#f2cf63" : rank === 2 ? "#d6dbe4" : rank === 3 ? "#c88b5a" : "#7d86ff"
   return (
-    <span className="bl-lb-avatar" style={{ color }}>
+    <span className={compact ? leaderboardRowAvatarClass : leaderboardAvatarClass} style={{ color }}>
       {badgeId ? (
         <BrawlImage src={clubBadgeUrl(badgeId)} alt="" width={44} height={44} sizes="44px" />
       ) : firstGlyph(name)}
@@ -392,7 +418,7 @@ function DpmButton({
     <button
       type="button"
       onClick={onClick}
-      className="bl-lb-action"
+      className={leaderboardActionClass}
     >
       {children}
     </button>

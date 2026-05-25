@@ -16,11 +16,11 @@ export default function Footer() {
   return (
     <footer
       data-landing={isLandingPage ? "true" : undefined}
-      className={`bl-footer w-full px-[30px] text-[#5f5f5d] max-lg:px-5 max-sm:px-4 ${isLandingPage ? "border-t-0 bg-transparent" : "border-t-0 bg-[#0d0d11]"}`}
+      className={`app-footer w-full px-[30px] text-[var(--bt-muted)] max-lg:px-5 max-sm:px-4 ${isLandingPage ? "border-t-0 bg-transparent" : "border-t border-[var(--bt-line)] bg-[#090c14]"}`}
     >
-      <div className="flex h-[44px] w-full items-center justify-between gap-4">
+      <div className="flex min-h-[64px] w-full items-center justify-between gap-4">
         {isLandingPage ? <span aria-hidden="true" /> : (
-          <p className="m-0 truncate text-[11.5px] font-medium leading-none tracking-[-0.005em] text-[#5f5f5d]">
+          <p className="m-0 truncate text-[11.5px] font-medium leading-none tracking-[-0.005em] text-[var(--lovable-muted)]">
             &copy; BrawlLens 2026
           </p>
         )}
@@ -30,7 +30,7 @@ export default function Footer() {
             <Link
               key={`${link.label}-${link.href}`}
               href={link.href}
-              className="whitespace-nowrap text-[#f5f4f1] no-underline transition-colors duration-150 hover:text-[#7c5cff]"
+              className="inline-flex whitespace-nowrap rounded-none border-0 bg-transparent p-0 text-[var(--bt-text-2)] no-underline shadow-none transition-colors duration-150 hover:text-[var(--bt-text)]"
             >
               {link.label}
             </Link>

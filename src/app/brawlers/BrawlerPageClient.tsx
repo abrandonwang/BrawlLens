@@ -511,6 +511,7 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
           <section className="bl-tier-board" aria-label="Brawler tierlist">
             <div className="bl-tier-toolbar">
               <div className="bl-tier-selector-group">
+                <div className="bl-tier-selector-anchor">
                 <div
                   ref={rarityDropdownRef}
                   className="bl-tier-selector-wrap"
@@ -585,7 +586,9 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
                     </button>
                   </div>
                 </div>
+                </div>
 
+                <div className="bl-tier-selector-anchor">
                 <div
                   ref={classDropdownRef}
                   className="bl-tier-selector-wrap"
@@ -660,7 +663,9 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
                     </button>
                   </div>
                 </div>
+                </div>
 
+                <div className="bl-tier-selector-anchor">
                 <div
                   ref={sortDropdownRef}
                   className="bl-tier-selector-wrap"
@@ -737,9 +742,12 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
                     })}
                   </div>
                 </div>
+                </div>
               </div>
 
+              <div className="bl-tier-search-anchor">
               <div className="bl-tier-search">
+                <div className="bl-tier-search-bar">
                 <Search size={15} />
                 <input
                   ref={searchInputRef}
@@ -762,6 +770,7 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
                   autoComplete="off"
                   placeholder="Search brawler..."
                 />
+                </div>
                 {searchOpen && searchTerm.length > 0 && searchMatches.length > 0 && (
                   <div
                     ref={searchDropdownRef}
@@ -790,6 +799,7 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
                     ))}
                   </div>
                 )}
+              </div>
               </div>
             </div>
 
