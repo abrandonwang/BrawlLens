@@ -86,14 +86,14 @@ const authPanelClass =
   "bl-auth-panel relative z-[1] w-[min(420px,calc(100vw-36px))] animate-[authPanelIn_220ms_cubic-bezier(0.16,1,0.3,1)_both] overflow-hidden rounded-[14px] border border-[rgba(255,255,255,0.10)] p-[22px] text-[#f5f4f1] shadow-[rgba(255,255,255,0.06)_0_0.5px_0_0_inset,0_24px_64px_-20px_rgba(0,0,0,0.58)] [background:linear-gradient(180deg,rgba(34,34,42,0.96),rgba(20,20,27,0.96)),rgba(22,22,29,0.96)] max-[560px]:w-[calc(100vw-20px)] max-[560px]:rounded-[12px] max-[560px]:p-[18px]";
 
 const authCloseClass =
-  "grid size-[30px] shrink-0 cursor-pointer place-items-center rounded-[8px] border-0 bg-transparent text-[rgba(245,244,241,0.42)] outline-none transition-colors duration-150 hover:bg-[rgba(245,244,241,0.06)] hover:text-[#f5f4f1] focus-visible:bg-[rgba(245,244,241,0.06)] focus-visible:text-[#f5f4f1]";
+  "grid size-[30px] shrink-0 cursor-pointer place-items-center rounded-[8px] border-0 bg-transparent text-[rgba(245,244,241,0.72)] outline-none transition-colors duration-150 hover:bg-[rgba(245,244,241,0.06)] hover:text-[#f5f4f1] focus-visible:bg-[rgba(245,244,241,0.06)] focus-visible:text-[#f5f4f1]";
 
 const authTabButtonClass = (active: boolean) =>
-  `relative z-[1] h-[34px] cursor-pointer rounded-[7px] border-0 bg-transparent text-[12.5px] font-[680] outline-none transition-colors duration-[260ms] ${active ? "text-[#0d0d11] shadow-none hover:text-[#0d0d11] focus-visible:text-[#0d0d11]" : "text-[rgba(245,244,241,0.48)] hover:text-[rgba(245,244,241,0.78)] focus-visible:text-[rgba(245,244,241,0.78)]"}`;
+  `relative z-[1] h-[34px] cursor-pointer rounded-[7px] border-0 bg-transparent text-[12.5px] font-[680] outline-none transition-colors duration-[260ms] ${active ? "text-[#0d0d11] shadow-none hover:text-[#0d0d11] focus-visible:text-[#0d0d11]" : "text-[rgba(245,244,241,0.74)] hover:text-[rgba(245,244,241,0.9)] focus-visible:text-[rgba(245,244,241,0.9)]"}`;
 
-const authFieldLabelClass = "text-[12px] font-[660] leading-none text-[rgba(245,244,241,0.58)]";
+const authFieldLabelClass = "text-[12px] font-[660] leading-none text-[rgba(245,244,241,0.74)]";
 const authControlClass =
-  "h-11 w-full rounded-[10px] border border-[rgba(255,255,255,0.08)] bg-[rgba(8,8,12,0.50)] px-[13px] text-[13.5px] font-[560] leading-none text-[#f5f4f1] outline-none transition-[border-color,background-color,box-shadow] duration-150 placeholder:text-[rgba(245,244,241,0.30)] hover:border-[rgba(255,255,255,0.12)] hover:bg-[rgba(8,8,12,0.58)] focus:border-[rgba(167,139,255,0.46)] focus:bg-[rgba(8,8,12,0.66)] focus:shadow-[0_0_0_3px_rgba(124,92,255,0.12)] [font-family:var(--font-ui)]";
+  "h-11 w-full rounded-[10px] border border-[rgba(255,255,255,0.08)] bg-[rgba(8,8,12,0.50)] px-[13px] text-[13.5px] font-[560] leading-none text-[#f5f4f1] outline-none transition-[border-color,background-color,box-shadow] duration-150 placeholder:text-[rgba(245,244,241,0.72)] hover:border-[rgba(255,255,255,0.12)] hover:bg-[rgba(8,8,12,0.58)] focus:border-[rgba(167,139,255,0.46)] focus:bg-[rgba(8,8,12,0.66)] focus:shadow-[0_0_0_3px_rgba(124,92,255,0.12)] [font-family:var(--font-ui)]";
 
 const authHintBaseClass = "flex min-h-[15px] items-center gap-[7px] text-[11px] font-[560] leading-[1.2]";
 const authHintTransitionClass =
@@ -102,7 +102,7 @@ const authHintTransitionClass =
 function authHintToneClass(status: EmailCheckStatus) {
   if (status === "valid") return "text-[rgba(245,244,241,0.82)]";
   if (status === "format" || status === "invalid") return "text-[rgba(255,180,180,0.78)]";
-  return "text-[rgba(245,244,241,0.40)]";
+  return "text-[rgba(245,244,241,0.74)]";
 }
 
 function authRuleDotClass(status: EmailCheckStatus | "passed") {
@@ -615,7 +615,7 @@ export default function NavBar() {
   return (
     <>
       <nav
-        className={`fixed left-1/2 top-4 z-[500] w-[70vw] max-w-[1200px] -translate-x-1/2 overflow-visible rounded-[20px] border border-solid bg-[rgba(13,13,17,0.92)] text-[#f5f4f1] shadow-[0_18px_44px_-22px_rgba(0,0,0,0.55)] backdrop-blur-xl backdrop-saturate-150 [font-family:var(--font-ui)] max-lg:w-[calc(100%-20px)] ${menuVisible ? "border-transparent" : "border-[rgba(245,244,241,0.10)]"}`}
+        className="fixed left-1/2 top-4 z-[500] w-[70vw] max-w-[1200px] -translate-x-1/2 overflow-visible rounded-[20px] border-0 bg-[rgba(13,13,17,0.92)] text-[#f5f4f1] shadow-[0_20px_52px_-22px_rgba(0,0,0,0.70),0_0_48px_-18px_rgba(124,92,255,0.78),0_0_76px_-42px_rgba(36,94,216,0.58)] backdrop-blur-xl backdrop-saturate-150 [font-family:var(--font-ui)] max-lg:w-[calc(100%-20px)]"
         onMouseLeave={() => {
           setHoverDesktopPanel(null);
           setDesktopPanel(null);
@@ -701,7 +701,7 @@ export default function NavBar() {
                       href={href}
                       role="menuitem"
                       onClick={() => setIsAccountMenuOpen(false)}
-                      className="flex min-h-9 items-center rounded-[8px] px-2.5 py-2 text-[13px] font-medium text-[rgba(245,244,241,0.62)] no-underline transition-colors duration-150 hover:bg-[rgba(245,244,241,0.04)] hover:text-[#f5f4f1]"
+                      className="flex min-h-9 items-center rounded-[8px] px-2.5 py-2 text-[13px] font-medium text-[rgba(245,244,241,0.78)] no-underline transition-colors duration-150 hover:bg-[rgba(245,244,241,0.04)] hover:text-[#f5f4f1]"
                     >
                       <span className="truncate">{label}</span>
                     </Link>
@@ -711,7 +711,7 @@ export default function NavBar() {
                     type="button"
                     role="menuitem"
                     onClick={signOut}
-                    className="flex min-h-9 w-full cursor-pointer items-center rounded-[8px] border-0 bg-transparent px-2.5 py-2 text-left text-[13px] font-medium text-[rgba(245,244,241,0.62)] transition-colors duration-150 hover:bg-[rgba(245,244,241,0.04)] hover:text-[#f5f4f1]"
+                    className="flex min-h-9 w-full cursor-pointer items-center rounded-[8px] border-0 bg-transparent px-2.5 py-2 text-left text-[13px] font-medium text-[rgba(245,244,241,0.78)] transition-colors duration-150 hover:bg-[rgba(245,244,241,0.04)] hover:text-[#f5f4f1]"
                   >
                     Sign out
                   </button>
@@ -755,8 +755,8 @@ export default function NavBar() {
                       aria-disabled="true"
                       className="rounded-[12px] px-3 py-2 opacity-60"
                     >
-                      <p className="m-0 text-[14px] font-semibold leading-tight text-[rgba(245,244,241,0.4)]">{item.label}</p>
-                      <p className="mt-1 mb-0 text-[12px] leading-snug text-[rgba(245,244,241,0.32)]">{item.description}</p>
+                      <p className="m-0 text-[14px] font-semibold leading-tight text-[rgba(245,244,241,0.72)]">{item.label}</p>
+                      <p className="mt-1 mb-0 text-[12px] leading-snug text-[rgba(245,244,241,0.68)]">{item.description}</p>
                     </div>
                   );
                 }
@@ -772,7 +772,7 @@ export default function NavBar() {
                     className={`group block rounded-[12px] px-3 py-2 text-inherit no-underline transition-colors duration-150 ${active ? "bg-[rgba(124,92,255,0.10)]" : "hover:bg-[rgba(245,244,241,0.04)]"}`}
                   >
                     <p className={`m-0 text-[14px] font-semibold leading-tight ${active ? "text-[#a78bff]" : "text-[#f5f4f1]"}`}>{item.label}</p>
-                    <p className="mt-1 mb-0 text-[12px] leading-snug text-[rgba(245,244,241,0.5)]">{item.description}</p>
+                    <p className="mt-1 mb-0 text-[12px] leading-snug text-[rgba(245,244,241,0.74)]">{item.description}</p>
                   </Link>
                 );
               })}
@@ -824,7 +824,7 @@ export default function NavBar() {
                               key={item.href}
                               href={item.href}
                               onClick={closeMenu}
-                              className={`flex min-h-[42px] items-center justify-start text-[17px] font-[620] leading-none no-underline outline-none transition-colors duration-150 hover:text-[#a78bff] focus-visible:text-[#a78bff] focus-visible:outline-none ${active ? "text-[#a78bff]" : "text-[rgba(245,244,241,0.62)]"}`}
+                              className={`flex min-h-[42px] items-center justify-start text-[17px] font-[620] leading-none no-underline outline-none transition-colors duration-150 hover:text-[#a78bff] focus-visible:text-[#a78bff] focus-visible:outline-none ${active ? "text-[#a78bff]" : "text-[rgba(245,244,241,0.86)]"}`}
                             >
                               {item.label}
                             </Link>
@@ -855,7 +855,7 @@ export default function NavBar() {
                   <h2 id="login-modal-title" className="m-0 text-[20px] font-[760] leading-none text-[#f5f4f1] max-[560px]:text-[19px]">
                     {authMode === "signup" ? "Create account" : "Log in"}
                   </h2>
-                  <p className="mb-0 mt-1.5 text-[12.5px] font-medium leading-[1.35] text-[rgba(245,244,241,0.46)] max-[560px]:max-w-[260px]">
+                  <p className="mb-0 mt-1.5 text-[12.5px] font-medium leading-[1.35] text-[rgba(245,244,241,0.74)] max-[560px]:max-w-[260px]">
                     {authMode === "signup" ? "Save your setup and BrawlLens profile." : "Welcome back to BrawlLens."}
                   </p>
                 </div>
@@ -891,7 +891,7 @@ export default function NavBar() {
                 <div className="mt-5 grid gap-3">
                   <div className="rounded-[12px] border border-[rgba(255,255,255,0.08)] bg-[rgba(8,8,12,0.42)] p-[15px]">
                     <p className="m-0 text-[14px] font-[760] leading-[1.1] text-[#f5f4f1]">Check your inbox</p>
-                    <small className="mt-[7px] block text-[12.5px] font-medium leading-[1.45] text-[rgba(245,244,241,0.52)]">
+                    <small className="mt-[7px] block text-[12.5px] font-medium leading-[1.45] text-[rgba(245,244,241,0.74)]">
                       We sent a setup link to <strong className="font-semibold text-[#f5f4f1]">{loginEmail}</strong>. It opens BrawlLens setup.
                     </small>
                   </div>
@@ -955,7 +955,7 @@ export default function NavBar() {
                       className={`grid gap-[5px] overflow-hidden ${authHintTransitionClass} ${authMode === "login" ? "pointer-events-none max-h-0 -translate-y-1 opacity-0" : "max-h-10 translate-y-0 opacity-100"}`}
                     >
                       {loginPasswordRules.map(rule => (
-                        <div key={rule.label} className={`${authHintBaseClass} ${rule.passed ? "text-[rgba(245,244,241,0.82)]" : "text-[rgba(245,244,241,0.40)]"}`}>
+                        <div key={rule.label} className={`${authHintBaseClass} ${rule.passed ? "text-[rgba(245,244,241,0.82)]" : "text-[rgba(245,244,241,0.74)]"}`}>
                           <span className={authRuleDotClass(rule.passed ? "passed" : "idle")} aria-hidden="true">{rule.passed ? "✓" : ""}</span>
                           <span>{rule.label}</span>
                         </div>
@@ -980,12 +980,12 @@ export default function NavBar() {
               </p>
             )}
 
-            <p className="mb-0 mt-[18px] text-center text-[11px] font-medium leading-normal text-[rgba(245,244,241,0.32)]">
+            <p className="mb-0 mt-[18px] text-center text-[11px] font-medium leading-normal text-[rgba(245,244,241,0.66)]">
               By continuing, you agree to the{" "}
               <Link
                 href="/privacy"
                 onClick={() => setIsLoginOpen(false)}
-                className="text-[rgba(245,244,241,0.58)] underline underline-offset-[3px] hover:text-[#f5f4f1]"
+                className="text-[rgba(245,244,241,0.78)] underline underline-offset-[3px] hover:text-[#f5f4f1]"
               >
                 Privacy Policy
               </Link>.

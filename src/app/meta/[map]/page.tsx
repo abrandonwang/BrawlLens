@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import MapDetailClient from "./MapDetailClient"
 import { getModeName } from "@/lib/modes"
+import type { RotationEvent } from "@/lib/rotation"
 
 export const dynamic = "force-dynamic"
 
@@ -19,18 +20,19 @@ async function getMapImage(mapName: string): Promise<string | null> {
   }
 }
 
-async function getRotationMapNames(): Promise<Set<string>> {
+async function getRotationInfoForMap(mapName: string): Promise<{ isLive: boolean; endTime: string | null }> {
   try {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
     const res = await fetch(`${baseUrl}/api/rotation`, { next: { revalidate: 300 } })
-    const data = await res.json()
-    const names = new Set<string>()
+    const data = await res.json() as RotationEvent[]
     for (const slot of data || []) {
-      if (slot.event?.map) names.add(slot.event.map)
+      if (slot.event?.map === mapName) {
+        return { isLive: true, endTime: slot.endTime ?? null }
+      }
     }
-    return names
+    return { isLive: false, endTime: null }
   } catch {
-    return new Set()
+    return { isLive: false, endTime: null }
   }
 }
 
@@ -57,7 +59,7 @@ export default async function MapDetailPage({ params }: PageProps) {
     process.env.SUPABASE_SERVICE_KEY!
   )
 
-  const [{ data, error }, { data: mapMeta }, imageUrl, rotationNames] = await Promise.all([
+  const [{ data, error }, { data: mapMeta }, imageUrl, rotationInfo] = await Promise.all([
     supabase
       .from("map_brawler_stats")
       .select("brawler_id, brawler_name, picks, wins, win_rate")
@@ -71,7 +73,7 @@ export default async function MapDetailPage({ params }: PageProps) {
       .limit(1)
       .maybeSingle(),
     getMapImage(mapName),
-    getRotationMapNames(),
+    getRotationInfoForMap(mapName),
   ])
 
   if (error) notFound()
@@ -94,7 +96,8 @@ export default async function MapDetailPage({ params }: PageProps) {
       modeName={mapMeta?.mode ? getModeName(mapMeta.mode) : null}
       totalBattles={totalBattles}
       brawlers={brawlers}
-      isLive={rotationNames.has(mapName)}
+      isLive={rotationInfo.isLive}
+      rotationEndTime={rotationInfo.endTime}
     />
   )
 }

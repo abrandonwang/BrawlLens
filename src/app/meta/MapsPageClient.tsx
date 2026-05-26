@@ -1,8 +1,9 @@
 "use client"
 
-import { useState, useEffect, useRef, useMemo } from "react"
+import { useState, useEffect, useRef, useMemo, type CSSProperties } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
+import { PulsingBorder } from "@paper-design/shaders-react"
 import { ChevronDown, Search } from "lucide-react"
 import HelpTooltip from "@/components/HelpTooltip"
 import MetaDashboard from "@/components/MetaDashboard"
@@ -33,6 +34,28 @@ function formatFullNumber(value: number) {
   return value.toLocaleString("en-US")
 }
 
+const MAP_INTRO_BORDER_COLORS = ["#7c5cff", "#5aeed0", "#ff6099", "#f5d75e", "#7c5cff"]
+const MAP_INTRO_BORDER_STYLE: CSSProperties = {
+  position: "absolute",
+  inset: 0,
+  zIndex: 3,
+  boxSizing: "border-box",
+  width: "100%",
+  height: "100%",
+  borderRadius: "inherit",
+  pointerEvents: "none",
+  opacity: 0.88,
+}
+
+function browserSupportsWebGL() {
+  try {
+    const canvas = document.createElement("canvas")
+    return Boolean(canvas.getContext("webgl") || canvas.getContext("experimental-webgl"))
+  } catch {
+    return false
+  }
+}
+
 export default function MapsPageClient() {
   const [modes, setModes] = useState<ModeInfo[]>([])
   const [loading, setLoading] = useState(true)
@@ -44,6 +67,7 @@ export default function MapsPageClient() {
   const [spotlightBrawlerLoaded, setSpotlightBrawlerLoaded] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [modeOpen, setModeOpen] = useState(false)
+  const [introBorderReady, setIntroBorderReady] = useState(false)
   const [mapImageLookup, setMapImageLookup] = useState<Map<string, string>>(new Map())
   const searchInputRef = useRef<HTMLInputElement>(null)
   const searchDropdownRef = useRef<HTMLDivElement>(null)
@@ -52,6 +76,10 @@ export default function MapsPageClient() {
   useEffect(() => {
     document.documentElement.classList.add("landing-bg")
     return () => document.documentElement.classList.remove("landing-bg")
+  }, [])
+
+  useEffect(() => {
+    setIntroBorderReady(browserSupportsWebGL())
   }, [])
 
   useEffect(() => {
@@ -86,6 +114,21 @@ export default function MapsPageClient() {
       .catch(() => setLoading(false))
   }, [])
 
+  useEffect(() => {
+    if (!modes.length) return
+    const modeParam = searchParams.get("mode")
+    if (!modeParam) {
+      setSelectedMode(null)
+      return
+    }
+    const normalized = modeParam.toLowerCase()
+    const match = modes.find(mode =>
+      mode.mode.toLowerCase() === normalized
+      || getModeName(mode.mode).toLowerCase() === normalized
+    )
+    if (match) setSelectedMode(match.mode)
+  }, [modes, searchParams])
+
   const [autoOpenHandled, setAutoOpenHandled] = useState(false)
   useEffect(() => {
     const openName = searchParams.get("open")
@@ -106,6 +149,14 @@ export default function MapsPageClient() {
 
   const totalBattlesAnalyzed = useMemo(() => {
     return modes.reduce((total, mode) => total + mode.totalBattles, 0)
+  }, [modes])
+
+  const totalUniqueMapCount = useMemo(() => {
+    const seen = new Set<string>()
+    for (const mode of modes) {
+      for (const map of mode.maps) seen.add(map.name)
+    }
+    return seen.size
   }, [modes])
 
   const allMapsList = useMemo(() => {
@@ -144,88 +195,114 @@ export default function MapsPageClient() {
       .finally(() => setSpotlightBrawlerLoaded(true))
   }, [])
 
+  function selectMode(mode: string | null) {
+    setSelectedMode(mode)
+    setModeOpen(false)
+    const params = new URLSearchParams(searchParams.toString())
+    if (mode) params.set("mode", mode)
+    else params.delete("mode")
+    params.delete("open")
+    const query = params.toString()
+    router.replace(query ? `/meta?${query}` : "/meta", { scroll: false })
+  }
+
+  const analyzedLabel = totalBattlesAnalyzed > 0 ? formatFullNumber(totalBattlesAnalyzed) : loading ? "Loading..." : "-"
+
   return (
     <>
       <main className="bl-tier-shell">
         <div className="bl-tier-content">
-        <section className="bl-tier-intro-card" aria-labelledby="maps-title">
-          <h1 id="maps-title">Maps</h1>
-          <div className="bl-tier-analyzed">
-            <span>BATTLES ANALYZED</span>
-            <strong>{totalBattlesAnalyzed > 0 ? formatFullNumber(totalBattlesAnalyzed) : "-"}</strong>
-            <HelpTooltip label="How map stats are summarized">
-              Battle counts come from the current tracked map dataset. The most popular map is the map with the
-              highest tracked battle volume, while best brawler uses the current brawler win-rate dataset.
-            </HelpTooltip>
-          </div>
-          <p>
-            Scan live maps and open matchup data for the brawlers performing best on each layout.
-            <span className="mt-2 block text-[var(--lb-text-2)]">
-              Most popular map: <strong className="font-semibold text-[var(--lb-text)]">{spotlightMap ? `${spotlightMap.name} (${getModeName(spotlightMap.mode)}, ${formatFullNumber(spotlightMap.battles)} battles)` : "Loading..."}</strong>
-              <span aria-hidden="true"> · </span>
-              Best brawler: <strong className="font-semibold text-[var(--lb-text)]">{spotlightTopBrawler ? `${formatBrawlerName(spotlightTopBrawler.name)} ${spotlightTopBrawler.winRate.toFixed(1)}%` : spotlightBrawlerLoaded ? "Unavailable" : "Loading..."}</strong>
-            </span>
-          </p>
-        </section>
+          <section
+            className="relative isolate mb-4 overflow-visible rounded-[10px] max-[560px]:mb-3"
+            aria-labelledby="maps-title"
+          >
+            {introBorderReady && (
+              <PulsingBorder
+                aria-hidden="true"
+                className="bl-tier-hero-border-shader"
+                style={MAP_INTRO_BORDER_STYLE}
+                colors={MAP_INTRO_BORDER_COLORS}
+                colorBack="#00000000"
+                roundness={0.08}
+                thickness={0.08}
+                softness={0.72}
+                intensity={0.22}
+                bloom={0.22}
+                spots={5}
+                spotSize={0.48}
+                pulse={0.22}
+                smoke={0.28}
+                smokeSize={0.64}
+                speed={0.82}
+                scale={1}
+              />
+            )}
+
+            <div className="relative z-[2] min-h-[132px] rounded-[10px] border border-[rgba(245,244,241,0.105)] bg-[#101015] px-5 py-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] max-[760px]:px-4 max-[760px]:py-4">
+              <div className="mx-auto grid max-w-[1040px] justify-items-center text-center">
+                <h1
+                  id="maps-title"
+                  className="m-0 text-[clamp(18px,2.52vw,29px)] font-[820] leading-[1.02] tracking-[0] text-[#f5f4f1] [font-family:var(--font-heading)]"
+                >
+                  Maps &amp; Modes Top 1000, S50
+                </h1>
+
+                <div className="mt-2 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[clamp(11px,1.2vw,13px)] leading-none">
+                  <span className="font-[720] uppercase tracking-[0.02em] text-[rgba(245,244,241,0.82)]">BATTLES ANALYZED</span>
+                  <strong className="font-[900] text-[#f2de8a] [font-family:var(--font-number,var(--font-geist-mono),ui-monospace,monospace)]">
+                    {analyzedLabel}
+                  </strong>
+                  <HelpTooltip label="How map stats are summarized">
+                    Battle counts come from the tracked map dataset. Map pages are grouped by mode and ranked by
+                    current battle volume so live rotation and high-sample layouts stay easy to scan.
+                  </HelpTooltip>
+                </div>
+
+                <p className="m-0 mt-4 max-w-[960px] text-[clamp(11px,1.14vw,13px)] font-[560] leading-[1.42] text-[rgba(245,244,241,0.78)]">
+                  Explore every tracked Brawl Stars map by mode, live rotation, and battle volume. Open a map to compare
+                  the brawlers performing best on that layout.
+                  <span className="mt-2 block text-[rgba(245,244,241,0.78)]">
+                    {totalUniqueMapCount ? `${formatFullNumber(totalUniqueMapCount)} maps · ${formatFullNumber(modes.length)} modes` : "Loading map coverage"}
+                    <span aria-hidden="true"> · </span>
+                    Popular: <strong className="font-semibold text-[#f5f4f1]">{spotlightMap ? `${spotlightMap.name} (${getModeName(spotlightMap.mode)})` : "Loading..."}</strong>
+                    <span aria-hidden="true"> · </span>
+                    Best brawler: <strong className="font-semibold text-[#f5f4f1]">{spotlightTopBrawler ? `${formatBrawlerName(spotlightTopBrawler.name)} ${spotlightTopBrawler.winRate.toFixed(1)}%` : spotlightBrawlerLoaded ? "Unavailable" : "Loading..."}</strong>
+                  </span>
+                </p>
+              </div>
+            </div>
+          </section>
 
         <MetaDashboard
           modes={modes}
           loading={loading}
           selectedMode={selectedMode}
           mapSearch={mapSearch}
-          onClearFilters={() => { setMapSearch(""); setSelectedMode(null) }}
-          toolbar={(
-            <div className="grid grid-cols-[minmax(240px,320px)_auto] items-center gap-3 max-md:grid-cols-1">
-              <div className="relative max-md:w-full">
-                <div className="flex h-[34px] items-center gap-2 rounded-[4px] border border-[#26262d] bg-[#0d0d11] px-3 text-[var(--ink)] transition-colors focus-within:border-[rgba(245,244,241,0.15)] focus-within:bg-[#15151b]">
-                  <Search size={13} className="shrink-0 text-[var(--ink-4)]" />
-                  <input
-                    ref={searchInputRef}
-                    value={mapSearch}
-                    onChange={e => { setMapSearch(e.target.value); setSearchOpen(true) }}
-                    onFocus={() => setSearchOpen(true)}
-                    placeholder="Search maps"
-                    className="w-full border-0 bg-transparent font-inherit text-[12px] font-semibold tracking-normal text-[var(--ink)] outline-none placeholder:text-[rgba(245,244,241,0.38)]"
-                  />
-                </div>
-
-                {searchOpen && searchMatches.length > 0 && (
-                  <div
-                    ref={searchDropdownRef}
-                    className="absolute top-[calc(100%+8px)] right-0 left-0 z-50 max-h-[280px] overflow-y-auto rounded-[6px] border border-[#26262d] bg-[#0d0d11] p-1 shadow-[0_18px_42px_rgba(0,0,0,0.08)]"
-                  >
-                    {searchMatches.slice(0, 12).map(m => {
-                      const imageUrl = mapImageLookup.get(m.name) ?? mapImageLookup.get(normalizeMapName(m.name))
-                      return (
-                        <Link
-                          key={m.name}
-                          href={mapHref(m.name)}
-                          onClick={() => {
-                            setMapSearch("")
-                            setSearchOpen(false)
-                          }}
-                          className="row-hover flex w-full cursor-pointer items-center gap-2.5 rounded-[5px] border-0 bg-transparent px-2.5 py-2 text-left font-inherit"
-                        >
-                          <div className="grid size-[26px] shrink-0 place-items-center overflow-hidden rounded-[5px] border border-[var(--line)] bg-[var(--panel-2)]">
-                            {imageUrl && (
-                              <BrawlImage src={imageUrl} alt={m.name} width={26} height={26} sizes="26px" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                            )}
-                          </div>
-                          <div className="min-w-0">
-                            <div className="truncate text-[12px] font-semibold text-[var(--ink)]">{m.name}</div>
-                            <div className="text-[10px] leading-snug tracking-normal text-[var(--ink-4)]">{getModeName(m.mode)}</div>
-                          </div>
-                        </Link>
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
-
-              <div ref={modeDropdownRef} className="bl-tier-selector-wrap w-fit max-md:w-full">
+          onClearFilters={() => { setMapSearch(""); selectMode(null) }}
+          filterControls={(
+            <div className="bl-tier-selector-anchor">
+              <div
+                ref={modeDropdownRef}
+                className="bl-tier-selector-wrap"
+                onPointerEnter={event => {
+                  if (event.pointerType !== "mouse") return
+                  setModeOpen(true)
+                  setSearchOpen(false)
+                }}
+                onPointerLeave={event => {
+                  if (event.pointerType === "mouse") setModeOpen(false)
+                }}
+                onFocus={() => {
+                  setModeOpen(true)
+                  setSearchOpen(false)
+                }}
+                onBlur={event => {
+                  if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setModeOpen(false)
+                }}
+              >
                 <button
                   type="button"
-                  className="bl-tier-selector max-md:w-full"
+                  className="bl-tier-selector"
                   aria-haspopup="listbox"
                   aria-expanded={modeOpen}
                   onClick={() => {
@@ -242,10 +319,7 @@ export default function MapsPageClient() {
                     role="option"
                     aria-selected={selectedMode === null}
                     className={`bl-tier-menu-card bl-tier-menu-card-all ${selectedMode === null ? "is-active" : ""}`}
-                    onClick={() => {
-                      setSelectedMode(null)
-                      setModeOpen(false)
-                    }}
+                    onClick={() => selectMode(null)}
                   >
                     All modes
                   </button>
@@ -258,16 +332,64 @@ export default function MapsPageClient() {
                         role="option"
                         aria-selected={active}
                         className={`bl-tier-menu-card ${active ? "is-active" : ""}`}
-                        onClick={() => {
-                          setSelectedMode(mode.mode)
-                          setModeOpen(false)
-                        }}
+                        onClick={() => selectMode(mode.mode)}
                       >
                         {getModeName(mode.mode)}
                       </button>
                     )
                   })}
                 </div>
+              </div>
+            </div>
+          )}
+          searchControl={(
+            <div className="bl-tier-search-anchor">
+              <div className="bl-tier-search">
+                <div className="bl-tier-search-bar">
+                  <Search size={15} />
+                  <input
+                    ref={searchInputRef}
+                    value={mapSearch}
+                    onChange={e => {
+                      setMapSearch(e.target.value)
+                      setSearchOpen(e.target.value.trim().length > 0)
+                      setModeOpen(false)
+                    }}
+                    onFocus={() => {
+                      setSearchOpen(mapSearch.trim().length > 0)
+                      setModeOpen(false)
+                    }}
+                    aria-label="Search maps"
+                    autoComplete="off"
+                    placeholder="Search maps..."
+                  />
+                </div>
+
+                {searchOpen && mapSearch.trim().length > 0 && searchMatches.length > 0 && (
+                  <div ref={searchDropdownRef} className="bl-tier-search-menu">
+                    {searchMatches.slice(0, 12).map(m => {
+                      const imageUrl = mapImageLookup.get(m.name) ?? mapImageLookup.get(normalizeMapName(m.name))
+                      return (
+                        <Link
+                          key={m.name}
+                          href={mapHref(m.name)}
+                          onClick={() => {
+                            setMapSearch("")
+                            setSearchOpen(false)
+                          }}
+                        >
+                          {imageUrl && (
+                            <BrawlImage src={imageUrl} alt={m.name} width={28} height={28} className="size-7 object-cover" sizes="28px" />
+                          )}
+                          <span>
+                            <strong>{m.name}</strong>
+                            <small>{getModeName(m.mode)}</small>
+                          </span>
+                        </Link>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
             </div>
           )}

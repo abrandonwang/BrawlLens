@@ -3,6 +3,8 @@ import "./globals.css";
 import NavBar from "../components/NavBar";
 import Footer from "../components/Footer";
 import TopLoader from "../components/TopLoader";
+import PageTransition from "../components/PageTransition";
+import PageNav from "../components/PageNav";
 import { Analytics } from "@vercel/analytics/next";
 
 export const metadata: Metadata = {
@@ -37,8 +39,10 @@ export default function RootLayout({
         className="flex min-h-dvh flex-col overflow-x-hidden overflow-y-auto"
       >
         <TopLoader />
+        <PageTransition />
         <NavBar />
         <div className="app-main-shell flex-1 flex flex-col pt-[40px]">
+          <PageNav />
           {children}
         </div>
         <Footer />

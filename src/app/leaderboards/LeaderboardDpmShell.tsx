@@ -2,7 +2,7 @@
 
 /* eslint-disable @next/next/no-img-element */
 
-import { useEffect, type CSSProperties, type ReactNode } from "react"
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react"
 import {
   ChevronDown,
   ChevronLeft,
@@ -13,10 +13,12 @@ import {
   type LucideIcon,
 } from "lucide-react"
 import Link from "next/link"
+import { PulsingBorder } from "@paper-design/shaders-react"
 import { BrawlImage, brawlerIconUrl } from "@/components/BrawlImage"
 import { leaderboardRegionShort } from "@/lib/leaderboardRegions"
+import { useClickOutside } from "@/lib/useClickOutside"
 
-export type LeaderboardKind = "players" | "clubs" | "brawlers"
+export type LeaderboardKind = "players" | "clubs" | "brawlers" | "pro"
 
 export type FeatureCard = {
   title: string
@@ -105,6 +107,7 @@ const tabs = [
   { key: "players", label: "Players", href: "/leaderboards/players" },
   { key: "clubs", label: "Clubs", href: "/leaderboards/clubs" },
   { key: "brawlers", label: "Brawlers", href: "/leaderboards/brawlers" },
+  { key: "pro", label: "Pro Teams", href: "/leaderboards/pro" },
 ] as const
 
 const leaderboardSubnavSlotClass =
@@ -130,12 +133,6 @@ export const leaderboardToolbarActionsClass =
 
 export const leaderboardActionClass =
   "inline-flex h-[38px] cursor-pointer items-center justify-center rounded-[7px] border border-[rgba(0,0,0,0.2)] bg-[var(--lb-text)] px-3.5 text-[13px] font-[750] text-[#111214] no-underline shadow-[rgba(255,255,255,0.18)_0_0.5px_0_0_inset,rgba(0,0,0,0.2)_0_0_0_0.5px_inset,rgba(0,0,0,0.05)_0_1px_2px_0] hover:brightness-[1.04]"
-
-const leaderboardSearchClass =
-  "flex h-[34px] w-[min(100%,330px)] items-center gap-[9px] rounded-[5px] border border-[var(--lb-line)] bg-[var(--panel)] px-[11px] text-[var(--lb-text-3)] focus-within:border-[var(--lb-line-2)] focus-within:bg-[var(--lb-panel-2)] max-[1024px]:w-full"
-
-const leaderboardSearchInputClass =
-  "min-w-0 w-full border-0 bg-transparent text-[13px] font-semibold leading-none text-[var(--lb-text)] outline-none placeholder:text-[rgba(245,244,241,0.38)] [font-family:var(--font-label)]"
 
 const leaderboardRegionPillsClass =
   "flex h-[34px] min-w-0 items-center gap-1 overflow-hidden rounded-[5px] border border-[var(--lb-line)] bg-[var(--panel)] p-[3px] max-[560px]:overflow-x-auto max-[560px]:[scrollbar-width:none] max-[560px]:[&::-webkit-scrollbar]:hidden"
@@ -277,10 +274,9 @@ function teamSlug(title: string) {
 }
 
 export function LeaderboardPageShell({
-  active,
   children,
 }: {
-  active: LeaderboardKind
+  active?: LeaderboardKind
   children: ReactNode
 }) {
   useEffect(() => {
@@ -290,7 +286,6 @@ export function LeaderboardPageShell({
 
   return (
     <main className={leaderboardShellClass}>
-      <LeaderboardTabs active={active} />
       <div className={leaderboardFrameClass}>
         {children}
       </div>
@@ -390,40 +385,124 @@ export function LeaderboardBoard({ children }: { children: ReactNode }) {
   )
 }
 
+const LEADERBOARD_HERO_BORDER_COLORS = ["#7c5cff", "#5aeed0", "#ff6099", "#f5d75e", "#7c5cff"]
+const LEADERBOARD_HERO_BORDER_STYLE: CSSProperties = {
+  position: "absolute",
+  inset: 0,
+  zIndex: 3,
+  boxSizing: "border-box",
+  width: "100%",
+  height: "100%",
+  borderRadius: "inherit",
+  pointerEvents: "none",
+  opacity: 0.88,
+}
+
+function browserSupportsWebGL() {
+  try {
+    const canvas = document.createElement("canvas")
+    return Boolean(canvas.getContext("webgl") || canvas.getContext("experimental-webgl"))
+  } catch {
+    return false
+  }
+}
+
 export function LeaderboardHero({
   title,
   description,
   imageId,
   eyebrow,
   meta,
+  highlight,
 }: {
   title: string
   description?: string
   imageId?: number
   eyebrow?: string
   meta?: ReactNode
+  highlight?: ReactNode
 }) {
+  const [borderReady, setBorderReady] = useState(false)
+
+  useEffect(() => {
+    setBorderReady(browserSupportsWebGL())
+  }, [])
+
   return (
-    <section className="mb-3 block min-h-[116px] rounded-[8px] border border-[rgba(245,244,241,0.065)] bg-[var(--panel)] px-7 py-[27px] pb-[25px] text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
-      <div className="min-w-0">
-        {eyebrow && <span className="mb-1 block text-[10px] font-extrabold uppercase leading-none text-[var(--lb-accent)] [font-family:var(--font-label)]">{eyebrow}</span>}
-        <h1 className="m-0 text-[30px] font-[850] leading-[1.04] tracking-[0] text-[var(--lb-text)] [font-family:var(--font-ui)]">{title}</h1>
-        {description && <p className="mx-auto mb-0 mt-3 max-w-[820px] text-[13px] font-medium leading-[1.48] text-[var(--lb-text-2)] [font-family:var(--font-ui-light)]">{description}</p>}
-      </div>
-      <div className="hidden items-center gap-3" aria-hidden={!meta && !imageId}>
-        {imageId && (
-          <span className="grid size-[68px] place-items-center overflow-hidden rounded-[10px] border border-[var(--lb-line)] bg-[var(--lb-panel-2)]">
-            <BrawlImage
-              src={brawlerIconUrl(imageId)}
-              alt=""
-              width={72}
-              height={72}
-              className="size-[72px] object-cover"
-              sizes="72px"
-            />
-          </span>
-        )}
-        {meta && <div className="min-w-[116px] rounded-[8px] border border-[var(--lb-line)] bg-[var(--lb-panel-2)] px-3 py-2.5 text-right">{meta}</div>}
+    <section
+      className="relative isolate mb-3 overflow-visible rounded-[10px] max-[560px]:mb-2.5"
+      aria-labelledby="leaderboard-hero-title"
+    >
+      {borderReady && (
+        <PulsingBorder
+          aria-hidden="true"
+          className="bl-tier-hero-border-shader"
+          style={LEADERBOARD_HERO_BORDER_STYLE}
+          colors={LEADERBOARD_HERO_BORDER_COLORS}
+          colorBack="#00000000"
+          roundness={0.08}
+          thickness={0.08}
+          softness={0.72}
+          intensity={0.22}
+          bloom={0.22}
+          spots={5}
+          spotSize={0.48}
+          pulse={0.22}
+          smoke={0.28}
+          smokeSize={0.64}
+          speed={0.82}
+          scale={1}
+        />
+      )}
+
+      <div className="relative z-[2] min-h-[124px] rounded-[10px] border border-[rgba(245,244,241,0.105)] bg-[#101015] px-5 py-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] max-[760px]:px-4 max-[760px]:py-4">
+        <div className="mx-auto grid max-w-[1040px] justify-items-center text-center">
+          {eyebrow && (
+            <span className="mb-1.5 block text-[10px] font-extrabold uppercase leading-none tracking-[0.18em] text-[var(--lb-accent)] [font-family:var(--font-label)]">
+              {eyebrow}
+            </span>
+          )}
+          <h1
+            id="leaderboard-hero-title"
+            className="m-0 text-[clamp(18px,2.52vw,29px)] font-[820] leading-[1.02] tracking-[0] text-[#f5f4f1] [font-family:var(--font-heading)]"
+          >
+            {title}
+          </h1>
+
+          {highlight && (
+            <div className="mt-2 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[clamp(11px,1.2vw,13px)] leading-none">
+              {highlight}
+            </div>
+          )}
+
+          {description && (
+            <p className="m-0 mt-4 max-w-[960px] text-[clamp(11px,1.14vw,13px)] font-[560] leading-[1.42] text-[rgba(245,244,241,0.78)]">
+              {description}
+            </p>
+          )}
+
+          {(imageId || meta) && (
+            <div className="mt-4 flex items-center justify-center gap-3">
+              {imageId && (
+                <span className="grid size-[58px] place-items-center overflow-hidden rounded-[10px] border border-[var(--lb-line)] bg-[var(--lb-panel-2)]">
+                  <BrawlImage
+                    src={brawlerIconUrl(imageId)}
+                    alt=""
+                    width={64}
+                    height={64}
+                    className="size-[64px] object-cover"
+                    sizes="64px"
+                  />
+                </span>
+              )}
+              {meta && (
+                <div className="min-w-[116px] rounded-[8px] border border-[var(--lb-line)] bg-[var(--lb-panel-2)] px-3 py-2.5 text-right">
+                  {meta}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </section>
   )
@@ -437,10 +516,58 @@ export function LeaderboardToolbar({ children }: { children: ReactNode }) {
   )
 }
 
-export function LeaderboardPanel({ children }: { children: ReactNode }) {
+export function LeaderboardPanel({
+  children,
+  minWidth = 1080,
+}: {
+  children: ReactNode
+  minWidth?: number
+}) {
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const [hint, setHint] = useState({ left: false, right: false })
+
+  useEffect(() => {
+    const scroller = scrollRef.current
+    if (!scroller) return
+
+    let frame = 0
+    const update = () => {
+      if (frame) window.cancelAnimationFrame(frame)
+      frame = window.requestAnimationFrame(() => {
+        const maxLeft = Math.max(0, scroller.scrollWidth - scroller.clientWidth)
+        const next = {
+          left: scroller.scrollLeft > 4,
+          right: scroller.scrollLeft < maxLeft - 4,
+        }
+        setHint(cur => (cur.left === next.left && cur.right === next.right ? cur : next))
+        frame = 0
+      })
+    }
+
+    update()
+    scroller.addEventListener("scroll", update, { passive: true })
+    window.addEventListener("resize", update)
+    const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(update) : null
+    ro?.observe(scroller)
+    if (scroller.firstElementChild) ro?.observe(scroller.firstElementChild)
+
+    return () => {
+      if (frame) window.cancelAnimationFrame(frame)
+      scroller.removeEventListener("scroll", update)
+      window.removeEventListener("resize", update)
+      ro?.disconnect()
+    }
+  }, [])
+
   return (
-    <section className={leaderboardPanelClass}>
-      {children}
+    <section
+      className={`bl-tier-table-scroll-shell mt-1.5 ${hint.left ? "has-scroll-left" : ""} ${hint.right ? "has-scroll-right" : ""}`}
+    >
+      <div ref={scrollRef} className="bl-lb-table-scroll">
+        <div className="bl-lb-table-inner" style={{ minWidth: `${minWidth}px` }}>
+          {children}
+        </div>
+      </div>
     </section>
   )
 }
@@ -471,6 +598,74 @@ export function RegionPills({
           </button>
         )
       })}
+    </div>
+  )
+}
+
+export function RegionDropdown({
+  regions,
+  activeRegion,
+  onChange,
+}: {
+  regions: { code: string; label: string }[]
+  activeRegion: string
+  onChange: (code: string) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const wrapRef = useRef<HTMLDivElement>(null)
+
+  useClickOutside(wrapRef, () => setOpen(false), open)
+
+  const active = regions.find(r => r.code === activeRegion)
+
+  return (
+    <div className="bl-tier-selector-anchor">
+      <div
+        ref={wrapRef}
+        className="bl-tier-selector-wrap"
+        onPointerEnter={event => {
+          if (event.pointerType !== "mouse") return
+          setOpen(true)
+        }}
+        onPointerLeave={event => {
+          if (event.pointerType === "mouse") setOpen(false)
+        }}
+        onFocus={() => setOpen(true)}
+        onBlur={event => {
+          if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setOpen(false)
+        }}
+      >
+        <button
+          type="button"
+          className="bl-tier-selector"
+          aria-haspopup="listbox"
+          aria-expanded={open}
+          onClick={() => setOpen(o => !o)}
+        >
+          <span>{active?.label ?? "Region"}</span>
+          <ChevronDown size={14} className={open ? "rotate-180" : ""} />
+        </button>
+        <div className={`bl-tier-menu bl-tier-menu-list ${open ? "is-open" : ""}`} role="listbox">
+          {regions.map(region => {
+            const isActive = region.code === activeRegion
+            return (
+              <button
+                type="button"
+                key={region.code}
+                role="option"
+                aria-selected={isActive}
+                className={`bl-tier-menu-card ${isActive ? "is-active" : ""}`}
+                onClick={() => {
+                  onChange(region.code)
+                  setOpen(false)
+                }}
+              >
+                {region.label}
+              </button>
+            )
+          })}
+        </div>
+      </div>
     </div>
   )
 }
@@ -509,16 +704,21 @@ export function SearchBox({
   name?: string
 }) {
   return (
-    <label className={leaderboardSearchClass}>
-      <Search size={15} strokeWidth={2.25} />
-      <input
-        className={leaderboardSearchInputClass}
-        name={name}
-        value={value}
-        onChange={event => onChange(event.target.value)}
-        placeholder={placeholder}
-      />
-    </label>
+    <div className="bl-tier-search-anchor">
+      <div className="bl-tier-search">
+        <div className="bl-tier-search-bar">
+          <Search size={15} />
+          <input
+            name={name}
+            value={value}
+            onChange={event => onChange(event.target.value)}
+            placeholder={placeholder}
+            aria-label={placeholder}
+            autoComplete="off"
+          />
+        </div>
+      </div>
+    </div>
   )
 }
 

@@ -15,7 +15,6 @@ import {
 } from "@/lib/leaderboardUtils"
 import {
   EmptyLeaderboardState,
-  FeatureCardRail,
   LeaderboardBoard,
   LeaderboardHero,
   LeaderboardPageShell,
@@ -23,7 +22,7 @@ import {
   LeaderboardToolbar,
   Pager,
   RankCell,
-  RegionPills,
+  RegionDropdown,
   SearchBox,
   TableHead,
   TableHeadHelp,
@@ -53,7 +52,6 @@ import {
   leaderboardSublineClass,
   leaderboardTableListClass,
   leaderboardToolbarActionsClass,
-  professionalTeamCards,
 } from "../LeaderboardDpmShell"
 
 interface Club {
@@ -192,8 +190,6 @@ export default function ClubsClient({ allData }: { allData: RegionData[] }) {
 
   return (
     <LeaderboardPageShell active="clubs">
-      <FeatureCardRail cards={professionalTeamCards} />
-
       <LeaderboardHero
         title="Clubs Leaderboard"
         description={`Top clubs in ${regionData?.label ?? "Global"} ranked by total trophies — ${(regionData?.clubs?.length ?? 0).toLocaleString()} clubs tracked.`}
@@ -203,7 +199,7 @@ export default function ClubsClient({ allData }: { allData: RegionData[] }) {
         <LeaderboardToolbar>
           <SearchBox value={search} onChange={setSearch} placeholder="Search club or tag" name="club-leaderboard-search" />
           <div className={leaderboardToolbarActionsClass}>
-            <RegionPills regions={allData} activeRegion={activeRegion} onChange={setActiveRegion} />
+            <RegionDropdown regions={allData} activeRegion={activeRegion} onChange={setActiveRegion} />
           </div>
         </LeaderboardToolbar>
 

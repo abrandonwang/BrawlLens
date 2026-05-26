@@ -52,11 +52,11 @@ const DEFAULT_SORT_DIRECTIONS: Record<CatalogSort, "asc" | "desc"> = {
   recentBuffs: "desc",
 }
 
-const TIER_HERO_BORDER_COLORS = ["#7c5cff", "#5aeed0", "#ff6099", "#f5d75e", "#7c5cff"]
-const TIER_HERO_BORDER_STYLE: CSSProperties = {
+const TIER_INTRO_BORDER_COLORS = ["#7c5cff", "#5aeed0", "#ff6099", "#f5d75e", "#7c5cff"]
+const TIER_INTRO_BORDER_STYLE: CSSProperties = {
   position: "absolute",
   inset: 0,
-  zIndex: 1,
+  zIndex: 3,
   boxSizing: "border-box",
   width: "100%",
   height: "100%",
@@ -115,19 +115,6 @@ function formatInteger(value: number | null | undefined) {
 function formatPercent(value: number | null | undefined, digits = 1) {
   if (value == null || Number.isNaN(value)) return "-"
   return `${value.toFixed(digits)}%`
-}
-
-function formatSignedPercent(value: number | null | undefined, digits = 1) {
-  if (value == null || Number.isNaN(value)) return ""
-  return `${value >= 0 ? "+" : ""}${value.toFixed(digits)}%`
-}
-
-function formatCompact(value: number | null | undefined) {
-  if (value == null || Number.isNaN(value)) return "-"
-  return new Intl.NumberFormat("en-US", {
-    notation: "compact",
-    maximumFractionDigits: 1,
-  }).format(value)
 }
 
 function getWilsonLowerBound(stat: CatalogBrawlerStats) {
@@ -194,27 +181,6 @@ function getBrawlerClassName(brawler: Brawler) {
     ?? "Unclassified"
 }
 
-function HeaderHelp({ label, help }: { label: string; help: string }) {
-  return (
-    <span className="bl-help-label">
-      <span>{label}</span>
-      <HelpTooltip label={`${label} explained`}>
-        {help}
-      </HelpTooltip>
-    </span>
-  )
-}
-
-function HeroSignal({ label, value, detail }: { label: string; value: string; detail?: string }) {
-  return (
-    <span className="bl-tier-hero-signal">
-      <span>{label}</span>
-      <strong>{value}</strong>
-      {detail && <em>{detail}</em>}
-    </span>
-  )
-}
-
 export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] }) {
   const [activeRarity, setActiveRarity] = useState<string | null>(null)
   const [activeClass, setActiveClass] = useState<string | null>(null)
@@ -223,7 +189,7 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
   const [search, setSearch] = useState("")
   const [catalogStats, setCatalogStats] = useState<Record<number, CatalogBrawlerStats>>({})
   const [catalogStatsLoaded, setCatalogStatsLoaded] = useState(false)
-  const [heroShaderReady, setHeroShaderReady] = useState(false)
+  const [introBorderReady, setIntroBorderReady] = useState(false)
   const [tableScrollHint, setTableScrollHint] = useState({ left: false, right: false })
   const [searchOpen, setSearchOpen] = useState(false)
   const [sortOpen, setSortOpen] = useState(false)
@@ -250,7 +216,7 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
   }, [])
 
   useEffect(() => {
-    setHeroShaderReady(browserSupportsWebGL())
+    setIntroBorderReady(browserSupportsWebGL())
   }, [])
 
   useEffect(() => {
@@ -297,30 +263,6 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
       }
       return a.name.localeCompare(b.name) * direction
     })
-
-  const brawlerSignals = brawlers
-    .map(brawler => {
-      const stat = catalogStats[brawler.id]
-      return {
-        brawler,
-        stat,
-        metaScore: getMetaScore(stat, totalAnalyzedGames),
-        tier: getTier(stat, totalAnalyzedGames),
-      }
-    })
-    .filter(item => item.stat?.picks && item.metaScore != null)
-    .sort((a, b) => (b.metaScore ?? -1) - (a.metaScore ?? -1))
-  const topPerformer = brawlerSignals[0]
-  const mostPicked = brawlerSignals.length
-    ? [...brawlerSignals].sort((a, b) => (b.stat?.picks ?? 0) - (a.stat?.picks ?? 0))[0]
-    : null
-  const mostImproved = brawlerSignals
-    .filter(item => {
-      const delta = item.stat?.winRateDeltaDay
-      return delta != null && Number.isFinite(delta) && delta > 0
-    })
-    .sort((a, b) => (b.stat?.winRateDeltaDay ?? 0) - (a.stat?.winRateDeltaDay ?? 0))[0] ?? null
-  const signalLeaders = brawlerSignals.slice(0, 3)
 
   useClickOutside([searchDropdownRef, searchInputRef], () => setSearchOpen(false), searchOpen)
   useClickOutside(sortDropdownRef, () => setSortOpen(false), sortOpen)
@@ -428,13 +370,16 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
     <>
       <main className="bl-tier-shell">
         <div className="bl-tier-content">
-          <section className="bl-tier-hero" aria-labelledby="brawlers-title">
-            {heroShaderReady && (
+          <section
+            className="relative isolate mb-4 overflow-visible rounded-[10px] max-[560px]:mb-3"
+            aria-labelledby="brawlers-title"
+          >
+            {introBorderReady && (
               <PulsingBorder
                 aria-hidden="true"
                 className="bl-tier-hero-border-shader"
-                style={TIER_HERO_BORDER_STYLE}
-                colors={TIER_HERO_BORDER_COLORS}
+                style={TIER_INTRO_BORDER_STYLE}
+                colors={TIER_INTRO_BORDER_COLORS}
                 colorBack="#00000000"
                 roundness={0.08}
                 thickness={0.08}
@@ -450,60 +395,30 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
                 scale={1}
               />
             )}
-            <div className="bl-tier-hero-copy">
-              <h1 id="brawlers-title">Brawlers Tierlist: <span>Season 50</span></h1>
-              <div className="bl-tier-analyzed">
-                <span>GAMES ANALYZED</span>
-                <strong>{analyzedLabel}</strong>
-                <HelpTooltip label="How BrawlLens calculates brawler stats">
-                  This count comes from the current tracked brawler dataset. Rankings use a Wilson confidence score,
-                  win rate, pick volume, and map coverage rather than a hand-written tier list.
-                </HelpTooltip>
-              </div>
-              <div className="bl-tier-hero-signals" aria-label="Brawler tierlist model summary">
-                <HeroSignal
-                  label="Best Brawler:"
-                  value={topPerformer ? topPerformer.brawler.name : "-"}
-                />
-                <HeroSignal
-                  label="Most Played:"
-                  value={mostPicked ? mostPicked.brawler.name : "-"}
-                />
-                <HeroSignal
-                  label="Most Improved:"
-                  value={mostImproved ? mostImproved.brawler.name : "Building baseline"}
-                  detail={formatSignedPercent(mostImproved?.stat?.winRateDeltaDay)}
-                />
-              </div>
-            </div>
 
-            <div className="bl-tier-signal-card" aria-label="Top brawler signals">
-              <div className="bl-tier-signal-head">
-                <span>Meta leaders</span>
-                <small>Weighted model score</small>
-              </div>
-              <div className="bl-tier-signal-list">
-                {signalLeaders.length ? signalLeaders.map((item, index) => (
-                  <Link key={item.brawler.id} href={brawlerHref(item.brawler.id)} className="bl-tier-signal-row">
-                    <span className="bl-tier-signal-rank">{index + 1}</span>
-                    <BrawlImage
-                      src={item.brawler.imageUrl2}
-                      alt={item.brawler.name}
-                      width={34}
-                      height={34}
-                      className="bl-tier-signal-avatar"
-                      sizes="34px"
-                      priority={index < 3}
-                    />
-                    <span className="bl-tier-signal-name">
-                      <strong>{item.brawler.name}</strong>
-                      <small>{item.stat ? `${formatPercent(item.stat.winRate)} WR · ${formatCompact(item.stat.picks)} games` : "No sample"}</small>
-                    </span>
-                    <span className="bl-tier-signal-tier" style={{ color: item.tier.color }}>{item.tier.label}</span>
-                  </Link>
-                )) : (
-                  <div className="bl-tier-signal-empty">Loading signals...</div>
-                )}
+            <div className="relative z-[2] min-h-[132px] rounded-[10px] border border-[rgba(245,244,241,0.105)] bg-[#101015] px-5 py-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] max-[760px]:px-4 max-[760px]:py-4">
+              <div className="mx-auto grid max-w-[1040px] justify-items-center text-center">
+                <h1
+                  id="brawlers-title"
+                  className="m-0 text-[clamp(18px,2.52vw,29px)] font-[820] leading-[1.02] tracking-[0] text-[#f5f4f1] [font-family:var(--font-heading)]"
+                >
+                  Tierlist &amp; Builds Top 1000, S50
+                </h1>
+
+                <div className="mt-2 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[clamp(11px,1.2vw,13px)] leading-none">
+                  <span className="font-[720] uppercase tracking-[0.02em] text-[rgba(245,244,241,0.82)]">BRAWLERS ANALYZED</span>
+                  <strong className="font-[900] text-[#f2de8a] [font-family:var(--font-number,var(--font-geist-mono),ui-monospace,monospace)]">
+                    {analyzedLabel}
+                  </strong>
+                  <HelpTooltip label="How BrawlLens calculates brawler stats">
+                    This count comes from the current tracked brawler dataset. Rankings use a Wilson confidence score,
+                    win rate, pick volume, and map coverage rather than a hand-written tier list.
+                  </HelpTooltip>
+                </div>
+
+                <p className="m-0 mt-4 max-w-[960px] text-[clamp(11px,1.14vw,13px)] font-[560] leading-[1.42] text-[rgba(245,244,241,0.78)]">
+                  Explore BrawlLens&apos; Brawl Stars tierlist, updated live with the best brawlers across the current meta. Compare win rates, pick volume, map coverage, and data-driven rankings built from tracked matches.
+                </p>
               </div>
             </div>
           </section>
@@ -809,12 +724,12 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
                 <div className="bl-tier-table-head" role="row">
                   <span>Rank</span>
                   <span>Brawler</span>
-                  <HeaderHelp label="Tier" help="Tier is derived from the confidence-adjusted meta score, so tiny lucky samples do not jump to the top." />
-                  <HeaderHelp label="Meta score" help="Weighted score built from confidence-adjusted win rate, pick volume, map coverage, and pick share." />
-                  <HeaderHelp label="Winrate" help="Wins divided by tracked picks for that brawler across the eligible map dataset." />
-                  <HeaderHelp label="Pickrate" help="This brawler's tracked picks divided by the total tracked brawler picks in the current dataset." />
-                  <HeaderHelp label="Best map" help="Highest tracked map win rate after requiring at least 3% of this brawler's total plays on that map." />
-                  <HeaderHelp label="Sample" help="Raw tracked games for this brawler in the current dataset." />
+                  <span>Tier</span>
+                  <span>Meta score</span>
+                  <span>Winrate</span>
+                  <span>Pickrate</span>
+                  <span>Best map</span>
+                  <span>Sample</span>
                 </div>
 
                 {!catalogStatsLoaded ? (

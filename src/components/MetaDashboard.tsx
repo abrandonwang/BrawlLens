@@ -2,11 +2,12 @@
 
 import { useState, useEffect, useMemo, type CSSProperties, type ReactNode } from "react";
 import Link from "next/link";
+import { ChevronLeft, ChevronRight, MoreHorizontal, X } from "lucide-react";
 import { BrawlImage } from "@/components/BrawlImage";
-import HelpTooltip from "@/components/HelpTooltip";
 import { EmptyState, MapGridSkeleton, StateButton } from "@/components/PolishStates";
 import { MODE_CONFIG } from "@/lib/modes";
 import { normalizeMapName } from "@/lib/format";
+import { formatRotationTimeRemaining, type RotationEvent } from "@/lib/rotation";
 
 interface MapInfo {
   name: string;
@@ -25,7 +26,8 @@ interface Props {
   selectedMode: string | null;
   mapSearch: string;
   onClearFilters?: () => void;
-  toolbar?: ReactNode;
+  filterControls?: ReactNode;
+  searchControl?: ReactNode;
 }
 
 function getModeForMap(modes: ModeInfo[], mapName: string): string | null {
@@ -47,6 +49,24 @@ function mapInitials(name: string) {
     .map(part => part[0])
     .join("")
     .toUpperCase();
+}
+
+function getPaginationItems(currentPage: number, totalPages: number) {
+  if (totalPages <= 7) {
+    return Array.from({ length: totalPages }, (_, index) => index);
+  }
+
+  const pages = new Set([0, totalPages - 1, currentPage - 1, currentPage, currentPage + 1]);
+  const validPages = [...pages].filter(page => page >= 0 && page < totalPages).sort((a, b) => a - b);
+  const items: Array<number | "ellipsis"> = [];
+
+  validPages.forEach((page, index) => {
+    const previous = validPages[index - 1];
+    if (index > 0 && page - previous > 1) items.push("ellipsis");
+    items.push(page);
+  });
+
+  return items;
 }
 
 function MapPreview({ imageUrl, name, modeColor, priority = false }: { imageUrl?: string; name: string; mode: string | null; modeColor?: string; priority?: boolean }) {
@@ -90,22 +110,29 @@ function MapPreview({ imageUrl, name, modeColor, priority = false }: { imageUrl?
   );
 }
 
-export default function MetaDashboard({ modes, loading, selectedMode, mapSearch, onClearFilters, toolbar }: Props) {
+export default function MetaDashboard({ modes, loading, selectedMode, mapSearch, onClearFilters, filterControls, searchControl }: Props) {
   const [mapImageLookup, setMapImageLookup] = useState<Map<string, string>>(new Map());
-  const [rotationMapNames, setRotationMapNames] = useState<Set<string>>(new Set());
+  const [rotationByMap, setRotationByMap] = useState<Map<string, RotationEvent>>(new Map());
   const [mapPage, setMapPage] = useState(0);
   const [liveOnly, setLiveOnly] = useState(false);
+  const [mapModalOpen, setMapModalOpen] = useState(false);
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const interval = window.setInterval(() => setNow(Date.now()), 60_000);
+    return () => window.clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     Promise.all([
       fetch("/api/rotation").then(r => r.json()).catch(() => []),
       fetch("https://api.brawlify.com/v1/maps").then(r => r.json()).catch(() => ({ list: [] })),
     ]).then(([rotationData, mapsData]) => {
-      const activeNames = new Set<string>();
+      const activeMaps = new Map<string, RotationEvent>();
       for (const slot of rotationData || []) {
-        if (slot.event?.map) activeNames.add(slot.event.map);
+        if (slot.event?.map) activeMaps.set(slot.event.map, slot);
       }
-      setRotationMapNames(activeNames);
+      setRotationByMap(activeMaps);
 
       const lookup = new Map<string, string>();
       for (const map of mapsData.list || []) {
@@ -131,27 +158,39 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch,
       : (modes.find(m => m.mode === selectedMode)?.maps ?? []);
 
     return [...base].sort((a, b) => {
-      const aLive = rotationMapNames.has(a.name) ? 1 : 0;
-      const bLive = rotationMapNames.has(b.name) ? 1 : 0;
+      const aLive = rotationByMap.has(a.name) ? 1 : 0;
+      const bLive = rotationByMap.has(b.name) ? 1 : 0;
       if (bLive !== aLive) return bLive - aLive;
       return b.battles - a.battles;
     });
-  }, [modes, selectedMode, rotationMapNames, allUniqueMaps]);
+  }, [modes, selectedMode, rotationByMap, allUniqueMaps]);
 
   const displayedMaps = useMemo(() => {
     let list = sortedMaps;
     if (mapSearch) list = list.filter(m => m.name.toLowerCase().includes(mapSearch.toLowerCase()));
-    if (liveOnly) list = list.filter(m => rotationMapNames.has(m.name));
+    if (liveOnly) list = list.filter(m => rotationByMap.has(m.name));
     return list;
-  }, [sortedMaps, mapSearch, liveOnly, rotationMapNames]);
+  }, [sortedMaps, mapSearch, liveOnly, rotationByMap]);
 
   useEffect(() => { setMapPage(0); }, [displayedMaps]);
+
+  useEffect(() => {
+    if (!mapModalOpen) return;
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setMapModalOpen(false);
+    }
+
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [mapModalOpen]);
 
   const MAP_PAGE_SIZE = 12;
   const mapTotalPages = Math.ceil(displayedMaps.length / MAP_PAGE_SIZE);
   const paginatedMaps = displayedMaps.slice(mapPage * MAP_PAGE_SIZE, (mapPage + 1) * MAP_PAGE_SIZE);
-  const liveCountAll = sortedMaps.filter(map => rotationMapNames.has(map.name)).length;
-  const liveCount = displayedMaps.filter(map => rotationMapNames.has(map.name)).length;
+  const liveCountAll = sortedMaps.filter(map => rotationByMap.has(map.name)).length;
+  const liveCount = displayedMaps.filter(map => rotationByMap.has(map.name)).length;
+  const paginationItems = getPaginationItems(mapPage, mapTotalPages);
 
   if (loading) {
     return <MapGridSkeleton />;
@@ -179,32 +218,49 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch,
 
   return (
     <div className="relative pt-1">
-      <div className="mb-3 rounded-[5px] border border-[#26262d] bg-[var(--panel)] px-4 py-3 shadow-[rgba(0,0,0,0.06)_0_1px_3px_0]">
-        <div className="flex items-center justify-between gap-3 max-[720px]:flex-col max-[720px]:items-stretch">
-          <div className="min-w-0 flex-1">{toolbar}</div>
-          <div className="flex shrink-0 flex-nowrap items-center justify-end gap-1.5 max-[720px]:justify-start">
+      <div className="bl-tier-toolbar bl-meta-toolbar">
+        <div className="bl-tier-selector-group">
+          {filterControls}
+          <div className="bl-meta-live-toggle-wrap">
             <button
               type="button"
               onClick={() => setLiveOnly(v => !v)}
               disabled={!liveOnly && liveCountAll === 0}
               aria-pressed={liveOnly}
-              className={`inline-flex min-h-8 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-[5px] border px-3 text-[12px] font-semibold tracking-normal transition-colors max-[420px]:px-2 max-[420px]:text-[10px] disabled:cursor-default disabled:opacity-40 ${liveOnly ? "border-[var(--win-line)] bg-[var(--win-soft)] text-[var(--win)]" : "border-[var(--line)] bg-[#0d0d11] text-[var(--ink-3)] hover:text-[var(--ink)]"}`}
+              aria-label={liveOnly ? `Showing ${liveCount.toLocaleString()} live maps` : `Show ${liveCountAll.toLocaleString()} live maps`}
+              className="bl-meta-live-toggle"
             >
-              <span className={`size-1.5 rounded-full ${liveOnly ? "bg-[var(--win)]" : "bg-[var(--ink-4)]"}`} />
-              {liveOnly ? `${liveCount.toLocaleString()} live · on` : `${liveCountAll.toLocaleString()} live`}
+              <span className="bl-meta-live-toggle-surface" aria-hidden="true">
+                <span className="bl-meta-live-knob" />
+                <span className="bl-meta-live-text bl-meta-live-text-left">Live</span>
+                <span className="bl-meta-live-text bl-meta-live-text-right">{liveCountAll.toLocaleString()}</span>
+              </span>
             </button>
-            <HelpTooltip label="Live maps explained" align="left">
-              Live maps come from the current rotation feed. Turning this on filters the grid to maps active right now.
-            </HelpTooltip>
-            <span className="inline-flex min-h-8 items-center whitespace-nowrap rounded-[5px] border border-[var(--line)] bg-[#0d0d11] px-3 text-[12px] font-semibold tracking-normal text-[var(--ink-3)] max-[420px]:px-2 max-[420px]:text-[10px]">Page {mapPage + 1} of {mapTotalPages}</span>
+          </div>
+          <div className="bl-tier-selector-anchor">
+            <div className="bl-tier-selector-wrap">
+              <button
+                type="button"
+                className="bl-tier-selector bl-meta-count-pill"
+                aria-haspopup="dialog"
+                aria-expanded={mapModalOpen}
+                onClick={() => setMapModalOpen(true)}
+              >
+                <span>{displayedMaps.length.toLocaleString()} maps</span>
+              </button>
+            </div>
           </div>
         </div>
+
+        {searchControl}
       </div>
 
-      <div className="mb-5 grid grid-cols-[repeat(auto-fill,minmax(170px,1fr))] gap-2 max-[520px]:grid-cols-2 max-[520px]:gap-2">
+      <div className="mt-4 mb-5 grid grid-cols-[repeat(auto-fill,minmax(170px,1fr))] gap-2 max-[520px]:mt-3 max-[520px]:grid-cols-2 max-[520px]:gap-2">
         {paginatedMaps.map((map, index) => {
           const imageUrl = mapImageLookup.get(map.name) ?? mapImageLookup.get(normalizeMapName(map.name));
-          const isLive = rotationMapNames.has(map.name);
+          const rotationSlot = rotationByMap.get(map.name);
+          const rotationLabel = formatRotationTimeRemaining(rotationSlot?.endTime, now);
+          const isLive = Boolean(rotationSlot);
           const mode = getModeForMap(modes, map.name);
           const modeColor = mode ? MODE_CONFIG[mode]?.color : undefined;
 
@@ -226,7 +282,7 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch,
                   {map.name}
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-[12px] leading-snug tracking-[-0.01em] text-[var(--ink-3)]">{map.battles.toLocaleString()} battles</span>
+                  <span className="text-[12px] leading-snug tracking-[-0.01em] text-[var(--ink-3)]">{rotationLabel ?? `${map.battles.toLocaleString()} battles`}</span>
                   {mode && modeColor && (
                     <span className="text-[9.5px] font-semibold tracking-[0.04em] uppercase opacity-85" style={{ color: modeColor }}>
                       {MODE_CONFIG[mode]?.label || mode}
@@ -240,37 +296,110 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch,
       </div>
 
       {mapTotalPages > 1 && (
-        <nav className="bl-lb-pager" aria-label="Map pages">
-          <button
-            type="button"
-            onClick={() => setMapPage(p => p - 1)}
-            disabled={mapPage === 0}
-            aria-label="Previous page"
-          >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-          </button>
-
-          {Array.from({ length: mapTotalPages }, (_, idx) => (
+        <nav className="bl-meta-pagination" aria-label="Map pages">
+          <div className="bl-meta-page-rail">
             <button
-              key={idx}
               type="button"
-              onClick={() => setMapPage(idx)}
-              className={idx === mapPage ? "bl-lb-page-active" : ""}
-              aria-current={idx === mapPage ? "page" : undefined}
+              onClick={() => setMapPage(page => Math.max(0, page - 1))}
+              disabled={mapPage === 0}
+              className="bl-meta-page-control"
+              aria-label="Go to previous page"
             >
-              {idx + 1}
+              <ChevronLeft aria-hidden="true" />
             </button>
-          ))}
 
-          <button
-            type="button"
-            onClick={() => setMapPage(p => p + 1)}
-            disabled={mapPage === mapTotalPages - 1}
-            aria-label="Next page"
-          >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-          </button>
+            <div className="bl-meta-page-list">
+              {paginationItems.map((item, index) => {
+                if (item === "ellipsis") {
+                  return (
+                    <span key={`ellipsis-${index}`} className="bl-meta-page-ellipsis" aria-hidden="true">
+                      <MoreHorizontal aria-hidden="true" />
+                    </span>
+                  );
+                }
+
+                const active = item === mapPage;
+                return (
+                  <button
+                    key={item}
+                    type="button"
+                    onClick={() => setMapPage(item)}
+                    aria-label={`Go to page ${item + 1}`}
+                    aria-current={active ? "page" : undefined}
+                    className={`bl-meta-page-link ${active ? "is-active" : ""}`}
+                  >
+                    {item + 1}
+                  </button>
+                );
+              })}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setMapPage(page => Math.min(mapTotalPages - 1, page + 1))}
+              disabled={mapPage === mapTotalPages - 1}
+              className="bl-meta-page-control"
+              aria-label="Go to next page"
+            >
+              <ChevronRight aria-hidden="true" />
+            </button>
+          </div>
+          <span className="bl-meta-page-summary">Page {mapPage + 1} of {mapTotalPages}</span>
         </nav>
+      )}
+
+      {mapModalOpen && (
+        <div
+          className="bl-meta-modal-layer fixed inset-0 z-[1000] grid place-items-center bg-[rgba(0,0,0,0.54)] p-[18px] backdrop-blur-[10px]"
+          role="presentation"
+          onMouseDown={() => setMapModalOpen(false)}
+        >
+          <section
+            className="bl-meta-map-modal w-[min(560px,calc(100vw-28px))] max-h-[min(680px,calc(100vh-56px))] overflow-hidden rounded-[12px] border border-[rgba(245,244,241,0.12)] bg-[rgba(13,13,17,0.98)] shadow-[inset_0_1px_0_rgba(255,255,255,0.055),0_26px_84px_-42px_rgba(0,0,0,0.92)]"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="bl-meta-map-modal-title"
+            onMouseDown={event => event.stopPropagation()}
+          >
+            <header className="bl-meta-map-modal-head flex items-center justify-between gap-[14px] border-b border-[rgba(245,244,241,0.075)] px-3 py-[11px]">
+              <div>
+                <h2 id="bl-meta-map-modal-title" className="m-0 text-[14px] font-[840] leading-none text-[#f5f4f1] [font-family:var(--font-heading)]">Maps</h2>
+                <p className="m-0 mt-1 text-[10.5px] font-[760] leading-none text-[rgba(245,244,241,0.62)] [font-family:var(--font-label)]">{displayedMaps.length.toLocaleString()} maps in this view</p>
+              </div>
+              <button
+                type="button"
+                aria-label="Close maps list"
+                onClick={() => setMapModalOpen(false)}
+                className="grid size-7 shrink-0 cursor-pointer place-items-center rounded-[8px] border border-transparent bg-transparent text-[rgba(245,244,241,0.62)] transition-colors hover:border-[rgba(245,244,241,0.10)] hover:bg-[rgba(245,244,241,0.045)] hover:text-[#f5f4f1] focus-visible:border-[rgba(245,244,241,0.10)] focus-visible:bg-[rgba(245,244,241,0.045)] focus-visible:text-[#f5f4f1] focus-visible:outline-none"
+              >
+                <X aria-hidden="true" className="size-[14px]" />
+              </button>
+            </header>
+            <div className="bl-meta-map-modal-list max-h-[min(596px,calc(100vh-136px))] overflow-y-auto p-[5px]">
+              {displayedMaps.map(map => {
+                const mode = getModeForMap(modes, map.name);
+                const modeColor = mode ? MODE_CONFIG[mode]?.color : undefined;
+
+                return (
+                  <Link
+                    key={map.name}
+                    href={mapHref(map.name)}
+                    onClick={() => setMapModalOpen(false)}
+                    className="bl-meta-map-modal-row grid min-h-[27px] grid-cols-[minmax(0,1fr)_88px_98px] items-center gap-[10px] rounded-[7px] px-[7px] py-[5px] text-[11.5px] font-[780] leading-none text-[rgba(245,244,241,0.78)] no-underline transition-colors hover:bg-[rgba(245,244,241,0.045)] hover:text-[#f5f4f1] focus-visible:bg-[rgba(245,244,241,0.045)] focus-visible:text-[#f5f4f1] focus-visible:outline-none max-[640px]:grid-cols-[minmax(0,1fr)_76px] [font-family:var(--font-label)]"
+                  >
+                    <span className="bl-meta-map-modal-name min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">{map.name}</span>
+                    {mode && (
+                      <span className="bl-meta-map-modal-mode min-w-0 overflow-hidden text-right text-[10px] font-[820] text-ellipsis whitespace-nowrap opacity-85 max-[640px]:hidden" style={modeColor ? { color: modeColor } : undefined}>
+                        {MODE_CONFIG[mode]?.label || mode}
+                      </span>
+                    )}
+                    <span className="bl-meta-map-modal-count text-right text-[11px] font-[840] text-[rgba(245,244,241,0.72)] [font-family:var(--font-number,var(--font-geist-mono),ui-monospace,monospace)]">{map.battles.toLocaleString()}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+        </div>
       )}
     </div>
   );

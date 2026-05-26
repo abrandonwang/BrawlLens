@@ -8,18 +8,69 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_KEY!
 )
 
+type DailyHistoryRow = {
+  stat_date: string
+  picks: number | string
+  wins: number | string
+  win_rate: number | string
+  map_count: number | string
+}
+
+async function fetchDailyHistory(id: number) {
+  const { data, error } = await supabase
+    .from("brawler_stats_daily")
+    .select("stat_date, picks, wins, win_rate, map_count")
+    .eq("brawler_id", id)
+    .order("stat_date", { ascending: false })
+    .limit(30)
+
+  if (error || !data) return []
+
+  return (data as DailyHistoryRow[])
+    .slice()
+    .reverse()
+    .map(row => ({
+      date: row.stat_date,
+      picks: Number(row.picks),
+      wins: Number(row.wins),
+      winRate: Number(row.win_rate),
+      mapCount: Number(row.map_count),
+    }))
+    .filter(row =>
+      row.date
+      && Number.isFinite(row.picks)
+      && Number.isFinite(row.wins)
+      && Number.isFinite(row.winRate)
+      && Number.isFinite(row.mapCount)
+    )
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const id = parseBrawlerId(searchParams.get("id"))
   if (id === null) return NextResponse.json({ error: "invalid id" }, { status: 400 })
 
-  const { data, error } = await supabase
-    .from("map_brawler_stats")
-    .select("map, mode, picks, wins, win_rate")
-    .eq("brawler_id", id)
-    .order("picks", { ascending: false })
+  const [mapResult, history] = await Promise.all([
+    supabase
+      .from("map_brawler_stats")
+      .select("map, mode, picks, wins, win_rate")
+      .eq("brawler_id", id)
+      .order("picks", { ascending: false }),
+    fetchDailyHistory(id),
+  ])
+  const { data, error } = mapResult
 
-  if (error || !data) return NextResponse.json({ maps: [], modes: [], totalPicks: 0, avgWinRate: null, histogram: [] })
+  if (error || !data) {
+    return NextResponse.json({
+      maps: [],
+      modes: [],
+      totalPicks: 0,
+      avgWinRate: null,
+      histogram: [],
+      history,
+      historySource: "daily_snapshots",
+    })
+  }
 
   const totalPicks = data.reduce((s, r) => s + Number(r.picks), 0)
   const totalWins = data.reduce((s, r) => s + Number(r.wins), 0)
@@ -71,8 +122,23 @@ export async function GET(request: Request) {
     }))
     .filter(m => m.picks >= 10)
     .sort((a, b) => b.winRate - a.winRate)
+  const trend30 = history.map(point => ({
+    label: point.date.slice(5),
+    winRate: point.winRate,
+    picks: point.picks,
+  }))
 
-  const res = NextResponse.json({ totalPicks, avgWinRate, maps, modes, histogram, trend7, trend30: trend7 })
+  const res = NextResponse.json({
+    totalPicks,
+    avgWinRate,
+    maps,
+    modes,
+    histogram,
+    trend7,
+    trend30,
+    history,
+    historySource: "daily_snapshots",
+  })
   res.headers.set("Cache-Control", "s-maxage=300, stale-while-revalidate=600")
   return res
 }

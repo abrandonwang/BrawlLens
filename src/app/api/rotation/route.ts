@@ -1,20 +1,11 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { parseBrawlStarsTime, type RotationEvent } from "@/lib/rotation";
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_KEY!
 );
-
-function parseBsTime(t: string): number {
-  const s = t.replace(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})/, "$1-$2-$3T$4:$5:$6");
-  return new Date(s).getTime();
-}
-
-interface RotationEvent {
-  startTime?: string;
-  endTime?: string;
-}
 
 export async function GET() {
   const { data, error } = await supabase
@@ -32,8 +23,9 @@ export async function GET() {
 
   const active = events.filter((e) => {
     if (!e.startTime || !e.endTime) return true;
-    const start = parseBsTime(e.startTime);
-    const end = parseBsTime(e.endTime);
+    const start = parseBrawlStarsTime(e.startTime);
+    const end = parseBrawlStarsTime(e.endTime);
+    if (start == null || end == null) return true;
     return now >= start && now <= end;
   });
 

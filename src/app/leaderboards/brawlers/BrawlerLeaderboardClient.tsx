@@ -17,7 +17,6 @@ import {
 import { useClickOutside } from "@/lib/useClickOutside"
 import {
   EmptyLeaderboardState,
-  FeatureCardRail,
   LeaderboardBoard,
   LeaderboardHero,
   LeaderboardPageShell,
@@ -55,7 +54,6 @@ import {
   leaderboardSublineClass,
   leaderboardTableListClass,
   leaderboardToolbarActionsClass,
-  professionalTeamCards,
 } from "../LeaderboardDpmShell"
 
 interface Brawler {
@@ -190,8 +188,6 @@ export default function BrawlerLeaderboardClient({
 
   return (
     <LeaderboardPageShell active="brawlers">
-      <FeatureCardRail cards={professionalTeamCards} />
-
       <LeaderboardHero
         title={`${selectedName} Leaderboard`}
         description={`Open a brawler-specific ladder for ${selectedName} and scan the leading accounts without leaving the compact leaderboard flow. The primary rank is for this brawler, while the smaller rank tracks each player's overall trophy position.`}

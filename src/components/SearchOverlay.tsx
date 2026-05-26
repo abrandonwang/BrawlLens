@@ -16,15 +16,15 @@ import { sanitizePlayerTag } from "@/lib/validation"
 const mdComponents: Components = {
   p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
   strong: ({ children }) => <strong className="font-[720] text-[rgba(245,244,241,0.88)]">{children}</strong>,
-  em: ({ children }) => <em className="italic text-[rgba(245,244,241,0.52)]">{children}</em>,
+  em: ({ children }) => <em className="italic text-[rgba(245,244,241,0.74)]">{children}</em>,
   h2: ({ children }) => <h2 className="mb-[5px] mt-3.5 text-[13px] font-[720] text-[rgba(245,244,241,0.84)] first:mt-0">{children}</h2>,
-  h3: ({ children }) => <h3 className="mb-1 mt-2.5 text-[12.5px] font-[680] text-[rgba(245,244,241,0.68)] first:mt-0">{children}</h3>,
+  h3: ({ children }) => <h3 className="mb-1 mt-2.5 text-[12.5px] font-[680] text-[rgba(245,244,241,0.76)] first:mt-0">{children}</h3>,
   ul: ({ children }) => <ul className="mb-2 flex flex-col gap-[3px]">{children}</ul>,
   ol: ({ children }) => <ol className="mb-2 flex flex-col gap-[3px]">{children}</ol>,
   li: ({ children }) => <li className="ml-4 list-item text-[13px]">{children}</li>,
   a: ({ href, children }) => <Link href={href ?? "/"} className="font-[650] text-[var(--bt-blue-hot)] underline underline-offset-2 hover:opacity-75">{children}</Link>,
   code: ({ children, className }) => {
-    if (className?.includes("language-")) return <pre className="my-2 overflow-x-auto rounded-[8px] border border-[rgba(245,244,241,0.08)] bg-[rgba(245,244,241,0.035)] px-3 py-2.5 font-mono text-[11.5px] text-[rgba(245,244,241,0.62)]"><code>{children}</code></pre>
+    if (className?.includes("language-")) return <pre className="my-2 overflow-x-auto rounded-[8px] border border-[rgba(245,244,241,0.08)] bg-[rgba(245,244,241,0.035)] px-3 py-2.5 font-mono text-[11.5px] text-[rgba(245,244,241,0.74)]"><code>{children}</code></pre>
     return <code className="rounded border border-[rgba(245,244,241,0.08)] bg-[rgba(245,244,241,0.04)] px-[5px] py-px font-mono text-[11.5px] text-[rgba(245,244,241,0.72)]">{children}</code>
   },
   hr: () => <hr className="my-2.5 border-0 border-t border-[rgba(245,244,241,0.08)]" />,
@@ -283,13 +283,13 @@ const cmdPanelClass = (closing: boolean) =>
   `relative z-[1] flex w-[min(620px,calc(100vw-36px))] max-h-[min(540px,calc(100dvh-120px))] flex-col overflow-hidden rounded-[14px] border border-[rgba(255,255,255,0.10)] bg-[rgba(34,34,42,0.94)] shadow-[rgba(255,255,255,0.05)_0_0.5px_0_0_inset,0_24px_64px_-20px_rgba(0,0,0,0.55)] backdrop-blur-[12px] max-[560px]:w-[calc(100vw-20px)] max-[560px]:max-h-[calc(100dvh-92px)] max-[560px]:rounded-2xl ${closing ? "animate-[cmdPanelOut_180ms_ease_both]" : "animate-[cmdPanelIn_200ms_cubic-bezier(0.16,1,0.3,1)_both]"}`
 
 const cmdTabClass = (active: boolean) =>
-  `relative inline-flex h-[30px] min-w-[72px] cursor-pointer items-center justify-center rounded-full border-0 px-3.5 text-[12px] font-[720] tracking-normal outline-none transition-[background-color,color,box-shadow] duration-150 max-[560px]:min-w-[66px] ${active ? "bg-[#7c5cff] text-white shadow-none hover:bg-[#5b3fcc] focus-visible:bg-[#5b3fcc]" : "bg-transparent text-[rgba(245,244,241,0.46)] hover:text-[rgba(245,244,241,0.76)]"}`
+  `relative inline-flex h-[30px] min-w-[72px] cursor-pointer items-center justify-center rounded-full border-0 px-3.5 text-[12px] font-[720] tracking-normal outline-none transition-[background-color,color,box-shadow] duration-150 max-[560px]:min-w-[66px] ${active ? "bg-[#7c5cff] text-white shadow-none hover:bg-[#5b3fcc] focus-visible:bg-[#5b3fcc]" : "bg-transparent text-[rgba(245,244,241,0.74)] hover:text-[rgba(245,244,241,0.92)]"}`
 
 const cmdFormClass =
   "grid h-12 min-h-12 grid-cols-[auto_minmax(0,1fr)_auto] items-center border-0 bg-transparent shadow-none transition-none focus-within:bg-[rgba(255,255,255,0.055)] focus-within:shadow-none focus-within:outline-none max-[560px]:mx-2.5 max-[560px]:mb-1 max-[560px]:mt-2 max-[560px]:h-[42px] max-[560px]:min-h-[42px]"
 
 const cmdInputClass =
-  "min-w-0 border-0 bg-transparent px-3 py-0 text-[15px] font-medium tracking-normal text-[#f5f4f1] shadow-none outline-none placeholder:text-[rgba(245,244,241,0.36)] placeholder:font-medium focus:border-0 focus:bg-transparent focus:shadow-none focus:outline-none max-[560px]:text-[13px] [font-family:var(--font-ui)]"
+  "min-w-0 border-0 bg-transparent px-3 py-0 text-[15px] font-medium tracking-normal text-[#f5f4f1] shadow-none outline-none placeholder:text-[rgba(245,244,241,0.68)] placeholder:font-medium focus:border-0 focus:bg-transparent focus:shadow-none focus:outline-none max-[560px]:text-[13px] [font-family:var(--font-ui)]"
 
 const cmdSubmitClass =
   "mr-3 grid size-8 cursor-pointer place-items-center rounded-[8px] border-0 bg-transparent text-[rgba(245,244,241,0.7)] outline-none transition-colors duration-150 hover:bg-[rgba(245,244,241,0.06)] hover:text-[#f5f4f1]"
@@ -301,7 +301,7 @@ const cmdRowClass = (recent: boolean) =>
   `grid items-center gap-3 border-0 bg-transparent text-[var(--bt-text-2)] no-underline shadow-none transition-colors duration-150 hover:border-0 hover:bg-[rgba(245,244,241,0.04)] hover:text-[#f5f4f1] hover:shadow-none hover:[transform:none] max-[560px]:grid-cols-[36px_minmax(0,1fr)] max-[560px]:px-2 max-[560px]:py-1.5 max-[560px]:min-h-[50px] ${recent ? "min-h-[54px] grid-cols-[22px_minmax(0,1fr)_auto] px-3.5 py-2" : "min-h-9 grid-cols-[22px_minmax(0,1fr)] px-3.5 py-1.5"}`
 
 const cmdIconClass =
-  "grid size-5 place-items-center overflow-hidden rounded bg-[rgba(245,244,241,0.06)] text-[11px] font-semibold text-[rgba(245,244,241,0.4)] shadow-none max-[560px]:size-8"
+  "grid size-5 place-items-center overflow-hidden rounded bg-[rgba(245,244,241,0.06)] text-[11px] font-semibold text-[rgba(245,244,241,0.72)] shadow-none max-[560px]:size-8"
 
 const cmdIconImageClass = "size-5 object-cover max-[560px]:size-8"
 const cmdTeamLogoClass = "size-5 object-contain p-1 max-[560px]:size-8"
@@ -581,7 +581,7 @@ export default function SearchOverlay() {
           /* ── Search mode ── */
           <>
             <form onSubmit={submitSearch} className={cmdFormClass}>
-              <Search size={15} strokeWidth={2.2} className="ml-3.5 shrink-0 text-[rgba(245,244,241,0.55)]" aria-hidden="true" />
+              <Search size={15} strokeWidth={2.2} className="ml-3.5 shrink-0 text-[rgba(245,244,241,0.72)]" aria-hidden="true" />
               <input
                 ref={inputRef}
                 value={query}
@@ -624,7 +624,7 @@ export default function SearchOverlay() {
                           <strong className={cmdCopyTitleClass}>{item.title}</strong>
                           <small className="hidden">{item.subtitle}</small>
                         </span>
-                        {isRecent && <time className="whitespace-nowrap text-[13px] font-medium leading-none text-[rgba(245,244,241,0.42)]" dateTime={item.lastUsedAt}>{formatRecentDate(item.lastUsedAt)}</time>}
+                        {isRecent && <time className="whitespace-nowrap text-[13px] font-medium leading-none text-[rgba(245,244,241,0.72)]" dateTime={item.lastUsedAt}>{formatRecentDate(item.lastUsedAt)}</time>}
                         {item.badge && <em className="hidden">{item.badge}</em>}
                       </Link>
                     )
@@ -638,7 +638,7 @@ export default function SearchOverlay() {
           <>
             <div className="flex flex-1 flex-col overflow-y-auto px-5 pb-2.5 pt-[18px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden max-[560px]:px-3.5 max-[560px]:pb-1.5 max-[560px]:pt-3.5">
               {aiMessages.length === 0 && (
-                <div className="flex flex-1 items-center justify-center text-center text-[13px] font-[550] text-[rgba(245,244,241,0.36)]">Ask anything about the meta, brawlers, or maps.</div>
+                <div className="flex flex-1 items-center justify-center text-center text-[13px] font-[550] text-[rgba(245,244,241,0.72)]">Ask anything about the meta, brawlers, or maps.</div>
               )}
               {aiMessages.map((msg, i) => (
                 <div key={i} className={cmdAiMessageClass(msg.role)}>
@@ -665,7 +665,7 @@ export default function SearchOverlay() {
                 onChange={handleAiInput}
                 onKeyDown={handleAiKeyDown}
                 placeholder="Ask anything..."
-                className="min-h-5 max-h-[120px] flex-1 resize-none border-0 bg-transparent text-[13px] font-[560] leading-normal text-[rgba(245,244,241,0.88)] outline-0 placeholder:text-[rgba(245,244,241,0.38)] focus:shadow-none focus:outline-none [font-family:var(--font-ui)]"
+                className="min-h-5 max-h-[120px] flex-1 resize-none border-0 bg-transparent text-[13px] font-[560] leading-normal text-[rgba(245,244,241,0.88)] outline-0 placeholder:text-[rgba(245,244,241,0.68)] focus:shadow-none focus:outline-none [font-family:var(--font-ui)]"
               />
               {aiStreaming ? (
                 <button type="button" onClick={() => aiAbortRef.current?.abort()} className={cmdAiSendClass} aria-label="Stop">
