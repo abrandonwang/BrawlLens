@@ -3,8 +3,8 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
-import { BrawlImage } from "@/components/BrawlImage"
-import { formatRelativeTime, formatTrophies } from "@/lib/format"
+import { BrawlImage, profileIconUrl } from "@/components/BrawlImage"
+import { formatTrophies } from "@/lib/format"
 import {
   clubBadgeUrl,
   clubDetailHref,
@@ -12,8 +12,10 @@ import {
   formatLeaderboardRank,
   formatPlainNumber,
   leaderboardTagKey,
+  playerProfileHref,
 } from "@/lib/leaderboardUtils"
 import {
+  CellSkeleton,
   EmptyLeaderboardState,
   LeaderboardBoard,
   LeaderboardHero,
@@ -40,18 +42,16 @@ import {
   leaderboardPodiumRateClass,
   leaderboardPodiumScoreClass,
   leaderboardPodiumTopClass,
-  leaderboardRankStackClass,
   leaderboardRowAvatarClass,
   leaderboardRowClass,
   leaderboardRowMainClass,
-  leaderboardRowMonoClass,
-  leaderboardRowMutedClass,
   leaderboardRowNameClass,
   leaderboardRowStatClass,
   leaderboardRowSublineClass,
   leaderboardSublineClass,
   leaderboardTableListClass,
   leaderboardToolbarActionsClass,
+  leaderboardUnifiedGrid,
 } from "../LeaderboardDpmShell"
 
 interface Club {
@@ -78,13 +78,13 @@ interface ClubEnrichment {
 }
 
 const PAGE_SIZE = 50
-const clubTableGrid = "grid grid-cols-[34px_minmax(150px,190px)_82px_56px_74px_minmax(116px,1fr)_70px_54px_42px_64px] items-center gap-1"
 
 interface ClubMemberSummary {
   tag: string | null
   name: string
   trophies: number | null
   role: string | null
+  iconId: number | null
 }
 
 export default function ClubsClient({ allData }: { allData: RegionData[] }) {
@@ -192,7 +192,7 @@ export default function ClubsClient({ allData }: { allData: RegionData[] }) {
     <LeaderboardPageShell active="clubs">
       <LeaderboardHero
         title="Clubs Leaderboard"
-        description={`Top clubs in ${regionData?.label ?? "Global"} ranked by total trophies — ${(regionData?.clubs?.length ?? 0).toLocaleString()} clubs tracked.`}
+        description={`The strongest clubs in ${regionData?.label ?? "Global"} ranked by combined member trophies.`}
       />
 
       <LeaderboardBoard>
@@ -223,17 +223,12 @@ export default function ClubsClient({ allData }: { allData: RegionData[] }) {
             </section>
 
             <LeaderboardPanel>
-              <TableHead className={`${clubTableGrid} min-w-[820px] [&>span:first-child]:text-center [&>span:nth-child(6)]:pl-2 [&>span:nth-child(6)]:text-left`}>
+              <TableHead className={`${leaderboardUnifiedGrid} [&>span:first-child]:text-center`}>
                 <span>Rank</span>
                 <span>Club</span>
                 <TableHeadHelp label="Trophies" help="Club trophy total from the selected leaderboard snapshot." />
-                <TableHeadHelp label="Members" help="Visible member count for the club." />
-                <TableHeadHelp label="Avg" help="Club trophies divided by visible member count." />
+                <TableHeadHelp label="Members" help="Visible member count plus the average trophies per member." />
                 <TableHeadHelp label="Top member" help="Highest trophy member returned by club enrichment." />
-                <TableHeadHelp label="Prestige" help="Summed member prestige from enrichment when available." />
-                <TableHeadHelp label="Leader %" help="Top member trophies as a share of the club trophy total." />
-                <TableHeadHelp label="World" help="The club's global rank when BrawlLens can match it to the global leaderboard." />
-                <TableHeadHelp label="Updated" help="How recently BrawlLens last updated this leaderboard row." />
               </TableHead>
 
               <div className={leaderboardTableListClass}>
@@ -241,7 +236,6 @@ export default function ClubsClient({ allData }: { allData: RegionData[] }) {
                   <ClubRankRow
                     key={`${activeRegion}-${club.club_tag}`}
                     club={club}
-                    worldRank={globalRankByTag.get(leaderboardTagKey(club.club_tag)) ?? (activeRegion === "global" ? club.rank : null)}
                     enrichment={apiEnrichments[leaderboardTagKey(club.club_tag)]}
                   />
                 ))}
@@ -258,20 +252,18 @@ export default function ClubsClient({ allData }: { allData: RegionData[] }) {
 
 function ClubRankRow({
   club,
-  worldRank,
   enrichment,
 }: {
   club: Club
-  worldRank: number | null
   enrichment?: ClubEnrichment
 }) {
   const avg = averageTrophies(club)
+  const enrichmentReady = enrichment !== undefined
 
   return (
-    <div className={`${leaderboardRowClass} min-w-[820px] ${clubTableGrid}`}>
-      <div className={leaderboardRankStackClass}>
+    <div className={`${leaderboardRowClass} ${leaderboardUnifiedGrid}`}>
+      <div className="grid place-items-center">
         <RankCell rank={club.rank} />
-        <span>{formatWorldRank(worldRank)}</span>
       </div>
       <Link href={clubDetailHref(club.club_tag)} className="flex min-w-0 items-center gap-2 rounded-[7px] text-inherit no-underline transition-opacity hover:opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-[rgba(142,213,255,0.42)]">
         <ClubAvatar name={club.club_name} rank={club.rank} badgeId={enrichment?.badgeId ?? null} compact />
@@ -283,13 +275,15 @@ function ClubRankRow({
       <span className={leaderboardRowStatClass}>
         {formatTrophies(club.trophies)}
       </span>
-      <span className={leaderboardRowMonoClass}>{club.member_count ?? "-"}</span>
-      <span className={leaderboardRowMonoClass}>{formatTrophies(avg)}</span>
-      <TopMemberCell member={enrichment?.topMember ?? null} />
-      <PrestigeCell value={enrichment?.totalPrestige} coverage={enrichment?.prestigeCoverage} members={club.member_count} />
-      <span className={leaderboardRowMonoClass}>{formatLeaderShare(club, enrichment?.topMember)}</span>
-      <span className={leaderboardRowMonoClass}>{formatWorldRank(worldRank)}</span>
-      <span suppressHydrationWarning className={leaderboardRowMutedClass}>{formatRelativeTime(club.updated_at) || "Live"}</span>
+      <div className="flex min-w-0 flex-col gap-0.5">
+        <strong className="text-[13px] font-[850] leading-none text-[var(--lb-text)] [font-family:var(--font-geist-mono,var(--font-jetbrains-mono),ui-monospace,monospace)]">
+          {club.member_count ?? "-"}
+        </strong>
+        <span className="text-[10.5px] font-[620] leading-none text-[var(--lb-text-3)]">
+          avg {formatTrophies(avg)}
+        </span>
+      </div>
+      <TopMemberCell member={enrichment?.topMember ?? null} ready={enrichmentReady} />
     </div>
   )
 }
@@ -315,8 +309,8 @@ function ClubPodiumCard({
           </div>
         </Link>
         <div className={leaderboardPodiumRateClass}>
-          <strong suppressHydrationWarning>{formatRelativeTime(club.updated_at) || "Live"}</strong>
-          <span>updated</span>
+          <strong>{formatTrophies(averageTrophies(club))}</strong>
+          <span>avg / member</span>
         </div>
       </div>
       <div className={leaderboardPodiumScoreClass}>{formatTrophies(club.trophies)}</div>
@@ -338,35 +332,64 @@ function ClubPodiumCard({
   )
 }
 
-function PrestigeCell({
-  value,
-  coverage,
-  members,
-}: {
-  value: number | null | undefined
-  coverage: number | undefined
-  members: number | null
-}) {
-  if (typeof value !== "number") return <span className={leaderboardRowMonoClass}>--</span>
-  const complete = typeof members === "number" && typeof coverage === "number" && coverage >= members
+function TopMemberCell({ member, ready = true }: { member: ClubMemberSummary | null; ready?: boolean }) {
+  if (!ready) {
+    return (
+      <span className="flex min-w-0 items-center gap-2">
+        <CellSkeleton width={22} height={22} />
+        <span className="flex min-w-0 flex-col gap-1">
+          <CellSkeleton width={84} height={9} />
+          <CellSkeleton width={44} height={8} />
+        </span>
+      </span>
+    )
+  }
+  if (!member) {
+    return <span className="text-[11px] font-[680] text-[var(--lb-text-3)]">No data yet</span>
+  }
 
-  return (
+  const trophyLine = typeof member.trophies === "number" ? formatFullNumber(member.trophies) : member.role ?? "-"
+  const avatar = (
     <span
-      className={leaderboardRowMonoClass}
-      title={complete ? "Total club prestige" : `Prestige loaded for ${coverage ?? 0}/${members ?? "?"} members`}
+      aria-hidden="true"
+      className="grid size-[22px] shrink-0 place-items-center overflow-hidden rounded-full border border-[rgba(245,244,241,0.08)] bg-[rgba(124,92,255,0.16)] [font-family:var(--font-geist-mono,var(--font-jetbrains-mono),ui-monospace,monospace)] text-[10px] font-black leading-none text-[#a78bff]"
     >
-      {formatPlainStat(value)}
+      {member.iconId ? (
+        <BrawlImage src={profileIconUrl(member.iconId)} alt="" width={22} height={22} sizes="22px" />
+      ) : (
+        member.name.charAt(0).toUpperCase()
+      )}
     </span>
   )
-}
 
-function TopMemberCell({ member }: { member: ClubMemberSummary | null }) {
-  if (!member) return <span className="pl-2 text-[11px] font-extrabold text-[var(--lb-text-4)] [font-family:var(--font-geist-mono,var(--font-jetbrains-mono),ui-monospace,monospace)] max-[560px]:text-[9px]">--</span>
+  const inner = (
+    <>
+      {avatar}
+      <span className="min-w-0">
+        <strong className="block min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-[11.5px] font-[780] leading-none text-[var(--lb-text)]">
+          {member.name}
+        </strong>
+        <small className="mt-[3px] block min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-[10px] font-[760] leading-none text-[var(--lb-text-3)] [font-family:var(--font-geist-mono,var(--font-jetbrains-mono),ui-monospace,monospace)]">
+          {trophyLine}
+        </small>
+      </span>
+    </>
+  )
+
+  if (member.tag) {
+    return (
+      <Link
+        href={playerProfileHref(member.tag)}
+        className="flex min-w-0 items-center gap-1.5 overflow-hidden rounded-[7px] text-inherit no-underline transition-opacity hover:opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-[rgba(142,213,255,0.42)]"
+      >
+        {inner}
+      </Link>
+    )
+  }
 
   return (
-    <span className="flex min-w-0 items-center gap-1.5 overflow-hidden pl-2 text-[var(--lb-text-2)] [&_strong]:block [&_strong]:min-w-0 [&_strong]:overflow-hidden [&_strong]:text-ellipsis [&_strong]:whitespace-nowrap [&_strong]:text-[11px] [&_strong]:font-[780] [&_strong]:leading-none [&_strong]:text-[var(--lb-text)] [&_small]:mt-[3px] [&_small]:block [&_small]:min-w-0 [&_small]:overflow-hidden [&_small]:text-ellipsis [&_small]:whitespace-nowrap [&_small]:text-[9px] [&_small]:font-[760] [&_small]:leading-none [&_small]:text-[var(--lb-text-3)] [&_small]:[font-family:var(--font-geist-mono,var(--font-jetbrains-mono),ui-monospace,monospace)]">
-      <strong>{member.name}</strong>
-      <small>{typeof member.trophies === "number" ? formatFullNumber(member.trophies) : member.role ?? "--"}</small>
+    <span className="flex min-w-0 items-center gap-1.5 overflow-hidden">
+      {inner}
     </span>
   )
 }
@@ -384,11 +407,6 @@ function ClubAvatar({ name, rank, badgeId, compact = false }: { name: string; ra
 
 function averageTrophies(club: Club) {
   return club.member_count ? Math.round(club.trophies / Math.max(1, club.member_count)) : club.trophies
-}
-
-function formatLeaderShare(club: Club, topMember: ClubMemberSummary | null | undefined) {
-  if (typeof topMember?.trophies !== "number" || !club.trophies) return "--"
-  return `${Math.round((topMember.trophies / club.trophies) * 100)}%`
 }
 
 function formatWorldRank(value: number | null | undefined) {

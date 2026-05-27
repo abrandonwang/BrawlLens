@@ -4,17 +4,16 @@ import { useEffect, useMemo, useState, type ReactNode } from "react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { BrawlImage, brawlerIconUrl } from "@/components/BrawlImage"
-import { formatBrawlerName, formatTrophies } from "@/lib/format"
+import { formatTrophies } from "@/lib/format"
 import {
   clubBadgeUrl,
   firstGlyph,
-  formatLeaderboardRank,
-  formatPlainNumber,
   leaderboardTagKey,
   playerProfileHref,
   profileIconUrl,
 } from "@/lib/leaderboardUtils"
 import {
+  CellSkeleton,
   EmptyLeaderboardState,
   LeaderboardBoard,
   LeaderboardHero,
@@ -25,6 +24,7 @@ import {
   RankCell,
   RegionDropdown,
   SearchBox,
+  leaderboardUnifiedGrid,
   TableHead,
   TableHeadHelp,
   leaderboardAvatarClass,
@@ -32,9 +32,6 @@ import {
   leaderboardBrawlerIconsClass,
   leaderboardBrawlerIconsEmptyClass,
   leaderboardBrawlerIconsRowClass,
-  leaderboardBrawlerMetricClass,
-  leaderboardBrawlerMetricCompactClass,
-  leaderboardBrawlerMetricEmptyClass,
   leaderboardClubCellClass,
   leaderboardMiniStatClass,
   leaderboardMiniStatRightClass,
@@ -47,11 +44,9 @@ import {
   leaderboardPodiumRateClass,
   leaderboardPodiumScoreClass,
   leaderboardPodiumTopClass,
-  leaderboardRankStackClass,
   leaderboardRowAvatarClass,
   leaderboardRowClass,
   leaderboardRowMainClass,
-  leaderboardRowMonoClass,
   leaderboardRowNameClass,
   leaderboardRowPlayerLinkClass,
   leaderboardRowStatClass,
@@ -59,7 +54,6 @@ import {
   leaderboardSublineClass,
   leaderboardTableListClass,
   leaderboardToolbarActionsClass,
-  regionCode,
 } from "./LeaderboardDpmShell"
 
 interface Player {
@@ -96,7 +90,6 @@ interface TopPlayerEnrichment {
 }
 
 const PAGE_SIZE = 50
-const playerTableGrid = "grid grid-cols-[34px_minmax(156px,1fr)_78px_minmax(150px,1fr)_66px_140px_86px_54px_42px] items-center gap-1"
 
 interface BrawlerSummary {
   id: number
@@ -130,10 +123,6 @@ export default function LeaderboardsClient({
   }, [searchParams])
 
   const regionData = useMemo(() => allData.find(r => r.code === activeRegion) ?? allData[0], [allData, activeRegion])
-  const globalRankByTag = useMemo(() => {
-    const globalPlayers = allData.find(r => r.code === "global")?.players ?? []
-    return new Map(globalPlayers.map(player => [leaderboardTagKey(player.player_tag), player.rank]))
-  }, [allData])
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
     const players = regionData?.players ?? []
@@ -204,7 +193,7 @@ export default function LeaderboardsClient({
     <LeaderboardPageShell active="players">
       <LeaderboardHero
         title="Players Leaderboard"
-        description={`Top players in ${regionData?.label ?? "Global"} ranked by trophies — ${(regionData?.players?.length ?? 0).toLocaleString()} accounts tracked.`}
+        description={`The highest trophy Brawl Stars players in ${regionData?.label ?? "Global"} right now.`}
       />
 
       <LeaderboardBoard>
@@ -228,23 +217,18 @@ export default function LeaderboardsClient({
                 <PlayerPodiumCard
                   key={player.player_tag}
                   player={player}
-                  region={activeRegion}
                   enrichment={enrichments[leaderboardTagKey(player.player_tag)]}
                 />
               ))}
             </section>
 
             <LeaderboardPanel>
-              <TableHead className={`${playerTableGrid} [&>span:first-child]:text-center [&>span:nth-child(4)]:pl-2 [&>span:nth-child(4)]:text-left [&>span:nth-child(6)]:pl-2 [&>span:nth-child(6)]:text-left`}>
+              <TableHead className={`${leaderboardUnifiedGrid} [&>span:first-child]:text-center`}>
                 <span>Rank</span>
                 <span>Player</span>
                 <TableHeadHelp label="Trophies" help="Current trophy count from the leaderboard snapshot for the selected region." />
                 <span>Club</span>
-                <TableHeadHelp label="Wins" help="Total public win categories from the enriched player profile when available." />
                 <TableHeadHelp label="Best brawlers" help="The player's highest trophy brawlers from their public profile." />
-                <TableHeadHelp label="Peak" help="The highest trophy brawler found in the player's profile snapshot." />
-                <TableHeadHelp label="Prestige" help="Total prestige level from the public profile when the API returns it." />
-                <TableHeadHelp label="World" help="The player's global trophy rank when BrawlLens can match the selected row to the global leaderboard." />
               </TableHead>
 
               <div className={leaderboardTableListClass}>
@@ -252,7 +236,6 @@ export default function LeaderboardsClient({
                   <PlayerRankRow
                     key={`${activeRegion}-${player.player_tag}`}
                     player={player}
-                    worldRank={globalRankByTag.get(leaderboardTagKey(player.player_tag)) ?? (activeRegion === "global" ? player.rank : null)}
                     enrichment={enrichments[leaderboardTagKey(player.player_tag)]}
                   />
                 ))}
@@ -269,20 +252,18 @@ export default function LeaderboardsClient({
 
 function PlayerRankRow({
   player,
-  worldRank,
   enrichment,
 }: {
   player: Player
-  worldRank: number | null
   enrichment?: TopPlayerEnrichment
 }) {
   const playerHref = playerProfileHref(player.player_tag)
 
+  const enrichmentReady = enrichment !== undefined
   return (
-    <div className={`${leaderboardRowClass} ${playerTableGrid}`}>
-      <div className={leaderboardRankStackClass}>
+    <div className={`${leaderboardRowClass} ${leaderboardUnifiedGrid}`}>
+      <div className="grid place-items-center">
         <RankCell rank={player.rank} />
-        <span>{formatWorldRank(worldRank)}</span>
       </div>
       <Link href={playerHref} className={leaderboardRowPlayerLinkClass}>
         <PlayerAvatar name={player.player_name} rank={player.rank} iconId={enrichment?.iconId ?? null} compact />
@@ -294,23 +275,17 @@ function PlayerRankRow({
       <span className={leaderboardRowStatClass}>
         {formatTrophies(player.trophies)}
       </span>
-      <ClubCell name={player.club_name} badgeId={enrichment?.clubBadgeId ?? null} />
-      <span className={leaderboardRowMonoClass}>{formatStat(getTotalWins(enrichment))}</span>
-      <TopBrawlerIcons brawlers={enrichment?.topBrawlers ?? []} compact />
-      <BrawlerMetric brawler={enrichment?.peakBrawler ?? enrichment?.topBrawlers?.[0] ?? null} valueKey="highestTrophies" compact />
-      <span className={leaderboardRowMonoClass}>{formatPlainStat(enrichment?.totalPrestigeLevel)}</span>
-      <span className={leaderboardRowMonoClass}>{formatWorldRank(worldRank)}</span>
+      <ClubCell name={player.club_name} badgeId={enrichment?.clubBadgeId ?? null} ready={enrichmentReady} />
+      <TopBrawlerIcons brawlers={enrichment?.topBrawlers ?? []} ready={enrichmentReady} compact />
     </div>
   )
 }
 
 function PlayerPodiumCard({
   player,
-  region,
   enrichment,
 }: {
   player: Player
-  region: string
   enrichment?: TopPlayerEnrichment
 }) {
   const totalWins = getTotalWins(enrichment)
@@ -328,7 +303,7 @@ function PlayerPodiumCard({
           </div>
         </Link>
         <div className={leaderboardPodiumRateClass}>
-          <strong>{enrichment?.recentWinRate === null || enrichment?.recentWinRate === undefined ? "--" : `${enrichment.recentWinRate}%`}</strong>
+          <strong>{enrichment?.recentWinRate == null ? "-" : `${enrichment.recentWinRate}%`}</strong>
           <span>recent wr</span>
         </div>
       </div>
@@ -338,10 +313,10 @@ function PlayerPodiumCard({
           <strong>{formatStat(totalWins)}</strong>
           <span>wins</span>
         </div>
-        <TopBrawlerIcons brawlers={enrichment?.topBrawlers ?? []} />
+        <TopBrawlerIcons brawlers={enrichment?.topBrawlers ?? []} ready={enrichment !== undefined} />
         <div className={leaderboardMiniStatRightClass}>
-          <strong>{regionCode(region)}</strong>
-          <span>region</span>
+          <strong>{enrichment?.totalPrestigeLevel ?? "-"}</strong>
+          <span>prestige</span>
         </div>
       </div>
     </div>
@@ -359,11 +334,27 @@ function PlayerAvatar({ name, rank, iconId, compact = false }: { name: string; r
   )
 }
 
-function ClubCell({ name, badgeId }: { name: string | null; badgeId?: number | null }) {
+function ClubCell({
+  name,
+  badgeId,
+  ready = true,
+}: {
+  name: string | null
+  badgeId?: number | null
+  ready?: boolean
+}) {
+  // Player's club_name comes from the leaderboard payload (always populated as
+  // either a string or null), so it's safe to render even before enrichments
+  // resolve. The badge comes from enrichment, fall back to a neutral square
+  // while it loads.
   return (
     <span className={leaderboardClubCellClass}>
-      {badgeId && (
+      {badgeId ? (
         <BrawlImage src={clubBadgeUrl(badgeId)} alt="" width={24} height={24} sizes="24px" />
+      ) : ready ? (
+        <span className="inline-block size-[22px] shrink-0 rounded-[5px] border border-[rgba(245,244,241,0.07)] bg-[rgba(245,244,241,0.04)]" aria-hidden="true" />
+      ) : (
+        <CellSkeleton width={22} height={22} />
       )}
       <span>{name ?? "No club"}</span>
     </span>
@@ -372,14 +363,32 @@ function ClubCell({ name, badgeId }: { name: string | null; badgeId?: number | n
 
 function TopBrawlerIcons({
   brawlers,
+  ready = true,
   compact = false,
 }: {
   brawlers: { id: number; name: string }[]
+  ready?: boolean
   compact?: boolean
 }) {
+  if (!ready) {
+    return (
+      <div className={`${leaderboardBrawlerIconsClass} ${compact ? leaderboardBrawlerIconsRowClass : ""}`} aria-label="Loading top brawlers">
+        {[0, 1, 2].map(i => (
+          <CellSkeleton key={i} width={compact ? 22 : 28} height={compact ? 22 : 28} />
+        ))}
+      </div>
+    )
+  }
+  if (!brawlers.length) {
+    return (
+      <div className={`${leaderboardBrawlerIconsClass} ${compact ? leaderboardBrawlerIconsRowClass : ""}`} aria-label="No top brawlers">
+        <span className={leaderboardBrawlerIconsEmptyClass}>-</span>
+      </div>
+    )
+  }
   return (
     <div className={`${leaderboardBrawlerIconsClass} ${compact ? leaderboardBrawlerIconsRowClass : ""}`} aria-label="Highest brawlers">
-      {brawlers.length ? brawlers.map(brawler => (
+      {brawlers.slice(0, 3).map(brawler => (
         <BrawlImage
           key={brawler.id}
           src={brawlerIconUrl(brawler.id)}
@@ -388,54 +397,13 @@ function TopBrawlerIcons({
           height={30}
           sizes="30px"
         />
-      )) : (
-        <span className={leaderboardBrawlerIconsEmptyClass}>--</span>
-      )}
+      ))}
     </div>
-  )
-}
-
-function BrawlerMetric({
-  brawler,
-  valueKey,
-  compact = false,
-}: {
-  brawler: BrawlerSummary | null
-  valueKey: "trophies" | "highestTrophies"
-  compact?: boolean
-}) {
-  if (!brawler) return <span className={`${leaderboardBrawlerMetricClass} ${leaderboardBrawlerMetricEmptyClass}`}>--</span>
-  const value = valueKey === "trophies" ? brawler.trophies : brawler.highestTrophies ?? brawler.trophies
-
-  return (
-    <span className={`${leaderboardBrawlerMetricClass} ${compact ? leaderboardBrawlerMetricCompactClass : ""}`}>
-      <BrawlImage src={brawlerIconUrl(brawler.id)} alt={brawler.name} width={24} height={24} sizes="24px" />
-      <span>
-        {!compact && <strong>{formatBrawlerLabel(brawler.name)}</strong>}
-        <small>{formatFullNumber(value)}</small>
-      </span>
-    </span>
   )
 }
 
 function formatStat(value: number | null | undefined) {
   return typeof value === "number" ? formatTrophies(value) : "--"
-}
-
-function formatPlainStat(value: number | null | undefined) {
-  return formatPlainNumber(value)
-}
-
-function formatFullNumber(value: number | null | undefined) {
-  return formatPlainNumber(value)
-}
-
-function formatBrawlerLabel(name: string) {
-  return formatBrawlerName(name)
-}
-
-function formatWorldRank(value: number | null | undefined) {
-  return formatLeaderboardRank(value)
 }
 
 function getTotalWins(enrichment: TopPlayerEnrichment | undefined) {

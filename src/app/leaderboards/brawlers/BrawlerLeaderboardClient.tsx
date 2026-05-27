@@ -16,6 +16,7 @@ import {
 } from "@/lib/leaderboardUtils"
 import { useClickOutside } from "@/lib/useClickOutside"
 import {
+  CellSkeleton,
   EmptyLeaderboardState,
   LeaderboardBoard,
   LeaderboardHero,
@@ -27,6 +28,7 @@ import {
   SearchBox,
   TableHead,
   TableHeadHelp,
+  leaderboardUnifiedGrid,
   leaderboardAvatarClass,
   leaderboardActionClass,
   leaderboardClubCellClass,
@@ -42,11 +44,9 @@ import {
   leaderboardPodiumRateClass,
   leaderboardPodiumScoreClass,
   leaderboardPodiumTopClass,
-  leaderboardRankStackClass,
   leaderboardRowAvatarClass,
   leaderboardRowClass,
   leaderboardRowMainClass,
-  leaderboardRowMonoClass,
   leaderboardRowNameClass,
   leaderboardRowPlayerLinkClass,
   leaderboardRowStatClass,
@@ -86,7 +86,6 @@ interface PlayerEnrichment {
 }
 
 const PAGE_SIZE = 50
-const brawlerTableGrid = "grid grid-cols-[34px_minmax(136px,160px)_72px_72px_46px_54px_72px_minmax(112px,1fr)_66px] items-center gap-1"
 
 interface BrawlerSummary {
   id: number
@@ -190,7 +189,7 @@ export default function BrawlerLeaderboardClient({
     <LeaderboardPageShell active="brawlers">
       <LeaderboardHero
         title={`${selectedName} Leaderboard`}
-        description={`Open a brawler-specific ladder for ${selectedName} and scan the leading accounts without leaving the compact leaderboard flow. The primary rank is for this brawler, while the smaller rank tracks each player's overall trophy position.`}
+        description={`The top tracked players for ${selectedName} sorted by current brawler trophies.`}
       />
 
       <LeaderboardBoard>
@@ -236,16 +235,12 @@ export default function BrawlerLeaderboardClient({
             </section>
 
             <LeaderboardPanel>
-              <TableHead className={`${brawlerTableGrid} [&>span:first-child]:text-center [&>span:nth-child(8)]:pl-2 [&>span:nth-child(8)]:text-left`}>
+              <TableHead className={`${leaderboardUnifiedGrid} [&>span:first-child]:text-center`}>
                 <span>Rank</span>
                 <span>Player</span>
-                <TableHeadHelp label="Brawler" help="Current selected-brawler trophies for this player." />
-                <TableHeadHelp label="Peak" help="Highest trophy value found for the selected brawler." />
-                <TableHeadHelp label="Power" help="Selected brawler power level from profile enrichment when available." />
-                <TableHeadHelp label="Prestige" help="Selected brawler prestige level when the public profile returns it." />
-                <TableHeadHelp label="Total" help="The player's total account trophies from leaderboard or profile enrichment." />
+                <TableHeadHelp label="Trophies" help="Current selected-brawler trophies for this player." />
                 <span>Club</span>
-                <TableHeadHelp label="World" help="The player's global trophy rank or estimated global rank context." />
+                <TableHeadHelp label="Account total" help="The player's total account trophies from leaderboard or profile enrichment." />
               </TableHead>
 
               <div className={leaderboardTableListClass}>
@@ -254,7 +249,6 @@ export default function BrawlerLeaderboardClient({
                     key={`${activeBrawler.id}-${player.player_tag}`}
                     player={player}
                     enrichment={apiEnrichments[leaderboardTagKey(player.player_tag)]}
-                    rankedTotal={rankedTotal}
                   />
                 ))}
               </div>
@@ -352,23 +346,18 @@ function BrawlerSelector({
 function BrawlerRankRow({
   player,
   enrichment,
-  rankedTotal,
 }: {
   player: Player
   enrichment?: PlayerEnrichment
-  rankedTotal: number
 }) {
   const playerHref = playerProfileHref(player.player_tag)
   const totalTrophies = getTotalTrophies(player, enrichment)
-  const selectedBrawler = enrichment?.selectedBrawler
-  const worldPlacement = formatWorldPlacement(player.world_rank, enrichment, player.rank, rankedTotal)
-  const worldPlacementShort = formatWorldPlacementShort(player.world_rank, enrichment, player.rank, rankedTotal)
+  const enrichmentReady = enrichment !== undefined
 
   return (
-    <div className={`${leaderboardRowClass} ${brawlerTableGrid}`}>
-      <div className={leaderboardRankStackClass}>
+    <div className={`${leaderboardRowClass} ${leaderboardUnifiedGrid}`}>
+      <div className="grid place-items-center">
         <RankCell rank={player.rank} />
-        <span>{worldPlacementShort}</span>
       </div>
       <Link href={playerHref} className={leaderboardRowPlayerLinkClass}>
         <PlayerAvatar name={player.player_name} rank={player.rank} iconId={enrichment?.iconId ?? null} compact />
@@ -380,12 +369,18 @@ function BrawlerRankRow({
       <span className={leaderboardRowStatClass}>
         {formatExactTrophies(player.trophies)}
       </span>
-      <span className={leaderboardRowMonoClass}>{formatExactTrophies(selectedBrawler?.highestTrophies ?? player.trophies)}</span>
-      <span className={leaderboardRowMonoClass}>{formatPlainStat(selectedBrawler?.power)}</span>
-      <span className={leaderboardRowMonoClass}>{formatPlainStat(selectedBrawler?.prestigeLevel)}</span>
-      <span className={leaderboardRowMonoClass}>{formatNullableTrophies(totalTrophies)}</span>
-      <ClubCell name={player.club_name} badgeId={enrichment?.clubBadgeId ?? null} />
-      <span className={leaderboardRowMonoClass}>{worldPlacement}</span>
+      <ClubCell name={player.club_name} badgeId={enrichment?.clubBadgeId ?? null} ready={enrichmentReady} />
+      <div className="flex min-w-0 items-center">
+        {totalTrophies != null ? (
+          <strong className="text-[13px] font-[850] leading-none text-[var(--lb-text)] [font-family:var(--font-geist-mono,var(--font-jetbrains-mono),ui-monospace,monospace)]">
+            {formatNullableTrophies(totalTrophies)}
+          </strong>
+        ) : enrichmentReady ? (
+          <span className="text-[11px] font-[680] text-[var(--lb-text-3)]">-</span>
+        ) : (
+          <CellSkeleton width={72} height={11} />
+        )}
+      </div>
     </div>
   )
 }
@@ -449,11 +444,23 @@ function PlayerAvatar({ name, rank, iconId, compact = false }: { name: string; r
   )
 }
 
-function ClubCell({ name, badgeId }: { name: string | null; badgeId?: number | null }) {
+function ClubCell({
+  name,
+  badgeId,
+  ready = true,
+}: {
+  name: string | null
+  badgeId?: number | null
+  ready?: boolean
+}) {
   return (
     <span className={leaderboardClubCellClass}>
-      {badgeId && (
+      {badgeId ? (
         <BrawlImage src={clubBadgeUrl(badgeId)} alt="" width={24} height={24} sizes="24px" />
+      ) : ready ? (
+        <span className="inline-block size-[22px] shrink-0 rounded-[5px] border border-[rgba(245,244,241,0.07)] bg-[rgba(245,244,241,0.04)]" aria-hidden="true" />
+      ) : (
+        <CellSkeleton width={22} height={22} />
       )}
       <span>{name ?? "No club"}</span>
     </span>
@@ -472,17 +479,6 @@ function formatWorldPlacement(
   return brawlerPercentile ? `Top ${brawlerPercentile}` : "--"
 }
 
-function formatWorldPlacementShort(
-  value: number | null | undefined,
-  enrichment: PlayerEnrichment | undefined,
-  brawlerRank: number,
-  rankedTotal: number
-) {
-  if (typeof value === "number") return `#${value}`
-  if (enrichment?.globalPercentile) return enrichment.globalPercentile
-  return formatBrawlerPercentile(brawlerRank, rankedTotal) ?? "--"
-}
-
 function formatBrawlerPercentile(rank: number | null | undefined, total: number | null | undefined) {
   if (!rank || !total) return null
   const percentile = (rank / total) * 100
@@ -497,10 +493,6 @@ function formatNullableTrophies(value: number | null | undefined) {
 }
 
 function formatExactTrophies(value: number | null | undefined) {
-  return formatPlainNumber(value)
-}
-
-function formatPlainStat(value: number | null | undefined) {
   return formatPlainNumber(value)
 }
 

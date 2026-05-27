@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState, type ReactNode } from "react"
-import { ChevronDown, Filter } from "lucide-react"
+import { Check, ChevronDown, Filter } from "lucide-react"
 
 type OutcomeFilter = "all" | "win" | "loss" | "neutral"
 
@@ -69,67 +69,63 @@ export default function PlayerBattleFilters({
     }
   }, [isOpen])
 
-  const activeMode = modes.find(option => option.value === mode)
+  const allModes = [{ label: "All modes", value: "all" }, ...modes]
+  const activeMode = allModes.find(option => option.value === mode) ?? allModes[0]
 
   return (
     <div ref={rootRef} className="bl-profile-battle-shell">
-      <section className="bl-lb-toolbar bl-profile-filter-row">
-        <div className="bl-lb-region-pills bl-profile-segment" role="group" aria-label="Battle result filter">
+      <section className="bl-pf-filterbar" aria-label="Battle filters">
+        <div className="bl-pf-tabs" role="group" aria-label="Battle result filter">
           {outcomeOptions.map(option => (
             <button
               key={option.value}
               type="button"
               onClick={() => setOutcome(option.value)}
-              className={outcome === option.value ? "is-active" : ""}
+              className={`bl-pf-tab ${outcome === option.value ? "is-active" : ""}`}
               aria-pressed={outcome === option.value}
             >
-              {option.label}
+              <span>{option.label}</span>
             </button>
           ))}
         </div>
 
-        <div ref={dropdownRef} className="bl-profile-filter-menu">
+        <div ref={dropdownRef} className="bl-pf-dd">
           <button
             type="button"
-            className="bl-profile-filter-button"
+            className="bl-pf-dd-trigger"
             onClick={() => setIsOpen(open => !open)}
             aria-expanded={isOpen}
+            aria-haspopup="listbox"
           >
-            <Filter size={16} />
-            {activeMode?.label ?? "All modes"}
-            <ChevronDown size={16} />
+            <Filter size={13} aria-hidden="true" className="bl-pf-dd-icon" />
+            <span className="bl-pf-dd-label">{activeMode.label}</span>
+            <ChevronDown size={14} aria-hidden="true" className="bl-pf-dd-chev" />
           </button>
-          {isOpen && (
-            <div className="bl-profile-filter-dropdown" role="menu">
-              <button
-                type="button"
-                role="menuitemradio"
-                aria-checked={mode === "all"}
-                className={mode === "all" ? "is-active" : ""}
-                onClick={() => {
-                  setMode("all")
-                  setIsOpen(false)
-                }}
-              >
-                All modes
-              </button>
-              {modes.map(option => (
+          <div
+            className={`bl-pf-dd-menu ${isOpen ? "is-open" : ""}`}
+            role="listbox"
+            aria-hidden={!isOpen}
+          >
+            {allModes.map(option => {
+              const active = mode === option.value
+              return (
                 <button
                   key={option.value}
                   type="button"
-                  role="menuitemradio"
-                  aria-checked={mode === option.value}
-                  className={mode === option.value ? "is-active" : ""}
+                  role="option"
+                  aria-selected={active}
+                  className={`bl-pf-dd-item ${active ? "is-active" : ""}`}
                   onClick={() => {
                     setMode(option.value)
                     setIsOpen(false)
                   }}
                 >
-                  {option.label}
+                  <span>{option.label}</span>
+                  {active && <Check size={13} aria-hidden="true" />}
                 </button>
-              ))}
-            </div>
-          )}
+              )
+            })}
+          </div>
         </div>
       </section>
 

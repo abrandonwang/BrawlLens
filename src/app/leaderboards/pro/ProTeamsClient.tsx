@@ -13,7 +13,7 @@ export default function ProTeamsClient() {
     <LeaderboardPageShell active="pro">
       <LeaderboardHero
         title="Pro Teams"
-        description={`Track the competitive rosters BrawlLens follows — ${professionalTeamCards.length} teams featured across regions. Open a team for player breakdowns.`}
+        description={`Featured competitive Brawl Stars rosters tracked across ${professionalTeamCards.length} regions.`}
       />
 
       <LeaderboardBoard>

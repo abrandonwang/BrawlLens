@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function GuidesMaintenanceLayout() {
   return (
-    <main className="mx-auto grid min-h-[calc(100dvh-120px)] w-[min(720px,calc(100vw-28px))] place-items-center py-16 text-[#f5f4f1]">
+    <main className="mx-auto grid min-h-[calc(100dvh-180px)] w-[min(720px,calc(100vw-28px))] place-items-center pt-28 pb-16 text-[#f5f4f1]">
       <section className="w-full rounded-[12px] border border-[rgba(245,244,241,0.10)] bg-[#101015] px-6 py-7 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
         <h1 className="m-0 text-[clamp(24px,4vw,36px)] font-[900] leading-none tracking-[0] [font-family:var(--font-heading)]">
           Guides are under maintenance

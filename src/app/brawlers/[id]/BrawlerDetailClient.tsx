@@ -446,19 +446,29 @@ function MapRow({ map }: { map: BrawlerStats["maps"][number] }) {
 }
 
 function MatchupCard({ stat, delta, type }: { stat: CatalogStat; delta: number; type: "good" | "bad" }) {
+  // Sign comes from the raw delta so the percentage tells the truth even when
+  // a "worst" matchup still has a positive delta (e.g. top-meta brawlers).
+  const sign = delta > 0 ? "+" : delta < 0 ? "-" : ""
   return (
     <Link
       href={`/brawlers/${stat.id}`}
       className={cx(
-        "group grid w-[clamp(104px,10vw,116px)] shrink-0 overflow-hidden rounded-[8px] border bg-[#0d0d11] text-inherit no-underline transition-colors hover:bg-[rgba(245,244,241,0.045)]",
+        "group grid w-[clamp(84px,7.6vw,104px)] shrink-0 overflow-hidden rounded-[8px] border bg-[#0d0d11] text-inherit no-underline transition-colors hover:bg-[rgba(245,244,241,0.045)]",
         type === "good" ? "border-[rgba(74,222,128,0.16)]" : "border-[rgba(248,113,113,0.16)]",
       )}
     >
-      <BrawlImage src={brawlerIconUrl(stat.id)} alt={stat.name} width={116} height={128} className="h-[clamp(92px,8.6vw,100px)] w-full object-cover object-top" sizes="116px" />
+      <BrawlImage
+        src={brawlerIconUrl(stat.id)}
+        alt={stat.name}
+        width={104}
+        height={112}
+        className="h-[clamp(74px,6.6vw,92px)] w-full object-cover object-top"
+        sizes="(max-width: 640px) 84px, 104px"
+      />
       <div className="grid min-h-[68px] content-center justify-items-center gap-1 px-2 py-2 text-center transition-opacity group-hover:opacity-75">
         <b className="max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-[11px] font-[850] leading-tight text-[#f5f4f1]">{formatBrawlerName(stat.name)}</b>
         <strong className={cx("text-[17px] font-black leading-none", type === "good" ? "text-[#4ade80]" : "text-[#ff6262]")}>
-          {type === "good" ? "+" : "-"}{Math.abs(delta).toFixed(1)}%
+          {sign}{Math.abs(delta).toFixed(1)}%
         </strong>
         <span className="text-[11px] font-bold leading-none text-[rgba(245,244,241,0.74)]">{compactNumber(stat.picks)} games</span>
       </div>
@@ -564,22 +574,33 @@ export default function BrawlerDetailClient({ brawler }: { brawler: Brawler }) {
         all: [] as { stat: CatalogStat; delta: number }[],
       }
     }
-    const pool = catalogValues
-      .filter(stat => stat.id !== brawler.id && stat.picks >= 50 && stat.winRate != null)
-      .map(stat => ({ stat, delta: selectedWinRate - (stat.winRate ?? selectedWinRate) }))
-      .sort((a, b) => b.delta - a.delta)
+    // Build pool with a graceful pick-threshold fallback so even thin samples
+    // can produce a full 5/5 matchup list.
+    const buildPool = (minPicks: number) =>
+      catalogValues
+        .filter(stat => stat.id !== brawler.id && stat.picks >= minPicks && stat.winRate != null)
+        .map(stat => ({ stat, delta: selectedWinRate - (stat.winRate ?? selectedWinRate) }))
+        .sort((a, b) => b.delta - a.delta)
 
-    return {
-      good: pool.filter(item => item.delta > 0),
-      bad: pool.filter(item => item.delta < 0).sort((a, b) => a.delta - b.delta),
-      all: pool,
-    }
+    let pool = buildPool(50)
+    if (pool.length < 10) pool = buildPool(20)
+    if (pool.length < 10) pool = buildPool(1)
+
+    // Always take top 5 by delta and bottom 5 by delta (no sign filter) so we
+    // get a guaranteed 5 best + 5 worst whenever the pool has >= 10 entries.
+    // When the pool is smaller, avoid overlap between halves.
+    const goodCount = Math.min(5, pool.length)
+    const badCount = Math.min(5, Math.max(0, pool.length - goodCount))
+    const good = pool.slice(0, goodCount)
+    const bad = pool.slice(pool.length - badCount).reverse()
+
+    return { good, bad, all: pool }
   }, [brawler.id, catalogValues, selectedWinRate])
   const visibleMatchups = showAllMatchups
     ? matchups.all
-    : [...matchups.good.slice(0, 5), ...matchups.bad.slice(0, 5)]
-  const previewGoodMatchups = matchups.good.slice(0, 5)
-  const previewBadMatchups = matchups.bad.slice(0, 5)
+    : [...matchups.good, ...matchups.bad]
+  const previewGoodMatchups = matchups.good
+  const previewBadMatchups = matchups.bad
   const matchupEmptyText = selectedPicks < 50
     ? "Need more sample."
     : "No comparison sample yet."
@@ -869,21 +890,21 @@ export default function BrawlerDetailClient({ brawler }: { brawler: Brawler }) {
                   {showAllMatchups ? (
                     visibleMatchups.length ? visibleMatchups.map(item => {
                       const type = item.delta >= 0 ? "good" : "bad"
-                      return <MatchupCard key={item.stat.id} type={type} stat={item.stat} delta={Math.abs(item.delta)} />
+                      return <MatchupCard key={item.stat.id} type={type} stat={item.stat} delta={item.delta} />
                     }) : <div className={`${rowSurfaceClass} grid min-h-[104px] w-full min-w-[260px] place-items-center px-3 text-center text-[12px] font-bold text-[rgba(245,244,241,0.74)]`}>{matchupEmptyText}</div>
                   ) : (
                     <>
-                      {previewGoodMatchups.map(item => <MatchupCard key={item.stat.id} type="good" stat={item.stat} delta={Math.abs(item.delta)} />)}
+                      {previewGoodMatchups.map(item => <MatchupCard key={item.stat.id} type="good" stat={item.stat} delta={item.delta} />)}
                       <button
                         type="button"
-                        className={`${rowSurfaceClass} grid w-[clamp(104px,10vw,116px)] shrink-0 place-items-center content-center gap-1 px-2 text-center text-[12px] font-[850] text-[#f5f4f1] transition-colors hover:border-[rgba(124,92,255,0.28)] hover:bg-[rgba(124,92,255,0.08)]`}
+                        className={`${rowSurfaceClass} grid w-[clamp(84px,7.6vw,104px)] shrink-0 place-items-center content-center gap-1 px-2 text-center text-[12px] font-[850] text-[#f5f4f1] transition-colors hover:border-[rgba(124,92,255,0.28)] hover:bg-[rgba(124,92,255,0.08)]`}
                         aria-label="Show full matchup list"
                         onClick={() => setShowAllMatchups(true)}
                       >
                         <span className="text-[28px] font-semibold leading-none text-[#a78bff]">+</span>
                         <span>Full List</span>
                       </button>
-                      {previewBadMatchups.map(item => <MatchupCard key={item.stat.id} type="bad" stat={item.stat} delta={Math.abs(item.delta)} />)}
+                      {previewBadMatchups.map(item => <MatchupCard key={item.stat.id} type="bad" stat={item.stat} delta={item.delta} />)}
                       {!previewGoodMatchups.length && !previewBadMatchups.length && (
                         <div className={`${rowSurfaceClass} grid min-h-[104px] w-full min-w-[260px] place-items-center px-3 text-center text-[12px] font-bold text-[rgba(245,244,241,0.74)]`}>{matchupEmptyText}</div>
                       )}

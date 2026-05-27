@@ -55,41 +55,65 @@ function readableLabel(pathname: string) {
   if (pathname === "/about") return "About"
   if (pathname === "/contact") return "Contact"
   if (pathname === "/dashboard") return "Dashboard"
-  return "Previous"
+  return "Back"
 }
 
-type BackTarget = { href: string; label: string; history: boolean }
+// Sensible parent route per known section — used when no in-app history exists.
+function parentFor(pathname: string): { href: string; label: string } {
+  if (pathname.startsWith("/player/") && pathname.endsWith("/brawlers")) {
+    const base = pathname.replace(/\/brawlers$/, "")
+    return { href: base, label: "Player" }
+  }
+  if (pathname.startsWith("/player/")) return { href: "/leaderboards/players", label: "Player Rankings" }
+  if (pathname.startsWith("/meta/")) return { href: "/meta", label: "Map Tierlist" }
+  if (pathname.startsWith("/brawlers/")) return { href: "/brawlers", label: "Brawler Tierlist" }
+  if (pathname.startsWith("/leaderboards/pro/")) return { href: "/leaderboards/pro", label: "Pro Teams" }
+  if (pathname.startsWith("/leaderboards/clubs/")) return { href: "/leaderboards/clubs", label: "Club Rankings" }
+  if (pathname.startsWith("/leaderboards/brawlers/")) return { href: "/leaderboards/brawlers", label: "Brawler Rankings" }
+  if (pathname.startsWith("/guides/")) return { href: "/guides", label: "Guides" }
+  return { href: "/", label: "Home" }
+}
+
+type BackTarget = { href: string; label: string; useHistory: boolean }
 
 export default function PageNav() {
   const pathname = usePathname()
   const router = useRouter()
-  const [back, setBack] = useState<BackTarget>({ href: "/", label: "Home", history: false })
+  const [back, setBack] = useState<BackTarget>(() => {
+    const parent = parentFor(pathname)
+    return { ...parent, useHistory: false }
+  })
 
   useEffect(() => {
+    // Re-derive parent on path change as the initial fallback.
+    const parent = parentFor(pathname)
+    let next: BackTarget = { ...parent, useHistory: false }
+
     try {
-      if (!document.referrer) return
-      const referrer = new URL(document.referrer)
-      if (referrer.origin !== window.location.origin) return
-      if (referrer.pathname === pathname) return
-      setBack({
-        href: `${referrer.pathname}${referrer.search}${referrer.hash}`,
-        label: readableLabel(referrer.pathname),
-        history: true,
-      })
+      if (document.referrer) {
+        const referrer = new URL(document.referrer)
+        if (referrer.origin === window.location.origin && referrer.pathname !== pathname) {
+          next = {
+            href: `${referrer.pathname}${referrer.search}${referrer.hash}`,
+            label: readableLabel(referrer.pathname),
+            useHistory: true,
+          }
+        }
+      }
     } catch {
-      // ignore
+      // ignore — keep parent fallback
     }
+
+    setBack(next)
   }, [pathname])
 
-  if (HIDDEN_PATHS.has(pathname)) return null
+  if (HIDDEN_PATHS.has(pathname) || pathname.startsWith("/account")) return null
 
   const ringIdx = ringIndexForPath(pathname)
-  // For unknown paths, recommend the Map Tierlist as a sensible default.
   const nextEntry = ringIdx >= 0
     ? ROUTE_RING[(ringIdx + 1) % ROUTE_RING.length]
     : ROUTE_RING[1]
 
-  // Tierlist & subpages get a wider rail to match their wider hero card.
   const isTierlist =
     pathname === "/meta" ||
     pathname.startsWith("/meta/") ||
@@ -97,26 +121,34 @@ export default function PageNav() {
     pathname.startsWith("/brawlers/")
   const scopeClass = isTierlist ? "bl-page-nav--tier" : "bl-page-nav--lb"
 
+  const handleBack = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    // Allow modifier keys / middle-click to open in new tab via the default Link behavior.
+    if (event.defaultPrevented) return
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return
+
+    if (back.useHistory && typeof window !== "undefined" && window.history.length > 1) {
+      event.preventDefault()
+      router.back()
+    }
+    // else: let the <Link> navigate normally to back.href
+  }
+
   return (
     <nav className={`bl-page-nav ${scopeClass}`} aria-label="Page navigation">
-      <button
-        type="button"
+      <Link
+        href={back.href}
         className="bl-page-nav-link bl-page-nav-back"
-        onClick={() => {
-          if (back.history && window.history.length > 1) {
-            router.back()
-            return
-          }
-          router.push(back.href)
-        }}
+        prefetch={false}
+        onClick={handleBack}
       >
         <ArrowLeft size={13} strokeWidth={2.2} aria-hidden="true" />
         <span>{back.label}</span>
-      </button>
+      </Link>
 
       <Link
         href={nextEntry.path}
         className="bl-page-nav-link bl-page-nav-next"
+        prefetch={false}
         data-no-transition={pathname === nextEntry.path ? "" : undefined}
       >
         <span>{nextEntry.label}</span>

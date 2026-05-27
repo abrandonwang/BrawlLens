@@ -37,10 +37,12 @@ interface ClubMemberSummary {
   name: string
   trophies: number | null
   role: string | null
+  iconId: number | null
 }
 
 interface PlayerProfile {
   totalPrestigeLevel?: number
+  icon?: { id?: number }
 }
 
 function cleanTag(raw: unknown) {
@@ -58,13 +60,17 @@ async function fetchClubEnrichment(tag: string, includePrestige: boolean): Promi
     const memberPrestiges = includePrestige ? await mapWithConcurrency(members, 5, fetchMemberPrestige) : []
     const prestigeValues = memberPrestiges.filter((value): value is number => typeof value === "number")
 
+    const topMemberTag = topMember?.tag ? topMember.tag.replace(/^#/, "") : null
+    const topMemberIconId = topMemberTag ? await fetchMemberIconId(topMemberTag) : null
+
     return {
       badgeId: club.badgeId ?? null,
       topMember: topMember ? {
-        tag: topMember.tag ? topMember.tag.replace(/^#/, "") : null,
+        tag: topMemberTag,
         name: topMember.name ?? "Unknown",
         trophies: topMember.trophies ?? null,
         role: topMember.role ?? null,
+        iconId: topMemberIconId,
       } : null,
       totalPrestige: prestigeValues.length ? prestigeValues.reduce((sum, value) => sum + value, 0) : null,
       prestigeCoverage: prestigeValues.length,
@@ -85,6 +91,19 @@ async function fetchMemberPrestige(member: ClubMember): Promise<number | null> {
     if (!response.ok) return null
     const profile = (await response.json()) as PlayerProfile
     return typeof profile.totalPrestigeLevel === "number" ? profile.totalPrestigeLevel : null
+  } catch {
+    return null
+  }
+}
+
+async function fetchMemberIconId(tag: string): Promise<number | null> {
+  const clean = sanitizePlayerTag(tag)
+  if (!clean) return null
+  try {
+    const response = await fetchPlayerResponse(clean, { next: { revalidate: 900 } })
+    if (!response.ok) return null
+    const profile = (await response.json()) as PlayerProfile
+    return typeof profile.icon?.id === "number" ? profile.icon.id : null
   } catch {
     return null
   }

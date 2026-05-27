@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
-import { ChevronDown, Search, X } from "lucide-react";
+import { ChevronDown, LogOut, Search, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import BrandMark from "./BrandMark";
@@ -29,13 +29,12 @@ const leaderboardItems: NavPanelItem[] = [
   { label: "Player rankings", href: "/leaderboards/players", description: "Top player trophies" },
   { label: "Club rankings", href: "/leaderboards/clubs", description: "Top club trophies" },
   { label: "Brawler rankings", href: "/leaderboards/brawlers", description: "Brawler trophy ranks" },
+  { label: "Pro teams", href: "/leaderboards/pro", description: "Competitive rosters" },
 ];
 
-const accountMenuItems = [
-  { label: "Profile", href: "/account?tab=profile" },
-  { label: "Settings", href: "/account?tab=settings" },
-  { label: "Appearance", href: "/account?tab=appearance" },
-] as const;
+const accountNavItems: NavPanelItem[] = [
+  { label: "Settings", href: "/account", description: "Player tag, email, plan, status" },
+];
 
 type MobileMenuGroupKey = "tierlists" | "leaderboards" | "guides";
 
@@ -59,6 +58,7 @@ const mobileMenuGroups: Array<{
       { label: "Players", href: "/leaderboards/players" },
       { label: "Clubs", href: "/leaderboards/clubs" },
       { label: "Brawler ranks", href: "/leaderboards/brawlers" },
+      { label: "Pro teams", href: "/leaderboards/pro" },
     ],
   },
   {
@@ -116,9 +116,10 @@ function authRuleDotClass(status: EmailCheckStatus | "passed") {
 const authActionBaseClass =
   "inline-flex h-11 w-full cursor-pointer items-center justify-center rounded-[10px] text-[13px] font-[720] outline-none transition-[background-color,border-color,color,opacity] duration-150";
 
-type DesktopPanel = "browse" | "leaderboards";
+type DesktopPanel = "browse" | "leaderboards" | "account";
 type LoginState = "idle" | "sending" | "sent" | "error";
 type AuthMode = "signup" | "login";
+type AccountNavTab = "profile" | "appearance";
 type AuthMePayload = {
   user?: PremiumUser | null;
   session?: { accessToken?: string; refreshToken?: string; expiresAt?: number } | null;
@@ -132,8 +133,9 @@ function passwordRules(password: string) {
 }
 
 function isRouteActive(pathname: string, href: string) {
-  if (href === "/") return pathname === "/";
-  return pathname.startsWith(href);
+  const routePath = href.split(/[?#]/)[0] || "/";
+  if (routePath === "/") return pathname === "/";
+  return pathname === routePath || pathname.startsWith(`${routePath}/`);
 }
 
 function isDesktopItemActive(pathname: string, href: string) {
@@ -195,7 +197,6 @@ export default function NavBar() {
   const [isSignedIn, setIsSignedIn] = useState(false);
   const [accountName, setAccountName] = useState<string | null>(null);
   const [accountEmail, setAccountEmail] = useState<string | null>(null);
-  const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [authMode, setAuthMode] = useState<AuthMode>("signup");
   const [loginEmail, setLoginEmail] = useState("");
@@ -204,9 +205,10 @@ export default function NavBar() {
   const [loginResending, setLoginResending] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
   const [loginRedirectTo, setLoginRedirectTo] = useState<string | null>(null);
+  const [accountTab, setAccountTab] = useState<AccountNavTab>("profile");
+  const [isNavHidden, setIsNavHidden] = useState(false);
   const previousPathnameRef = useRef(pathname);
   const desktopNavRef = useRef<HTMLDivElement>(null);
-  const accountMenuRef = useRef<HTMLDivElement>(null);
   const menuCloseTimerRef = useRef<number | null>(null);
   const desktopHoverTimerRef = useRef<number | null>(null);
   const loginInputRef = useRef<HTMLInputElement>(null);
@@ -250,7 +252,6 @@ export default function NavBar() {
     setDesktopPanel(null);
     setHoverDesktopPanel(null);
     setSuppressedDesktopPanel(null);
-    setIsAccountMenuOpen(false);
     setLoginRedirectTo(redirectTo);
     setAuthMode(mode);
     setIsLoginOpen(true);
@@ -269,6 +270,51 @@ export default function NavBar() {
     return lockBodyScroll();
   }, [bodyScrollLocked]);
 
+  // Hide-on-scroll: tuck the nav out of the way when scrolling down past a
+  // small threshold; reveal again on scroll-up or near the top.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (isMenuOpen || menuClosing || isLoginOpen) return;
+
+    let lastY = window.scrollY;
+    let frame = 0;
+    const REVEAL_AT_TOP = 80;
+    const HIDE_DELTA = 8;
+    const SHOW_DELTA = 4;
+
+    const update = () => {
+      frame = 0;
+      const currentY = window.scrollY;
+      const delta = currentY - lastY;
+
+      if (currentY <= REVEAL_AT_TOP) {
+        setIsNavHidden(false);
+      } else if (delta > HIDE_DELTA) {
+        setIsNavHidden(true);
+      } else if (delta < -SHOW_DELTA) {
+        setIsNavHidden(false);
+      }
+
+      lastY = currentY;
+    };
+
+    const onScroll = () => {
+      if (frame) return;
+      frame = window.requestAnimationFrame(update);
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (frame) window.cancelAnimationFrame(frame);
+    };
+  }, [isMenuOpen, menuClosing, isLoginOpen]);
+
+  // Always reveal when any modal/menu opens so users can dismiss it.
+  useEffect(() => {
+    if (isMenuOpen || menuClosing || isLoginOpen) setIsNavHidden(false);
+  }, [isMenuOpen, menuClosing, isLoginOpen]);
+
   useEffect(() => {
     document.documentElement.classList.toggle("bl-auth-open", isLoginOpen);
     return () => document.documentElement.classList.remove("bl-auth-open");
@@ -285,6 +331,21 @@ export default function NavBar() {
   }, [pathname, closeMenu]);
 
   useEffect(() => {
+    function syncAccountTab() {
+      const params = new URLSearchParams(window.location.search);
+      setAccountTab(params.get("tab") === "appearance" ? "appearance" : "profile");
+    }
+
+    syncAccountTab();
+    window.addEventListener("popstate", syncAccountTab);
+    window.addEventListener("brawllens:account-tab-change", syncAccountTab);
+    return () => {
+      window.removeEventListener("popstate", syncAccountTab);
+      window.removeEventListener("brawllens:account-tab-change", syncAccountTab);
+    };
+  }, [pathname]);
+
+  useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
@@ -297,7 +358,6 @@ export default function NavBar() {
         setHoverDesktopPanel(null);
         setSuppressedDesktopPanel(null);
         setIsLoginOpen(false);
-        setIsAccountMenuOpen(false);
         return;
       }
     }
@@ -366,19 +426,6 @@ export default function NavBar() {
   }, [desktopPanel]);
 
   useEffect(() => {
-    if (!isAccountMenuOpen) return;
-
-    function onPointerDown(event: PointerEvent) {
-      if (!accountMenuRef.current?.contains(event.target as Node)) {
-        setIsAccountMenuOpen(false);
-      }
-    }
-
-    window.addEventListener("pointerdown", onPointerDown);
-    return () => window.removeEventListener("pointerdown", onPointerDown);
-  }, [isAccountMenuOpen]);
-
-  useEffect(() => {
     function onOpenLogin(e: Event) {
       const detail = (e as CustomEvent<{ mode?: AuthMode; next?: string }>).detail;
       showLogin(detail?.mode === "login" ? "login" : "signup", internalRedirectPath(detail?.next ?? null));
@@ -426,7 +473,6 @@ export default function NavBar() {
       closeMenu();
       return;
     }
-    setIsAccountMenuOpen(false);
     setMobileOpenGroup(activeMobileMenuGroup(pathname) ?? "tierlists");
     setIsMenuOpen(true);
   }
@@ -551,7 +597,6 @@ export default function NavBar() {
   }
 
   function signOut() {
-    setIsAccountMenuOpen(false);
     setIsSignedIn(false);
     setAccountName(null);
     setAccountEmail(null);
@@ -568,6 +613,12 @@ export default function NavBar() {
   const isTierlistRoute = pathname === "/brawlers" || pathname.startsWith("/brawlers/") || pathname === "/meta" || pathname.startsWith("/meta/");
   const browseActive = browseItems.some(item => item.href && isDesktopItemActive(pathname, item.href));
   const leaderboardsActive = isPlayerRoute || leaderboardItems.some(item => item.href && isDesktopItemActive(pathname, item.href));
+  const accountActive = pathname.startsWith("/account");
+  const accountDesktopItems = accountNavItems.map(item =>
+    item.href === "/account?tab=profile" && accountEmail
+      ? { ...item, description: accountEmail }
+      : item
+  );
   const loginEmailCheck = useEmailCheck(loginEmail, isLoginOpen && authMode === "signup");
   const loginEmailFormatValid = isEmailFormatValid(loginEmail);
   const loginEmailReady = authMode === "signup" ? loginEmailCheck.isValid : loginEmailFormatValid;
@@ -593,9 +644,18 @@ export default function NavBar() {
   const renderedDesktopPanel = visibleDesktopPanel ?? lastDesktopPanel;
   const desktopPanelContent = renderedDesktopPanel === "leaderboards"
     ? { items: leaderboardItems }
-    : { items: browseItems };
+    : renderedDesktopPanel === "account"
+      ? { items: accountDesktopItems }
+      : { items: browseItems };
   const navTextClass = (active: boolean) =>
     `relative inline-flex h-[36px] items-center rounded-full border-0 px-3 text-[13px] font-semibold leading-none tracking-[-0.005em] no-underline outline-none transition-colors duration-150 text-[rgba(245,244,241,0.78)] hover:text-[#f5f4f1] hover:bg-[rgba(245,244,241,0.06)] focus-visible:text-[#f5f4f1] ${active ? "text-[#f5f4f1] bg-[rgba(124,92,255,0.14)]" : ""}`;
+
+  function isAccountNavItemActive(href: string) {
+    if (!href.startsWith("/account")) return isRouteActive(pathname, href);
+    const [, rawQuery] = href.split("?");
+    const tab = new URLSearchParams(rawQuery ?? "").get("tab") === "appearance" ? "appearance" : "profile";
+    return accountActive && tab === accountTab;
+  }
 
   useEffect(() => {
     document.documentElement.classList.toggle("leaderboards-nav-flow", isLeaderboardsRoute);
@@ -615,7 +675,8 @@ export default function NavBar() {
   return (
     <>
       <nav
-        className="fixed left-1/2 top-4 z-[500] w-[70vw] max-w-[1200px] -translate-x-1/2 overflow-visible rounded-[20px] border-0 bg-[rgba(13,13,17,0.92)] text-[#f5f4f1] shadow-[0_20px_52px_-22px_rgba(0,0,0,0.70),0_0_48px_-18px_rgba(124,92,255,0.78),0_0_76px_-42px_rgba(36,94,216,0.58)] backdrop-blur-xl backdrop-saturate-150 [font-family:var(--font-ui)] max-lg:w-[calc(100%-20px)]"
+        data-nav-hidden={isNavHidden ? "true" : undefined}
+        className="bl-nav-scroll-hide fixed left-1/2 top-4 z-[500] w-[70vw] max-w-[1200px] -translate-x-1/2 overflow-visible rounded-[20px] border border-[rgba(255,255,255,0.36)] bg-[rgba(13,13,17,0.92)] text-[#f5f4f1] [box-shadow:inset_0_0_0_1px_rgba(255,255,255,0.18),0_0_32px_rgba(255,255,255,0.34),0_0_72px_-12px_rgba(255,255,255,0.22),0_20px_52px_-22px_rgba(0,0,0,0.88)] backdrop-blur-xl backdrop-saturate-150 [font-family:var(--font-ui)] max-lg:w-[calc(100%-20px)]"
         onMouseLeave={() => {
           setHoverDesktopPanel(null);
           setDesktopPanel(null);
@@ -636,6 +697,7 @@ export default function NavBar() {
           >
             <Link
               href="/brawlers"
+              onFocus={() => openHoverDesktopPanel("browse")}
               onClick={() => { setDesktopPanel(null); setHoverDesktopPanel(null); }}
               className={`${navTextClass(browseActive)} cursor-pointer gap-1.5`}
             >
@@ -651,6 +713,7 @@ export default function NavBar() {
           >
             <Link
               href="/leaderboards/players"
+              onFocus={() => openHoverDesktopPanel("leaderboards")}
               onClick={() => { setDesktopPanel(null); setHoverDesktopPanel(null); }}
               className={`${navTextClass(leaderboardsActive)} cursor-pointer gap-1.5`}
             >
@@ -673,59 +736,24 @@ export default function NavBar() {
           </button>
           <span aria-hidden="true" className="h-5 w-px bg-[rgba(245,244,241,0.12)]" />
           {isSignedIn ? (
-            <div ref={accountMenuRef} className="relative shrink-0">
+            <Link
+              href="/account"
+              onClick={() => { setDesktopPanel(null); setHoverDesktopPanel(null); }}
+              className={`${navTextClass(accountActive)} max-w-[220px] cursor-pointer`}
+              title={accountLabel}
+            >
+              <span className="min-w-0 truncate">{accountLabel}</span>
+            </Link>
+          ) : (
+            <>
               <button
                 type="button"
-                onClick={() => setIsAccountMenuOpen(open => !open)}
-                className={`bl-account-menu-button relative z-[620] inline-flex h-[36px] min-w-[76px] max-w-[220px] shrink-0 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-[10px] border-0 bg-[rgba(245,244,241,0.06)] px-3.5 text-[14px] font-semibold leading-none text-[rgba(245,244,241,0.78)] outline-none transition-colors duration-150 hover:bg-[rgba(245,244,241,0.10)] hover:text-[#f5f4f1] focus-visible:ring-1 focus-visible:ring-[rgba(245,244,241,0.15)] max-[540px]:max-w-[180px] max-[430px]:max-w-[132px] max-[420px]:px-3 ${isAccountMenuOpen ? "bg-[rgba(245,244,241,0.10)] text-[#f5f4f1]" : ""}`}
-                aria-haspopup="menu"
-                aria-expanded={isAccountMenuOpen}
-                title={accountLabel}
+                onClick={openLogin}
+                className={loginButtonClass}
               >
-                <span className="block min-w-0 truncate leading-[1.35]">{accountLabel}</span>
-                <ChevronDown size={14} strokeWidth={2} className="bl-account-menu-arrow shrink-0 text-[#5f5f5d] max-[430px]:hidden" />
+                <span>{accountLabel}</span>
               </button>
-              {isAccountMenuOpen && (
-                <div
-                  role="menu"
-                  className="bl-account-menu-panel absolute right-0 top-full z-[630] w-[278px] origin-top-right rounded-[12px] border border-[#26262d] bg-[#0d0d11] p-1.5 pt-2 text-[#f5f4f1] shadow-[0_24px_64px_-36px_rgba(0,0,0,0.38),rgba(255,255,255,0.04)_0_0.5px_0_0_inset] animate-[accountMenuIn_0.16s_cubic-bezier(0.16,1,0.3,1)_both]"
-                >
-                  <div className="px-2.5 py-2.5">
-                    <p className="m-0 truncate text-[14px] font-semibold leading-tight text-[#f5f4f1]">{accountLabel}</p>
-                    {accountEmail && <p className="mt-1 mb-0 truncate text-[12px] leading-tight text-[#5f5f5d]">{accountEmail}</p>}
-                  </div>
-                  <div className="my-1 h-px bg-[rgba(245,244,241,0.04)]" />
-                  {accountMenuItems.map(({ label, href }) => (
-                    <Link
-                      key={href}
-                      href={href}
-                      role="menuitem"
-                      onClick={() => setIsAccountMenuOpen(false)}
-                      className="flex min-h-9 items-center rounded-[8px] px-2.5 py-2 text-[13px] font-medium text-[rgba(245,244,241,0.78)] no-underline transition-colors duration-150 hover:bg-[rgba(245,244,241,0.04)] hover:text-[#f5f4f1]"
-                    >
-                      <span className="truncate">{label}</span>
-                    </Link>
-                  ))}
-                  <div className="my-1 h-px bg-[rgba(245,244,241,0.04)]" />
-                  <button
-                    type="button"
-                    role="menuitem"
-                    onClick={signOut}
-                    className="flex min-h-9 w-full cursor-pointer items-center rounded-[8px] border-0 bg-transparent px-2.5 py-2 text-left text-[13px] font-medium text-[rgba(245,244,241,0.78)] transition-colors duration-150 hover:bg-[rgba(245,244,241,0.04)] hover:text-[#f5f4f1]"
-                  >
-                    Sign out
-                  </button>
-                </div>
-              )}
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={openLogin}
-              className={loginButtonClass}
-            >
-              <span>{accountLabel}</span>
-            </button>
+            </>
           )}
         </div>
           <button
@@ -746,7 +774,10 @@ export default function NavBar() {
           className={`hidden overflow-hidden transition-[max-height,opacity,transform] duration-[640ms] ease-[cubic-bezier(0.16,1,0.3,1)] lg:block ${visibleDesktopPanel ? "max-h-[220px] opacity-100 translate-y-0" : "max-h-0 opacity-0 -translate-y-2"}`}
         >
           <div className="px-5 pb-4 pt-1">
-            <div className="grid grid-cols-3 gap-4 px-0">
+            <div
+              className="grid gap-4 px-0"
+              style={{ gridTemplateColumns: renderedDesktopPanel === "account" ? "repeat(2, minmax(0, 1fr))" : "repeat(3, minmax(0, 1fr))" }}
+            >
               {desktopPanelContent.items.map(item => {
                 if (!item.href || item.disabled) {
                   return (
@@ -760,7 +791,11 @@ export default function NavBar() {
                     </div>
                   );
                 }
-                const active = item.href ? isRouteActive(pathname, item.href) : false;
+                const active = item.href
+                  ? renderedDesktopPanel === "account"
+                    ? isAccountNavItemActive(item.href)
+                    : isRouteActive(pathname, item.href)
+                  : false;
                 return (
                   <Link
                     key={item.href}
@@ -835,6 +870,44 @@ export default function NavBar() {
                   </div>
                 );
               })}
+              <div
+                className="animate-[mobileMenuItemIn_0.34s_cubic-bezier(0.16,1,0.3,1)_both] border-b border-[rgba(245,244,241,0.07)] py-4"
+                style={{ animationDelay: menuClosing ? "0ms" : `${50 + mobileMenuGroups.length * 34}ms` }}
+              >
+                {isSignedIn ? (
+                  <div className="grid gap-3">
+                    <p className="m-0 truncate text-[22px] font-[680] leading-none text-[#a78bff]">{accountLabel}</p>
+                    <div className="grid gap-0">
+                      {accountNavItems.map(item => (
+                        <Link
+                          key={item.href}
+                          href={item.href ?? "/account"}
+                          onClick={closeMenu}
+                          className={`flex min-h-[42px] items-center justify-start text-[17px] font-[620] leading-none no-underline outline-none transition-colors duration-150 hover:text-[#a78bff] focus-visible:text-[#a78bff] focus-visible:outline-none ${item.href && isAccountNavItemActive(item.href) ? "text-[#a78bff]" : "text-[rgba(245,244,241,0.86)]"}`}
+                        >
+                          {item.label}
+                        </Link>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={signOut}
+                        className="mt-2 inline-flex min-h-[42px] w-fit cursor-pointer items-center gap-2 rounded-[8px] border border-[rgba(245,244,241,0.08)] bg-[rgba(245,244,241,0.04)] px-3 text-[15px] font-[680] leading-none text-[rgba(245,244,241,0.78)] outline-none transition-colors duration-150 hover:border-[rgba(245,244,241,0.14)] hover:bg-[rgba(245,244,241,0.07)] hover:text-[#f5f4f1] focus-visible:border-[rgba(245,244,241,0.14)] focus-visible:bg-[rgba(245,244,241,0.07)] focus-visible:text-[#f5f4f1]"
+                      >
+                        <LogOut size={15} strokeWidth={2} aria-hidden="true" />
+                        Sign out
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={openLogin}
+                    className="inline-flex h-11 w-fit cursor-pointer items-center rounded-[10px] border-0 bg-[#f5f4f1] px-4 text-[14px] font-[760] leading-none text-[#0d0d11] outline-none transition-colors duration-150 hover:bg-[rgba(245,244,241,0.88)] focus-visible:bg-[rgba(245,244,241,0.88)]"
+                  >
+                    Log in
+                  </button>
+                )}
+              </div>
             </div>
           </nav>
         </div>

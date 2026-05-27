@@ -417,7 +417,7 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
                 </div>
 
                 <p className="m-0 mt-4 max-w-[960px] text-[clamp(11px,1.14vw,13px)] font-[560] leading-[1.42] text-[rgba(245,244,241,0.78)]">
-                  Explore BrawlLens&apos; Brawl Stars tierlist, updated live with the best brawlers across the current meta. Compare win rates, pick volume, map coverage, and data-driven rankings built from tracked matches.
+                  The current Brawl Stars meta ranked by live win rate and pick data.
                 </p>
               </div>
             </div>

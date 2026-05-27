@@ -7,14 +7,12 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
-  Crown,
   Search,
-  Trophy,
-  type LucideIcon,
 } from "lucide-react"
 import Link from "next/link"
 import { PulsingBorder } from "@paper-design/shaders-react"
 import { BrawlImage, brawlerIconUrl } from "@/components/BrawlImage"
+import HelpTooltip from "@/components/HelpTooltip"
 import { leaderboardRegionShort } from "@/lib/leaderboardRegions"
 import { useClickOutside } from "@/lib/useClickOutside"
 
@@ -103,28 +101,6 @@ export const professionalTeamCards: FeatureCard[] = [
   },
 ]
 
-const tabs = [
-  { key: "players", label: "Players", href: "/leaderboards/players" },
-  { key: "clubs", label: "Clubs", href: "/leaderboards/clubs" },
-  { key: "brawlers", label: "Brawlers", href: "/leaderboards/brawlers" },
-  { key: "pro", label: "Pro Teams", href: "/leaderboards/pro" },
-] as const
-
-const leaderboardSubnavSlotClass =
-  "relative z-[70] min-h-[54px] w-full px-3.5 max-[640px]:min-h-[50px] max-[640px]:px-2.5"
-
-const leaderboardSubnavWrapClass =
-  "sticky top-[86px] z-[80] mx-auto w-[min(1180px,calc(100vw-28px))] overflow-hidden rounded-[14px] border border-[rgba(255,255,255,0.10)] bg-[rgba(16,16,22,0.74)] shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_18px_36px_-28px_rgba(0,0,0,0.82)] backdrop-blur-[18px] backdrop-saturate-[1.18] max-[820px]:top-[76px] max-[640px]:w-[calc(100vw-20px)]"
-
-const leaderboardSubnavClass =
-  "flex h-11 w-full items-center justify-center gap-1 border-0 p-1 max-[640px]:h-[42px]"
-
-const leaderboardTabBaseClass =
-  "relative inline-flex h-9 min-w-0 items-center justify-center rounded-[10px] border border-transparent px-3.5 text-[12px] font-[820] leading-none no-underline text-[rgba(245,244,241,0.66)] hover:bg-[rgba(255,255,255,0.05)] hover:text-[#f5f4f1] max-[640px]:flex-1 max-[640px]:basis-0 max-[640px]:px-2.5"
-
-const leaderboardTabActiveClass =
-  "!border-[rgba(124,92,255,0.28)] !bg-[rgba(124,92,255,0.16)] !text-[#f5f4f1]"
-
 const leaderboardToolbarClass =
   "mb-2.5 flex items-center justify-between gap-2.5 p-0 max-[1024px]:flex-col max-[1024px]:items-stretch"
 
@@ -143,12 +119,6 @@ const leaderboardRegionPillBaseClass =
 const leaderboardRegionPillActiveClass =
   "!border-[#a78bff] !bg-[#7c5cff] !text-white shadow-none outline-none"
 
-const leaderboardSelectClass =
-  "relative flex h-[38px] min-w-[142px] items-center gap-2 rounded-[7px] border border-[var(--lb-line)] bg-[var(--lb-panel-2)] pl-[11px] text-[var(--lb-text-3)]"
-
-const leaderboardSelectControlClass =
-  "min-w-0 flex-1 appearance-none border-0 bg-transparent pr-7 text-[13px] font-bold text-[var(--lb-text)] outline-none"
-
 export const leaderboardShellClass =
   "min-h-[calc(100dvh-60px)] w-full overflow-x-clip bg-[var(--bg)] text-[var(--lb-text)] [--lb-accent:#7c5cff] [--lb-bg:#000000] [--lb-blue:#7c5cff] [--lb-line-2:rgba(245,244,241,0.10)] [--lb-line:rgba(245,244,241,0.07)] [--lb-nav:var(--panel)] [--lb-panel-2:#15151b] [--lb-panel-3:#26262d] [--lb-panel:#0d0d11] [--lb-text-2:rgba(245,244,241,0.76)] [--lb-text-3:rgba(245,244,241,0.52)] [--lb-text-4:rgba(245,244,241,0.34)] [--lb-text:#f5f4f1] [--lb-warm:#ff9f6e] [font-family:var(--font-ui)]"
 
@@ -158,17 +128,20 @@ export const leaderboardFrameClass =
 export const leaderboardBoardClass =
   "overflow-hidden rounded-[8px] border border-[rgba(245,244,241,0.055)] bg-[var(--panel)] p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.035),0_22px_60px_-46px_rgba(0,0,0,0.82)] max-[560px]:p-2"
 
-export const leaderboardPanelClass =
-  "mt-1.5 overflow-x-auto overflow-y-visible rounded-none border-0 bg-transparent [scrollbar-width:none] [&::-webkit-scrollbar]:hidden max-[560px]:-mx-0.5"
-
 export const leaderboardTableHeadClass =
-  "mb-1.5 min-h-8 rounded-[4px] border border-[rgba(245,244,241,0.08)] bg-[var(--panel)] px-2.5 py-0 text-left text-[10.5px] font-[760] leading-none tracking-[0] text-[var(--lb-text-2)] shadow-[inset_0_1px_0_rgba(255,255,255,0.035)] [font-family:var(--font-label)] [&>span]:min-w-0 [&>span]:overflow-hidden [&>span]:text-ellipsis [&>span]:whitespace-nowrap max-[1024px]:min-w-[660px] max-[1024px]:px-1.5 max-[1024px]:text-[10px] max-[560px]:px-1 max-[560px]:pb-1.5 max-[560px]:text-[9px]"
+  "mb-1.5 min-h-8 rounded-[4px] border border-[rgba(245,244,241,0.08)] bg-[var(--panel)] px-3 py-0 text-left text-[10.5px] font-[760] leading-none tracking-[0.02em] text-[var(--lb-text-2)] shadow-[inset_0_1px_0_rgba(255,255,255,0.035)] [font-family:var(--font-label)] [&>span]:min-w-0 [&>span]:overflow-hidden [&>span]:text-ellipsis [&>span]:whitespace-nowrap"
+
+// Unified 5-column grid used across players / clubs / brawlers leaderboards.
+// Total min: 56 + 160 + 100 + 140 + 140 + gaps = ~656px which fits comfortably
+// inside the LeaderboardPanel scroll wrapper.
+export const leaderboardUnifiedGrid =
+  "grid grid-cols-[56px_minmax(160px,1.8fr)_minmax(100px,0.9fr)_minmax(140px,1.3fr)_minmax(140px,1.3fr)] items-center gap-3"
 
 export const leaderboardTableListClass =
   "grid gap-[3px] bg-transparent"
 
 export const leaderboardRowClass =
-  "min-h-[39px] rounded-[4px] border border-[rgba(245,244,241,0.065)] bg-[var(--panel)] px-2.5 py-[3px] text-[var(--lb-text)] shadow-[inset_0_1px_0_rgba(255,255,255,0.032)] max-[1024px]:min-h-[35px] max-[1024px]:min-w-[660px] max-[1024px]:px-1.5 max-[560px]:min-h-8 max-[560px]:px-1 max-[560px]:py-0.5"
+  "min-h-[39px] rounded-[4px] border border-[rgba(245,244,241,0.065)] bg-[var(--panel)] px-2.5 py-[3px] text-[var(--lb-text)] shadow-[inset_0_1px_0_rgba(255,255,255,0.032)]"
 
 export const leaderboardRankStackClass =
   "grid min-w-0 content-center justify-items-center gap-[3px] [&>span:last-child]:max-w-full [&>span:last-child]:overflow-hidden [&>span:last-child]:text-ellipsis [&>span:last-child]:whitespace-nowrap [&>span:last-child]:text-[11px] [&>span:last-child]:font-[760] [&>span:last-child]:uppercase [&>span:last-child]:leading-none [&>span:last-child]:text-[var(--lb-text-3)] max-[560px]:[&>span:last-child]:text-[8px]"
@@ -232,7 +205,7 @@ export const leaderboardPodiumIdentityClass =
   `${leaderboardPlayerLinkClass} justify-self-center justify-center max-[560px]:justify-self-start max-[560px]:justify-start`
 
 export const leaderboardPodiumRateClass =
-  "min-w-0 text-right max-[560px]:text-left [&>strong]:block [&>strong]:text-[16px] [&>strong]:font-[850] [&>strong]:leading-none [&>strong]:text-[var(--lb-text-2)] [&>strong]:[font-family:var(--font-geist-mono,var(--font-jetbrains-mono),ui-monospace,monospace)] [&>span]:mt-[3px] [&>span]:block [&>span]:text-[10px] [&>span]:font-bold [&>span]:leading-none [&>span]:text-[var(--lb-text-3)] max-[560px]:[&>strong]:text-[13px] max-[560px]:[&>span]:text-[9px]"
+  "min-w-0 justify-self-end text-right [&>strong]:block [&>strong]:text-[16px] [&>strong]:font-[850] [&>strong]:leading-none [&>strong]:text-[var(--lb-text-2)] [&>strong]:[font-family:var(--font-geist-mono,var(--font-jetbrains-mono),ui-monospace,monospace)] [&>span]:mt-[3px] [&>span]:block [&>span]:text-[10px] [&>span]:font-bold [&>span]:leading-none [&>span]:text-[var(--lb-text-3)] max-[560px]:[&>strong]:text-[13px] max-[560px]:[&>span]:text-[9px]"
 
 export const leaderboardPodiumScoreClass =
   "my-[37px] text-center text-[35px] font-[820] leading-[0.95] tracking-[0] text-[var(--lb-blue)] [font-family:var(--font-geist-mono,var(--font-jetbrains-mono),ui-monospace,monospace)] max-[560px]:my-[24px] max-[560px]:mb-[18px] max-[560px]:text-[30px]"
@@ -241,7 +214,7 @@ export const leaderboardPodiumFootClass =
   "mt-auto grid min-w-0 grid-cols-[82px_minmax(0,1fr)_82px] items-end gap-2 text-[11px] font-semibold text-[var(--lb-text-3)] max-[560px]:grid-cols-[76px_minmax(0,1fr)_76px] max-[560px]:gap-[5px] [&_strong]:block [&_strong]:overflow-hidden [&_strong]:text-ellipsis [&_strong]:whitespace-nowrap [&_strong]:text-[16px] [&_strong]:font-[850] [&_strong]:leading-[1.1] [&_strong]:text-[var(--lb-text-2)] [&_strong]:[font-family:var(--font-geist-mono,var(--font-jetbrains-mono),ui-monospace,monospace)] [&_span]:mt-[3px] [&_span]:block [&_span]:text-[10px] [&_span]:font-bold [&_span]:leading-none [&_span]:text-[var(--lb-text-3)] max-[560px]:[&_strong]:text-[13px] max-[560px]:[&_span]:text-[9px]"
 
 export const leaderboardMiniStatClass = "min-w-0"
-export const leaderboardMiniStatRightClass = "min-w-0 text-right max-[560px]:text-left"
+export const leaderboardMiniStatRightClass = "min-w-0 justify-self-end text-right"
 export const leaderboardMiniStatCenterClass = "min-w-0 text-center"
 
 export const leaderboardClubCellClass =
@@ -290,27 +263,6 @@ export function LeaderboardPageShell({
         {children}
       </div>
     </main>
-  )
-}
-
-export function LeaderboardTabs({ active }: { active: LeaderboardKind }) {
-  return (
-    <div className={leaderboardSubnavSlotClass}>
-      <div className={leaderboardSubnavWrapClass}>
-        <nav aria-label="Leaderboard sections" className={leaderboardSubnavClass}>
-          {tabs.map(tab => {
-            const isActive = tab.key === active
-            const className = `${leaderboardTabBaseClass} ${isActive ? leaderboardTabActiveClass : ""}`
-
-            return (
-              <Link key={tab.key} href={tab.href} className={className}>
-                <span>{tab.label}</span>
-              </Link>
-            )
-          })}
-        </nav>
-      </div>
-    </div>
   )
 }
 
@@ -518,7 +470,7 @@ export function LeaderboardToolbar({ children }: { children: ReactNode }) {
 
 export function LeaderboardPanel({
   children,
-  minWidth = 1080,
+  minWidth = 760,
 }: {
   children: ReactNode
   minWidth?: number
@@ -670,28 +622,6 @@ export function RegionDropdown({
   )
 }
 
-export function RegionSelect({
-  regions,
-  activeRegion,
-  onChange,
-}: {
-  regions: { code: string; label: string }[]
-  activeRegion: string
-  onChange: (code: string) => void
-}) {
-  return (
-    <label className={leaderboardSelectClass}>
-      <span className="text-[10px] font-extrabold uppercase">Region</span>
-      <select className={leaderboardSelectControlClass} aria-label="Region" value={activeRegion} onChange={event => onChange(event.target.value)}>
-        {regions.map(region => (
-          <option key={region.code} value={region.code}>{region.label}</option>
-        ))}
-      </select>
-      <ChevronDown size={14} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--lb-text-3)]" />
-    </label>
-  )
-}
-
 export function SearchBox({
   value,
   onChange,
@@ -722,54 +652,16 @@ export function SearchBox({
   )
 }
 
-export function SummaryStrip({ stats }: { stats: { label: string; value: string; icon?: LucideIcon }[] }) {
+export function CellSkeleton({ width = "70%", height = 10 }: { width?: string | number; height?: number }) {
   return (
-    <section className="mb-2 grid grid-cols-3 gap-2 max-[1024px]:grid-cols-2 max-[560px]:grid-cols-1">
-      {stats.map(stat => {
-        const Icon = stat.icon ?? Crown
-        return (
-          <div key={stat.label} className="grid min-h-[42px] min-w-0 grid-cols-[18px_minmax(0,1fr)_auto] items-center gap-2 rounded-[8px] border border-[var(--lb-line)] bg-[var(--lb-panel-2)] px-[11px] py-[9px] text-[var(--lb-text-3)]">
-            <Icon size={15} strokeWidth={2.25} />
-            <span className="overflow-hidden text-ellipsis whitespace-nowrap text-[11px] font-[750] uppercase leading-none">{stat.label}</span>
-            <strong className="overflow-hidden text-ellipsis whitespace-nowrap text-right text-[15px] font-[850] leading-none text-[var(--lb-text)] [font-family:var(--font-geist-mono,var(--font-jetbrains-mono),ui-monospace,monospace)]" suppressHydrationWarning>{stat.value}</strong>
-          </div>
-        )
-      })}
-    </section>
-  )
-}
-
-export function SignalStrip({
-  items,
-}: {
-  items: { label: string; value: string; icon?: LucideIcon; imageId?: number }[]
-}) {
-  return (
-    <div className="flex gap-1.5">
-      {items.map(item => {
-        const Icon = item.icon ?? Trophy
-        return (
-          <div key={item.label} className="flex h-[38px] items-center gap-[7px] rounded-[7px] border border-[var(--lb-line)] bg-[var(--lb-panel-2)] px-[9px] text-[12px] font-bold text-[var(--lb-text-3)]">
-            {item.imageId ? (
-              <BrawlImage src={brawlerIconUrl(item.imageId)} alt="" width={24} height={24} className="size-6 rounded-[5px] object-cover" sizes="24px" />
-            ) : (
-              <Icon size={15} strokeWidth={2.25} />
-            )}
-            <span>{item.label}</span>
-            <strong className="text-[12px] text-[var(--lb-text)] [font-family:var(--font-geist-mono,var(--font-jetbrains-mono),ui-monospace,monospace)]">{item.value}</strong>
-          </div>
-        )
-      })}
-    </div>
-  )
-}
-
-export function ModeControls() {
-  return (
-    <div className="inline-flex h-[38px] shrink-0 items-center gap-[7px] whitespace-nowrap rounded-[7px] border border-[var(--lb-line)] bg-[var(--lb-panel-2)] px-[11px] text-[12px] font-bold text-[var(--lb-text-2)] max-[560px]:w-full">
-      <Trophy size={14} strokeWidth={2.2} />
-      <span>Ranked snapshot</span>
-    </div>
+    <span
+      aria-hidden="true"
+      className="inline-block animate-pulse rounded-[3px] bg-[rgba(245,244,241,0.09)]"
+      style={{
+        width: typeof width === "number" ? `${width}px` : width,
+        height: `${height}px`,
+      }}
+    />
   )
 }
 
@@ -787,8 +679,13 @@ export function TableHead({
   )
 }
 
-export function TableHeadHelp({ label }: { label: string; help: string }) {
-  return <span>{label}</span>
+export function TableHeadHelp({ label, help }: { label: string; help: string }) {
+  return (
+    <span className="inline-flex items-center gap-1">
+      <span>{label}</span>
+      <HelpTooltip label={`${label}: ${help}`}>{help}</HelpTooltip>
+    </span>
+  )
 }
 
 export function RankCell({ rank }: { rank: number }) {
@@ -804,27 +701,6 @@ export function RankCell({ rank }: { rank: number }) {
     <span className={`text-center [font-family:var(--font-geist-mono,var(--font-jetbrains-mono),ui-monospace,monospace)] text-[19px] font-black leading-none max-[560px]:text-[15px] ${rankToneClass}`}>
       {rank}
     </span>
-  )
-}
-
-export function TrophyMetric({
-  value,
-  compact = false,
-}: {
-  value: string
-  compact?: boolean
-}) {
-  return (
-    <div className={`flex min-w-0 items-center text-center text-[var(--lb-blue)] ${compact ? "m-0 justify-start gap-[7px]" : "mt-[34px] justify-center gap-3"}`}>
-      <Trophy
-        size={compact ? 18 : 30}
-        strokeWidth={2.25}
-        className="shrink-0 fill-[rgba(240,211,115,0.18)] text-[var(--lb-accent)] [filter:drop-shadow(0_5px_10px_rgba(0,0,0,0.08))]"
-      />
-      <strong className={`[font-family:var(--font-geist-mono,var(--font-jetbrains-mono),ui-monospace,monospace)] font-[820] leading-[0.95] tracking-[0] text-[var(--lb-blue)] ${compact ? "text-[16px]" : "text-[34px]"}`}>
-        {value}
-      </strong>
-    </div>
   )
 }
 
@@ -874,40 +750,50 @@ export function Pager({
   const items = pagerItems(page, totalPages)
 
   return (
-    <nav className="flex items-center justify-center gap-1.5 pt-4" aria-label="Leaderboard pages">
-      <button
-        type="button"
-        onClick={() => onChange(page - 1)}
-        disabled={page === 0}
-        aria-label="Previous page"
-        className="grid size-9 cursor-pointer place-items-center rounded-[7px] border border-[var(--lb-line)] bg-[var(--lb-panel)] text-[12px] font-extrabold text-[var(--lb-text-3)] hover:border-[var(--lb-line-2)] hover:bg-[var(--lb-panel-2)] hover:text-[var(--lb-text)] disabled:cursor-default disabled:opacity-35"
-      >
-        <ChevronLeft size={15} />
-      </button>
-      {items.map((item, idx) =>
-        item === "…" ? (
-          <span key={`gap-${idx}`} className="inline-flex min-w-5 select-none items-center justify-center text-[13px] font-bold tracking-[0.1em] text-[var(--lb-text-4)]" aria-hidden="true">…</span>
-        ) : (
-          <button
-            key={item}
-            type="button"
-            onClick={() => onChange(item)}
-            className={`grid size-9 cursor-pointer place-items-center rounded-[7px] border border-[var(--lb-line)] bg-[var(--lb-panel)] text-[12px] font-extrabold text-[var(--lb-text-3)] hover:border-[var(--lb-line-2)] hover:bg-[var(--lb-panel-2)] hover:text-[var(--lb-text)] ${item === page ? "!border-[rgba(124,92,255,0.50)] !bg-[rgba(124,92,255,0.16)] !text-[#f5f4f1]" : ""}`}
-            aria-current={item === page ? "page" : undefined}
-          >
-            {item + 1}
-          </button>
-        ),
-      )}
-      <button
-        type="button"
-        onClick={() => onChange(page + 1)}
-        disabled={page >= totalPages - 1}
-        aria-label="Next page"
-        className="grid size-9 cursor-pointer place-items-center rounded-[7px] border border-[var(--lb-line)] bg-[var(--lb-panel)] text-[12px] font-extrabold text-[var(--lb-text-3)] hover:border-[var(--lb-line-2)] hover:bg-[var(--lb-panel-2)] hover:text-[var(--lb-text)] disabled:cursor-default disabled:opacity-35"
-      >
-        <ChevronRight size={15} />
-      </button>
+    <nav className="bl-meta-pagination" aria-label="Leaderboard pages">
+      <div className="bl-meta-page-rail">
+        <button
+          type="button"
+          onClick={() => onChange(page - 1)}
+          disabled={page === 0}
+          aria-label="Previous page"
+          className="bl-meta-page-control"
+        >
+          <ChevronLeft aria-hidden="true" />
+        </button>
+
+        <div className="bl-meta-page-list">
+          {items.map((item, idx) =>
+            item === "…" ? (
+              <span key={`gap-${idx}`} className="bl-meta-page-ellipsis" aria-hidden="true">
+                …
+              </span>
+            ) : (
+              <button
+                key={item}
+                type="button"
+                onClick={() => onChange(item)}
+                aria-label={`Go to page ${item + 1}`}
+                aria-current={item === page ? "page" : undefined}
+                className={`bl-meta-page-link ${item === page ? "is-active" : ""}`}
+              >
+                {item + 1}
+              </button>
+            ),
+          )}
+        </div>
+
+        <button
+          type="button"
+          onClick={() => onChange(page + 1)}
+          disabled={page >= totalPages - 1}
+          aria-label="Next page"
+          className="bl-meta-page-control"
+        >
+          <ChevronRight aria-hidden="true" />
+        </button>
+      </div>
+      <span className="bl-meta-page-summary">Page {page + 1} of {totalPages}</span>
     </nav>
   )
 }

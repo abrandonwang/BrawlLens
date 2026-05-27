@@ -192,29 +192,38 @@ const landingLineClass =
   "m-0 inline-flex min-h-7 min-w-[min(420px,100%)] items-baseline justify-center text-center text-[clamp(16px,1.7vw,23px)] font-[430] leading-[1.28] tracking-normal text-[rgba(231,236,246,0.82)] [font-family:var(--font-ui)] max-[640px]:min-h-[22px] max-[640px]:text-[clamp(15px,4.7vw,18px)]"
 const landingTypewordClass =
   "ml-[0.25em] inline-block text-left font-[520] text-[rgba(245,250,255,0.9)]"
+const landingPromptFormWrapClass =
+  "relative w-[min(740px,100%)] aspect-[5.65/1] max-[640px]:w-[min(100%,calc(100vw_-_24px))]"
 const landingPromptFormBaseClass =
-  "relative flex h-auto min-h-0 w-[min(740px,100%)] aspect-[5.65/1] flex-col items-stretch gap-0 overflow-hidden border-0 p-0 [backdrop-filter:none] [background:linear-gradient(180deg,rgba(24,25,32,0.96),rgba(11,13,19,0.93)),rgba(10,12,18,0.94)] [box-shadow:inset_0_1px_0_rgba(255,255,255,0.10),inset_0_-1px_0_rgba(255,255,255,0.04),0_20px_50px_-24px_rgba(0,0,0,0.90),0_0_64px_-18px_rgba(124,92,255,0.78),0_38px_108px_-48px_rgba(36,94,216,0.98)] [container-type:inline-size] [-webkit-backdrop-filter:none] rounded-[clamp(18px,1.7vw,22px)] transition-[height,padding,border-radius,background,box-shadow] duration-[420ms,420ms,420ms,220ms,220ms] ease-[cubic-bezier(0.22,1,0.36,1),cubic-bezier(0.22,1,0.36,1),cubic-bezier(0.22,1,0.36,1),ease,ease] focus-within:[box-shadow:inset_0_1px_0_rgba(255,255,255,0.10),inset_0_-1px_0_rgba(255,255,255,0.04),0_20px_50px_-24px_rgba(0,0,0,0.90),0_0_64px_-18px_rgba(124,92,255,0.78),0_38px_108px_-48px_rgba(36,94,216,0.98)] max-[640px]:rounded-[16px]"
+  "absolute left-0 right-0 top-0 z-[3] flex h-full min-h-0 flex-col items-stretch gap-0 overflow-hidden border border-[rgba(255,255,255,0.18)] p-0 [background:linear-gradient(180deg,rgba(26,28,38,0.96),rgba(13,15,22,0.96))] [box-shadow:inset_0_0_0_1px_rgba(255,255,255,0.08),0_0_24px_rgba(255,255,255,0.14),0_0_56px_-14px_rgba(255,255,255,0.10),0_28px_70px_-28px_rgba(0,0,0,0.85)] [container-type:inline-size] [backdrop-filter:blur(20px)_saturate(1.15)] [-webkit-backdrop-filter:blur(20px)_saturate(1.15)] rounded-[18px] transition-[height,border-color,border-radius,box-shadow,transform] duration-[460ms] ease-[cubic-bezier(0.16,1,0.3,1)] focus-within:border-[rgba(255,255,255,0.36)] focus-within:[box-shadow:inset_0_0_0_1px_rgba(255,255,255,0.18),0_0_32px_rgba(255,255,255,0.34),0_0_72px_-12px_rgba(255,255,255,0.22),0_28px_70px_-28px_rgba(0,0,0,0.85)] max-[640px]:rounded-[16px]"
+// Expanded ~3x of the collapsed aspect-[5.65/1]. At 740px wide collapsed is ~131px, so ~390-410px is "triple".
 const landingPromptFormExpandedClass =
-  "h-[clamp(430px,56vh,520px)] aspect-auto rounded-[22px] border-0 p-0 [box-shadow:inset_0_1px_0_rgba(255,255,255,0.10),inset_0_-1px_0_rgba(255,255,255,0.04),0_26px_64px_-28px_rgba(0,0,0,0.88),0_0_68px_-20px_rgba(124,92,255,0.76),0_38px_112px_-50px_rgba(36,94,216,0.98)] max-[640px]:h-[410px] max-[640px]:rounded-[18px] max-[640px]:p-3"
+  "!h-[400px] rounded-[20px] [animation:landingChatFormGlow_4200ms_ease-in-out_infinite] max-[640px]:!h-[360px] max-[640px]:rounded-[18px]"
+// Collapsed: the form IS the input box. Textarea fills top-left, submit
+// anchored to the bottom-right corner.
 const landingPromptInputbarBaseClass =
-  "absolute inset-[15px_14px_12px_18px] z-[2] mt-0 grid shrink-0 grid-cols-[minmax(0,1fr)_38px] items-end gap-2.5 max-[640px]:inset-[11px_9px_9px_13px] max-[640px]:grid-cols-[minmax(0,1fr)_32px] max-[640px]:gap-2"
+  "absolute inset-[14px_14px_12px_18px] z-[2] grid shrink-0 grid-cols-[minmax(0,1fr)_36px] items-end gap-2.5 max-[640px]:inset-[12px_10px_10px_14px] max-[640px]:grid-cols-[minmax(0,1fr)_32px] max-[640px]:gap-2"
+// Expanded: inputbar becomes a real nested pill at the bottom of the column.
 const landingPromptInputbarExpandedClass =
-  "static inset-auto m-[0_14px_14px_14px] grid-cols-[minmax(0,1fr)_34px] items-center gap-2 rounded-full border-0 bg-[rgba(8,10,15,0.78)] p-[6px_7px_6px_14px] [box-shadow:inset_0_1px_0_rgba(255,255,255,0.08),0_12px_28px_-22px_rgba(0,0,0,0.85),0_0_32px_-14px_rgba(124,92,255,0.78)] max-[640px]:grid-cols-[minmax(0,1fr)_34px] max-[640px]:p-[6px_7px_6px_12px]"
+  "!static !inset-auto !translate-y-0 !gap-2 grid grid-cols-[minmax(0,1fr)_36px] items-center rounded-[14px] border border-white/[0.08] bg-[rgba(255,255,255,0.04)] p-[8px_10px_8px_14px] [box-shadow:inset_0_1px_0_rgba(255,255,255,0.06),0_2px_10px_-6px_rgba(0,0,0,0.6)] transition-[border-color,box-shadow,background] duration-200 ease-out focus-within:border-[rgba(167,139,255,0.5)] focus-within:bg-[rgba(255,255,255,0.06)] focus-within:[box-shadow:inset_0_1px_0_rgba(255,255,255,0.08),0_2px_10px_-6px_rgba(0,0,0,0.6),0_0_0_3px_rgba(124,92,255,0.18)] m-[0_14px_14px_14px] max-[640px]:grid-cols-[minmax(0,1fr)_32px] max-[640px]:p-[7px_8px_7px_12px]"
 const landingTextareaBaseClass =
-  "relative z-[2] block h-full min-h-0 max-h-none w-full resize-none self-stretch border-0 bg-transparent p-[0_8px_0_0] text-[clamp(15px,2.05cqw,17px)] font-[520] leading-[1.28] tracking-normal text-[rgba(245,250,255,0.94)] outline-0 placeholder:text-[rgba(231,236,246,0.72)] placeholder:opacity-100 focus:border-0 focus:bg-transparent focus:outline-0 [font-family:var(--font-ui)] max-[640px]:h-full max-[640px]:min-h-0 max-[640px]:text-[15px] max-[640px]:leading-[1.32]"
+  "relative z-[2] block h-full min-h-0 max-h-none w-full resize-none self-stretch border-0 bg-transparent p-[0_8px_0_0] text-[15px] font-[520] leading-[1.4] tracking-normal text-white outline-0 placeholder:text-[rgba(245,250,255,0.40)] placeholder:opacity-100 focus:border-0 focus:bg-transparent focus:outline-0 [font-family:var(--font-ui)] max-[640px]:text-[14px] max-[640px]:leading-[1.45]"
+// Inside the expanded nested pill the textarea should be one line, vertically centered.
 const landingTextareaExpandedClass =
-  "!h-6 !min-h-6 max-h-[68px] self-center !p-0 text-[clamp(16px,2.1cqw,17px)] font-bold leading-[1.45] max-[640px]:!h-[22px] max-[640px]:!min-h-[22px] max-[640px]:text-[16px]"
+  "!h-[20px] !min-h-[20px] max-h-[80px] !self-center !text-[14px] !leading-[1.5]"
 const landingSubmitBaseClass =
-  "box-border grid size-[30px] min-h-[30px] min-w-[30px] cursor-pointer place-items-center self-end justify-self-end rounded-full border-0 bg-[rgba(255,255,255,0.92)] p-0 text-[#151821] outline-none [box-shadow:inset_0_1px_0_rgba(255,255,255,0.80),0_14px_28px_-20px_rgba(0,0,0,0.95)] [transform:none] transition-[background,color,opacity] duration-150 ease-in-out disabled:cursor-default disabled:opacity-100 max-[640px]:size-7 max-[640px]:min-h-7 max-[640px]:min-w-7"
-const landingSubmitExpandedClass =
-  "size-8 min-h-8 min-w-8 self-center max-[640px]:size-8 max-[640px]:min-h-8 max-[640px]:min-w-8"
-const landingSubmitActiveClass = "bg-[var(--bt-blue)] text-white"
+  "box-border grid size-[30px] min-h-[30px] min-w-[30px] cursor-pointer place-items-center self-end justify-self-end rounded-full border-0 bg-white p-0 text-[#0f172a] outline-none [box-shadow:inset_0_1px_0_rgba(255,255,255,0.7),0_8px_22px_-12px_rgba(0,0,0,0.6)] transition-[background,color,transform,box-shadow] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] hover:enabled:[box-shadow:inset_0_1px_0_rgba(255,255,255,0.85),0_10px_28px_-12px_rgba(255,255,255,0.35)] hover:enabled:scale-105 active:enabled:scale-95 disabled:cursor-default disabled:bg-white/[0.08] disabled:text-white/[0.32] disabled:[box-shadow:none] disabled:opacity-100 max-[640px]:size-[28px] max-[640px]:min-h-[28px] max-[640px]:min-w-[28px]"
+// Inside the expanded nested pill the submit sits vertically centered.
+const landingSubmitExpandedClass = "!self-center"
+const landingSubmitActiveClass = "!bg-[var(--bt-blue)] !text-white hover:enabled:!bg-[#6849f4] hover:enabled:[box-shadow:inset_0_1px_0_rgba(255,255,255,0.18),0_10px_28px_-12px_rgba(124,92,255,0.6)]"
 const landingChatCloseClass =
-  "absolute right-3 top-3 z-[4] m-0 grid size-7 min-h-7 min-w-7 cursor-pointer place-items-center rounded-full border border-white/8 bg-white/8 p-0 text-[rgba(244,248,255,0.90)] shadow-none outline-none [transform:none] transition-colors duration-150 hover:border-white/12 hover:bg-white/12 hover:text-white hover:[transform:none] max-[640px]:right-2.5 max-[640px]:top-2.5 max-[640px]:size-7 max-[640px]:min-h-7 max-[640px]:min-w-7 [&>svg]:[transform:none]"
+  "absolute right-3 top-3 z-[4] m-0 grid size-[26px] min-h-[26px] min-w-[26px] cursor-pointer place-items-center rounded-full border border-white/[0.06] bg-white/[0.04] p-0 text-white/60 shadow-none outline-none transition-[background,border-color,color,transform] duration-150 hover:border-white/[0.14] hover:bg-white/[0.10] hover:text-white hover:scale-105 active:scale-95"
 const landingChatBodyClass =
-  "relative z-[2] flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto p-[48px_18px_10px_18px] [scrollbar-width:none] max-[640px]:gap-2 max-[640px]:p-[34px_0_4px_0] [&::-webkit-scrollbar]:hidden"
-const landingChatBubbleBaseClass =
-  "max-w-[min(74%,560px)] rounded-[13px] p-[9px_11px] text-[13px] font-[620] leading-[1.46] text-[rgba(244,248,255,0.91)] max-[640px]:max-w-[86%] max-[640px]:rounded-[12px] max-[640px]:p-[8px_10px] max-[640px]:text-[12.5px]"
+  "relative z-[2] flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto p-[40px_20px_8px_20px] scroll-smooth [scrollbar-color:rgba(255,255,255,0.18)_transparent] [scrollbar-width:thin] max-[640px]:gap-4 max-[640px]:p-[36px_14px_4px_14px] [&::-webkit-scrollbar]:w-[6px] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[rgba(255,255,255,0.18)] [&::-webkit-scrollbar-track]:bg-transparent"
+const landingChatUserBubbleClass =
+  "ml-auto max-w-[min(78%,460px)] rounded-[16px_16px_4px_16px] border border-white/[0.06] bg-[linear-gradient(180deg,rgba(124,92,255,0.22),rgba(124,92,255,0.14))] px-[14px] py-[9px] text-[13.5px] font-[600] leading-[1.55] text-[#f5f7ff] [box-shadow:inset_0_1px_0_rgba(255,255,255,0.10),0_8px_22px_-14px_rgba(124,92,255,0.55)] [animation:landingChatMsgIn_380ms_cubic-bezier(0.16,1,0.3,1)_both] max-[640px]:max-w-[88%] max-[640px]:text-[13px]"
+const landingChatAssistantClass =
+  "w-full max-w-full text-[13.5px] font-[460] leading-[1.65] text-[rgba(244,248,255,0.92)] [animation:landingChatMsgIn_380ms_cubic-bezier(0.16,1,0.3,1)_both] [&>p]:my-0 max-[640px]:text-[13px]"
 const landingChatDotsClass =
   "inline-flex gap-[5px] py-1 [&>span]:block [&>span]:size-[5px] [&>span]:rounded-full [&>span]:bg-current [&>span]:opacity-[0.72] [&>span]:[animation:landingChatPulse_980ms_ease-in-out_infinite] [&>span:nth-child(2)]:[animation-delay:120ms] [&>span:nth-child(3)]:[animation-delay:240ms]"
 const landingPulseClass =
@@ -236,13 +245,37 @@ const landingCarouselKbdClass =
 
 const landingMarkdownComponents: Components = {
   p: ({ children }) => <p className="mb-2 mt-0 last:mb-0">{children}</p>,
-  strong: ({ children }) => <strong className="font-[780] text-white">{children}</strong>,
-  em: ({ children }) => <em className="text-[rgba(244,248,255,0.82)]">{children}</em>,
-  ul: ({ children }) => <ul className="my-2 flex flex-col gap-1 pl-[18px]">{children}</ul>,
-  ol: ({ children }) => <ol className="my-2 flex flex-col gap-1 pl-[18px]">{children}</ol>,
-  li: ({ children }) => <li className="list-item">{children}</li>,
-  a: ({ href, children }) => <Link href={href ?? "/"} className="font-[740] text-[#a9e4ff] underline underline-offset-2">{children}</Link>,
-  code: ({ children }) => <code className="rounded-md border border-[rgba(215,235,255,0.10)] bg-white/5 px-[5px] py-px font-mono text-[0.92em]">{children}</code>,
+  h1: ({ children }) => <h3 className="mb-2 mt-3 text-[14px] font-[760] text-white first:mt-0">{children}</h3>,
+  h2: ({ children }) => <h3 className="mb-2 mt-3 text-[13.5px] font-[760] text-white first:mt-0">{children}</h3>,
+  h3: ({ children }) => <h4 className="mb-1.5 mt-3 text-[13px] font-[720] text-white first:mt-0">{children}</h4>,
+  strong: ({ children }) => <strong className="font-[720] text-white">{children}</strong>,
+  em: ({ children }) => <em className="text-[rgba(244,248,255,0.74)]">{children}</em>,
+  ul: ({ children }) => <ul className="my-2 flex list-disc flex-col gap-1 pl-[20px] marker:text-[rgba(255,255,255,0.34)]">{children}</ul>,
+  ol: ({ children }) => <ol className="my-2 flex list-decimal flex-col gap-1 pl-[22px] marker:text-[rgba(255,255,255,0.34)]">{children}</ol>,
+  li: ({ children }) => <li className="leading-[1.55]">{children}</li>,
+  a: ({ href, children }) => <Link href={href ?? "/"} className="font-[660] text-[#a9c8ff] underline underline-offset-2 hover:text-[#c9d8ff]">{children}</Link>,
+  code: ({ children }) => <code className="rounded-[5px] border border-white/[0.08] bg-white/[0.05] px-[5px] py-[1px] font-mono text-[0.9em] text-[#e8efff]">{children}</code>,
+  pre: ({ children }) => <pre className="my-2 overflow-x-auto rounded-[8px] border border-white/[0.08] bg-white/[0.04] p-3 text-[12px] leading-[1.5] text-[#e8efff]">{children}</pre>,
+  table: ({ children }) => (
+    <div className="my-3 overflow-x-auto rounded-[10px] border border-white/[0.08]">
+      <table className="w-full min-w-full border-collapse text-[12.5px]">{children}</table>
+    </div>
+  ),
+  thead: ({ children }) => <thead className="bg-white/[0.05]">{children}</thead>,
+  tbody: ({ children }) => <tbody>{children}</tbody>,
+  tr: ({ children }) => <tr className="border-b border-white/[0.06] last:border-b-0">{children}</tr>,
+  th: ({ children }) => (
+    <th className="px-3 py-2 text-left text-[10.5px] font-[720] uppercase tracking-[0.06em] text-[rgba(244,248,255,0.62)]">
+      {children}
+    </th>
+  ),
+  td: ({ children }) => <td className="px-3 py-2 align-top text-[rgba(244,248,255,0.92)]">{children}</td>,
+  blockquote: ({ children }) => (
+    <blockquote className="my-2 border-l-2 border-[rgba(167,139,255,0.5)] pl-3 text-[rgba(244,248,255,0.72)]">
+      {children}
+    </blockquote>
+  ),
+  hr: () => <hr className="my-3 border-0 border-t border-white/[0.08]" />,
 }
 
 type LandingChatMessage = {
@@ -372,8 +405,6 @@ export default function LandingClient() {
     mainShell?.style.setProperty("overflow", "hidden", "important")
     nav?.style.setProperty("background", "#0d0d11", "important")
     nav?.style.setProperty("background-color", "#0d0d11", "important")
-    nav?.style.setProperty("border-color", "transparent", "important")
-    nav?.style.setProperty("box-shadow", "0 20px 52px -22px rgba(0, 0, 0, 0.88), 0 0 48px -18px rgba(124, 92, 255, 0.78), 0 0 76px -42px rgba(36, 94, 216, 0.58)", "important")
     nav?.style.setProperty("backdrop-filter", "none", "important")
     nav?.style.setProperty("-webkit-backdrop-filter", "none", "important")
 
@@ -606,7 +637,7 @@ export default function LandingClient() {
       g -= spacing
     }
 
-    // Hard stop at edges — no rubber-band, no over-scroll
+    // Hard stop at edges, no rubber-band, no over-scroll
     if (idx === 0 && g > 0) g = 0
     if (idx === lastIdx && g < 0) g = 0
 
@@ -707,7 +738,7 @@ export default function LandingClient() {
     const atStart = landingCarouselIndex === 0
     const atEnd = landingCarouselIndex === lastIdx
     let effective = Math.max(-landingCarouselSpacingPx * 2.4, Math.min(landingCarouselSpacingPx * 2.4, deltaX))
-    // Hard stop at edges — no over-scroll past the first/last card
+    // Hard stop at edges, no over-scroll past the first/last card
     if (atStart && effective > 0) effective = 0
     if (atEnd && effective < 0) effective = 0
     setLandingCarouselDragPx(effective)
@@ -784,6 +815,7 @@ export default function LandingClient() {
           <p className={landingLineClass} aria-live="polite">
             Find data for <span className={landingTypewordClass}>{typedTopic || "\u00a0"}</span>
           </p>
+          <div className={landingPromptFormWrapClass}>
           <form
             className={cx(
               landingPromptFormBaseClass,
@@ -794,27 +826,22 @@ export default function LandingClient() {
             {landingChatExpanded && (
               <>
                 <button type="button" className={landingChatCloseClass} aria-label="Close chat" onClick={closeLandingChat}>
-                  <X size={18} strokeWidth={2.4} aria-hidden="true" />
+                  <X size={16} strokeWidth={2.3} aria-hidden="true" />
                 </button>
                 <div className={landingChatBodyClass} aria-live="polite">
                   {landingChatMessages.map((message, index) => (
-                    <div key={index} className={cx("flex w-full", message.role === "user" ? "justify-end" : "justify-start")}>
-                      <div
-                        className={cx(
-                          landingChatBubbleBaseClass,
-                          message.role === "user"
-                            ? "max-w-[min(72%,420px)] rounded-[18px_18px_6px_18px] bg-[#05070b] text-white max-[640px]:rounded-[18px_18px_6px_18px]"
-                            : "border border-[rgba(215,235,255,0.10)] bg-white/5",
-                        )}
-                      >
-                        {message.role === "assistant" ? (
-                          landingChatStreaming && index === landingChatMessages.length - 1 && message.content === "" ? (
+                    <div key={index} className="flex w-full flex-col">
+                      {message.role === "user" ? (
+                        <div className={landingChatUserBubbleClass}>{message.content}</div>
+                      ) : (
+                        <div className={landingChatAssistantClass}>
+                          {landingChatStreaming && index === landingChatMessages.length - 1 && message.content === "" ? (
                             <span className={landingChatDotsClass} aria-label="Thinking"><span /><span /><span /></span>
                           ) : (
                             <ReactMarkdown remarkPlugins={[remarkGfm]} components={landingMarkdownComponents}>{message.content}</ReactMarkdown>
-                          )
-                        ) : message.content}
-                      </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   ))}
                   <div ref={landingChatBottomRef} />
@@ -830,7 +857,7 @@ export default function LandingClient() {
                 aria-label="Landing prompt"
                 autoComplete="off"
                 placeholder="Tell us what you're looking for..."
-                rows={landingChatExpanded ? 1 : 3}
+                rows={1}
                 spellCheck={false}
               />
               <button
@@ -856,6 +883,7 @@ export default function LandingClient() {
               </button>
             </div>
           </form>
+          </div>
         </div>
       </section>
 

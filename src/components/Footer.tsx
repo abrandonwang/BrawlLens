@@ -2,37 +2,46 @@
 
 import { usePathname } from "next/navigation"
 import Link from "next/link"
+import Image from "next/image"
+import { HelpCircle } from "lucide-react"
 
-const footerLinks: { label: string; href: string }[] = [
-  { label: "Help", href: "/guides" },
+const footerLinks: { label: string; href: string; icon?: React.ComponentType<{ size?: number; className?: string }> }[] = [
+  { label: "Help", href: "/guides", icon: HelpCircle },
 ]
+
+const HIDDEN_PATHS = new Set(["/"])
 
 export default function Footer() {
   const pathname = usePathname()
   if (pathname.startsWith("/account")) return null
-  if (pathname === "/") return null
-  const isLandingPage = false
+  if (HIDDEN_PATHS.has(pathname)) return null
 
   return (
-    <footer
-      data-landing={isLandingPage ? "true" : undefined}
-      className={`app-footer w-full px-[30px] text-[var(--bt-muted)] max-lg:px-5 max-sm:px-4 ${isLandingPage ? "border-t-0 bg-transparent" : "border-t border-[var(--bt-line)] bg-[#090c14]"}`}
-    >
-      <div className="flex min-h-[64px] w-full items-center justify-between gap-4">
-        {isLandingPage ? <span aria-hidden="true" /> : (
-          <p className="m-0 truncate text-[11.5px] font-medium leading-none tracking-[-0.005em] text-[var(--lovable-muted)]">
-            &copy; BrawlLens 2026
-          </p>
-        )}
+    <footer className="bl-footer app-footer" aria-label="Site footer">
+      <div className="bl-footer-divider" aria-hidden="true" />
+      <div className="bl-footer-inner">
+        <div className="bl-footer-brand">
+          <span className="bl-footer-mark">
+            <Image
+              src="/brawllens-mark.svg"
+              alt=""
+              width={28}
+              height={28}
+              className="bl-footer-mark-img"
+              unoptimized
+            />
+          </span>
+          <div className="bl-footer-brand-copy">
+            <span className="bl-footer-brand-name">BrawlLens</span>
+            <span className="bl-footer-brand-meta">&copy; 2026 · All rights reserved</span>
+          </div>
+        </div>
 
-        <nav className="flex shrink-0 items-center gap-5 text-[11.5px] font-semibold leading-none text-[#f5f4f1]" aria-label="Footer links">
-          {footerLinks.map(link => (
-            <Link
-              key={`${link.label}-${link.href}`}
-              href={link.href}
-              className="inline-flex whitespace-nowrap rounded-none border-0 bg-transparent p-0 text-[var(--bt-text-2)] no-underline shadow-none transition-colors duration-150 hover:text-[var(--bt-text)]"
-            >
-              {link.label}
+        <nav className="bl-footer-links" aria-label="Footer links">
+          {footerLinks.map(({ label, href, icon: Icon }) => (
+            <Link key={href} href={href} className="bl-footer-link" prefetch={false}>
+              {Icon && <Icon size={13} className="bl-footer-link-icon" />}
+              <span>{label}</span>
             </Link>
           ))}
         </nav>

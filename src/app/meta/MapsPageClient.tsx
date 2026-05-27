@@ -259,8 +259,7 @@ export default function MapsPageClient() {
                 </div>
 
                 <p className="m-0 mt-4 max-w-[960px] text-[clamp(11px,1.14vw,13px)] font-[560] leading-[1.42] text-[rgba(245,244,241,0.78)]">
-                  Explore every tracked Brawl Stars map by mode, live rotation, and battle volume. Open a map to compare
-                  the brawlers performing best on that layout.
+                  The best brawlers for every Brawl Stars map, ranked by live battle data.
                   <span className="mt-2 block text-[rgba(245,244,241,0.78)]">
                     {totalUniqueMapCount ? `${formatFullNumber(totalUniqueMapCount)} maps · ${formatFullNumber(modes.length)} modes` : "Loading map coverage"}
                     <span aria-hidden="true"> · </span>

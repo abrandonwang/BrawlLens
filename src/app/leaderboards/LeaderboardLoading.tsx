@@ -1,25 +1,10 @@
 type LeaderboardLoadingKind = "players" | "clubs" | "brawlers"
 
-const tabs: { key: LeaderboardLoadingKind; width: string }[] = [
-  { key: "players", width: "w-[58px]" },
-  { key: "clubs", width: "w-[48px]" },
-  { key: "brawlers", width: "w-[66px]" },
-]
-
 const rowCounts: Record<LeaderboardLoadingKind, number> = {
   players: 12,
   clubs: 12,
   brawlers: 12,
 }
-
-const loadingSubnavSlotClass =
-  "relative z-[70] min-h-[54px] w-full px-3.5 max-[640px]:min-h-[50px] max-[640px]:px-2.5"
-
-const loadingSubnavWrapClass =
-  "sticky top-[86px] z-[80] mx-auto w-[min(1180px,calc(100vw-28px))] overflow-hidden rounded-[14px] border border-[rgba(255,255,255,0.10)] bg-[rgba(16,16,22,0.74)] shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_18px_36px_-28px_rgba(0,0,0,0.82)] backdrop-blur-[18px] backdrop-saturate-[1.18] max-[820px]:top-[76px] max-[640px]:w-[calc(100vw-20px)]"
-
-const loadingSubnavClass =
-  "flex h-11 w-full items-center justify-center gap-1 border-0 p-1 max-[640px]:h-[42px]"
 
 const loadingToolbarClass =
   "mb-2.5 flex items-center justify-between gap-2.5 p-0 max-[1024px]:flex-col max-[1024px]:items-stretch"
@@ -41,33 +26,6 @@ const loadingPanelClass =
 
 const skeletonClass =
   "animate-pulse overflow-hidden bg-[rgba(245,244,241,0.075)]"
-
-function LoadingTabs({ active }: { active: LeaderboardLoadingKind }) {
-  return (
-    <div className={loadingSubnavSlotClass}>
-      <div className={loadingSubnavWrapClass}>
-        <div className={loadingSubnavClass}>
-          {tabs.map(tab => (
-            <div
-              key={tab.key}
-              className={`${skeletonClass} relative h-[18px] rounded-[5px] ${tab.width} ${tab.key === active ? "after:absolute after:-bottom-[11px] after:left-2.5 after:right-2.5 after:h-[3px] after:rounded-t-full after:bg-[var(--lb-accent)]" : ""}`}
-            />
-          ))}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function LoadingTeamRail() {
-  return (
-    <div className="mb-3 mt-2.5 grid grid-cols-4 gap-3 max-[1024px]:grid-cols-2 max-[560px]:grid-cols-1">
-      {[0, 1, 2, 3].map(index => (
-        <div key={index} className={`${skeletonClass} h-[138px] rounded-[8px] border border-[var(--lb-line)]`} />
-      ))}
-    </div>
-  )
-}
 
 function LoadingHero({
   titleWidth = "w-72",
@@ -139,9 +97,7 @@ export function LeaderboardLoading({
 }) {
   return (
     <main className={loadingShellClass}>
-      <LoadingTabs active={kind} />
       <div className={loadingFrameClass}>
-        <LoadingTeamRail />
         <LoadingHero titleWidth={titleWidth} withIcon={kind === "brawlers"} />
         <LoadingBoard kind={kind} />
       </div>
@@ -149,14 +105,9 @@ export function LeaderboardLoading({
   )
 }
 
-export function ProTeamLoading({
-  active = "players",
-}: {
-  active?: LeaderboardLoadingKind
-}) {
+export function ProTeamLoading() {
   return (
     <main className={loadingShellClass}>
-      <LoadingTabs active={active} />
       <div className={loadingFrameClass}>
         <section className="relative my-2.5 min-h-[104px] overflow-hidden rounded-[8px] border border-[rgba(245,244,241,0.07)] bg-[#15171d] px-6 py-5">
           <div className="relative z-[2] max-w-[690px]">

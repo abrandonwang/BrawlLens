@@ -6,7 +6,7 @@ import AccountClient from "./AccountClient"
 
 export const metadata: Metadata = {
   title: "Account - BrawlLens",
-  description: "Manage BrawlLens account, premium, billing, cancellation, and privacy settings.",
+  description: "Manage BrawlLens profile settings and appearance.",
 }
 
 export default async function AccountPage() {

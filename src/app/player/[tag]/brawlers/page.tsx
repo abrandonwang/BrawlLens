@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { createClient } from "@supabase/supabase-js"
-import { ChevronDown } from "lucide-react"
+import { Check, ChevronDown, Filter } from "lucide-react"
 import { BrawlImage, brawlerIconUrl } from "@/components/BrawlImage"
 import { cleanEnv } from "@/lib/env"
 import { formatBrawlerName } from "@/lib/format"
@@ -388,32 +388,35 @@ export default async function PlayerBrawlersPage({
         <section className="bl-lb-board bl-profile-board bl-profile-brawlers-board" id="brawlers">
           <div className="bl-profile-brawlers-toolbar">
             <h2>Season stats</h2>
-            <details className="bl-profile-brawlers-dropdown">
-              <summary className="bl-profile-brawlers-filter-trigger" aria-label="Brawler table filters">
-                <span>{activeBrawlerFilter.label} / {activeModeFilter.label}</span>
-                <ChevronDown size={15} aria-hidden="true" />
+            <details className="bl-pf-dd bl-pf-dd-details">
+              <summary className="bl-pf-dd-trigger" aria-label="Brawler table filters">
+                <Filter size={13} aria-hidden="true" className="bl-pf-dd-icon" />
+                <span className="bl-pf-dd-label">{activeBrawlerFilter.label} / {activeModeFilter.label}</span>
+                <ChevronDown size={14} aria-hidden="true" className="bl-pf-dd-chev" />
               </summary>
-              <div className="bl-profile-brawlers-menu">
-                <span className="bl-profile-brawlers-menu-label">Brawlers</span>
+              <div className="bl-pf-dd-menu bl-pf-dd-menu-grouped is-open" role="menu">
+                <span className="bl-pf-dd-section">Brawlers</span>
                 {brawlerFilters.map(option => (
                   <Link
                     key={option.value}
                     href={filterHref(tag, option.value, mode)}
-                    className={filter === option.value ? "is-active" : ""}
+                    className={`bl-pf-dd-item ${filter === option.value ? "is-active" : ""}`}
                     prefetch={false}
                   >
-                    {option.label}
+                    <span>{option.label}</span>
+                    {filter === option.value && <Check size={13} aria-hidden="true" />}
                   </Link>
                 ))}
-                <span className="bl-profile-brawlers-menu-label">Modes</span>
+                <span className="bl-pf-dd-section">Modes</span>
                 {modeFilters.map(option => (
                   <Link
                     key={option.value}
                     href={filterHref(tag, filter, option.value)}
-                    className={mode === option.value ? "is-active" : ""}
+                    className={`bl-pf-dd-item ${mode === option.value ? "is-active" : ""}`}
                     prefetch={false}
                   >
-                    {option.label}
+                    <span>{option.label}</span>
+                    {mode === option.value && <Check size={13} aria-hidden="true" />}
                   </Link>
                 ))}
               </div>
