@@ -913,6 +913,7 @@ export default function LandingClient() {
       <nav
         className={cx(landingCarouselShellClass, landingChatExpanded && "pointer-events-none opacity-0")}
         aria-label="Explore BrawlLens pages"
+        aria-hidden={landingChatExpanded}
       >
         <div
           ref={landingCarouselRailRef}
@@ -920,25 +921,27 @@ export default function LandingClient() {
           role="group"
           aria-roledescription="carousel"
           aria-label="Page destinations"
-          onWheel={handleLandingCarouselWheel}
-          onPointerDown={handleLandingCarouselPointerDown}
-          onPointerMove={handleLandingCarouselPointerMove}
-          onPointerUp={handleLandingCarouselPointerUp}
-          onPointerCancel={handleLandingCarouselPointerCancel}
-          style={{ cursor: landingCarouselDragging ? "grabbing" : "grab" }}
+          onWheel={landingChatExpanded ? undefined : handleLandingCarouselWheel}
+          onPointerDown={landingChatExpanded ? undefined : handleLandingCarouselPointerDown}
+          onPointerMove={landingChatExpanded ? undefined : handleLandingCarouselPointerMove}
+          onPointerUp={landingChatExpanded ? undefined : handleLandingCarouselPointerUp}
+          onPointerCancel={landingChatExpanded ? undefined : handleLandingCarouselPointerCancel}
+          style={{ cursor: landingChatExpanded ? "default" : landingCarouselDragging ? "grabbing" : "grab" }}
         >
           <Link
             href={landingActiveItem.href}
             className={landingCarouselCtaClass}
             aria-label={`Open ${landingActiveItem.label}`}
             draggable={false}
+            tabIndex={landingChatExpanded ? -1 : undefined}
             style={{
               opacity: landingCarouselDragging ? 0.35 : 1,
+              pointerEvents: landingChatExpanded ? "none" : "auto",
               transform: `translate(-50%, calc(-100% - ${landingCarouselCardWidthPx * 0.4 + (landingCarouselDragging ? 8 : 14)}px))`,
               transition: LANDING_CTA_TRANSITION,
             }}
             onClick={event => {
-              if (landingCarouselSuppressClickRef.current) event.preventDefault()
+              if (landingChatExpanded || landingCarouselSuppressClickRef.current) event.preventDefault()
             }}
           >
             <span className={landingCarouselKbdClass} aria-hidden="true">↵</span>
@@ -1005,7 +1008,7 @@ export default function LandingClient() {
             const finalOpacity = outOfRange ? 0 : opacity
             const itemStyle: CSSProperties = {
               opacity: finalOpacity,
-              pointerEvents: isHidden ? "none" : "auto",
+              pointerEvents: landingChatExpanded || isHidden ? "none" : "auto",
               transform: `translate(-50%, -50%) translate3d(${translateX.toFixed(2)}px, 0px, ${translateZ.toFixed(1)}px) rotateY(${rotateY.toFixed(2)}deg) scale(${scale.toFixed(3)})`,
               zIndex: 20 - Math.round(absFrac * 2),
               filter: blur > 0 ? `blur(${blur.toFixed(2)}px)` : "none",
@@ -1055,9 +1058,11 @@ export default function LandingClient() {
                   className={landingCarouselCardBaseClass}
                   style={itemStyle}
                   draggable={false}
+                  tabIndex={landingChatExpanded ? -1 : undefined}
+                  aria-hidden={landingChatExpanded}
                   aria-label={`Open ${item.label}`}
                   onClick={event => {
-                    if (landingCarouselSuppressClickRef.current) event.preventDefault()
+                    if (landingChatExpanded || landingCarouselSuppressClickRef.current) event.preventDefault()
                   }}
                 >
                   <div className="flex h-full flex-col">{cardBody}</div>
@@ -1071,11 +1076,11 @@ export default function LandingClient() {
                 type="button"
                 className={landingCarouselCardBaseClass}
                 style={itemStyle}
-                tabIndex={isHidden ? -1 : 0}
-                aria-hidden={isHidden}
+                tabIndex={landingChatExpanded || isHidden ? -1 : 0}
+                aria-hidden={landingChatExpanded || isHidden}
                 aria-label={`Show ${item.label}`}
                 onClick={() => {
-                  if (landingCarouselSuppressClickRef.current) return
+                  if (landingChatExpanded || landingCarouselSuppressClickRef.current) return
                   setLandingCarouselIndex(index)
                 }}
               >

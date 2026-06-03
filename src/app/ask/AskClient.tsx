@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type KeyboardEvent } from "react"
 import { useSearchParams } from "next/navigation"
+import { ArrowUp, Square } from "lucide-react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import type { Components } from "react-markdown"
@@ -21,6 +22,17 @@ const SUGGESTIONS = [
   { headline: "Pro scene", prompt: "Top pro players this season" },
 ] as const
 
+const askInitialSendButtonClass =
+  "grid size-9 shrink-0 place-items-center rounded-[8px] bg-[#7c5cff] p-0 text-white outline-none transition-[background-color,opacity,transform] duration-150 hover:bg-[#6b4cff] focus-visible:ring-2 focus-visible:ring-[rgba(124,92,255,0.48)] disabled:cursor-default disabled:bg-[rgba(245,244,241,0.07)] disabled:text-[rgba(245,244,241,0.32)] active:translate-y-px"
+const askComposerSendButtonClass =
+  "grid size-10 shrink-0 place-items-center rounded-[8px] bg-[#7c5cff] p-0 text-white outline-none transition-[background-color,opacity,transform] duration-150 hover:bg-[#6b4cff] focus-visible:ring-2 focus-visible:ring-[rgba(124,92,255,0.48)] disabled:cursor-default disabled:bg-[rgba(245,244,241,0.06)] disabled:text-[rgba(245,244,241,0.32)] active:translate-y-px"
+const askComposerStopButtonClass =
+  "grid size-10 shrink-0 place-items-center rounded-[8px] border border-[rgba(245,244,241,0.12)] bg-[rgba(245,244,241,0.06)] p-0 text-[#f5f4f1] outline-none transition-[background-color,border-color,color,transform] duration-150 hover:border-[rgba(245,244,241,0.2)] hover:bg-[rgba(245,244,241,0.1)] focus-visible:ring-2 focus-visible:ring-[rgba(124,92,255,0.48)] active:translate-y-px"
+
+function normalizeChatMarkdown(content: string) {
+  return content.replace(/\[(\/[^\]\s)]+)\](?!\()/g, "[$1]($1)")
+}
+
 const askMarkdownComponents: Components = {
   p: ({ children }) => <p className="mb-3 mt-0 last:mb-0">{children}</p>,
   h2: ({ children }) => <h2 className="mb-2 mt-5 text-[16px] font-[800] text-[#f5f4f1] first:mt-0 [font-family:var(--font-heading)]">{children}</h2>,
@@ -39,7 +51,20 @@ const askMarkdownComponents: Components = {
   th: ({ children }) => <th className="px-3 py-2 text-left text-[11px] font-[800] uppercase tracking-[0.04em] text-[rgba(245,244,241,0.58)]">{children}</th>,
   td: ({ children }) => <td className="px-3 py-2 align-top text-[rgba(245,244,241,0.82)]">{children}</td>,
   code: ({ children }) => <code className="rounded-[5px] border border-[rgba(245,244,241,0.08)] bg-[rgba(245,244,241,0.045)] px-1.5 py-px font-mono text-[0.92em] text-[rgba(245,244,241,0.86)]">{children}</code>,
-  a: ({ children, href }) => <a href={href} className="text-[#a78bff] underline decoration-[rgba(167,139,255,0.34)] underline-offset-[3px] transition-colors hover:decoration-[#a78bff]">{children}</a>,
+  a: ({ children, href }) => {
+    const url = href ?? "#"
+    const isExternal = /^https?:\/\//i.test(url)
+    return (
+      <a
+        href={url}
+        target={isExternal ? "_blank" : undefined}
+        rel={isExternal ? "noreferrer" : undefined}
+        className="break-words font-[720] text-[#b9a7ff] underline decoration-[rgba(167,139,255,0.42)] decoration-1 underline-offset-[3px] transition-colors hover:text-[#d8d0ff] hover:decoration-[#c4b5fd] focus-visible:rounded-[4px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgba(167,139,255,0.5)]"
+      >
+        {children}
+      </a>
+    )
+  },
 }
 
 export default function AskClient() {
@@ -187,9 +212,10 @@ export default function AskClient() {
                 <button
                   type="submit"
                   disabled={!input.trim()}
-                  className="pointer-events-auto inline-flex h-9 items-center justify-center rounded-[8px] bg-[#7c5cff] px-4 text-[12.5px] font-[820] text-white outline-none transition-[background-color,opacity,transform] duration-150 hover:bg-[#6b4cff] focus-visible:ring-2 focus-visible:ring-[rgba(124,92,255,0.48)] disabled:cursor-default disabled:bg-[rgba(245,244,241,0.07)] disabled:text-[rgba(245,244,241,0.32)] active:translate-y-px [font-family:var(--font-label)]"
+                  className={`pointer-events-auto ${askInitialSendButtonClass}`}
+                  aria-label="Send message"
                 >
-                  Send
+                  <ArrowUp size={16} strokeWidth={2.6} aria-hidden="true" />
                 </button>
               </div>
             </div>
@@ -233,7 +259,7 @@ export default function AskClient() {
                         <span className="block size-1.5 animate-[cmdDotPulse_1s_ease_infinite] rounded-full bg-current [animation-delay:0.24s]" />
                       </span>
                     ) : (
-                      <ReactMarkdown remarkPlugins={[remarkGfm]} components={askMarkdownComponents}>{message.content}</ReactMarkdown>
+                      <ReactMarkdown remarkPlugins={[remarkGfm]} components={askMarkdownComponents}>{normalizeChatMarkdown(message.content)}</ReactMarkdown>
                     )}
                   </div>
                 </div>
@@ -271,18 +297,19 @@ export default function AskClient() {
                   <button
                     type="button"
                     onClick={() => abortRef.current?.abort()}
-                    className="inline-flex h-10 shrink-0 items-center justify-center rounded-[8px] border border-[rgba(245,244,241,0.12)] bg-[rgba(245,244,241,0.06)] px-4 text-[12.5px] font-[760] text-[#f5f4f1] outline-none transition-colors duration-150 hover:border-[rgba(245,244,241,0.2)] hover:bg-[rgba(245,244,241,0.1)] [font-family:var(--font-label)]"
+                    className={askComposerStopButtonClass}
                     aria-label="Stop generating"
                   >
-                    Stop
+                    <Square size={13} strokeWidth={0} fill="currentColor" aria-hidden="true" />
                   </button>
                 ) : (
                   <button
                     type="submit"
                     disabled={!input.trim()}
-                    className="inline-flex h-10 shrink-0 items-center justify-center rounded-[8px] bg-[#7c5cff] px-4 text-[12.5px] font-[820] text-white outline-none transition-[background-color,opacity,transform] duration-150 hover:bg-[#6b4cff] focus-visible:ring-2 focus-visible:ring-[rgba(124,92,255,0.48)] disabled:cursor-default disabled:bg-[rgba(245,244,241,0.06)] disabled:text-[rgba(245,244,241,0.32)] active:translate-y-px [font-family:var(--font-label)]"
+                    className={askComposerSendButtonClass}
+                    aria-label="Send message"
                   >
-                    Send
+                    <ArrowUp size={18} strokeWidth={2.7} aria-hidden="true" />
                   </button>
                 )}
               </div>

@@ -28,13 +28,14 @@ const SYSTEM_PROMPT = `You are BrawlLens AI, the assistant inside BrawlLens, a B
 
 # Routing hints (use one link at most per response)
 
-- Brawler ability / kit / details → [/brawlers/SLUG] (lowercase, spaces become hyphens, e.g. El Primo → /brawlers/el-primo).
-- Current maps and modes → [/meta].
-- Top players for a region → [/leaderboards/players].
-- Top clubs for a region → [/leaderboards/clubs].
-- Best players for a brawler → [/leaderboards/brawlers].
-- Pro teams → [/leaderboards/pro].
-- Player tag (format #ALPHANUMERIC) → call get_player_info, link [/player/TAG].
+- Brawler ability / kit / details → path \`/brawlers/SLUG\` (lowercase, spaces become hyphens, e.g. El Primo → /brawlers/el-primo).
+- Current maps and modes → path \`/meta\`.
+- Top players for a region → path \`/leaderboards/players\`.
+- Top clubs for a region → path \`/leaderboards/clubs\`.
+- Best players for a brawler → path \`/leaderboards/brawlers\`.
+- Pro teams → path \`/leaderboards/pro\`.
+- Player tag (format #ALPHANUMERIC) → call get_player_info, link path \`/player/TAG\`.
+- Links must be real markdown links in \`[readable text](/path)\` format. Never output a bare bracketed path like \`[/brawlers/shelly]\`.
 
 # Output format
 
@@ -52,7 +53,7 @@ Write clean, scannable markdown. Always leave a blank line between distinct sect
 **Prose.**
 - Open with at most one short setup sentence before data ("Here are the global top 10 by trophies.").
 - Close with at most one short sentence after data, only if it adds insight ("**Surge** leads with a wide pick-rate gap.").
-- One markdown link to the most relevant page at the end, e.g. "See more on [/leaderboards/players]." Do not repeat the same link twice.
+- One markdown link to the most relevant page at the end, e.g. "See more on [player leaderboards](/leaderboards/players)." Do not repeat the same link twice.
 
 **Style.**
 - Bold (**) only for player names, brawler names, club names, and map names.
@@ -305,7 +306,7 @@ ${top}`
 
 type AssistantBlock = { type: "text"; text: string } | { type: "tool_use"; id: string; name: string; input: Record<string, string> }
 
-function chatModelForUser(_user: PremiumUser | null): string {
+function chatModelForUser(): string {
   return process.env.ANTHROPIC_FREE_MODEL ?? "claude-sonnet-4-6"
 }
 
@@ -589,7 +590,7 @@ export async function POST(request: Request) {
     return rateLimitResponse(user, allowance.limit, allowance.used)
   }
 
-  const model = chatModelForUser(user)
+  const model = chatModelForUser()
   const encoder = new TextEncoder()
   const pageContext = formatPageContext(body.pageContext)
   const systemPrompt = pageContext
