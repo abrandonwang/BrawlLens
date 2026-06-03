@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server"
+import { unstable_cache } from "next/cache"
 import { createClient } from "@supabase/supabase-js"
 import { cleanEnv } from "@/lib/env"
 import { stripTagPrefix } from "@/lib/leaderboardUtils"
 import { fetchClubResponse, fetchPlayerResponse } from "@/lib/playerLookup"
 import { sanitizePlayerTag } from "@/lib/validation"
 
-export const dynamic = "force-dynamic"
+const SEARCH_CACHE_CONTROL = "public, s-maxage=60, stale-while-revalidate=300"
 
 interface PlayerProfile {
   name?: string
@@ -139,22 +140,33 @@ async function searchLeaderboardClubs(query: string) {
   return (data ?? []) as ClubSearchRow[]
 }
 
+const cachedResolvePlayerTag = unstable_cache(resolvePlayerTag, ["search-player-tag-v1"], { revalidate: 120 })
+const cachedResolveClubTag = unstable_cache(resolveClubTag, ["search-club-tag-v1"], { revalidate: 180 })
+const cachedSearchLeaderboardPlayers = unstable_cache(searchLeaderboardPlayers, ["search-leaderboard-players-v1"], { revalidate: 60 })
+const cachedSearchLeaderboardClubs = unstable_cache(searchLeaderboardClubs, ["search-leaderboard-clubs-v1"], { revalidate: 60 })
+
+function cachedJson(body: unknown, init?: ResponseInit) {
+  const response = NextResponse.json(body, init)
+  response.headers.set("Cache-Control", SEARCH_CACHE_CONTROL)
+  return response
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const query = cleanQuery(searchParams.get("q"))
   if (!query) {
-    return NextResponse.json({ query: "", tag: null, tagMatches: { player: null, club: null }, players: [], clubs: [] })
+    return cachedJson({ query: "", tag: null, tagMatches: { player: null, club: null }, players: [], clubs: [] })
   }
 
   const tag = sanitizePlayerTag(query)
   const [tagPlayer, tagClub, players, clubs] = await Promise.all([
-    tag ? resolvePlayerTag(tag) : Promise.resolve(null),
-    tag ? resolveClubTag(tag) : Promise.resolve(null),
-    searchLeaderboardPlayers(query),
-    searchLeaderboardClubs(query),
+    tag ? cachedResolvePlayerTag(tag) : Promise.resolve(null),
+    tag ? cachedResolveClubTag(tag) : Promise.resolve(null),
+    cachedSearchLeaderboardPlayers(query),
+    cachedSearchLeaderboardClubs(query),
   ])
 
-  return NextResponse.json({
+  return cachedJson({
     query,
     tag,
     tagMatches: {

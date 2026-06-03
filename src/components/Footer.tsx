@@ -6,7 +6,7 @@ import Image from "next/image"
 import { HelpCircle } from "lucide-react"
 
 const footerLinks: { label: string; href: string; icon?: React.ComponentType<{ size?: number; className?: string }> }[] = [
-  { label: "Help", href: "/guides", icon: HelpCircle },
+  { label: "Help", href: "/help", icon: HelpCircle },
 ]
 
 const HIDDEN_PATHS = new Set(["/"])

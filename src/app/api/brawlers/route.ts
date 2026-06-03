@@ -9,7 +9,9 @@ export async function GET() {
             return NextResponse.json({ list: [] }, { status: 502 });
         }
         const data = await response.json();
-        return NextResponse.json(data);
+        const res = NextResponse.json(data);
+        res.headers.set("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=86400");
+        return res;
     } catch {
         return NextResponse.json({ list: [] }, { status: 502 });
     }

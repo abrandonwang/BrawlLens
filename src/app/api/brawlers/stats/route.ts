@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { unstable_cache } from "next/cache"
 import { createClient } from "@supabase/supabase-js"
 import { getModeName } from "@/lib/modes"
 import { fetchAllPaged } from "@/lib/supabaseFetch"
@@ -41,7 +42,7 @@ async function fetchWinRateDeltas() {
   )
 }
 
-export async function GET() {
+async function loadBrawlerStatsPayload() {
   const [{ data, error }, winRateDeltas] = await Promise.all([
     fetchAllPaged<Row>(() =>
       supabase
@@ -54,8 +55,12 @@ export async function GET() {
     fetchWinRateDeltas(),
   ])
 
-  if (error || data.length === 0) {
-    return NextResponse.json({ stats: {} }, { status: error ? 502 : 200 })
+  if (error) {
+    throw new Error(error.message)
+  }
+
+  if (data.length === 0) {
+    return { stats: {} }
   }
 
   const stats = new Map<number, {
@@ -124,7 +129,25 @@ export async function GET() {
     }),
   )
 
-  const res = NextResponse.json({ stats: payload })
+  return { stats: payload }
+}
+
+const getCachedBrawlerStatsPayload = unstable_cache(
+  loadBrawlerStatsPayload,
+  ["brawlers-stats-payload-v1"],
+  { revalidate: 300 },
+)
+
+export async function GET() {
+  let payload: Awaited<ReturnType<typeof loadBrawlerStatsPayload>>
+  try {
+    payload = await getCachedBrawlerStatsPayload()
+  } catch (error) {
+    console.error("brawlers stats error:", error)
+    return NextResponse.json({ stats: {} }, { status: 502 })
+  }
+
+  const res = NextResponse.json(payload)
   res.headers.set("Cache-Control", "s-maxage=300, stale-while-revalidate=600")
   return res
 }

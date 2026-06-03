@@ -16,10 +16,6 @@ type AuthMePayload = {
   session?: { accessToken?: string; refreshToken?: string; expiresAt?: number } | null
 }
 
-function formatStatus(value: string) {
-  return value.replace(/_/g, " ")
-}
-
 function LoadingState() {
   return <main className="bl-acct-shell" aria-busy="true" />
 }
@@ -194,8 +190,6 @@ export default function AccountClient() {
     )
   }
 
-  const isAdmin = user.role === "admin" || user.subscriptionTier === "admin"
-  const planName = isAdmin ? "Admin" : user.subscriptionTier.charAt(0).toUpperCase() + user.subscriptionTier.slice(1)
   const playerName = user.accountSetup?.playerName ?? user.displayName ?? "—"
   const displayTag = savedTag ? `#${savedTag}` : "—"
 
@@ -282,19 +276,6 @@ export default function AccountClient() {
             <dd>{user.email ?? "—"}</dd>
           </div>
 
-          <div className="bl-acct-row">
-            <dt>Plan</dt>
-            <dd>{planName}</dd>
-          </div>
-
-          <div className="bl-acct-row">
-            <dt>Status</dt>
-            <dd>
-              <span className={`bl-acct-status is-${user.subscriptionStatus}`}>
-                {formatStatus(user.subscriptionStatus)}
-              </span>
-            </dd>
-          </div>
         </dl>
       </section>
     </main>

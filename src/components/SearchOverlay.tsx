@@ -8,7 +8,10 @@ import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import type { Components } from "react-markdown"
 import { BrawlImage, brawlerIconUrl, profileIconUrl } from "@/components/BrawlImage"
+import ChatLimitDialog from "@/components/ChatLimitDialog"
 import { lockBodyScroll } from "@/lib/bodyScrollLock"
+import { authHeaders } from "@/lib/clientAuth"
+import { chatLimitFromResponse, type ChatLimitPayload } from "@/lib/aiLimits"
 import { clubBadgeUrl, clubDetailHref, playerProfileHref } from "@/lib/leaderboardUtils"
 import { sanitizePlayerTag } from "@/lib/validation"
 
@@ -31,7 +34,7 @@ const mdComponents: Components = {
 }
 
 /* ── Search types ── */
-type SearchItemKind = "player" | "club" | "brawler" | "team" | "page"
+type SearchItemKind = "player" | "club" | "brawler" | "team" | "page" | "ai"
 
 type SearchItem = {
   title: string
@@ -223,7 +226,19 @@ function fallbackPlayerItem(query: string): SearchItem | null {
   if (!trimmed) return null
   const tag = sanitizePlayerTag(trimmed)
   if (tag) return { title: `#${tag}`, subtitle: "Open player profile", href: playerProfileHref(tag), kind: "player", playerTag: tag, badge: "Player" }
-  return { title: trimmed, subtitle: "Search player leaderboard", href: `/leaderboards/players?search=${encodeURIComponent(trimmed)}`, kind: "player", badge: "Players" }
+  return null
+}
+
+function askItem(query: string): SearchItem | null {
+  const trimmed = query.trim()
+  if (!trimmed) return null
+  return {
+    title: trimmed,
+    subtitle: "Ask BrawlLens AI",
+    href: `/ask?q=${encodeURIComponent(trimmed)}`,
+    kind: "ai",
+    badge: "AI",
+  }
 }
 
 function loadRecentSearches(): SearchItem[] {
@@ -248,7 +263,7 @@ async function resolveSearchDestination(query: string) {
   const playerTag = sanitizePlayerTag(trimmed)
   if (playerTag) {
     try {
-      const response = await fetch(`/api/search?q=${encodeURIComponent(playerTag)}`, { cache: "no-store" })
+      const response = await fetch(`/api/search?q=${encodeURIComponent(playerTag)}`)
       if (response.ok) {
         const payload = await response.json() as RemoteSearchPayload
         if (payload.tagMatches?.player) return playerProfileHref(playerTag)
@@ -257,11 +272,29 @@ async function resolveSearchDestination(query: string) {
     } catch { /* fast path */ }
     return playerProfileHref(playerTag)
   }
+
+  try {
+    const response = await fetch(`/api/search?q=${encodeURIComponent(trimmed)}`)
+    if (response.ok) {
+      const payload = await response.json() as RemoteSearchPayload
+      const player = payload.players?.flatMap(p => {
+        const item = playerItemFromRemote(p)
+        return item ? [item] : []
+      })[0]
+      if (player) return player.href
+      const club = payload.clubs?.flatMap(c => {
+        const item = clubItemFromRemote(c)
+        return item ? [item] : []
+      })[0]
+      if (club) return club.href
+    }
+  } catch { /* fall through to page or AI routing */ }
+
   const normalized = trimmed.toLowerCase()
   if (normalized.includes("club")) return "/leaderboards/clubs"
   if (normalized.includes("brawler") || normalized.includes("tier") || normalized.includes("build")) return "/brawlers"
   if (normalized.includes("map") || normalized.includes("meta") || normalized.includes("mode")) return "/meta"
-  return `/leaderboards/players?search=${encodeURIComponent(trimmed)}`
+  return `/ask?q=${encodeURIComponent(trimmed)}`
 }
 
 const AI_TRIGGERS = /^(what|why|how|who|which|where|when|is|are|should|can|does|will|compare|summarize|explain|tell|give|best|worst|top|rank|recommend)\b/i
@@ -330,6 +363,7 @@ export default function SearchOverlay() {
   const [aiMessages, setAiMessages] = useState<AiMessage[]>([])
   const [aiInput, setAiInput] = useState("")
   const [aiStreaming, setAiStreaming] = useState(false)
+  const [limitGate, setLimitGate] = useState<ChatLimitPayload | null>(null)
   const aiInputRef = useRef<HTMLTextAreaElement>(null)
   const aiBottomRef = useRef<HTMLDivElement>(null)
   const aiAbortRef = useRef<AbortController | null>(null)
@@ -431,7 +465,7 @@ export default function SearchOverlay() {
     const timer = window.setTimeout(async () => {
       setRemoteState("loading")
       try {
-        const response = await fetch(`/api/search?q=${encodeURIComponent(trimmedQuery)}`, { cache: "no-store", signal: controller.signal })
+        const response = await fetch(`/api/search?q=${encodeURIComponent(trimmedQuery)}`, { signal: controller.signal })
         if (!response.ok) { setRemoteSearch(null); setRemoteState("error"); return }
         const payload = await response.json() as RemoteSearchPayload
         setRemoteSearch(payload)
@@ -459,7 +493,10 @@ export default function SearchOverlay() {
       ...(remoteSearch?.clubs ?? []).map(c => clubItemFromRemote(c)),
       tag && remoteState === "ready" && !remoteSearch?.tagMatches?.club ? { title: `#${tag}`, subtitle: "Search club leaderboard", href: `/leaderboards/clubs?search=${encodeURIComponent(tag)}`, kind: "club" as const, badge: "Club" } : null,
     ].filter((i): i is SearchItem => Boolean(i)))
-    return [{ label: "Players", items: remotePlayerItems }, ...(remoteClubItems.length ? [{ label: "Clubs", items: remoteClubItems }] : []), ...staticGroups].filter(g => g.items.length > 0)
+    const groups = [{ label: "Players", items: remotePlayerItems }, ...(remoteClubItems.length ? [{ label: "Clubs", items: remoteClubItems }] : []), ...staticGroups].filter(g => g.items.length > 0)
+    const hasConcreteResult = groups.some(group => group.items.some(item => item.kind !== "ai"))
+    const ask = trimmedQuery.length >= 2 && !tag && !hasConcreteResult && remoteState !== "loading" ? askItem(trimmedQuery) : null
+    return ask ? [...groups, { label: "Ask", items: [ask] }] : groups
   }, [recentItems, remoteSearch, remoteState, trimmedQuery])
 
   const primaryResult = useMemo(() => visibleSearchGroups.flatMap(g => g.items)[0] ?? null, [visibleSearchGroups])
@@ -496,10 +533,9 @@ export default function SearchOverlay() {
 
   async function submitSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (mode === "search" && isAiQuery(trimmedQuery)) {
-      setMode("ai")
-      setAiInput("")
-      sendAiMessage(trimmedQuery)
+    if (mode === "search" && trimmedQuery && (primaryResult?.kind === "ai" || isAiQuery(trimmedQuery))) {
+      close()
+      router.push(`/ask?q=${encodeURIComponent(trimmedQuery)}`)
       return
     }
     const destination = primaryResult?.href ?? await resolveSearchDestination(query)
@@ -521,10 +557,17 @@ export default function SearchOverlay() {
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { ...authHeaders(), "Content-Type": "application/json" },
         body: JSON.stringify({ messages: history, pageContext: collectPageContext() }),
         signal: controller.signal,
       })
+      const gate = await chatLimitFromResponse(res)
+      if (gate) {
+        setAiMessages(history)
+        setLimitGate(gate)
+        setAiStreaming(false)
+        return
+      }
       if (!res.ok) { setAiMessages([...history, { role: "assistant", content: "Something went wrong." }]); setAiStreaming(false); return }
       const reader = res.body!.getReader()
       const decoder = new TextDecoder()
@@ -618,10 +661,18 @@ export default function SearchOverlay() {
                             // External team logo URLs can be outside the configured Next image domains.
                             // eslint-disable-next-line @next/next/no-img-element
                             : item.logoUrl ? <img src={item.logoUrl} alt="" className={`${cmdTeamLogoClass} ${item.logoClassName ?? ""}`} />
+                            : item.kind === "ai" ? <Search size={15} strokeWidth={2.2} aria-hidden="true" />
                             : <span>{item.title.slice(0, 1)}</span>}
                         </span>
                         <span className="min-w-0">
-                          <strong className={cmdCopyTitleClass}>{item.title}</strong>
+                          {item.kind === "ai" ? (
+                            <strong className={cmdCopyTitleClass}>
+                              <span className="text-[rgba(245,244,241,0.94)]">{item.title}</span>
+                              <span className="ml-1.5 font-medium text-[rgba(245,244,241,0.5)]">— Ask BrawlLens AI</span>
+                            </strong>
+                          ) : (
+                            <strong className={cmdCopyTitleClass}>{item.title}</strong>
+                          )}
                           <small className="hidden">{item.subtitle}</small>
                         </span>
                         {isRecent && <time className="whitespace-nowrap text-[13px] font-medium leading-none text-[rgba(245,244,241,0.72)]" dateTime={item.lastUsedAt}>{formatRecentDate(item.lastUsedAt)}</time>}
@@ -680,6 +731,7 @@ export default function SearchOverlay() {
           </>
         )}
       </div>
+      <ChatLimitDialog gate={limitGate} onClose={() => setLimitGate(null)} />
     </div>
   )
 }

@@ -16,10 +16,10 @@ const loadingShellClass =
   "min-h-[calc(100dvh-60px)] w-full overflow-x-clip bg-[var(--bg)] text-[#f5f4f1] [--lb-accent:#7c5cff] [--lb-line:rgba(245,244,241,0.07)] [--lb-line-2:rgba(245,244,241,0.10)] [--lb-panel:#0d0d11] [--lb-panel-2:#15151b] [--lb-text:#f5f4f1] [--lb-text-3:rgba(245,244,241,0.52)] [font-family:var(--font-ui)]"
 
 const loadingFrameClass =
-  "mx-auto w-[min(1120px,calc(100vw-20px))] px-0 pb-[18px] pt-2.5 max-[560px]:w-[min(1120px,calc(100vw-48px))]"
+  "mx-auto w-[min(1120px,calc(100vw-20px))] px-0 pb-[18px] pt-2.5 max-[560px]:w-[min(1120px,calc(100vw-12px))]"
 
 const loadingBoardClass =
-  "overflow-hidden rounded-[8px] border border-[rgba(245,244,241,0.055)] bg-[var(--panel)] p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.035),0_22px_60px_-46px_rgba(0,0,0,0.82)] max-[560px]:p-2"
+  "overflow-hidden rounded-[8px] border border-[rgba(245,244,241,0.055)] bg-[var(--panel)] p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.035),0_22px_60px_-46px_rgba(0,0,0,0.82)] max-[560px]:rounded-[6px] max-[560px]:p-1.5"
 
 const loadingPanelClass =
   "mt-1.5 overflow-x-auto overflow-y-visible rounded-none border-0 bg-transparent [scrollbar-width:none] [&::-webkit-scrollbar]:hidden max-[560px]:-mx-0.5"

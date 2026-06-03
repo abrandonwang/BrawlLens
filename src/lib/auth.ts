@@ -20,6 +20,8 @@ interface AccountSubscriptionRow {
   tier: string | null
   status: string | null
   provider: string | null
+  provider_customer_id: string | null
+  provider_subscription_id: string | null
   current_period_end: string | null
 }
 
@@ -123,6 +125,8 @@ async function premiumUserFromAccessToken(token: string): Promise<PremiumUser | 
   let subscriptionTier: SubscriptionTier = normalizeSubscriptionTier(metadataString(appMetadata, ["subscription_tier", "plan", "tier"]))
   let subscriptionStatus: SubscriptionStatus = normalizeSubscriptionStatus(metadataString(appMetadata, ["subscription_status", "plan_status"]))
   let subscriptionProvider: string | null = null
+  let providerCustomerId: string | null = null
+  let providerSubscriptionId: string | null = null
   let currentPeriodEnd: string | null = null
 
   const serviceKey = process.env.SUPABASE_SERVICE_KEY
@@ -138,7 +142,7 @@ async function premiumUserFromAccessToken(token: string): Promise<PremiumUser | 
         .maybeSingle<AccountProfileRow>(),
       admin
         .from("user_subscriptions")
-        .select("tier, status, provider, current_period_end")
+        .select("tier, status, provider, provider_customer_id, provider_subscription_id, current_period_end")
         .eq("user_id", data.user.id)
         .maybeSingle<AccountSubscriptionRow>(),
     ])
@@ -148,6 +152,8 @@ async function premiumUserFromAccessToken(token: string): Promise<PremiumUser | 
     subscriptionTier = normalizeSubscriptionTier(subscription?.tier ?? subscriptionTier)
     subscriptionStatus = normalizeSubscriptionStatus(subscription?.status ?? subscriptionStatus)
     subscriptionProvider = subscription?.provider ?? null
+    providerCustomerId = subscription?.provider_customer_id ?? null
+    providerSubscriptionId = subscription?.provider_subscription_id ?? null
     currentPeriodEnd = subscription?.current_period_end ?? null
   }
 
@@ -160,6 +166,8 @@ async function premiumUserFromAccessToken(token: string): Promise<PremiumUser | 
     subscriptionTier,
     subscriptionStatus,
     subscriptionProvider,
+    providerCustomerId,
+    providerSubscriptionId,
     currentPeriodEnd,
     entitlements: metadataEntitlements(appMetadata),
   }

@@ -22,6 +22,7 @@ const HIDDEN_PATHS = new Set([
   "/auth",
   "/auth/setup",
   "/auth/callback",
+  "/ask",
 ])
 
 function ringIndexForPath(pathname: string): number {

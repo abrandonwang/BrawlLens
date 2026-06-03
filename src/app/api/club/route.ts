@@ -2,6 +2,8 @@ import { NextResponse } from "next/server"
 import { fetchClubResponse } from "@/lib/playerLookup"
 import { sanitizePlayerTag } from "@/lib/validation"
 
+const CLUB_CACHE_CONTROL = "public, s-maxage=300, stale-while-revalidate=900"
+
 function clubLookupMessage(status: number) {
   if (status === 403) {
     return "Club lookup is blocked by the upstream API. Configure a Brawl Stars API key valid for this server."
@@ -26,7 +28,9 @@ export async function GET(request: Request) {
     }
 
     const data = await response.json()
-    return NextResponse.json(data)
+    const res = NextResponse.json(data)
+    res.headers.set("Cache-Control", CLUB_CACHE_CONTROL)
+    return res
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to reach club API"
     return NextResponse.json({ error: message }, { status: 502 })

@@ -4,8 +4,9 @@ import Anthropic from "@anthropic-ai/sdk"
 import { NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { getRequestUser } from "@/lib/auth"
+import { AI_LIMITS, CHAT_LIMIT_ERROR } from "@/lib/aiLimits"
 import { fetchPlayerResponse } from "@/lib/playerLookup"
-import { canUsePremium, type PremiumUser } from "@/lib/premium"
+import type { PremiumUser } from "@/lib/premium"
 import { sanitizePlayerTag } from "@/lib/validation"
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
@@ -304,11 +305,92 @@ ${top}`
 
 type AssistantBlock = { type: "text"; text: string } | { type: "tool_use"; id: string; name: string; input: Record<string, string> }
 
-function chatModelForUser(user: PremiumUser | null): string {
-  if (canUsePremium(user, "ai:premium-chat")) {
-    return process.env.ANTHROPIC_PREMIUM_MODEL ?? process.env.ANTHROPIC_FREE_MODEL ?? "claude-sonnet-4-6"
-  }
+function chatModelForUser(_user: PremiumUser | null): string {
   return process.env.ANTHROPIC_FREE_MODEL ?? "claude-sonnet-4-6"
+}
+
+function tomorrowUtcIso() {
+  const now = new Date()
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1)).toISOString()
+}
+
+function usageDay() {
+  return new Date().toISOString().slice(0, 10)
+}
+
+function requestIp(request: Request) {
+  const forwarded = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+  return forwarded
+    || request.headers.get("cf-connecting-ip")
+    || request.headers.get("x-real-ip")
+    || "unknown"
+}
+
+async function sha256Hex(value: string) {
+  const data = new TextEncoder().encode(value)
+  const hash = await crypto.subtle.digest("SHA-256", data)
+  return Array.from(new Uint8Array(hash), byte => byte.toString(16).padStart(2, "0")).join("")
+}
+
+async function anonymousSubjectKey(request: Request) {
+  const salt = process.env.CHAT_RATE_LIMIT_SALT ?? process.env.NEXT_PUBLIC_BASE_URL ?? "brawllens"
+  const userAgent = request.headers.get("user-agent") ?? "unknown"
+  return sha256Hex(`${requestIp(request)}|${userAgent}|${salt}`)
+}
+
+async function incrementChatUsage(subjectType: "anonymous" | "user", subjectKey: string) {
+  const { data, error } = await supabase.rpc("increment_ai_message_usage", {
+    p_subject_type: subjectType,
+    p_subject_key: subjectKey,
+    p_usage_day: usageDay(),
+  })
+
+  if (error) {
+    console.error("AI usage limit check failed:", error.message)
+    return null
+  }
+
+  const count = Number(data)
+  return Number.isFinite(count) ? count : null
+}
+
+async function chatAllowance(request: Request, user: PremiumUser | null) {
+  if (user?.role === "admin" || user?.subscriptionTier === "admin") {
+    return { allowed: true as const, limit: null, remaining: null, used: null }
+  }
+
+  const subjectType = user ? "user" as const : "anonymous" as const
+  const subjectKey = user?.id ?? await anonymousSubjectKey(request)
+  const limit = user ? AI_LIMITS.freeDailyMessages : AI_LIMITS.anonymousDailyMessages
+  const used = await incrementChatUsage(subjectType, subjectKey)
+
+  // Fail open if the usage table or RPC has not been deployed yet. The server
+  // still logs the problem so production can be fixed without blocking chat.
+  if (used === null) return { allowed: true as const, limit, remaining: null, used: null }
+
+  return {
+    allowed: used <= limit,
+    limit,
+    remaining: Math.max(0, limit - used),
+    used,
+  }
+}
+
+function rateLimitResponse(user: PremiumUser | null, limit: number, used: number) {
+  const reason = user ? "daily_limit" : "auth_required"
+  const message = user
+    ? `You've used your ${limit} daily messages. Resets at midnight UTC.`
+    : `You've used your ${limit} daily messages. Log in to get ${AI_LIMITS.freeDailyMessages}.`
+
+  return NextResponse.json({
+    error: CHAT_LIMIT_ERROR,
+    reason,
+    message,
+    limit,
+    used,
+    remaining: 0,
+    resetAt: tomorrowUtcIso(),
+  }, { status: 429 })
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -502,6 +584,11 @@ export async function POST(request: Request) {
   }
 
   const user = await getRequestUser(request)
+  const allowance = await chatAllowance(request, user)
+  if (!allowance.allowed && allowance.limit !== null && allowance.used !== null) {
+    return rateLimitResponse(user, allowance.limit, allowance.used)
+  }
+
   const model = chatModelForUser(user)
   const encoder = new TextEncoder()
   const pageContext = formatPageContext(body.pageContext)
@@ -517,6 +604,11 @@ export async function POST(request: Request) {
   })
 
   return new Response(readable, {
-    headers: { "Content-Type": "text/plain; charset=utf-8" }
+    headers: {
+      "Content-Type": "text/plain; charset=utf-8",
+      ...(allowance.limit !== null ? { "X-BrawlLens-AI-Limit": String(allowance.limit) } : {}),
+      ...(allowance.remaining !== null ? { "X-BrawlLens-AI-Remaining": String(allowance.remaining) } : {}),
+      ...(user ? { "X-BrawlLens-AI-Reset": tomorrowUtcIso() } : {}),
+    }
   })
 }

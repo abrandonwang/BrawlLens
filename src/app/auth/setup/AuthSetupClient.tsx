@@ -63,7 +63,7 @@ export default function AuthSetupClient() {
     setState("saving")
     let playerName: string | null = null
     try {
-      const response = await fetch(`/api/player?tag=${encodeURIComponent(cleanTag)}`, { cache: "no-store" })
+      const response = await fetch(`/api/player?tag=${encodeURIComponent(cleanTag)}`)
       const player = await response.json().catch(() => null) as { name?: string } | null
       playerName = response.ok && typeof player?.name === "string" ? player.name : null
     } catch {

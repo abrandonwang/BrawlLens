@@ -13,6 +13,8 @@ export const metadata: Metadata = {
   },
 }
 
+export const revalidate = 3600
+
 export interface Brawler {
   id: number
   name: string
@@ -27,7 +29,7 @@ export interface Brawler {
 }
 
 export default async function Brawlers() {
-  const res = await fetch("https://api.brawlify.com/v1/brawlers", { cache: "no-store" })
+  const res = await fetch("https://api.brawlify.com/v1/brawlers", { next: { revalidate: 3600 } })
   const data = await res.json()
   const brawlers: Brawler[] = data.list ?? []
   return (

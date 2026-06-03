@@ -5,6 +5,8 @@ import Link from "next/link"
 import { PulsingBorder } from "@paper-design/shaders-react"
 import { BrawlImage, brawlerIconUrl } from "@/components/BrawlImage"
 import HelpTooltip from "@/components/HelpTooltip"
+import { BUFFIES, type BrawlerBuffies } from "@/data/buffies"
+import { GEARS, buildForBrawler, gearWikiFile, type GearKey } from "@/data/builds"
 import { HYPERCHARGES } from "@/data/hypercharges"
 import { formatBrawlerName, formatNum } from "@/lib/format"
 import { getTierInfo, winRateColor } from "@/lib/tiers"
@@ -58,13 +60,24 @@ interface CatalogStat {
   winRate: number | null
 }
 
+type AbilityTone = "gadget" | "star" | "hyper" | "gear"
+
 type AbilityItem = {
   key: string
   name: string
   description: string
   label: string
   iconUrl?: string
-  tone: "gadget" | "star" | "hyper"
+  tone: AbilityTone
+}
+
+type BuffieKind = "gadget" | "star" | "hyper" | "bling"
+
+type BuffieItem = {
+  key: BuffieKind
+  title: string
+  description: string
+  iconUrl: string
 }
 
 function cx(...classes: Array<string | false | null | undefined>) {
@@ -75,7 +88,7 @@ const pageShellClass =
   "min-h-screen bg-[var(--bg)] text-[#f5f4f1] [font-family:var(--font-ui)]"
 
 const pageFrameClass =
-  "mx-auto w-[min(1180px,calc(100vw-28px))] pb-10 pt-3 max-[560px]:w-[calc(100vw-20px)]"
+  "mx-auto w-[min(1180px,calc(100vw-28px))] pb-10 pt-3 max-[560px]:w-[calc(100vw-12px)]"
 
 const panelClass =
   "min-w-0 rounded-[9px] border border-[rgba(245,244,241,0.075)] bg-[#15151b] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.035)]"
@@ -145,6 +158,10 @@ const BRAWLER_CLASS_OVERRIDES_BY_NAME: Record<string, string> = {
   "STARR NOVA": "Assassin",
   BOLT: "Tank",
   "BUZZ LIGHTYEAR": "Damage Dealer",
+}
+
+const WIKI_BRAWLER_NAME_OVERRIDES: Record<number, string> = {
+  16000093: "Jae-yong",
 }
 
 function formatPercent(value: number | null | undefined, digits = 1) {
@@ -356,6 +373,23 @@ function cleanAbilityDescription(value: string | undefined, fallback: string) {
   return cleaned || fallback
 }
 
+function wikiBrawlerName(brawler: Pick<Brawler, "id" | "name">) {
+  return WIKI_BRAWLER_NAME_OVERRIDES[brawler.id] ?? brawler.name
+}
+
+function wikiImageProxyUrl(fileName: string) {
+  return `/api/wiki-image?file=${encodeURIComponent(fileName)}&v=2`
+}
+
+function hyperchargeIconUrl(brawler: Pick<Brawler, "id" | "name">) {
+  return wikiImageProxyUrl(`${wikiBrawlerName(brawler)}-Hypercharge.png`)
+}
+
+function buffieIconUrl(brawler: Pick<Brawler, "id" | "name">, kind: BuffieKind) {
+  const suffix = kind === "star" ? "Star" : kind === "hyper" ? "Hyper" : kind === "bling" ? "Bling" : "Gadget"
+  return wikiImageProxyUrl(`${wikiBrawlerName(brawler)} Buffie-${suffix}.png`)
+}
+
 function abilityItemsFor(brawler: Brawler): AbilityItem[] {
   const gadgets = (brawler.gadgets ?? []).map((gadget, index) => ({
     key: `gadget-${gadget.id ?? index}`,
@@ -376,17 +410,105 @@ function abilityItemsFor(brawler: Brawler): AbilityItem[] {
   }))
 
   const hypercharge = HYPERCHARGES[brawler.id]
-  const liveHyper = brawler.hypercharge ?? brawler.hyperCharge ?? null
   const hyper = hypercharge ? [{
     key: `hyper-${brawler.id}`,
     name: hypercharge.name,
     description: `${hypercharge.description} +${hypercharge.speedBoost}% speed, +${hypercharge.damageBoost}% damage, +${hypercharge.shieldBoost}% shield while active.`,
     label: "H",
-    iconUrl: liveHyper?.imageUrl ?? `https://cdn.brawlify.com/brawlers/emoji/${brawler.id}.png`,
+    iconUrl: hyperchargeIconUrl(brawler),
     tone: "hyper" as const,
   }] : []
 
   return [...gadgets, ...starPowers, ...hyper]
+}
+
+function joinBuffieDescriptions(entries: Record<string, string> | undefined) {
+  const values = Object.entries(entries ?? {})
+  if (!values.length) return null
+  return values.map(([name, description]) => `${name}: ${description}`).join(" ")
+}
+
+function buffieItemsFor(brawler: Brawler, buffies: BrawlerBuffies | undefined): BuffieItem[] {
+  if (!buffies) return []
+
+  return [
+    {
+      key: "gadget" as const,
+      title: "Gadget Buffy",
+      description: joinBuffieDescriptions(buffies.gadgets) ?? "Enhances this Brawler's Gadgets.",
+      iconUrl: buffieIconUrl(brawler, "gadget"),
+    },
+    {
+      key: "star" as const,
+      title: "Star Power Buffy",
+      description: joinBuffieDescriptions(buffies.starPowers) ?? "Enhances this Brawler's Star Powers.",
+      iconUrl: buffieIconUrl(brawler, "star"),
+    },
+    {
+      key: "hyper" as const,
+      title: "Hypercharge Buffy",
+      description: buffies.hypercharge ?? "Enhances this Brawler's Hypercharge and extends its duration.",
+      iconUrl: buffieIconUrl(brawler, "hyper"),
+    },
+    {
+      key: "bling" as const,
+      title: "Bling Buffy",
+      description: "Cosmetic Buffy variant with no gameplay effect.",
+      iconUrl: buffieIconUrl(brawler, "bling"),
+    },
+  ]
+}
+
+const TONE_STYLES: Record<AbilityTone, { wrap: string; inner: string; img: string }> = {
+  gadget: {
+    wrap: "border-[rgba(120,221,108,0.32)] bg-[rgba(120,221,108,0.10)] shadow-[inset_0_0_0_1px_rgba(120,221,108,0.08)] hover:border-[rgba(120,221,108,0.5)]",
+    inner: "bg-[rgba(120,221,108,0.08)]",
+    img: "scale-[0.92]",
+  },
+  star: {
+    wrap: "border-[rgba(245,193,84,0.32)] bg-[rgba(245,193,84,0.10)] shadow-[inset_0_0_0_1px_rgba(245,193,84,0.08)] hover:border-[rgba(245,193,84,0.55)]",
+    inner: "bg-[rgba(245,193,84,0.08)]",
+    img: "scale-[0.92]",
+  },
+  hyper: {
+    wrap: "border-[rgba(214,108,221,0.42)] bg-[rgba(214,108,221,0.14)] shadow-[0_0_0_1px_rgba(214,108,221,0.18),0_0_12px_rgba(214,108,221,0.18)] hover:border-[rgba(214,108,221,0.72)] hover:shadow-[0_0_0_1px_rgba(214,108,221,0.32),0_0_18px_rgba(214,108,221,0.32)]",
+    inner: "bg-[rgba(214,108,221,0.10)]",
+    img: "scale-[1.18]",
+  },
+  gear: {
+    wrap: "border-[rgba(124,160,255,0.32)] bg-[rgba(124,160,255,0.10)] shadow-[inset_0_0_0_1px_rgba(124,160,255,0.08)] hover:border-[rgba(124,160,255,0.55)]",
+    inner: "bg-[rgba(124,160,255,0.08)]",
+    img: "scale-[1.02]",
+  },
+}
+
+function KitIcon({ item, title }: { item: AbilityItem; title: string }) {
+  const tone = TONE_STYLES[item.tone]
+  return (
+    <span
+      key={`${title}-${item.key}`}
+      className={cx(
+        "group relative grid size-8 place-items-center overflow-visible rounded-[7px] border text-[rgba(245,244,241,0.78)] outline-none transition-[box-shadow,border-color,background-color] duration-150 focus-visible:border-[rgba(124,92,255,0.58)]",
+        tone.wrap,
+      )}
+      tabIndex={0}
+      aria-label={item.name}
+    >
+      <span className={cx("grid size-full place-items-center overflow-hidden rounded-[6px]", tone.inner)}>
+        {item.iconUrl ? (
+          <BrawlImage src={item.iconUrl} alt={item.name} width={32} height={32} className={cx("size-full object-contain", tone.img)} sizes="32px" />
+        ) : (
+          <span className="text-[12px] font-black leading-none">{item.label}</span>
+        )}
+      </span>
+      <span
+        role="tooltip"
+        className="pointer-events-none absolute bottom-[calc(100%+8px)] left-1/2 z-40 max-w-[220px] -translate-x-1/2 translate-y-1 rounded-[7px] border border-[rgba(245,244,241,0.12)] bg-[#0d0d11] px-2 py-1.5 text-center text-[11px] font-[780] leading-tight text-[#f5f4f1] opacity-0 shadow-[0_14px_34px_rgba(0,0,0,0.38)] transition-[opacity,transform] duration-150 group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:translate-y-0 group-focus-within:opacity-100"
+      >
+        {item.name}
+      </span>
+    </span>
+  )
 }
 
 function BuildCell({ title, items, note }: { title: string; items: AbilityItem[]; note: string }) {
@@ -397,28 +519,35 @@ function BuildCell({ title, items, note }: { title: string; items: AbilityItem[]
         <span className="text-[10px] font-[780] leading-none text-[rgba(245,244,241,0.76)]">{note}</span>
       </div>
       <div className="flex flex-wrap justify-end gap-1.5 max-[560px]:justify-start">
-        {items.length ? items.map(item => (
-          <span
-            key={`${title}-${item.key}`}
-            className="group relative grid size-8 place-items-center overflow-visible rounded-[7px] border border-[#26262d] bg-[#15151b] text-[rgba(245,244,241,0.78)] outline-none focus-visible:border-[rgba(124,92,255,0.58)]"
-            tabIndex={0}
-            aria-label={item.name}
-          >
-            <span className="grid size-full place-items-center overflow-hidden rounded-[6px]">
-              {item.iconUrl ? (
-                <BrawlImage src={item.iconUrl} alt={item.name} width={32} height={32} className="size-full object-cover" sizes="32px" />
-              ) : (
-                <span className="text-[12px] font-black leading-none">{item.label}</span>
-              )}
-            </span>
-            <span
-              role="tooltip"
-              className="pointer-events-none absolute bottom-[calc(100%+8px)] left-1/2 z-40 max-w-[220px] -translate-x-1/2 translate-y-1 rounded-[7px] border border-[rgba(245,244,241,0.12)] bg-[#0d0d11] px-2 py-1.5 text-center text-[11px] font-[780] leading-tight text-[#f5f4f1] opacity-0 shadow-[0_14px_34px_rgba(0,0,0,0.38)] transition-[opacity,transform] duration-150 group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:translate-y-0 group-focus-within:opacity-100"
-            >
-              {item.name}
-            </span>
-          </span>
-        )) : <span className="text-[12px] font-bold text-[rgba(245,244,241,0.74)]">No kit data</span>}
+        {items.length ? items.map(item => <KitIcon key={`${title}-${item.key}`} item={item} title={title} />) : <span className="text-[12px] font-bold text-[rgba(245,244,241,0.74)]">No kit data</span>}
+      </div>
+    </div>
+  )
+}
+
+function BuffiesPanel({ items }: { items: BuffieItem[] }) {
+  if (!items.length) return null
+
+  return (
+    <div className={`${panelClass} mt-3`}>
+      <div className={panelHeaderClass}>
+        <span className={panelTitleClass}>Buffies</span>
+        <small className={panelMetaClass}>current unlock set</small>
+      </div>
+      <div className="grid grid-cols-4 gap-2 max-[760px]:grid-cols-2">
+        {items.map(item => (
+          <div key={item.key} className={`${rowSurfaceClass} grid min-h-[104px] gap-2 px-3 py-3`}>
+            <div className="flex min-w-0 items-center gap-2">
+              <span className="grid size-9 shrink-0 place-items-center overflow-hidden rounded-[8px] border border-[rgba(245,244,241,0.08)] bg-[#15151b]">
+                <BrawlImage src={item.iconUrl} alt={item.title} width={36} height={36} className="size-full object-contain" sizes="36px" />
+              </span>
+              <b className="min-w-0 text-[12px] font-[860] leading-tight text-[#f5f4f1]">{item.title}</b>
+            </div>
+            <p className="m-0 line-clamp-3 text-[11px] font-[650] leading-[1.35] text-[rgba(245,244,241,0.76)]">
+              {item.description}
+            </p>
+          </div>
+        ))}
       </div>
     </div>
   )
@@ -520,6 +649,7 @@ export default function BrawlerDetailClient({ brawler }: { brawler: Brawler }) {
   }, [brawler.id])
 
   const abilities = useMemo(() => abilityItemsFor(brawler), [brawler])
+  const buffieItems = useMemo(() => buffieItemsFor(brawler, BUFFIES[brawler.id]), [brawler])
   const selectedCatalog = catalogStats[String(brawler.id)]
   const catalogValues = useMemo(
     () => Object.values(catalogStats).filter(stat => stat.winRate != null && stat.picks > 0),
@@ -555,16 +685,51 @@ export default function BrawlerDetailClient({ brawler }: { brawler: Brawler }) {
   const bestMode = topModes[0] ?? null
   const hyper = HYPERCHARGES[brawler.id]
 
+  const classLabelForBuild = getBrawlerClassName(brawler)
+  const recommendedBuild = useMemo(() => buildForBrawler(brawler.id, classLabelForBuild), [brawler.id, classLabelForBuild])
+
+  const gearItems = useMemo<AbilityItem[]>(
+    () => recommendedBuild.gearKeys.map((key, index) => {
+      const gear = GEARS[key as GearKey]
+      return {
+        key: `gear-${key}-${index}`,
+        name: gear.name,
+        description: `${gear.rarity} gear: ${gear.name}.`,
+        label: gear.name.slice(0, 1),
+        iconUrl: `/api/wiki-image?file=${encodeURIComponent(gear.wikiFile)}&v=2`,
+        tone: "gear",
+      }
+    }),
+    [recommendedBuild.gearKeys],
+  )
+
   const builds = useMemo(() => {
     const gadgets = abilities.filter(item => item.tone === "gadget")
     const stars = abilities.filter(item => item.tone === "star")
     const hypers = abilities.filter(item => item.tone === "hyper")
+    const primaryGadget = gadgets[recommendedBuild.gadgetIndex ?? 0] ?? gadgets[0]
+    const primaryStar = stars[recommendedBuild.starIndex ?? 0] ?? stars[0]
+    const altGadget = gadgets.find(g => g !== primaryGadget) ?? primaryGadget
+    const altStar = stars.find(s => s !== primaryStar) ?? primaryStar
+
     return [
-      { title: "Primary build", items: [gadgets[0], stars[0], hypers[0]].filter(Boolean) as AbilityItem[], note: "Default ladder" },
-      { title: "Pressure build", items: [gadgets[1] ?? gadgets[0], stars[1] ?? stars[0], hypers[0]].filter(Boolean) as AbilityItem[], note: "High-tempo maps" },
-      { title: "Control build", items: [gadgets[0], stars[1] ?? stars[0], hypers[0]].filter(Boolean) as AbilityItem[], note: "Safer lanes" },
+      {
+        title: "Recommended",
+        items: [primaryGadget, primaryStar, hypers[0], ...gearItems].filter(Boolean) as AbilityItem[],
+        note: recommendedBuild.note ?? "Top-tier kit and gear pairing",
+      },
+      {
+        title: "Pressure build",
+        items: [altGadget, primaryStar, hypers[0], gearItems[0], gearItems[1]].filter(Boolean) as AbilityItem[],
+        note: "High-tempo maps",
+      },
+      {
+        title: "Control build",
+        items: [primaryGadget, altStar, hypers[0], gearItems[0], gearItems[1]].filter(Boolean) as AbilityItem[],
+        note: "Safer lanes",
+      },
     ]
-  }, [abilities])
+  }, [abilities, gearItems, recommendedBuild])
 
   const matchups = useMemo(() => {
     if (selectedWinRate == null) {
@@ -841,6 +1006,8 @@ export default function BrawlerDetailClient({ brawler }: { brawler: Brawler }) {
                 )}
               </div>
             </section>
+
+            <BuffiesPanel items={buffieItems} />
 
             <section className="mt-3 grid grid-cols-[minmax(0,1fr)_minmax(320px,0.78fr)] gap-3 max-[980px]:grid-cols-1">
               <div className={panelClass}>

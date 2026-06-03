@@ -144,4 +144,40 @@ export const BUFFIES: Record<number, BrawlerBuffies> = {
     },
     hypercharge: "Frank attacks at maximum speed during Hypercharge, and main attacks apply a stun effect.",
   },
+
+  16000039: {
+    gadgets: {
+      "Na-ah!": "The projectile passes through walls and pierces Brawlers, allowing Colette to hypnotize multiple enemies.",
+      "Gotcha!": "Extra healing becomes a decaying shield, up to 1000 shield health.",
+    },
+    starPowers: {
+      "Push It": "Colette's Super dash speed is increased by 50%.",
+      "Mass Tax": "Enemies hit by Colette's Super lose one-third of their ammo, and Colette gains the stolen ammo.",
+    },
+    hypercharge: "During Hypercharge, each main attack fires a smaller second shot after the first. Hypercharge lasts 2 seconds longer.",
+  },
+
+  16000043: {
+    gadgets: {
+      "Let's Fly": "After landing, Edgar gains 25% movement speed for 2.5 seconds.",
+      "Hardcore": "Edgar becomes immune to crowd control for 1 second after activating the shield.",
+    },
+    starPowers: {
+      "Hard Landing": "A direct Super landing charges Edgar's Super by 25%.",
+      "Fisticuffs": "Defeating a Brawler instantly heals Edgar for 30% of his maximum health.",
+    },
+    hypercharge: "During Hypercharge, Edgar's main attack gains two longer-range scarf punches that deal reduced damage.",
+  },
+
+  16000050: {
+    gadgets: {
+      "Piggy Bank": "Griff can shoot the piggy bank to charge up and increase its explosion radius and damage.",
+      "Coin Shower": "The coin shower grows larger throughout its duration.",
+    },
+    starPowers: {
+      "Keep the Change": "Attacking with full ammo fires a larger middle coin that deals extra damage.",
+      "Business Resilience": "Returning Super projectiles heal Griff for missing health.",
+    },
+    hypercharge: "During Hypercharge, Griff's main attack pierces enemies. Hypercharge lasts 2 seconds longer.",
+  },
 }

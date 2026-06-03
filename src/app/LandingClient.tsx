@@ -19,9 +19,12 @@ import { ArrowUp, X } from "lucide-react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import type { Components } from "react-markdown"
+import ChatLimitDialog from "@/components/ChatLimitDialog"
 import AnimatedGradientBackground from "@/components/ui/animated-gradient-background"
+import { chatLimitFromResponse, type ChatLimitPayload } from "@/lib/aiLimits"
+import { authHeaders } from "@/lib/clientAuth"
 
-const DATA_TOPICS = ["players", "brawlers", "maps", "upgrades"]
+const DATA_TOPICS = ["players", "brawlers", "maps", "clubs"]
 const LANDING_GRADIENT_COLORS = [
   "#030407",
   "#05060a",
@@ -198,7 +201,7 @@ const landingPromptFormBaseClass =
   "absolute left-0 right-0 top-0 z-[3] flex h-full min-h-0 flex-col items-stretch gap-0 overflow-hidden border border-[rgba(255,255,255,0.18)] p-0 [background:linear-gradient(180deg,rgba(26,28,38,0.96),rgba(13,15,22,0.96))] [box-shadow:inset_0_0_0_1px_rgba(255,255,255,0.08),0_0_24px_rgba(255,255,255,0.14),0_0_56px_-14px_rgba(255,255,255,0.10),0_28px_70px_-28px_rgba(0,0,0,0.85)] [container-type:inline-size] [backdrop-filter:blur(20px)_saturate(1.15)] [-webkit-backdrop-filter:blur(20px)_saturate(1.15)] rounded-[18px] transition-[height,border-color,border-radius,box-shadow,transform] duration-[460ms] ease-[cubic-bezier(0.16,1,0.3,1)] focus-within:border-[rgba(255,255,255,0.36)] focus-within:[box-shadow:inset_0_0_0_1px_rgba(255,255,255,0.18),0_0_32px_rgba(255,255,255,0.34),0_0_72px_-12px_rgba(255,255,255,0.22),0_28px_70px_-28px_rgba(0,0,0,0.85)] max-[640px]:rounded-[16px]"
 // Expanded ~3x of the collapsed aspect-[5.65/1]. At 740px wide collapsed is ~131px, so ~390-410px is "triple".
 const landingPromptFormExpandedClass =
-  "!h-[400px] rounded-[20px] [animation:landingChatFormGlow_4200ms_ease-in-out_infinite] max-[640px]:!h-[360px] max-[640px]:rounded-[18px]"
+  "!h-[440px] rounded-[20px] max-[640px]:!h-[380px] max-[640px]:rounded-[18px]"
 // Collapsed: the form IS the input box. Textarea fills top-left, submit
 // anchored to the bottom-right corner.
 const landingPromptInputbarBaseClass =
@@ -216,12 +219,18 @@ const landingSubmitBaseClass =
 // Inside the expanded nested pill the submit sits vertically centered.
 const landingSubmitExpandedClass = "!self-center"
 const landingSubmitActiveClass = "!bg-[var(--bt-blue)] !text-white hover:enabled:!bg-[#6849f4] hover:enabled:[box-shadow:inset_0_1px_0_rgba(255,255,255,0.18),0_10px_28px_-12px_rgba(124,92,255,0.6)]"
+const landingChatHeaderClass =
+  "pointer-events-none absolute left-0 right-0 top-0 z-[3] flex items-center justify-between gap-2 border-b border-white/[0.06] bg-[linear-gradient(180deg,rgba(13,15,22,0.96),rgba(13,15,22,0.78)_70%,rgba(13,15,22,0))] px-[18px] pb-[14px] pt-[12px] max-[640px]:px-[14px] max-[640px]:pb-[12px] max-[640px]:pt-[10px]"
+const landingChatHeaderTitleClass =
+  "inline-flex items-center gap-[8px] text-[11px] font-[700] uppercase tracking-[0.14em] text-[rgba(244,248,255,0.62)] [font-family:var(--font-ui)]"
+const landingChatHeaderDotClass =
+  "inline-block size-[6px] rounded-full bg-[#7c5cff] shadow-[0_0_10px_rgba(124,92,255,0.85)]"
 const landingChatCloseClass =
-  "absolute right-3 top-3 z-[4] m-0 grid size-[26px] min-h-[26px] min-w-[26px] cursor-pointer place-items-center rounded-full border border-white/[0.06] bg-white/[0.04] p-0 text-white/60 shadow-none outline-none transition-[background,border-color,color,transform] duration-150 hover:border-white/[0.14] hover:bg-white/[0.10] hover:text-white hover:scale-105 active:scale-95"
+  "pointer-events-auto m-0 grid size-[26px] min-h-[26px] min-w-[26px] cursor-pointer place-items-center rounded-full border border-white/[0.08] bg-white/[0.05] p-0 text-white/60 outline-none transition-[background,border-color,color] duration-150 hover:border-white/[0.18] hover:bg-white/[0.10] hover:text-white"
 const landingChatBodyClass =
-  "relative z-[2] flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto p-[40px_20px_8px_20px] scroll-smooth [scrollbar-color:rgba(255,255,255,0.18)_transparent] [scrollbar-width:thin] max-[640px]:gap-4 max-[640px]:p-[36px_14px_4px_14px] [&::-webkit-scrollbar]:w-[6px] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[rgba(255,255,255,0.18)] [&::-webkit-scrollbar-track]:bg-transparent"
+  "relative z-[2] flex min-h-0 flex-1 flex-col gap-[14px] overflow-y-auto p-[56px_20px_10px_20px] scroll-smooth [scrollbar-color:rgba(255,255,255,0.18)_transparent] [scrollbar-width:thin] max-[640px]:gap-[12px] max-[640px]:p-[48px_14px_6px_14px] [&::-webkit-scrollbar]:w-[6px] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[rgba(255,255,255,0.18)] [&::-webkit-scrollbar-track]:bg-transparent"
 const landingChatUserBubbleClass =
-  "ml-auto max-w-[min(78%,460px)] rounded-[16px_16px_4px_16px] border border-white/[0.06] bg-[linear-gradient(180deg,rgba(124,92,255,0.22),rgba(124,92,255,0.14))] px-[14px] py-[9px] text-[13.5px] font-[600] leading-[1.55] text-[#f5f7ff] [box-shadow:inset_0_1px_0_rgba(255,255,255,0.10),0_8px_22px_-14px_rgba(124,92,255,0.55)] [animation:landingChatMsgIn_380ms_cubic-bezier(0.16,1,0.3,1)_both] max-[640px]:max-w-[88%] max-[640px]:text-[13px]"
+  "ml-auto max-w-[min(78%,460px)] rounded-[14px_14px_4px_14px] bg-[#7c5cff] px-[13px] py-[8px] text-[13.5px] font-[600] leading-[1.5] text-white [box-shadow:0_10px_24px_-16px_rgba(124,92,255,0.7)] [animation:landingChatMsgIn_380ms_cubic-bezier(0.16,1,0.3,1)_both] max-[640px]:max-w-[88%] max-[640px]:text-[13px]"
 const landingChatAssistantClass =
   "w-full max-w-full text-[13.5px] font-[460] leading-[1.65] text-[rgba(244,248,255,0.92)] [animation:landingChatMsgIn_380ms_cubic-bezier(0.16,1,0.3,1)_both] [&>p]:my-0 max-[640px]:text-[13px]"
 const landingChatDotsClass =
@@ -291,6 +300,7 @@ export default function LandingClient() {
   const [landingChatMessages, setLandingChatMessages] = useState<LandingChatMessage[]>([])
   const [landingChatExpanded, setLandingChatExpanded] = useState(false)
   const [landingChatStreaming, setLandingChatStreaming] = useState(false)
+  const [landingLimitGate, setLandingLimitGate] = useState<ChatLimitPayload | null>(null)
   const [landingCarouselIndex, setLandingCarouselIndex] = useState(LANDING_CAROUSEL_INITIAL_INDEX)
   const [landingCarouselDragPx, setLandingCarouselDragPx] = useState(0)
   const [landingCarouselDragging, setLandingCarouselDragging] = useState(false)
@@ -551,7 +561,7 @@ export default function LandingClient() {
     try {
       const response = await fetch("/api/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { ...authHeaders(), "Content-Type": "application/json" },
         body: JSON.stringify({
           messages: history,
           pageContext: {
@@ -564,6 +574,13 @@ export default function LandingClient() {
         }),
         signal: controller.signal,
       })
+
+      const gate = await chatLimitFromResponse(response)
+      if (gate) {
+        setLandingChatMessages(history)
+        setLandingLimitGate(gate)
+        return
+      }
 
       if (!response.ok || !response.body) {
         setLandingChatMessages([...history, { role: "assistant", content: "Sorry, I’m having trouble connecting right now. Please try again in a moment." }])
@@ -718,7 +735,7 @@ export default function LandingClient() {
     const deltaY = event.clientY - start.y
 
     if (!start.axisLocked) {
-      if (Math.abs(deltaX) < 6 && Math.abs(deltaY) < 6) return
+      if (Math.abs(deltaX) < 4 && Math.abs(deltaY) < 4) return
       start.axisLocked = Math.abs(deltaX) > Math.abs(deltaY) ? "x" : "y"
       if (start.axisLocked === "x") {
         try {
@@ -825,9 +842,15 @@ export default function LandingClient() {
           >
             {landingChatExpanded && (
               <>
-                <button type="button" className={landingChatCloseClass} aria-label="Close chat" onClick={closeLandingChat}>
-                  <X size={16} strokeWidth={2.3} aria-hidden="true" />
-                </button>
+                <div className={landingChatHeaderClass}>
+                  <span className={landingChatHeaderTitleClass}>
+                    <span className={landingChatHeaderDotClass} aria-hidden="true" />
+                    BrawlLens AI
+                  </span>
+                  <button type="button" className={landingChatCloseClass} aria-label="Close chat" onClick={closeLandingChat}>
+                    <X size={14} strokeWidth={2.4} aria-hidden="true" />
+                  </button>
+                </div>
                 <div className={landingChatBodyClass} aria-live="polite">
                   {landingChatMessages.map((message, index) => (
                     <div key={index} className="flex w-full flex-col">
@@ -902,7 +925,6 @@ export default function LandingClient() {
           onPointerMove={handleLandingCarouselPointerMove}
           onPointerUp={handleLandingCarouselPointerUp}
           onPointerCancel={handleLandingCarouselPointerCancel}
-          onPointerLeave={handleLandingCarouselPointerCancel}
           style={{ cursor: landingCarouselDragging ? "grabbing" : "grab" }}
         >
           <Link
@@ -1064,6 +1086,7 @@ export default function LandingClient() {
         </div>
       </nav>
 
+      <ChatLimitDialog gate={landingLimitGate} onClose={() => setLandingLimitGate(null)} />
     </main>
   )
 }

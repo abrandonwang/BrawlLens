@@ -3,19 +3,21 @@ import type { Metadata } from "next"
 
 type PageProps = { params: Promise<{ id: string }> }
 
+export const revalidate = 3600
+
 async function getBrawler(id: string): Promise<Parameters<typeof BrawlerDetailClient>[0]["brawler"] | null> {
     const isNumeric = /^\d+$/.test(id)
 
     let brawler: unknown
 
     if (isNumeric) {
-        const res = await fetch(`https://api.brawlify.com/v1/brawlers/${id}`, { cache: "no-store" })
+        const res = await fetch(`https://api.brawlify.com/v1/brawlers/${id}`, { next: { revalidate: 3600 } })
         if (!res.ok) return null
         const text = await res.text()
         if (!text) return null
         brawler = JSON.parse(text)
     } else {
-        const res = await fetch("https://api.brawlify.com/v1/brawlers", { cache: "no-store" })
+        const res = await fetch("https://api.brawlify.com/v1/brawlers", { next: { revalidate: 3600 } })
         if (!res.ok) return null
         const data = await res.json()
         const slug = id.toLowerCase().replace(/-/g, " ")

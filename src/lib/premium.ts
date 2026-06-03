@@ -22,6 +22,8 @@ export interface PremiumUser {
   subscriptionTier: SubscriptionTier
   subscriptionStatus: SubscriptionStatus
   subscriptionProvider?: string | null
+  providerCustomerId?: string | null
+  providerSubscriptionId?: string | null
   currentPeriodEnd?: string | null
   entitlements?: string[]
 }

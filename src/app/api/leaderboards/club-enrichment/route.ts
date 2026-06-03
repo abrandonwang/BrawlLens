@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { unstable_cache } from "next/cache"
 import { fetchClubResponse, fetchPlayerResponse } from "@/lib/playerLookup"
 import { sanitizePlayerTag } from "@/lib/validation"
 
@@ -128,6 +129,18 @@ async function mapWithConcurrency<T, R>(
   return results
 }
 
+const fetchCachedClubSummaryEnrichment = unstable_cache(
+  (tag: string) => fetchClubEnrichment(tag, false),
+  ["leaderboard-club-summary-enrichment-v1"],
+  { revalidate: 900 },
+)
+
+const fetchCachedClubPrestigeEnrichment = unstable_cache(
+  (tag: string) => fetchClubEnrichment(tag, true),
+  ["leaderboard-club-prestige-enrichment-v1"],
+  { revalidate: 300 },
+)
+
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null) as { tags?: unknown[]; includePrestige?: unknown } | null
   const tags = Array.from(new Set((body?.tags ?? []).map(cleanTag).filter(Boolean))).slice(0, 60) as string[]
@@ -137,7 +150,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ clubs: {} })
   }
 
-  const entries = await mapWithConcurrency(tags, includePrestige ? 2 : 8, async tag => [tag, await fetchClubEnrichment(tag, includePrestige)] as const)
+  const fetchEnrichment = includePrestige ? fetchCachedClubPrestigeEnrichment : fetchCachedClubSummaryEnrichment
+  const entries = await mapWithConcurrency(tags, includePrestige ? 2 : 8, async tag => [tag, await fetchEnrichment(tag)] as const)
   const response = NextResponse.json({ clubs: Object.fromEntries(entries) })
   response.headers.set("Cache-Control", includePrestige ? "private, max-age=60" : "private, max-age=300, stale-while-revalidate=900")
   return response

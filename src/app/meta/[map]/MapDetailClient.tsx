@@ -26,9 +26,9 @@ type SortKey = "winRate" | "picks" | "share"
 const performanceGrid = "grid grid-cols-[44px_minmax(190px,1.2fr)_96px_92px_82px_60px] items-center gap-1"
 const compactSignalGrid = "grid grid-cols-[34px_minmax(0,1fr)_72px] items-center gap-1"
 const mapDetailFrameClass =
-  "mx-auto w-[min(1180px,calc(100vw-28px))] pb-4 pt-3 max-[560px]:w-[calc(100vw-20px)]"
+  "mx-auto w-[min(1180px,calc(100vw-28px))] pb-4 pt-3 max-[560px]:w-[calc(100vw-12px)]"
 const mapDetailAnalyticsClass =
-  "mx-auto w-[min(1180px,calc(100vw-28px))] pb-8 max-[560px]:w-[calc(100vw-20px)]"
+  "mx-auto w-[min(1180px,calc(100vw-28px))] pb-8 max-[560px]:w-[calc(100vw-12px)]"
 const MAP_DETAIL_BORDER_COLORS = ["#7c5cff", "#5aeed0", "#ff6099", "#f5d75e", "#7c5cff"]
 const MAP_DETAIL_BORDER_STYLE: CSSProperties = {
   position: "absolute",

@@ -224,7 +224,7 @@ export default function NavBar() {
 
     const tag = user?.accountSetup?.playerTag;
     if (user && tag && !user.accountSetup?.playerName) {
-      fetch(`/api/player?tag=${encodeURIComponent(tag)}`, { cache: "no-store" })
+      fetch(`/api/player?tag=${encodeURIComponent(tag)}`)
         .then(res => res.ok ? res.json() : null)
         .then((player: { name?: string } | null) => {
           if (player?.name) setAccountName(player.name);
@@ -648,7 +648,7 @@ export default function NavBar() {
       ? { items: accountDesktopItems }
       : { items: browseItems };
   const navTextClass = (active: boolean) =>
-    `relative inline-flex h-[36px] items-center rounded-full border-0 px-3 text-[13px] font-semibold leading-none tracking-[-0.005em] no-underline outline-none transition-colors duration-150 text-[rgba(245,244,241,0.78)] hover:text-[#f5f4f1] hover:bg-[rgba(245,244,241,0.06)] focus-visible:text-[#f5f4f1] ${active ? "text-[#f5f4f1] bg-[rgba(124,92,255,0.14)]" : ""}`;
+    `relative inline-flex h-[36px] items-center rounded-full border-0 px-3 text-[13px] font-semibold leading-none tracking-normal no-underline outline-none transition-colors duration-150 text-[rgba(250,250,248,0.90)] hover:text-[#ffffff] hover:bg-[rgba(245,244,241,0.07)] focus-visible:text-[#ffffff] ${active ? "text-[#ffffff] bg-[rgba(124,92,255,0.16)]" : ""}`;
 
   function isAccountNavItemActive(href: string) {
     if (!href.startsWith("/account")) return isRouteActive(pathname, href);
@@ -702,7 +702,7 @@ export default function NavBar() {
               className={`${navTextClass(browseActive)} cursor-pointer gap-1.5`}
             >
               Tierlist &amp; Brawlers
-              <ChevronDown size={13} strokeWidth={2.25} className={`ml-0.5 text-[var(--bt-text)] transition-transform duration-[340ms] ease-[cubic-bezier(0.16,1,0.3,1)] will-change-transform ${visibleDesktopPanel === "browse" ? "rotate-180" : "rotate-0"}`} />
+              <ChevronDown size={13} strokeWidth={2.25} className={`ml-0.5 text-[rgba(250,250,248,0.86)] transition-transform duration-[340ms] ease-[cubic-bezier(0.16,1,0.3,1)] will-change-transform ${visibleDesktopPanel === "browse" ? "rotate-180" : "rotate-0"}`} />
             </Link>
           </div>
           <div
@@ -718,16 +718,23 @@ export default function NavBar() {
               className={`${navTextClass(leaderboardsActive)} cursor-pointer gap-1.5`}
             >
               Leaderboards
-              <ChevronDown size={13} strokeWidth={2.25} className={`ml-0.5 text-[var(--bt-text)] transition-transform duration-[340ms] ease-[cubic-bezier(0.16,1,0.3,1)] will-change-transform ${visibleDesktopPanel === "leaderboards" ? "rotate-180" : "rotate-0"}`} />
+              <ChevronDown size={13} strokeWidth={2.25} className={`ml-0.5 text-[rgba(250,250,248,0.86)] transition-transform duration-[340ms] ease-[cubic-bezier(0.16,1,0.3,1)] will-change-transform ${visibleDesktopPanel === "leaderboards" ? "rotate-180" : "rotate-0"}`} />
             </Link>
           </div>
+          <Link
+            href="/ask"
+            onClick={() => { setDesktopPanel(null); setHoverDesktopPanel(null); }}
+            className={`${navTextClass(pathname.startsWith("/ask"))} cursor-pointer`}
+          >
+            Ask AI
+          </Link>
         </div>
 
         <div className="relative z-10 ml-auto hidden min-w-0 shrink-0 items-center justify-end gap-2 lg:flex">
           <button
             type="button"
             onClick={() => openSearchOverlay()}
-            className="inline-flex h-[36px] items-center gap-2 rounded-[10px] border-0 bg-[rgba(245,244,241,0.06)] px-3.5 text-[rgba(245,244,241,0.78)] outline-none transition-colors hover:bg-[rgba(245,244,241,0.10)] hover:text-[#f5f4f1]"
+            className="inline-flex h-[36px] items-center gap-2 rounded-[10px] border-0 bg-[rgba(245,244,241,0.07)] px-3.5 text-[rgba(250,250,248,0.90)] outline-none transition-colors hover:bg-[rgba(245,244,241,0.11)] hover:text-[#ffffff]"
             aria-label="Open search"
             title="Search (⌘K)"
           >
@@ -871,8 +878,20 @@ export default function NavBar() {
                 );
               })}
               <div
-                className="animate-[mobileMenuItemIn_0.34s_cubic-bezier(0.16,1,0.3,1)_both] border-b border-[rgba(245,244,241,0.07)] py-4"
+                className="animate-[mobileMenuItemIn_0.34s_cubic-bezier(0.16,1,0.3,1)_both] border-b border-[rgba(245,244,241,0.07)]"
                 style={{ animationDelay: menuClosing ? "0ms" : `${50 + mobileMenuGroups.length * 34}ms` }}
+              >
+                <Link
+                  href="/ask"
+                  onClick={closeMenu}
+                  className={`flex min-h-[58px] items-center justify-start text-[22px] font-[680] leading-none no-underline outline-none transition-colors duration-150 hover:text-[#ffffff] focus-visible:text-[#ffffff] focus-visible:outline-none ${pathname.startsWith("/ask") ? "text-[#ffffff]" : "text-[rgba(250,250,248,0.92)]"}`}
+                >
+                  Ask AI
+                </Link>
+              </div>
+              <div
+                className="animate-[mobileMenuItemIn_0.34s_cubic-bezier(0.16,1,0.3,1)_both] border-b border-[rgba(245,244,241,0.07)] py-4"
+                style={{ animationDelay: menuClosing ? "0ms" : `${50 + (mobileMenuGroups.length + 1) * 34}ms` }}
               >
                 {isSignedIn ? (
                   <div className="grid gap-3">

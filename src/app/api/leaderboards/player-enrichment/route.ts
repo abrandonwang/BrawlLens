@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { unstable_cache } from "next/cache"
 import { createClient } from "@supabase/supabase-js"
 import { cleanEnv } from "@/lib/env"
 import { stripTagPrefix } from "@/lib/leaderboardUtils"
@@ -154,6 +155,18 @@ async function fetchClubBadgeId(tag: string): Promise<number | null> {
   }
 }
 
+const fetchCachedPlayerEnrichment = unstable_cache(
+  fetchPlayerEnrichment,
+  ["leaderboard-player-enrichment-v1"],
+  { revalidate: 300 },
+)
+
+const fetchCachedClubBadgeId = unstable_cache(
+  fetchClubBadgeId,
+  ["leaderboard-club-badge-id-v1"],
+  { revalidate: 900 },
+)
+
 function formatPercentile(rank: number | null, total: number | null) {
   if (!rank || !total || rank > total) return null
   const percentile = (rank / total) * 100
@@ -176,12 +189,10 @@ async function mapWithConcurrency<T, R>(items: T[], limit: number, mapper: (item
   return results
 }
 
-async function fetchGlobalPlacements(trophyValues: number[]) {
+async function fetchGlobalLeaderboardCount() {
   const url = cleanEnv(process.env.SUPABASE_URL)
   const key = cleanEnv(process.env.SUPABASE_SERVICE_KEY)
-  const values = Array.from(new Set(trophyValues.filter(value => Number.isFinite(value))))
-  const placements = new Map<number, { rank: number | null; percentile: string | null }>()
-  if (!url || !key || !values.length) return placements
+  if (!url || !key) return null
 
   try {
     const supabase = createClient(url, key)
@@ -190,28 +201,62 @@ async function fetchGlobalPlacements(trophyValues: number[]) {
       .select("player_tag", { count: "exact", head: true })
       .eq("region", "global")
 
-    if (countError || !globalCount) return placements
+    if (countError || !globalCount) return null
+    return globalCount
+  } catch (error) {
+    console.error("Leaderboard global count estimate failed:", error)
+    return null
+  }
+}
 
-    const entries = await mapWithConcurrency(values, 8, async trophies => {
-      const { count, error } = await supabase
-        .from("leaderboards")
-        .select("player_tag", { count: "exact", head: true })
-        .eq("region", "global")
-        .gt("trophies", trophies)
+const fetchCachedGlobalLeaderboardCount = unstable_cache(
+  fetchGlobalLeaderboardCount,
+  ["leaderboard-global-count-v1"],
+  { revalidate: 300 },
+)
 
-      if (error) {
-        return [trophies, { rank: null, percentile: null }] as const
-      }
+async function fetchGlobalPlacement(trophies: number) {
+  const url = cleanEnv(process.env.SUPABASE_URL)
+  const key = cleanEnv(process.env.SUPABASE_SERVICE_KEY)
+  if (!url || !key || !Number.isFinite(trophies)) return { rank: null, percentile: null }
 
-      const rank = (count ?? 0) + 1
-      return [trophies, { rank, percentile: formatPercentile(rank, globalCount) }] as const
-    })
+  try {
+    const globalCount = await fetchCachedGlobalLeaderboardCount()
+    if (!globalCount) return { rank: null, percentile: null }
 
-    for (const [trophies, placement] of entries) {
-      placements.set(trophies, placement)
-    }
+    const supabase = createClient(url, key)
+    const { count, error } = await supabase
+      .from("leaderboards")
+      .select("player_tag", { count: "exact", head: true })
+      .eq("region", "global")
+      .gt("trophies", trophies)
+
+    if (error) return { rank: null, percentile: null }
+    const rank = (count ?? 0) + 1
+    return { rank, percentile: formatPercentile(rank, globalCount) }
   } catch (error) {
     console.error("Leaderboard global placement estimate failed:", error)
+    return { rank: null, percentile: null }
+  }
+}
+
+const fetchCachedGlobalPlacement = unstable_cache(
+  fetchGlobalPlacement,
+  ["leaderboard-global-placement-v1"],
+  { revalidate: 300 },
+)
+
+async function fetchGlobalPlacements(trophyValues: number[]) {
+  const values = Array.from(new Set(trophyValues.filter(value => Number.isFinite(value))))
+  const placements = new Map<number, { rank: number | null; percentile: string | null }>()
+  if (!values.length) return placements
+
+  const entries = await mapWithConcurrency(values, 8, async trophies => {
+    return [trophies, await fetchCachedGlobalPlacement(trophies)] as const
+  })
+
+  for (const [trophies, placement] of entries) {
+    placements.set(trophies, placement)
   }
 
   return placements
@@ -226,14 +271,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ players: {} })
   }
 
-  const entries = await Promise.all(tags.map(async tag => [tag, await fetchPlayerEnrichment(tag, brawlerId)] as const))
+  const entries = await mapWithConcurrency(tags, 8, async tag => [tag, await fetchCachedPlayerEnrichment(tag, brawlerId)] as const)
   const globalPlacements = await fetchGlobalPlacements(
     entries
       .map(([, data]) => data.totalTrophies)
       .filter((value): value is number => typeof value === "number")
   )
   const clubTags = Array.from(new Set(entries.map(([, data]) => data.clubTag).filter(Boolean))) as string[]
-  const clubEntries = await Promise.all(clubTags.map(async tag => [tag, await fetchClubBadgeId(tag)] as const))
+  const clubEntries = await mapWithConcurrency(clubTags, 8, async tag => [tag, await fetchCachedClubBadgeId(tag)] as const)
   const clubBadges = Object.fromEntries(clubEntries)
 
   const players = Object.fromEntries(entries.map(([tag, data]) => [
