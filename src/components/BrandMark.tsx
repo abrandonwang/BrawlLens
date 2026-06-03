@@ -15,7 +15,7 @@ export default function BrandMark({ className = "", size = "sm", showWordmark = 
       className={`inline-flex shrink-0 items-center justify-start gap-3 ${markSizeClass} font-medium leading-none tracking-normal text-[var(--bt-text)] [font-family:var(--font-ui)] [text-shadow:none] ${className}`}
       aria-hidden="true"
     >
-      <span className={`relative inline-flex ${glyphSizeClass} shrink-0 items-center justify-center overflow-visible rounded-none bg-transparent [filter:drop-shadow(0_0_10px_rgba(124,92,255,0.22))]`}>
+      <span className={`relative inline-flex ${glyphSizeClass} shrink-0 items-center justify-center overflow-visible rounded-none bg-transparent [filter:none]`}>
         <Image className="block h-full w-full object-contain" src="/brawllens-mark.svg" alt="" width={52} height={34} priority unoptimized />
       </span>
       {showWordmark && (

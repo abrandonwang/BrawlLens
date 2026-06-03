@@ -195,7 +195,7 @@ export default function AskClient() {
             }}
             className="w-full"
           >
-            <div className="group relative isolate overflow-hidden rounded-[10px] border border-[rgba(245,244,241,0.10)] bg-[rgba(14,14,20,0.88)] shadow-[inset_0_1px_0_rgba(255,255,255,0.045),0_22px_54px_-38px_rgba(0,0,0,0.9)] transition-[border-color,box-shadow] duration-200 focus-within:border-[rgba(167,139,255,0.48)] focus-within:shadow-[inset_0_1px_0_rgba(255,255,255,0.065),0_0_0_3px_rgba(124,92,255,0.14)]">
+            <div className="group relative isolate overflow-hidden rounded-[10px] border border-[rgba(245,244,241,0.10)] bg-[rgba(14,14,20,0.88)] shadow-[inset_0_1px_0_rgba(255,255,255,0.045),0_22px_54px_-38px_rgba(0,0,0,0.9)] transition-[border-color,box-shadow] duration-200 focus-within:border-[rgba(245,244,241,0.22)] focus-within:shadow-[inset_0_1px_0_rgba(255,255,255,0.065),0_24px_58px_-42px_rgba(0,0,0,0.96)]">
               <textarea
                 ref={textareaRef}
                 rows={5}
@@ -280,7 +280,7 @@ export default function AskClient() {
               }}
               className="pointer-events-auto w-full max-w-[760px]"
             >
-              <div className="group flex items-end gap-2 rounded-[10px] border border-[rgba(245,244,241,0.11)] bg-[rgba(14,14,20,0.96)] p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_22px_50px_-30px_rgba(0,0,0,0.92)] backdrop-blur-[14px] transition-[border-color,box-shadow] duration-200 focus-within:border-[rgba(167,139,255,0.48)] focus-within:shadow-[inset_0_1px_0_rgba(255,255,255,0.07),0_0_0_3px_rgba(124,92,255,0.14)]">
+              <div className="group flex items-end gap-2 rounded-[10px] border border-[rgba(245,244,241,0.11)] bg-[rgba(14,14,20,0.96)] p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_22px_50px_-30px_rgba(0,0,0,0.92)] backdrop-blur-[14px] transition-[border-color,box-shadow] duration-200 focus-within:border-[rgba(245,244,241,0.22)] focus-within:shadow-[inset_0_1px_0_rgba(255,255,255,0.07),0_24px_58px_-42px_rgba(0,0,0,0.96)]">
                 <textarea
                   ref={textareaRef}
                   rows={1}

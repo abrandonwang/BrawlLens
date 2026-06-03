@@ -80,10 +80,10 @@ const authLayerClass =
   "fixed inset-0 z-[320] flex animate-[modalOverlayIn_180ms_ease_both] items-center justify-center px-[18px] py-6 max-[560px]:px-2.5 max-[560px]:py-5";
 
 const authBackdropClass =
-  "bl-auth-backdrop absolute inset-0 cursor-default overflow-hidden border-0 bg-[rgba(8,8,12,0.26)] backdrop-blur-[64px] [transform:translateZ(0)]";
+  "bl-auth-backdrop absolute inset-0 cursor-default overflow-hidden border-0 bg-[rgba(5,6,10,0.48)] backdrop-blur-[22px] [transform:translateZ(0)]";
 
 const authPanelClass =
-  "bl-auth-panel relative z-[1] w-[min(420px,calc(100vw-36px))] animate-[authPanelIn_220ms_cubic-bezier(0.16,1,0.3,1)_both] overflow-hidden rounded-[14px] border border-[rgba(255,255,255,0.10)] p-[22px] text-[#f5f4f1] shadow-[rgba(255,255,255,0.06)_0_0.5px_0_0_inset,0_24px_64px_-20px_rgba(0,0,0,0.58)] [background:linear-gradient(180deg,rgba(34,34,42,0.96),rgba(20,20,27,0.96)),rgba(22,22,29,0.96)] max-[560px]:w-[calc(100vw-20px)] max-[560px]:rounded-[12px] max-[560px]:p-[18px]";
+  "bl-auth-panel relative z-[1] w-[min(420px,calc(100vw-36px))] animate-[authPanelIn_220ms_cubic-bezier(0.16,1,0.3,1)_both] overflow-hidden rounded-[14px] border border-[rgba(245,244,241,0.12)] p-[22px] text-[#f5f4f1] shadow-[inset_0_1px_0_rgba(255,255,255,0.045),0_24px_70px_-46px_rgba(0,0,0,0.92)] [background:linear-gradient(180deg,rgba(24,25,32,0.97),rgba(14,15,20,0.97))] max-[560px]:w-[calc(100vw-20px)] max-[560px]:rounded-[12px] max-[560px]:p-[18px]";
 
 const authCloseClass =
   "grid size-[30px] shrink-0 cursor-pointer place-items-center rounded-[8px] border-0 bg-transparent text-[rgba(245,244,241,0.72)] outline-none transition-colors duration-150 hover:bg-[rgba(245,244,241,0.06)] hover:text-[#f5f4f1] focus-visible:bg-[rgba(245,244,241,0.06)] focus-visible:text-[#f5f4f1]";
@@ -93,7 +93,7 @@ const authTabButtonClass = (active: boolean) =>
 
 const authFieldLabelClass = "text-[12px] font-[660] leading-none text-[rgba(245,244,241,0.74)]";
 const authControlClass =
-  "h-11 w-full rounded-[10px] border border-[rgba(255,255,255,0.08)] bg-[rgba(8,8,12,0.50)] px-[13px] text-[13.5px] font-[560] leading-none text-[#f5f4f1] outline-none transition-[border-color,background-color,box-shadow] duration-150 placeholder:text-[rgba(245,244,241,0.72)] hover:border-[rgba(255,255,255,0.12)] hover:bg-[rgba(8,8,12,0.58)] focus:border-[rgba(167,139,255,0.46)] focus:bg-[rgba(8,8,12,0.66)] focus:shadow-[0_0_0_3px_rgba(124,92,255,0.12)] [font-family:var(--font-ui)]";
+  "h-11 w-full rounded-[10px] border border-[rgba(255,255,255,0.08)] bg-[rgba(8,8,12,0.50)] px-[13px] text-[13.5px] font-[560] leading-none text-[#f5f4f1] outline-none transition-[border-color,background-color,box-shadow] duration-150 placeholder:text-[rgba(245,244,241,0.72)] hover:border-[rgba(255,255,255,0.12)] hover:bg-[rgba(8,8,12,0.58)] focus:border-[rgba(245,244,241,0.22)] focus:bg-[rgba(8,8,12,0.66)] focus:shadow-[inset_0_1px_0_rgba(255,255,255,0.045)] [font-family:var(--font-ui)]";
 
 const authHintBaseClass = "flex min-h-[15px] items-center gap-[7px] text-[11px] font-[560] leading-[1.2]";
 const authHintTransitionClass =
@@ -676,14 +676,15 @@ export default function NavBar() {
     <>
       <nav
         data-nav-hidden={isNavHidden ? "true" : undefined}
-        className="bl-nav-scroll-hide fixed left-1/2 top-4 z-[500] w-[70vw] max-w-[1200px] -translate-x-1/2 overflow-visible rounded-[20px] border border-[rgba(255,255,255,0.36)] bg-[rgba(13,13,17,0.92)] text-[#f5f4f1] [box-shadow:inset_0_0_0_1px_rgba(255,255,255,0.18),0_0_32px_rgba(255,255,255,0.34),0_0_72px_-12px_rgba(255,255,255,0.22),0_20px_52px_-22px_rgba(0,0,0,0.88)] backdrop-blur-xl backdrop-saturate-150 [font-family:var(--font-ui)] max-lg:w-[calc(100%-20px)]"
+        className="bl-nav-scroll-hide fixed left-1/2 top-4 z-[500] isolate w-[70vw] max-w-[1200px] -translate-x-1/2 overflow-visible rounded-[18px] border border-[rgba(218,232,255,0.16)] bg-[rgba(25,29,39,0.88)] text-[#f5f4f1] [box-shadow:inset_0_1px_0_rgba(255,255,255,0.075),inset_0_-1px_0_rgba(148,172,220,0.05),0_18px_46px_-34px_rgba(0,0,0,0.90)] backdrop-blur-md backdrop-saturate-125 [font-family:var(--font-ui)] max-lg:w-[calc(100%-20px)]"
         onMouseLeave={() => {
           setHoverDesktopPanel(null);
           setDesktopPanel(null);
           setSuppressedDesktopPanel(null);
         }}
       >
-        <div className="flex h-[60px] items-center px-5 max-lg:px-4">
+        <span aria-hidden="true" className="pointer-events-none absolute inset-0 z-0 rounded-[inherit] bg-[linear-gradient(180deg,rgba(35,40,53,0.92),rgba(18,22,31,0.94))]" />
+        <div className="relative z-10 flex h-[60px] items-center px-5 max-lg:px-4">
           <Link href="/" className="relative z-10 inline-flex h-full shrink-0 items-center whitespace-nowrap text-[#f5f4f1] no-underline" aria-label="BrawlLens home">
             <BrandMark size="sm" showWordmark={true} />
           </Link>

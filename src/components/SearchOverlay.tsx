@@ -310,10 +310,10 @@ const cmdLayerClass = (closing: boolean) =>
   `fixed inset-0 z-[300] flex items-start justify-center px-[18px] pb-[18px] pt-[clamp(118px,20vh,260px)] max-[560px]:p-2.5 max-[560px]:pt-[70px] ${closing ? "animate-[cmdLayerOut_180ms_ease_both]" : "animate-[cmdLayerIn_180ms_ease_both]"}`
 
 const cmdBackdropClass =
-  "bl-cmd-backdrop absolute inset-0 cursor-default overflow-hidden border-0 bg-[rgba(8,8,12,0.24)] backdrop-blur-[64px] [transform:translateZ(0)]"
+  "bl-cmd-backdrop absolute inset-0 cursor-default overflow-hidden border-0 bg-[rgba(5,6,10,0.48)] backdrop-blur-[22px] [transform:translateZ(0)]"
 
 const cmdPanelClass = (closing: boolean) =>
-  `relative z-[1] flex w-[min(620px,calc(100vw-36px))] max-h-[min(540px,calc(100dvh-120px))] flex-col overflow-hidden rounded-[14px] border border-[rgba(255,255,255,0.10)] bg-[rgba(34,34,42,0.94)] shadow-[rgba(255,255,255,0.05)_0_0.5px_0_0_inset,0_24px_64px_-20px_rgba(0,0,0,0.55)] backdrop-blur-[12px] max-[560px]:w-[calc(100vw-20px)] max-[560px]:max-h-[calc(100dvh-92px)] max-[560px]:rounded-2xl ${closing ? "animate-[cmdPanelOut_180ms_ease_both]" : "animate-[cmdPanelIn_200ms_cubic-bezier(0.16,1,0.3,1)_both]"}`
+  `relative z-[1] flex w-[min(620px,calc(100vw-36px))] max-h-[min(540px,calc(100dvh-120px))] flex-col overflow-hidden rounded-[14px] border border-[rgba(245,244,241,0.12)] bg-[rgba(20,21,28,0.96)] shadow-[inset_0_1px_0_rgba(255,255,255,0.045),0_24px_70px_-46px_rgba(0,0,0,0.92)] backdrop-blur-[10px] max-[560px]:w-[calc(100vw-20px)] max-[560px]:max-h-[calc(100dvh-92px)] max-[560px]:rounded-2xl ${closing ? "animate-[cmdPanelOut_180ms_ease_both]" : "animate-[cmdPanelIn_200ms_cubic-bezier(0.16,1,0.3,1)_both]"}`
 
 const cmdTabClass = (active: boolean) =>
   `relative inline-flex h-[30px] min-w-[72px] cursor-pointer items-center justify-center rounded-full border-0 px-3.5 text-[12px] font-[720] tracking-normal outline-none transition-[background-color,color,box-shadow] duration-150 max-[560px]:min-w-[66px] ${active ? "bg-[#7c5cff] text-white shadow-none hover:bg-[#5b3fcc] focus-visible:bg-[#5b3fcc]" : "bg-transparent text-[rgba(245,244,241,0.74)] hover:text-[rgba(245,244,241,0.92)]"}`
