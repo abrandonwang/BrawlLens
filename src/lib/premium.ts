@@ -14,6 +14,10 @@ export interface PremiumUser {
   accountSetup?: {
     playerTag?: string
     playerName?: string | null
+    club?: { tag: string; name: string } | null
+    trophies?: number | null
+    highestTrophies?: number | null
+    expLevel?: number | null
     region?: string
     goals?: string[]
     completedAt?: string

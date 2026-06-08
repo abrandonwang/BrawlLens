@@ -6,6 +6,7 @@ import TopLoader from "../components/TopLoader";
 import PageTransition from "../components/PageTransition";
 import PageNav from "../components/PageNav";
 import ScrollToTop from "../components/ScrollToTop";
+import SiteBackdrop from "../components/SiteBackdrop";
 import { Analytics } from "@vercel/analytics/next";
 
 export const metadata: Metadata = {
@@ -39,6 +40,7 @@ export default function RootLayout({
         suppressHydrationWarning
         className="flex min-h-dvh flex-col overflow-x-hidden overflow-y-auto"
       >
+        <SiteBackdrop />
         <TopLoader />
         <ScrollToTop />
         <PageTransition />

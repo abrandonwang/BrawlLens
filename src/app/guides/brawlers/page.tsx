@@ -2,7 +2,16 @@ export const revalidate = 300
 
 import type { Metadata } from "next"
 import Link from "next/link"
-import { BrawlerGuideRow, GuideHero, GuideMetric, GuideSection, GuideShell, formatNumber, formatPercent } from "../GuideContent"
+import {
+  BrawlerGuideRow,
+  GuideHero,
+  GuideMetric,
+  GuideSection,
+  GuideShell,
+  formatBrawlerName,
+  formatNumber,
+  formatPercent,
+} from "../GuideContent"
 import { fetchGuideDataset } from "@/lib/guideData"
 
 export const metadata: Metadata = {
@@ -24,43 +33,71 @@ export default async function BrawlerGuidePage() {
   return (
     <GuideShell>
       <GuideHero
-        title="Brawler Guide"
-        description="A compact wiki view of the brawler dataset: score, role, sample size, and best map context."
+        breadcrumb={[
+          { label: "Documentation", href: "/guides" },
+          { label: "Brawlers" },
+        ]}
+        title="Brawler wiki"
+        description={(
+          <p>
+            A compact wiki view of the brawler dataset: score, role, sample size, and best-map context. Each row links
+            into the full brawler page, where you can compare against the live{" "}
+            <Link href="/brawlers">brawler tierlist</Link>.
+          </p>
+        )}
         meta={(
           <>
-            <GuideMetric label="Brawlers ranked" value={formatNumber(data.brawlers.length)} help="Brawlers with enough tracked picks to enter the guide dataset." />
-            <GuideMetric label="Top win rate" value={ranked[0] ? formatPercent(ranked[0].winRate) : "-"} help="The win rate of the current highest guide-score brawler." />
-            <GuideMetric label="Tracked picks" value={formatNumber(data.totalPicks)} help="Total brawler pick rows represented in this guide." />
+            <GuideMetric label="Brawlers" value={formatNumber(data.brawlers.length)} />
+            <GuideMetric label="Top win rate" value={ranked[0] ? formatPercent(ranked[0].winRate) : "-"} />
+            <GuideMetric label="Tracked picks" value={formatNumber(data.totalPicks)} />
           </>
         )}
       />
 
-      <div className="bl-guide-grid">
-        <GuideSection title="Brawler Wiki Rankings" help="Guide score is not just raw win rate. It blends win rate, volume, and consistency to avoid overrating tiny samples.">
-          <div className="bl-guide-list">
-            {ranked.map((brawler, index) => (
-              <BrawlerGuideRow
-                key={brawler.id}
-                brawler={brawler}
-                rank={index + 1}
-                label={brawler.bestMap ? `${brawler.role} · best on ${brawler.bestMap.name}` : `${brawler.role} · ${brawler.rarity}`}
-              />
-            ))}
-          </div>
-        </GuideSection>
+      <GuideSection
+        title="Rankings"
+        help={(
+          <>
+            Guide score blends win rate, volume, and consistency so tiny samples do not lead. Open the{" "}
+            <Link href="/guides/progression">progression guide</Link> for upgrade order.
+          </>
+        )}
+      >
+        <div className="bl-doc-list">
+          {ranked.map((brawler, index) => (
+            <BrawlerGuideRow
+              key={brawler.id}
+              brawler={brawler}
+              rank={index + 1}
+              label={brawler.bestMap ? `${brawler.role.toLowerCase()} · best on ${brawler.bestMap.name.toLowerCase()}` : `${brawler.role.toLowerCase()} · ${brawler.rarity.toLowerCase()}`}
+            />
+          ))}
+        </div>
+      </GuideSection>
 
-        <GuideSection title="Best By Role" help="This is useful when you need a role fit rather than a single overall best brawler.">
-          <div className="bl-guide-note-list">
-            {bestByRole.map(([role, brawler], index) => (
-              <Link key={role} href={`/brawlers/${brawler.id}`}>
-                <span className="bl-guide-rank">{index + 1}</span>
+      <GuideSection
+        title="Best by role"
+        help={(
+          <>
+            Useful when you need a role fit, not a single overall best brawler. For deeper comparisons, drop the role
+            into <Link href="/ask">Ask AI</Link>.
+          </>
+        )}
+      >
+        <div className="bl-doc-list">
+          {bestByRole.map(([role, brawler], index) => (
+            <Link key={role} href={`/brawlers/${brawler.id}`} className="bl-doc-row">
+              <span className="bl-doc-row-rank">{(index + 1).toString().padStart(2, "0")}</span>
+              <span className="bl-doc-row-main">
                 <strong>{role}</strong>
-                <span>{brawler.name} · {formatPercent(brawler.winRate)} · {formatNumber(brawler.picks)} games</span>
-              </Link>
-            ))}
-          </div>
-        </GuideSection>
-      </div>
+                <span>{formatBrawlerName(brawler.name)}</span>
+              </span>
+              <span className="bl-doc-row-meta">{formatPercent(brawler.winRate)}</span>
+              <span className="bl-doc-row-muted">{formatNumber(brawler.picks)} games</span>
+            </Link>
+          ))}
+        </div>
+      </GuideSection>
     </GuideShell>
   )
 }

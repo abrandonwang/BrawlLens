@@ -108,7 +108,7 @@ export default function PageNav() {
     setBack(next)
   }, [pathname])
 
-  if (HIDDEN_PATHS.has(pathname) || pathname.startsWith("/account")) return null
+  if (HIDDEN_PATHS.has(pathname) || pathname.startsWith("/account") || pathname.startsWith("/guides")) return null
 
   const ringIdx = ringIndexForPath(pathname)
   const nextEntry = ringIdx >= 0

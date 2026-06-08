@@ -81,9 +81,24 @@ function metadataSetup(metadata: Metadata): PremiumUser["accountSetup"] {
   const value = metadata.brawllens_setup
   if (typeof value !== "object" || value === null || Array.isArray(value)) return null
   const setup = value as Metadata
+  const clubValue = setup.club
+  let club: { tag: string; name: string } | null = null
+  if (typeof clubValue === "object" && clubValue !== null && !Array.isArray(clubValue)) {
+    const clubObj = clubValue as Metadata
+    if (typeof clubObj.tag === "string" && clubObj.tag) {
+      club = {
+        tag: clubObj.tag,
+        name: typeof clubObj.name === "string" ? clubObj.name : "",
+      }
+    }
+  }
   return {
     playerTag: typeof setup.playerTag === "string" ? setup.playerTag : undefined,
     playerName: typeof setup.playerName === "string" ? setup.playerName : null,
+    club,
+    trophies: typeof setup.trophies === "number" ? setup.trophies : null,
+    highestTrophies: typeof setup.highestTrophies === "number" ? setup.highestTrophies : null,
+    expLevel: typeof setup.expLevel === "number" ? setup.expLevel : null,
     region: typeof setup.region === "string" ? setup.region : undefined,
     goals: Array.isArray(setup.goals) ? setup.goals.filter((entry): entry is string => typeof entry === "string") : undefined,
     completedAt: typeof setup.completedAt === "string" ? setup.completedAt : undefined,

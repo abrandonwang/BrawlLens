@@ -29,7 +29,6 @@ const leaderboardItems: NavPanelItem[] = [
   { label: "Player rankings", href: "/leaderboards/players", description: "Top player trophies" },
   { label: "Club rankings", href: "/leaderboards/clubs", description: "Top club trophies" },
   { label: "Brawler rankings", href: "/leaderboards/brawlers", description: "Brawler trophy ranks" },
-  { label: "Pro teams", href: "/leaderboards/pro", description: "Competitive rosters" },
 ];
 
 const accountNavItems: NavPanelItem[] = [
@@ -58,7 +57,6 @@ const mobileMenuGroups: Array<{
       { label: "Players", href: "/leaderboards/players" },
       { label: "Clubs", href: "/leaderboards/clubs" },
       { label: "Brawler ranks", href: "/leaderboards/brawlers" },
-      { label: "Pro teams", href: "/leaderboards/pro" },
     ],
   },
   {
@@ -116,7 +114,7 @@ function authRuleDotClass(status: EmailCheckStatus | "passed") {
 const authActionBaseClass =
   "inline-flex h-11 w-full cursor-pointer items-center justify-center rounded-[10px] text-[13px] font-[720] outline-none transition-[background-color,border-color,color,opacity] duration-150";
 
-type DesktopPanel = "browse" | "leaderboards" | "account";
+type DesktopPanel = "browse" | "leaderboards";
 type LoginState = "idle" | "sending" | "sent" | "error";
 type AuthMode = "signup" | "login";
 type AccountNavTab = "profile" | "appearance";
@@ -196,7 +194,6 @@ export default function NavBar() {
   const [lastDesktopPanel, setLastDesktopPanel] = useState<DesktopPanel>("browse");
   const [isSignedIn, setIsSignedIn] = useState(false);
   const [accountName, setAccountName] = useState<string | null>(null);
-  const [accountEmail, setAccountEmail] = useState<string | null>(null);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [authMode, setAuthMode] = useState<AuthMode>("signup");
   const [loginEmail, setLoginEmail] = useState("");
@@ -209,14 +206,17 @@ export default function NavBar() {
   const [isNavHidden, setIsNavHidden] = useState(false);
   const previousPathnameRef = useRef(pathname);
   const desktopNavRef = useRef<HTMLDivElement>(null);
+  const navWrapperRef = useRef<HTMLElement>(null);
+  const browseTriggerRef = useRef<HTMLDivElement>(null);
+  const leaderboardsTriggerRef = useRef<HTMLDivElement>(null);
   const menuCloseTimerRef = useRef<number | null>(null);
   const desktopHoverTimerRef = useRef<number | null>(null);
   const loginInputRef = useRef<HTMLInputElement>(null);
+  const [triggerOffsets, setTriggerOffsets] = useState<{ browse: number; leaderboards: number }>({ browse: 0, leaderboards: 0 });
   const bodyScrollLocked = isMenuOpen || menuClosing || isLoginOpen;
 
   const applyAccountUser = useCallback((user: PremiumUser | null) => {
     setIsSignedIn(Boolean(user));
-    setAccountEmail(user?.email ?? null);
     const resolvedName = user?.accountSetup?.playerName
       ?? user?.displayName
       ?? (user?.accountSetup?.playerTag ? `#${user.accountSetup.playerTag}` : null);
@@ -488,9 +488,37 @@ export default function NavBar() {
     }
   }
 
+  function scheduleDesktopClose() {
+    clearDesktopHoverTimer();
+    desktopHoverTimerRef.current = window.setTimeout(() => {
+      setHoverDesktopPanel(null);
+      setDesktopPanel(null);
+      setSuppressedDesktopPanel(null);
+      desktopHoverTimerRef.current = null;
+    }, 180);
+  }
+
+  const measureTriggers = useCallback(() => {
+    const navRect = navWrapperRef.current?.getBoundingClientRect();
+    const browseRect = browseTriggerRef.current?.getBoundingClientRect();
+    const lbRect = leaderboardsTriggerRef.current?.getBoundingClientRect();
+    if (!navRect || !browseRect || !lbRect) return;
+    setTriggerOffsets({
+      browse: browseRect.left - navRect.left,
+      leaderboards: lbRect.left - navRect.left,
+    });
+  }, []);
+
+  useEffect(() => {
+    measureTriggers();
+    window.addEventListener("resize", measureTriggers);
+    return () => window.removeEventListener("resize", measureTriggers);
+  }, [measureTriggers, pathname]);
+
   function openHoverDesktopPanel(panel: DesktopPanel) {
     if (suppressedDesktopPanel === panel) return;
     clearDesktopHoverTimer();
+    measureTriggers();
     setHoverDesktopPanel(panel);
   }
 
@@ -599,7 +627,6 @@ export default function NavBar() {
   function signOut() {
     setIsSignedIn(false);
     setAccountName(null);
-    setAccountEmail(null);
     clearAuthSession();
     clearServerSession().finally(() => {
       router.replace("/");
@@ -612,13 +639,8 @@ export default function NavBar() {
   const isPlayerRoute = pathname.startsWith("/player/");
   const isTierlistRoute = pathname === "/brawlers" || pathname.startsWith("/brawlers/") || pathname === "/meta" || pathname.startsWith("/meta/");
   const browseActive = browseItems.some(item => item.href && isDesktopItemActive(pathname, item.href));
-  const leaderboardsActive = isPlayerRoute || leaderboardItems.some(item => item.href && isDesktopItemActive(pathname, item.href));
+  const leaderboardsActive = isPlayerRoute || isLeaderboardsRoute;
   const accountActive = pathname.startsWith("/account");
-  const accountDesktopItems = accountNavItems.map(item =>
-    item.href === "/account?tab=profile" && accountEmail
-      ? { ...item, description: accountEmail }
-      : item
-  );
   const loginEmailCheck = useEmailCheck(loginEmail, isLoginOpen && authMode === "signup");
   const loginEmailFormatValid = isEmailFormatValid(loginEmail);
   const loginEmailReady = authMode === "signup" ? loginEmailCheck.isValid : loginEmailFormatValid;
@@ -642,13 +664,42 @@ export default function NavBar() {
   const menuVisible = isMenuOpen || menuClosing;
   const visibleDesktopPanel = hoverDesktopPanel ?? desktopPanel;
   const renderedDesktopPanel = visibleDesktopPanel ?? lastDesktopPanel;
-  const desktopPanelContent = renderedDesktopPanel === "leaderboards"
-    ? { items: leaderboardItems }
-    : renderedDesktopPanel === "account"
-      ? { items: accountDesktopItems }
-      : { items: browseItems };
-  const navTextClass = (active: boolean) =>
-    `relative inline-flex h-[36px] items-center rounded-full border-0 px-3 text-[13px] font-semibold leading-none tracking-normal no-underline outline-none transition-colors duration-150 text-[rgba(250,250,248,0.90)] hover:text-[#ffffff] hover:bg-[rgba(245,244,241,0.07)] focus-visible:text-[#ffffff] ${active ? "text-[#ffffff] bg-[rgba(124,92,255,0.16)]" : ""}`;
+  const desktopPanelOffset = renderedDesktopPanel === "leaderboards" ? 50 : 0;
+  const navTextClass = (active: boolean, isOpenTrigger = false) =>
+    `relative inline-flex h-[36px] items-center rounded-full border-0 px-3 text-[13px] font-semibold leading-none tracking-normal no-underline outline-none transition-colors duration-150 text-[rgba(250,250,248,0.90)] hover:text-[#ffffff] hover:bg-[rgba(245,244,241,0.07)] focus-visible:text-[#ffffff] ${active ? "text-[#ffffff] bg-[rgba(124,92,255,0.16)]" : ""} ${isOpenTrigger && !active ? "text-[#ffffff] bg-[rgba(124,92,255,0.14)]" : ""}`;
+
+  function renderDesktopPanelItems(items: NavPanelItem[]) {
+    return items.map(item => {
+      if (!item.href || item.disabled) {
+        return (
+          <div
+            key={item.label}
+            aria-disabled="true"
+            className="rounded-[10px] px-2.5 py-2 opacity-60"
+          >
+            <p className="m-0 text-[13.5px] font-semibold leading-tight text-[rgba(245,244,241,0.72)]">{item.label}</p>
+            <p className="mt-0.5 mb-0 text-[11.5px] leading-snug text-[rgba(245,244,241,0.56)]">{item.description}</p>
+          </div>
+        );
+      }
+
+      const active = isRouteActive(pathname, item.href);
+      return (
+        <Link
+          key={item.href}
+          href={item.href}
+          onClick={() => {
+            setDesktopPanel(null);
+            setHoverDesktopPanel(null);
+          }}
+          className={`group block rounded-[10px] px-2.5 py-[9px] text-inherit no-underline transition-colors duration-150 ${active ? "bg-[rgba(124,92,255,0.14)]" : "hover:bg-[rgba(245,244,241,0.05)]"}`}
+        >
+          <p className={`m-0 text-[13.5px] font-semibold leading-tight ${active ? "text-[#a78bff]" : "text-[#f5f4f1]"}`}>{item.label}</p>
+          <p className="mt-0.5 mb-0 text-[11.5px] leading-snug text-[rgba(245,244,241,0.56)]">{item.description}</p>
+        </Link>
+      );
+    });
+  }
 
   function isAccountNavItemActive(href: string) {
     if (!href.startsWith("/account")) return isRouteActive(pathname, href);
@@ -675,13 +726,11 @@ export default function NavBar() {
   return (
     <>
       <nav
+        ref={navWrapperRef}
         data-nav-hidden={isNavHidden ? "true" : undefined}
         className="bl-nav-scroll-hide fixed left-1/2 top-4 z-[500] isolate w-[70vw] max-w-[1200px] -translate-x-1/2 overflow-visible rounded-[18px] border border-[rgba(218,232,255,0.16)] bg-[rgba(25,29,39,0.88)] text-[#f5f4f1] [box-shadow:inset_0_1px_0_rgba(255,255,255,0.075),inset_0_-1px_0_rgba(148,172,220,0.05),0_18px_46px_-34px_rgba(0,0,0,0.90)] backdrop-blur-md backdrop-saturate-125 [font-family:var(--font-ui)] max-lg:w-[calc(100%-20px)]"
-        onMouseLeave={() => {
-          setHoverDesktopPanel(null);
-          setDesktopPanel(null);
-          setSuppressedDesktopPanel(null);
-        }}
+        onMouseEnter={clearDesktopHoverTimer}
+        onMouseLeave={scheduleDesktopClose}
       >
         <span aria-hidden="true" className="pointer-events-none absolute inset-0 z-0 rounded-[inherit] bg-[linear-gradient(180deg,rgba(35,40,53,0.92),rgba(18,22,31,0.94))]" />
         <div className="relative z-10 flex h-[60px] items-center px-5 max-lg:px-4">
@@ -691,6 +740,7 @@ export default function NavBar() {
 
         <div ref={desktopNavRef} className="relative z-10 ml-10 hidden h-full min-w-0 items-center gap-1 lg:flex">
           <div
+            ref={browseTriggerRef}
             className="group/nav-popover nav-popover relative"
             data-open={visibleDesktopPanel === "browse" ? "true" : undefined}
             onPointerEnter={() => openHoverDesktopPanel("browse")}
@@ -700,13 +750,14 @@ export default function NavBar() {
               href="/brawlers"
               onFocus={() => openHoverDesktopPanel("browse")}
               onClick={() => { setDesktopPanel(null); setHoverDesktopPanel(null); }}
-              className={`${navTextClass(browseActive)} cursor-pointer gap-1.5`}
+              className={`${navTextClass(browseActive, visibleDesktopPanel === "browse")} cursor-pointer gap-1.5`}
             >
               Tierlist &amp; Brawlers
               <ChevronDown size={13} strokeWidth={2.25} className={`ml-0.5 text-[rgba(250,250,248,0.86)] transition-transform duration-[340ms] ease-[cubic-bezier(0.16,1,0.3,1)] will-change-transform ${visibleDesktopPanel === "browse" ? "rotate-180" : "rotate-0"}`} />
             </Link>
           </div>
           <div
+            ref={leaderboardsTriggerRef}
             className="group/nav-popover nav-popover relative"
             data-open={visibleDesktopPanel === "leaderboards" ? "true" : undefined}
             onPointerEnter={() => openHoverDesktopPanel("leaderboards")}
@@ -716,7 +767,7 @@ export default function NavBar() {
               href="/leaderboards/players"
               onFocus={() => openHoverDesktopPanel("leaderboards")}
               onClick={() => { setDesktopPanel(null); setHoverDesktopPanel(null); }}
-              className={`${navTextClass(leaderboardsActive)} cursor-pointer gap-1.5`}
+              className={`${navTextClass(leaderboardsActive, visibleDesktopPanel === "leaderboards")} cursor-pointer gap-1.5`}
             >
               Leaderboards
               <ChevronDown size={13} strokeWidth={2.25} className={`ml-0.5 text-[rgba(250,250,248,0.86)] transition-transform duration-[340ms] ease-[cubic-bezier(0.16,1,0.3,1)] will-change-transform ${visibleDesktopPanel === "leaderboards" ? "rotate-180" : "rotate-0"}`} />
@@ -779,46 +830,34 @@ export default function NavBar() {
         </button>
         </div>
         <div
-          className={`hidden overflow-hidden transition-[max-height,opacity,transform] duration-[640ms] ease-[cubic-bezier(0.16,1,0.3,1)] lg:block ${visibleDesktopPanel ? "max-h-[220px] opacity-100 translate-y-0" : "max-h-0 opacity-0 -translate-y-2"}`}
+          className={`pointer-events-none absolute left-0 top-full z-10 hidden pt-1.5 lg:block [transition:opacity_200ms_ease,transform_260ms_cubic-bezier(0.16,1,0.3,1)] ${visibleDesktopPanel ? "translate-y-0 opacity-100" : "-translate-y-1 opacity-0"}`}
+          style={{ paddingLeft: `${Math.max(8, triggerOffsets.browse)}px` }}
+          aria-hidden={!visibleDesktopPanel}
+          onMouseEnter={() => {
+            clearDesktopHoverTimer();
+            openHoverDesktopPanel(renderedDesktopPanel);
+          }}
+          onMouseLeave={scheduleDesktopClose}
         >
-          <div className="px-5 pb-4 pt-1">
-            <div
-              className="grid gap-4 px-0"
-              style={{ gridTemplateColumns: renderedDesktopPanel === "account" ? "repeat(2, minmax(0, 1fr))" : "repeat(3, minmax(0, 1fr))" }}
-            >
-              {desktopPanelContent.items.map(item => {
-                if (!item.href || item.disabled) {
-                  return (
-                    <div
-                      key={item.label}
-                      aria-disabled="true"
-                      className="rounded-[12px] px-3 py-2 opacity-60"
-                    >
-                      <p className="m-0 text-[14px] font-semibold leading-tight text-[rgba(245,244,241,0.72)]">{item.label}</p>
-                      <p className="mt-1 mb-0 text-[12px] leading-snug text-[rgba(245,244,241,0.68)]">{item.description}</p>
-                    </div>
-                  );
-                }
-                const active = item.href
-                  ? renderedDesktopPanel === "account"
-                    ? isAccountNavItemActive(item.href)
-                    : isRouteActive(pathname, item.href)
-                  : false;
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => {
-                      setDesktopPanel(null);
-                      setHoverDesktopPanel(null);
-                    }}
-                    className={`group block rounded-[12px] px-3 py-2 text-inherit no-underline transition-colors duration-150 ${active ? "bg-[rgba(124,92,255,0.10)]" : "hover:bg-[rgba(245,244,241,0.04)]"}`}
-                  >
-                    <p className={`m-0 text-[14px] font-semibold leading-tight ${active ? "text-[#a78bff]" : "text-[#f5f4f1]"}`}>{item.label}</p>
-                    <p className="mt-1 mb-0 text-[12px] leading-snug text-[rgba(245,244,241,0.74)]">{item.description}</p>
-                  </Link>
-                );
-              })}
+          <div
+            className={`w-[296px] overflow-hidden rounded-[14px] border border-[rgba(245,244,241,0.10)] bg-[rgba(17,19,26,0.98)] [box-shadow:inset_0_1px_0_rgba(255,255,255,0.045),0_18px_44px_-26px_rgba(0,0,0,0.85)] ${visibleDesktopPanel ? "pointer-events-auto" : ""}`}
+          >
+            <div className="overflow-hidden p-1">
+              <div
+                className="nav-panel-track"
+                style={{ transform: `translateX(-${desktopPanelOffset}%)` }}
+              >
+                <div className="nav-panel-page">
+                  <div className="grid gap-px">
+                    {renderDesktopPanelItems(browseItems)}
+                  </div>
+                </div>
+                <div className="nav-panel-page">
+                  <div className="grid gap-px">
+                    {renderDesktopPanelItems(leaderboardItems)}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

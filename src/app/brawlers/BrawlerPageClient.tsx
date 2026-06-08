@@ -726,8 +726,8 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
                   <span>Brawler</span>
                   <span>Tier</span>
                   <span>Meta score</span>
-                  <span>Winrate</span>
-                  <span>Pickrate</span>
+                  <span>Win rate</span>
+                  <span>Pick rate</span>
                   <span>Best map</span>
                   <span>Sample</span>
                 </div>

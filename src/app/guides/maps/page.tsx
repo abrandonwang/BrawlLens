@@ -1,6 +1,7 @@
 export const revalidate = 300
 
 import type { Metadata } from "next"
+import Link from "next/link"
 import { GuideHero, GuideMetric, GuideSection, GuideShell, MapGuideRow, formatNumber } from "../GuideContent"
 import { fetchGuideDataset } from "@/lib/guideData"
 
@@ -25,38 +26,66 @@ export default async function MapGuidePage() {
   return (
     <GuideShell>
       <GuideHero
-        title="Map Guide"
-        description="A wiki-style map index using BrawlLens battle volume. Open a map to inspect brawler matchup rows."
+        breadcrumb={[
+          { label: "Documentation", href: "/guides" },
+          { label: "Maps" },
+        ]}
+        title="Map wiki"
+        description={(
+          <p>
+            A wiki-style map index using BrawlLens battle volume. Open a map to inspect brawler matchup rows, or
+            cross-reference with the live <Link href="/meta">map tierlist</Link> and{" "}
+            <Link href="/brawlers">brawler tierlist</Link>.
+          </p>
+        )}
         meta={(
           <>
-            <GuideMetric label="Maps tracked" value={formatNumber(data.maps.length)} help="Maps with current tracked battle rows in BrawlLens." />
-            <GuideMetric label="Battles analyzed" value={formatNumber(data.totalBattles)} help="Summed battle counts across visible map rows." />
-            <GuideMetric label="Modes" value={formatNumber(modeCounts.length)} help="Distinct mode labels represented by the current map dataset." />
+            <GuideMetric label="Maps tracked" value={formatNumber(data.maps.length)} />
+            <GuideMetric label="Battles" value={formatNumber(data.totalBattles)} />
+            <GuideMetric label="Modes" value={formatNumber(modeCounts.length)} />
           </>
         )}
       />
 
-      <div className="bl-guide-grid">
-        <GuideSection title="Map Wiki Rankings" help="High-volume maps have the most evidence behind their matchup tables.">
-          <div className="bl-guide-list">
-            {topMaps.map((map, index) => (
-              <MapGuideRow key={`${map.mode}-${map.name}`} map={map} rank={index + 1} />
-            ))}
-          </div>
-        </GuideSection>
+      <GuideSection
+        title="Rankings"
+        help={(
+          <>
+            High-volume maps have the most evidence behind their matchup tables. For brawler-side reads, jump to the{" "}
+            <Link href="/guides/brawlers">brawler wiki</Link>.
+          </>
+        )}
+      >
+        <div className="bl-doc-list">
+          {topMaps.map((map, index) => (
+            <MapGuideRow key={`${map.mode}-${map.name}`} map={map} rank={index + 1} />
+          ))}
+        </div>
+      </GuideSection>
 
-        <GuideSection title="Mode Coverage" help="Mode coverage shows where BrawlLens currently has the most tracked battle evidence.">
-          <div className="bl-guide-note-list">
-            {modeCounts.map(([mode, info], index) => (
-              <div key={mode}>
-                <span className="bl-guide-rank">{index + 1}</span>
+      <GuideSection
+        title="Mode coverage"
+        help={(
+          <>
+            Where BrawlLens currently has the most tracked battle evidence. Use the{" "}
+            <Link href="/meta">map tierlist</Link> to drill into specific modes.
+          </>
+        )}
+      >
+        <div className="bl-doc-list">
+          {modeCounts.map(([mode, info], index) => (
+            <div key={mode} className="bl-doc-row">
+              <span className="bl-doc-row-rank">{(index + 1).toString().padStart(2, "0")}</span>
+              <span className="bl-doc-row-main">
                 <strong>{mode}</strong>
-                <span>{formatNumber(info.battles)} battles · {formatNumber(info.count)} maps</span>
-              </div>
-            ))}
-          </div>
-        </GuideSection>
-      </div>
+                <span>{formatNumber(info.count)} maps</span>
+              </span>
+              <span className="bl-doc-row-meta">{formatNumber(info.battles)}</span>
+              <span className="bl-doc-row-muted">battles</span>
+            </div>
+          ))}
+        </div>
+      </GuideSection>
     </GuideShell>
   )
 }

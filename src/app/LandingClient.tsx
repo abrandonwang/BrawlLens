@@ -185,7 +185,7 @@ function clampLandingCarouselIndex(index: number) {
 const landingShellClass =
   "app-landing-shell relative isolate flex min-h-[calc(100dvh-60px)] flex-1 flex-col overflow-hidden bg-[#05060a] p-0 text-[var(--bt-text)]"
 const landingStageClass =
-  "relative z-[1] mx-auto grid min-h-[calc(100dvh-160px)] w-[min(1000px,calc(100vw_-_40px))] shrink-0 content-center justify-items-center pb-[clamp(46px,8vh,96px)] pt-[clamp(56px,10vh,120px)] [transform:translateY(clamp(-170px,-14vh,-112px))] max-[640px]:min-h-[calc(100dvh-132px)] max-[640px]:w-[min(calc(100%_-_24px),680px)] max-[640px]:pb-12 max-[640px]:pt-[54px] max-[640px]:[transform:translateY(-68px)] max-[900px]:w-[min(calc(100%_-_24px),680px)]"
+  "relative z-[1] mx-auto grid min-h-[calc(100dvh-160px)] w-[min(1000px,calc(100vw_-_40px))] shrink-0 content-center justify-items-center pb-[clamp(46px,8vh,96px)] pt-[clamp(56px,10vh,120px)] [margin-top:clamp(-170px,-14vh,-112px)] max-[640px]:min-h-[calc(100dvh-132px)] max-[640px]:w-[min(calc(100%_-_24px),680px)] max-[640px]:pb-12 max-[640px]:pt-[54px] max-[640px]:[margin-top:-68px] max-[900px]:w-[min(calc(100%_-_24px),680px)]"
 const landingBrandWrapClass = "flex w-full justify-center"
 const landingTextLogoClass =
   "relative m-0 block bg-[linear-gradient(180deg,#ffffff_0%,#f2f8ff_48%,#9fcfff_100%)] bg-clip-text text-center font-[900] leading-[0.98] tracking-normal text-[#f5f9ff] [filter:drop-shadow(0_8px_18px_rgba(0,0,0,0.34))] [font-family:var(--font-ui)] [text-shadow:0_1px_0_rgba(255,255,255,0.22)] [-webkit-background-clip:text] [-webkit-text-fill-color:transparent] [-webkit-text-stroke:0] text-[clamp(42px,4.8vw,78px)] max-[640px]:text-[clamp(38px,11.5vw,56px)]"

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { getRequestUser } from "@/lib/auth"
+import { fetchPlayerResponse } from "@/lib/playerLookup"
 import { sanitizePlayerTag } from "@/lib/validation"
 
 export const runtime = "nodejs"
@@ -17,6 +18,48 @@ function stringArray(value: unknown) {
   return value.filter((item): item is string => typeof item === "string" && item.trim().length > 0).slice(0, 8)
 }
 
+type PlayerProfileEnrichment = {
+  playerName: string | null
+  club: { tag: string; name: string } | null
+  trophies: number | null
+  highestTrophies: number | null
+  expLevel: number | null
+}
+
+async function enrichFromBrawlApi(playerTag: string): Promise<PlayerProfileEnrichment> {
+  const fallback: PlayerProfileEnrichment = {
+    playerName: null,
+    club: null,
+    trophies: null,
+    highestTrophies: null,
+    expLevel: null,
+  }
+  try {
+    const response = await fetchPlayerResponse(playerTag, { cache: "no-store" })
+    if (!response.ok) return fallback
+    const data = (await response.json().catch(() => null)) as Record<string, unknown> | null
+    if (!data) return fallback
+
+    const name = typeof data.name === "string" ? data.name.trim().slice(0, 80) : null
+    const trophies = typeof data.trophies === "number" ? data.trophies : null
+    const highestTrophies = typeof data.highestTrophies === "number" ? data.highestTrophies : null
+    const expLevel = typeof data.expLevel === "number" ? data.expLevel : null
+
+    let club: { tag: string; name: string } | null = null
+    const clubRaw = data.club as Record<string, unknown> | null | undefined
+    if (clubRaw && typeof clubRaw.tag === "string" && clubRaw.tag) {
+      club = {
+        tag: clubRaw.tag.replace(/^#/, ""),
+        name: typeof clubRaw.name === "string" ? clubRaw.name.slice(0, 80) : "",
+      }
+    }
+
+    return { playerName: name, club, trophies, highestTrophies, expLevel }
+  } catch {
+    return fallback
+  }
+}
+
 export async function POST(request: Request) {
   const user = await getRequestUser(request)
   if (!user) {
@@ -29,13 +72,21 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "invalid_player_tag" }, { status: 400 })
   }
 
-  const playerName = typeof body?.playerName === "string" && body.playerName.trim()
+  const enrichment = await enrichFromBrawlApi(playerTag)
+
+  const fallbackName = typeof body?.playerName === "string" && body.playerName.trim()
     ? body.playerName.trim().slice(0, 80)
     : null
+  const playerName = enrichment.playerName ?? fallbackName
   const displayName = playerName ?? `#${playerTag}`
+
   const setup = {
     playerTag,
     playerName,
+    club: enrichment.club,
+    trophies: enrichment.trophies,
+    highestTrophies: enrichment.highestTrophies,
+    expLevel: enrichment.expLevel,
     region: typeof body?.region === "string" && body.region.trim() ? body.region.trim().slice(0, 32) : "Global",
     goals: stringArray(body?.goals),
     completedAt: new Date().toISOString(),

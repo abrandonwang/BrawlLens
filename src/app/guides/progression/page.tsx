@@ -2,7 +2,16 @@ export const revalidate = 300
 
 import type { Metadata } from "next"
 import Link from "next/link"
-import { BrawlerGuideRow, GuideHero, GuideMetric, GuideSection, GuideShell, formatNumber, formatPercent } from "../GuideContent"
+import {
+  BrawlerGuideRow,
+  GuideHero,
+  GuideMetric,
+  GuideSection,
+  GuideShell,
+  formatBrawlerName,
+  formatNumber,
+  formatPercent,
+} from "../GuideContent"
 import { fetchGuideDataset } from "@/lib/guideData"
 
 export const metadata: Metadata = {
@@ -32,63 +41,113 @@ export default async function ProgressionGuidePage() {
   return (
     <GuideShell>
       <GuideHero
-        title="Progression Guide"
-        description="Use this as a first upgrade pass: prioritize brawlers with strong current results, broad map coverage, and enough games to trust."
+        breadcrumb={[
+          { label: "Documentation", href: "/guides" },
+          { label: "Progression" },
+        ]}
+        title="Progression guide"
+        description={(
+          <p>
+            A first-pass upgrade list: prioritize brawlers with strong current results, broad map coverage, and enough
+            games to trust. Pair this with the live <Link href="/brawlers">brawler tierlist</Link> and your{" "}
+            <Link href="/account">profile</Link> for personal recommendations.
+          </p>
+        )}
         meta={(
           <>
-            <GuideMetric label="Upgrade formula" value="Score + coverage" help="The priority list blends guide score, consistency, and qualifying map coverage." />
-            <GuideMetric label="Minimum sample" value="1,000 games" help="Upgrade recommendations ignore very tiny tracked samples." />
-            <GuideMetric label="Data pool" value={formatNumber(data.totalPicks)} help="Total tracked brawler pick rows considered for this guide." />
+            <GuideMetric label="Formula" value="Score + coverage" />
+            <GuideMetric label="Min sample" value="1,000 games" />
+            <GuideMetric label="Data pool" value={formatNumber(data.totalPicks)} />
           </>
         )}
       />
 
-      <div className="bl-guide-grid">
-        <GuideSection title="Upgrade First" help="Best default upgrades from the current dataset. These are broad picks, not only single-map spikes.">
-          <div className="bl-guide-list">
-            {upgradeFirst.map((brawler, index) => (
-              <BrawlerGuideRow
-                key={brawler.id}
-                brawler={brawler}
-                rank={index + 1}
-                label={`${brawler.role} · ${formatPercent(brawler.consistency)} consistency · ${brawler.mapCoverage} maps`}
-              />
-            ))}
-          </div>
-        </GuideSection>
+      <GuideSection
+        title="Upgrade first"
+        help={(
+          <>
+            Default upgrades from the current dataset. Broad picks, not single-map spikes. Cross-reference with the{" "}
+            <Link href="/brawlers">brawler tierlist</Link> if you want raw ranking.
+          </>
+        )}
+      >
+        <div className="bl-doc-list">
+          {upgradeFirst.map((brawler, index) => (
+            <BrawlerGuideRow
+              key={brawler.id}
+              brawler={brawler}
+              rank={index + 1}
+              label={`${formatPercent(brawler.consistency)} consistency · ${brawler.mapCoverage} maps`}
+            />
+          ))}
+        </div>
+      </GuideSection>
 
-        <GuideSection title="Specialist Upgrades" help="These are more map-dependent. Upgrade them when you actively play their strongest maps or modes.">
-          <div className="bl-guide-note-list">
-            {specialists.map((brawler, index) => (
-              <Link key={brawler.id} href={`/brawlers/${brawler.id}`}>
-                <span className="bl-guide-rank">{index + 1}</span>
-                <strong>{brawler.name}</strong>
-                <span>{brawler.bestMap ? `${brawler.bestMap.name} · ${formatPercent(brawler.bestMap.winRate)} · ${formatNumber(brawler.bestMap.picks)} games` : "No map sample"}</span>
-              </Link>
-            ))}
-          </div>
-        </GuideSection>
+      <GuideSection
+        title="Specialist upgrades"
+        help={(
+          <>
+            More map-dependent. Upgrade when you actively play their strongest maps or modes — open any map row in the{" "}
+            <Link href="/meta">map tierlist</Link> to confirm rotation fit.
+          </>
+        )}
+      >
+        <div className="bl-doc-list">
+          {specialists.map((brawler, index) => (
+            <Link key={brawler.id} href={`/brawlers/${brawler.id}`} className="bl-doc-row">
+              <span className="bl-doc-row-rank">{(index + 1).toString().padStart(2, "0")}</span>
+              <span className="bl-doc-row-main">
+                <strong>{formatBrawlerName(brawler.name)}</strong>
+                <span>{brawler.bestMap ? `best on ${brawler.bestMap.name.toLowerCase()}` : "no map sample"}</span>
+              </span>
+              <span className="bl-doc-row-meta">{brawler.bestMap ? formatPercent(brawler.bestMap.winRate) : "-"}</span>
+              <span className="bl-doc-row-muted">{brawler.bestMap ? `${formatNumber(brawler.bestMap.picks)} games` : ""}</span>
+            </Link>
+          ))}
+        </div>
+      </GuideSection>
 
-        <GuideSection title="Upgrade Later" help="These brawlers have enough tracked games but weaker current guide scores, so they are lower priority unless you personally main them.">
-          <div className="bl-guide-note-list">
-            {hold.map((brawler, index) => (
-              <Link key={brawler.id} href={`/brawlers/${brawler.id}`}>
-                <span className="bl-guide-rank">{index + 1}</span>
-                <strong>{brawler.name}</strong>
-                <span>{formatPercent(brawler.winRate)} win rate · {formatNumber(brawler.picks)} games</span>
-              </Link>
-            ))}
-          </div>
-        </GuideSection>
+      <GuideSection
+        title="Upgrade later"
+        help="Tracked enough but weaker current scores. Lower priority unless you main them."
+      >
+        <div className="bl-doc-list">
+          {hold.map((brawler, index) => (
+            <BrawlerGuideRow
+              key={brawler.id}
+              brawler={brawler}
+              rank={index + 1}
+              label={`${formatPercent(brawler.winRate)} win rate`}
+            />
+          ))}
+        </div>
+      </GuideSection>
 
-        <GuideSection title="How To Use It" help="This page is public meta guidance. Player-specific inventory recommendations can layer on later from a searched profile.">
-          <div className="bl-guide-copy">
-            <p>Upgrade broad, stable brawlers first when resources are limited.</p>
-            <p>Pick specialists when your favorite modes or current rotation maps match their best samples.</p>
-            <p>Use lower-priority picks for comfort, quests, or personal mains rather than pure efficiency.</p>
-          </div>
-        </GuideSection>
-      </div>
+      <GuideSection
+        title="How to use it"
+        help={(
+          <>
+            Public meta guidance. Player-specific recommendations layer in once you connect your{" "}
+            <Link href="/account">profile</Link>.
+          </>
+        )}
+      >
+        <div className="bl-doc-prose">
+          <p>
+            Upgrade broad, stable brawlers first when resources are limited. The list above ranks them by score plus
+            coverage so a one-map carry never beats a consistent generalist.
+          </p>
+          <p>
+            Pick specialists when your favorite modes or current rotation maps match their best samples. Use the{" "}
+            <Link href="/meta">map tierlist</Link> to check what is live, then upgrade only the specialists whose top
+            maps you actually play.
+          </p>
+          <p>
+            Use lower-priority picks for comfort, quests, or personal mains rather than pure efficiency. Want a deeper
+            read? Drop the name into <Link href="/ask">Ask AI</Link> for a tailored breakdown.
+          </p>
+        </div>
+      </GuideSection>
     </GuideShell>
   )
 }

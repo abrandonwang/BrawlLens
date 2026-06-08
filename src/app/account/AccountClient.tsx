@@ -190,8 +190,15 @@ export default function AccountClient() {
     )
   }
 
-  const playerName = user.accountSetup?.playerName ?? user.displayName ?? "—"
+  const setup = user.accountSetup
+  const playerName = setup?.playerName ?? user.displayName ?? "—"
   const displayTag = savedTag ? `#${savedTag}` : "—"
+  const club = setup?.club ?? null
+  const trophies = typeof setup?.trophies === "number" ? setup.trophies : null
+  const highestTrophies = typeof setup?.highestTrophies === "number" ? setup.highestTrophies : null
+  const expLevel = typeof setup?.expLevel === "number" ? setup.expLevel : null
+  const hasProfileData = Boolean(setup?.playerName || club || trophies !== null || expLevel !== null)
+  const numberFmt = (value: number) => value.toLocaleString("en-US")
 
   return (
     <main className="bl-acct-shell">
@@ -203,6 +210,47 @@ export default function AccountClient() {
             <span>Sign out</span>
           </button>
         </header>
+
+        {hasProfileData && (
+          <div className="bl-acct-profile">
+            <div className="bl-acct-profile-name">
+              <span className="bl-acct-profile-label">Player</span>
+              <strong>{playerName}</strong>
+              {savedTag && (
+                <Link href={`/player/${savedTag}`} className="bl-acct-profile-tag">
+                  #{savedTag}
+                </Link>
+              )}
+            </div>
+            <div className="bl-acct-profile-stats">
+              {trophies !== null && (
+                <div>
+                  <span className="bl-acct-profile-label">Trophies</span>
+                  <strong>{numberFmt(trophies)}</strong>
+                </div>
+              )}
+              {highestTrophies !== null && (
+                <div>
+                  <span className="bl-acct-profile-label">Highest</span>
+                  <strong>{numberFmt(highestTrophies)}</strong>
+                </div>
+              )}
+              {expLevel !== null && (
+                <div>
+                  <span className="bl-acct-profile-label">Level</span>
+                  <strong>{expLevel}</strong>
+                </div>
+              )}
+            </div>
+            {club && (
+              <div className="bl-acct-profile-club">
+                <span className="bl-acct-profile-label">Club</span>
+                <strong>{club.name || "—"}</strong>
+                <span className="bl-acct-profile-club-tag">#{club.tag}</span>
+              </div>
+            )}
+          </div>
+        )}
 
         <dl className="bl-acct-list">
           <div className="bl-acct-row">
@@ -270,6 +318,15 @@ export default function AccountClient() {
               {editingTag && tagError && <p className="bl-acct-error">{tagError}</p>}
             </dd>
           </div>
+
+          {club && (
+            <div className="bl-acct-row">
+              <dt>Club</dt>
+              <dd>
+                {club.name || "—"} <span className="bl-acct-row-tag">#{club.tag}</span>
+              </dd>
+            </div>
+          )}
 
           <div className="bl-acct-row">
             <dt>Email</dt>
