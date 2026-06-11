@@ -15,7 +15,7 @@ import {
 } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { ArrowUp, X } from "lucide-react"
+import { ArrowUp } from "lucide-react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import type { Components } from "react-markdown"
@@ -219,16 +219,8 @@ const landingSubmitBaseClass =
 // Inside the expanded nested pill the submit sits vertically centered.
 const landingSubmitExpandedClass = "!self-center"
 const landingSubmitActiveClass = "!bg-[var(--bt-blue)] !text-white hover:enabled:!bg-[#6849f4] hover:enabled:[box-shadow:inset_0_1px_0_rgba(255,255,255,0.16),0_10px_24px_-16px_rgba(0,0,0,0.78)]"
-const landingChatHeaderClass =
-  "pointer-events-none absolute left-0 right-0 top-0 z-[3] flex items-center justify-between gap-2 border-b border-white/[0.07] bg-[linear-gradient(180deg,rgba(30,35,47,0.96),rgba(25,30,41,0.82)_70%,rgba(25,30,41,0))] px-[18px] pb-[14px] pt-[12px] max-[640px]:px-[14px] max-[640px]:pb-[12px] max-[640px]:pt-[10px]"
-const landingChatHeaderTitleClass =
-  "inline-flex items-center gap-[8px] text-[11px] font-[700] uppercase tracking-[0.14em] text-[rgba(244,248,255,0.62)] [font-family:var(--font-ui)]"
-const landingChatHeaderDotClass =
-  "inline-block size-[6px] rounded-full bg-[#a78bff] shadow-none"
-const landingChatCloseClass =
-  "pointer-events-auto m-0 grid size-[26px] min-h-[26px] min-w-[26px] cursor-pointer place-items-center rounded-full border border-white/[0.08] bg-white/[0.05] p-0 text-white/60 outline-none transition-[background,border-color,color] duration-150 hover:border-white/[0.18] hover:bg-white/[0.10] hover:text-white"
 const landingChatBodyClass =
-  "relative z-[2] flex min-h-0 flex-1 flex-col gap-[14px] overflow-y-auto p-[56px_20px_10px_20px] scroll-smooth [scrollbar-color:rgba(255,255,255,0.18)_transparent] [scrollbar-width:thin] max-[640px]:gap-[12px] max-[640px]:p-[48px_14px_6px_14px] [&::-webkit-scrollbar]:w-[6px] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[rgba(255,255,255,0.18)] [&::-webkit-scrollbar-track]:bg-transparent"
+  "relative z-[2] flex min-h-0 flex-1 flex-col gap-[14px] overflow-y-auto p-[20px_20px_10px_20px] scroll-smooth [scrollbar-color:rgba(255,255,255,0.18)_transparent] [scrollbar-width:thin] max-[640px]:gap-[12px] max-[640px]:p-[14px_14px_6px_14px] [&::-webkit-scrollbar]:w-[6px] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[rgba(255,255,255,0.18)] [&::-webkit-scrollbar-track]:bg-transparent"
 const landingChatUserBubbleClass =
   "ml-auto max-w-[min(78%,460px)] rounded-[14px_14px_4px_14px] bg-[#7c5cff] px-[13px] py-[8px] text-[13.5px] font-[600] leading-[1.5] text-white [box-shadow:0_10px_22px_-18px_rgba(0,0,0,0.9)] [animation:landingChatMsgIn_380ms_cubic-bezier(0.16,1,0.3,1)_both] max-[640px]:max-w-[88%] max-[640px]:text-[13px]"
 const landingChatAssistantClass =
@@ -617,6 +609,10 @@ export default function LandingClient() {
       event.preventDefault()
       void sendLandingMessage(landingQuery)
     }
+    if (event.key === "Escape" && landingChatExpanded) {
+      event.preventDefault()
+      closeLandingChat()
+    }
   }
 
   function handleLandingPromptChange(event: ChangeEvent<HTMLTextAreaElement>) {
@@ -842,15 +838,6 @@ export default function LandingClient() {
           >
             {landingChatExpanded && (
               <>
-                <div className={landingChatHeaderClass}>
-                  <span className={landingChatHeaderTitleClass}>
-                    <span className={landingChatHeaderDotClass} aria-hidden="true" />
-                    BrawlLens AI
-                  </span>
-                  <button type="button" className={landingChatCloseClass} aria-label="Close chat" onClick={closeLandingChat}>
-                    <X size={14} strokeWidth={2.4} aria-hidden="true" />
-                  </button>
-                </div>
                 <div className={landingChatBodyClass} aria-live="polite">
                   {landingChatMessages.map((message, index) => (
                     <div key={index} className="flex w-full flex-col">

@@ -11,7 +11,7 @@ type PageProps = { params: Promise<{ map: string }> }
 
 async function getMapImage(mapName: string): Promise<string | null> {
   try {
-    const res = await fetch("https://api.brawlify.com/v1/maps", { next: { revalidate: 3600 } })
+    const res = await fetch("https://api.brawlapi.com/v1/maps", { next: { revalidate: 3600 } })
     const data = await res.json()
     const found = (data.list || []).find((m: { name: string; imageUrl: string }) => m.name === mapName)
     return found?.imageUrl ?? null

@@ -44,7 +44,7 @@ interface TrophyLeaderboardRow {
 
 async function fetchBrawlers(): Promise<Brawler[]> {
   try {
-    const response = await fetch("https://api.brawlify.com/v1/brawlers", { next: { revalidate: 3600 } })
+    const response = await fetch("https://api.brawlapi.com/v1/brawlers", { next: { revalidate: 3600 } })
     if (!response.ok) return []
     const data = await response.json() as { list?: Brawler[] }
     return data.list ?? []

@@ -29,7 +29,7 @@ export interface Brawler {
 }
 
 export default async function Brawlers() {
-  const res = await fetch("https://api.brawlify.com/v1/brawlers", { next: { revalidate: 3600 } })
+  const res = await fetch("https://api.brawlapi.com/v1/brawlers", { next: { revalidate: 3600 } })
   const data = await res.json()
   const brawlers: Brawler[] = data.list ?? []
   return (

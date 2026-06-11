@@ -82,7 +82,7 @@ function volumeScore(picks: number, maxPicks: number) {
 
 async function fetchBrawlerCatalog() {
   try {
-    const response = await fetch("https://api.brawlify.com/v1/brawlers", { next: { revalidate: 3600 } })
+    const response = await fetch("https://api.brawlapi.com/v1/brawlers", { next: { revalidate: 3600 } })
     if (!response.ok) return new Map<number, BrawlifyBrawler>()
     const data = await response.json() as { list?: BrawlifyBrawler[] }
     return new Map((data.list ?? []).map(brawler => [brawler.id, brawler]))

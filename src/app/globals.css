@@ -10290,14 +10290,8 @@ html:not(#brawllens-cascade-lock) body {
 html:not(#brawllens-cascade-lock):not(.home-landing-bg) body:has(.bl-doc-frame),
 html:not(#brawllens-cascade-lock):not(.home-landing-bg) body:has(.bl-acct-shell) {
   background:
-    radial-gradient(720px 520px at 12% 4%,   rgba(124, 92, 255, 0.32), transparent 64%),
-    radial-gradient(820px 600px at 88% 8%,   rgba(255, 96, 153, 0.20), transparent 66%),
-    radial-gradient(680px 520px at 6% 52%,   rgba(56, 189, 248, 0.14), transparent 68%),
-    radial-gradient(760px 580px at 96% 46%,  rgba(168, 85, 247, 0.18), transparent 68%),
-    radial-gradient(900px 680px at 50% 96%,  rgba(124, 92, 255, 0.18), transparent 70%),
-    radial-gradient(640px 480px at 18% 92%,  rgba(34, 211, 238, 0.10), transparent 72%),
-    radial-gradient(700px 520px at 82% 98%,  rgba(255, 96, 153, 0.10), transparent 74%),
-    linear-gradient(180deg, #0b0a14 0%, #0a0a0e 50%, #08070d 100%) !important;
+    radial-gradient(85% 60% at 100% 112%, rgba(34, 211, 238, 0.06), transparent 62%),
+    linear-gradient(180deg, #0d0c14 0%, #0a0a0e 55%, #08080c 100%) !important;
   background-attachment: fixed !important;
 }
 
@@ -12701,17 +12695,6 @@ html body .bl-meta-page-rail {
     0 18px 38px -28px rgba(0, 0, 0, 0.7);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-}
-
-html body .bl-meta-page-summary {
-  margin: 0;
-  color: rgba(245, 244, 241, 0.42);
-  font-family: var(--font-label);
-  font-size: 10px;
-  font-weight: 720;
-  letter-spacing: 0.18em;
-  line-height: 1;
-  text-transform: uppercase;
 }
 
 html body .bl-meta-page-list {
@@ -15339,6 +15322,58 @@ a.bl-doc-row:hover .bl-doc-row-main strong {
   font-size: 16px;
   font-weight: 400;
   line-height: 1.65;
+}
+
+.bl-doc-ask {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  max-width: 480px;
+  margin: 4px 0 0;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(245, 244, 241, 0.22);
+  transition: border-color 140ms ease;
+}
+
+.bl-doc-ask:focus-within {
+  border-bottom-color: var(--bt-blue-hot);
+}
+
+.bl-doc-ask input {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--bt-text);
+  font-family: var(--font-ui);
+  font-size: 16px;
+  font-weight: 500;
+  outline: none;
+}
+
+.bl-doc-ask input::placeholder {
+  color: rgba(245, 244, 241, 0.36);
+  font-weight: 400;
+}
+
+.bl-doc-ask button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: rgba(245, 244, 241, 0.55);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 140ms ease;
+}
+
+.bl-doc-ask button:hover,
+.bl-doc-ask button:focus-visible {
+  color: var(--bt-blue-hot);
+  outline: none;
 }
 
 @media (max-width: 880px) {

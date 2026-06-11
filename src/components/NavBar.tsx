@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type FormEvent } from "react";
 import { ChevronDown, LogOut, Search, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -209,6 +209,8 @@ export default function NavBar() {
   const navWrapperRef = useRef<HTMLElement>(null);
   const browseTriggerRef = useRef<HTMLDivElement>(null);
   const leaderboardsTriggerRef = useRef<HTMLDivElement>(null);
+  const navPanelTrackRef = useRef<HTMLDivElement>(null);
+  const prevVisiblePanelRef = useRef<DesktopPanel | null>(null);
   const menuCloseTimerRef = useRef<number | null>(null);
   const desktopHoverTimerRef = useRef<number | null>(null);
   const loginInputRef = useRef<HTMLInputElement>(null);
@@ -666,7 +668,11 @@ export default function NavBar() {
   const renderedDesktopPanel = visibleDesktopPanel ?? lastDesktopPanel;
   const desktopPanelOffset = renderedDesktopPanel === "leaderboards" ? 50 : 0;
   const navTextClass = (active: boolean, isOpenTrigger = false) =>
-    `relative inline-flex h-[36px] items-center rounded-full border-0 px-3 text-[13px] font-semibold leading-none tracking-normal no-underline outline-none transition-colors duration-150 text-[rgba(250,250,248,0.90)] hover:text-[#ffffff] hover:bg-[rgba(245,244,241,0.07)] focus-visible:text-[#ffffff] ${active ? "text-[#ffffff] bg-[rgba(124,92,255,0.16)]" : ""} ${isOpenTrigger && !active ? "text-[#ffffff] bg-[rgba(124,92,255,0.14)]" : ""}`;
+    `relative inline-flex h-[36px] items-center rounded-full border-0 px-3 text-[13px] font-semibold leading-none tracking-normal no-underline outline-none text-[rgba(250,250,248,0.90)] hover:text-[#ffffff] hover:bg-[rgba(245,244,241,0.07)] focus-visible:text-[#ffffff] ${active ? "text-[#ffffff] bg-[rgba(124,92,255,0.16)]" : ""} ${isOpenTrigger && !active ? "text-[#ffffff] bg-[rgba(124,92,255,0.14)]" : ""}`;
+
+  const navTextTransitionStyle = {
+    transition: "color 220ms cubic-bezier(0.22, 1, 0.36, 1), background-color 260ms cubic-bezier(0.22, 1, 0.36, 1)",
+  };
 
   function renderDesktopPanelItems(items: NavPanelItem[]) {
     return items.map(item => {
@@ -692,7 +698,8 @@ export default function NavBar() {
             setDesktopPanel(null);
             setHoverDesktopPanel(null);
           }}
-          className={`group block rounded-[10px] px-2.5 py-[9px] text-inherit no-underline transition-colors duration-150 ${active ? "bg-[rgba(124,92,255,0.14)]" : "hover:bg-[rgba(245,244,241,0.05)]"}`}
+          style={{ transition: "background-color 240ms cubic-bezier(0.22, 1, 0.36, 1), color 200ms cubic-bezier(0.22, 1, 0.36, 1)" }}
+          className={`group block rounded-[10px] px-2.5 py-[9px] text-inherit no-underline ${active ? "bg-[rgba(124,92,255,0.14)]" : "hover:bg-[rgba(245,244,241,0.05)]"}`}
         >
           <p className={`m-0 text-[13.5px] font-semibold leading-tight ${active ? "text-[#a78bff]" : "text-[#f5f4f1]"}`}>{item.label}</p>
           <p className="mt-0.5 mb-0 text-[11.5px] leading-snug text-[rgba(245,244,241,0.56)]">{item.description}</p>
@@ -723,6 +730,32 @@ export default function NavBar() {
     if (visibleDesktopPanel) setLastDesktopPanel(visibleDesktopPanel);
   }, [visibleDesktopPanel]);
 
+  // Animate the inner content slide only when switching between panels.
+  // When opening from closed -> first panel, snap to position without animating
+  // so it doesn't look like "Browse content sliding in from the side".
+  useLayoutEffect(() => {
+    const prev = prevVisiblePanelRef.current;
+    const track = navPanelTrackRef.current;
+    if (track) {
+      if (prev === null && visibleDesktopPanel !== null) {
+        // First-open: jump to correct position with no slide animation.
+        track.style.transition = "none";
+        // Force a reflow so the no-transition state commits before we restore it.
+        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+        track.offsetHeight;
+        requestAnimationFrame(() => {
+          if (navPanelTrackRef.current) {
+            navPanelTrackRef.current.style.transition = "";
+          }
+        });
+      } else {
+        // Switching between panels (or closing): use default CSS transition.
+        track.style.transition = "";
+      }
+    }
+    prevVisiblePanelRef.current = visibleDesktopPanel;
+  }, [visibleDesktopPanel]);
+
   return (
     <>
       <nav
@@ -751,9 +784,15 @@ export default function NavBar() {
               onFocus={() => openHoverDesktopPanel("browse")}
               onClick={() => { setDesktopPanel(null); setHoverDesktopPanel(null); }}
               className={`${navTextClass(browseActive, visibleDesktopPanel === "browse")} cursor-pointer gap-1.5`}
+              style={navTextTransitionStyle}
             >
               Tierlist &amp; Brawlers
-              <ChevronDown size={13} strokeWidth={2.25} className={`ml-0.5 text-[rgba(250,250,248,0.86)] transition-transform duration-[340ms] ease-[cubic-bezier(0.16,1,0.3,1)] will-change-transform ${visibleDesktopPanel === "browse" ? "rotate-180" : "rotate-0"}`} />
+              <ChevronDown
+                size={13}
+                strokeWidth={2.25}
+                className={`ml-0.5 text-[rgba(250,250,248,0.86)] will-change-transform ${visibleDesktopPanel === "browse" ? "rotate-180" : "rotate-0"}`}
+                style={{ transition: "transform 320ms cubic-bezier(0.22, 1, 0.36, 1), rotate 320ms cubic-bezier(0.22, 1, 0.36, 1), color 220ms cubic-bezier(0.22, 1, 0.36, 1)" }}
+              />
             </Link>
           </div>
           <div
@@ -768,15 +807,22 @@ export default function NavBar() {
               onFocus={() => openHoverDesktopPanel("leaderboards")}
               onClick={() => { setDesktopPanel(null); setHoverDesktopPanel(null); }}
               className={`${navTextClass(leaderboardsActive, visibleDesktopPanel === "leaderboards")} cursor-pointer gap-1.5`}
+              style={navTextTransitionStyle}
             >
               Leaderboards
-              <ChevronDown size={13} strokeWidth={2.25} className={`ml-0.5 text-[rgba(250,250,248,0.86)] transition-transform duration-[340ms] ease-[cubic-bezier(0.16,1,0.3,1)] will-change-transform ${visibleDesktopPanel === "leaderboards" ? "rotate-180" : "rotate-0"}`} />
+              <ChevronDown
+                size={13}
+                strokeWidth={2.25}
+                className={`ml-0.5 text-[rgba(250,250,248,0.86)] will-change-transform ${visibleDesktopPanel === "leaderboards" ? "rotate-180" : "rotate-0"}`}
+                style={{ transition: "transform 320ms cubic-bezier(0.22, 1, 0.36, 1), rotate 320ms cubic-bezier(0.22, 1, 0.36, 1), color 220ms cubic-bezier(0.22, 1, 0.36, 1)" }}
+              />
             </Link>
           </div>
           <Link
             href="/ask"
             onClick={() => { setDesktopPanel(null); setHoverDesktopPanel(null); }}
             className={`${navTextClass(pathname.startsWith("/ask"))} cursor-pointer`}
+            style={navTextTransitionStyle}
           >
             Ask AI
           </Link>
@@ -830,8 +876,11 @@ export default function NavBar() {
         </button>
         </div>
         <div
-          className={`pointer-events-none absolute left-0 top-full z-10 hidden pt-1.5 lg:block [transition:opacity_200ms_ease,transform_260ms_cubic-bezier(0.16,1,0.3,1)] ${visibleDesktopPanel ? "translate-y-0 opacity-100" : "-translate-y-1 opacity-0"}`}
-          style={{ paddingLeft: `${Math.max(8, triggerOffsets.browse)}px` }}
+          className={`pointer-events-none absolute left-0 top-full z-10 hidden pt-1.5 lg:block ${visibleDesktopPanel ? "translate-y-0 opacity-100" : "-translate-y-1.5 opacity-0"}`}
+          style={{
+            paddingLeft: `${Math.max(8, triggerOffsets.browse)}px`,
+            transition: "opacity 220ms cubic-bezier(0.22, 1, 0.36, 1), transform 320ms cubic-bezier(0.22, 1, 0.36, 1), translate 320ms cubic-bezier(0.22, 1, 0.36, 1)",
+          }}
           aria-hidden={!visibleDesktopPanel}
           onMouseEnter={() => {
             clearDesktopHoverTimer();
@@ -844,6 +893,7 @@ export default function NavBar() {
           >
             <div className="overflow-hidden p-1">
               <div
+                ref={navPanelTrackRef}
                 className="nav-panel-track"
                 style={{ transform: `translateX(-${desktopPanelOffset}%)` }}
               >

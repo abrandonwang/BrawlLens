@@ -793,7 +793,6 @@ export function Pager({
           <ChevronRight aria-hidden="true" />
         </button>
       </div>
-      <span className="bl-meta-page-summary">Page {page + 1} of {totalPages}</span>
     </nav>
   )
 }

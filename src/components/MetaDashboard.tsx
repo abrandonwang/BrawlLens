@@ -126,7 +126,7 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch,
   useEffect(() => {
     Promise.all([
       fetch("/api/rotation").then(r => r.json()).catch(() => []),
-      fetch("https://api.brawlify.com/v1/maps").then(r => r.json()).catch(() => ({ list: [] })),
+      fetch("https://api.brawlapi.com/v1/maps").then(r => r.json()).catch(() => ({ list: [] })),
     ]).then(([rotationData, mapsData]) => {
       const activeMaps = new Map<string, RotationEvent>();
       for (const slot of rotationData || []) {
@@ -344,7 +344,6 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch,
               <ChevronRight aria-hidden="true" />
             </button>
           </div>
-          <span className="bl-meta-page-summary">Page {mapPage + 1} of {mapTotalPages}</span>
         </nav>
       )}
 

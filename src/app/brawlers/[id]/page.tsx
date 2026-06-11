@@ -11,13 +11,13 @@ async function getBrawler(id: string): Promise<Parameters<typeof BrawlerDetailCl
     let brawler: unknown
 
     if (isNumeric) {
-        const res = await fetch(`https://api.brawlify.com/v1/brawlers/${id}`, { next: { revalidate: 3600 } })
+        const res = await fetch(`https://api.brawlapi.com/v1/brawlers/${id}`, { next: { revalidate: 3600 } })
         if (!res.ok) return null
         const text = await res.text()
         if (!text) return null
         brawler = JSON.parse(text)
     } else {
-        const res = await fetch("https://api.brawlify.com/v1/brawlers", { next: { revalidate: 3600 } })
+        const res = await fetch("https://api.brawlapi.com/v1/brawlers", { next: { revalidate: 3600 } })
         if (!res.ok) return null
         const data = await res.json()
         const slug = id.toLowerCase().replace(/-/g, " ")

@@ -83,7 +83,7 @@ export default function MapsPageClient() {
   }, [])
 
   useEffect(() => {
-    fetch("https://api.brawlify.com/v1/maps")
+    fetch("https://api.brawlapi.com/v1/maps")
       .then(r => r.ok ? r.json() : { list: [] })
       .then(data => {
         const lookup = new Map<string, string>()

@@ -13,7 +13,7 @@ type BrawlifyBrawler = {
 
 async function getCanonicalBrawlerNames() {
   try {
-    const response = await fetch("https://api.brawlify.com/v1/brawlers", {
+    const response = await fetch("https://api.brawlapi.com/v1/brawlers", {
       next: { revalidate: 3600 },
     });
     if (!response.ok) return new Map<number, string>();
