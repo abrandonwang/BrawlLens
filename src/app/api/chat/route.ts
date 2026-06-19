@@ -2,7 +2,7 @@ export const runtime = "edge"
 
 import Anthropic from "@anthropic-ai/sdk"
 import { NextResponse } from "next/server"
-import { createClient } from "@supabase/supabase-js"
+import { createClient, type SupabaseClient } from "@supabase/supabase-js"
 import { getRequestUser } from "@/lib/auth"
 import { AI_LIMITS, CHAT_LIMIT_ERROR } from "@/lib/aiLimits"
 import { fetchPlayerResponse } from "@/lib/playerLookup"
@@ -11,10 +11,16 @@ import { sanitizePlayerTag } from "@/lib/validation"
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_KEY!
-)
+let _supabase: SupabaseClient | null = null
+function getSupabase(): SupabaseClient {
+  if (!_supabase) {
+    _supabase = createClient(
+      process.env.SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_KEY!
+    )
+  }
+  return _supabase
+}
 
 const SYSTEM_PROMPT = `You are BrawlLens AI, the assistant inside BrawlLens, a Brawl Stars analytics platform powered by real battle data from top-ranked players across 6 regions (NA, EU, ASIA, KR, BR, DE). You have direct access to win rates, pick rates, map meta, player and club leaderboards, and per-brawler performance through the provided tools.
 
@@ -169,7 +175,7 @@ const tools: Anthropic.Tool[] = [
 
 async function executeTool(name: string, input: Record<string, string>): Promise<string> {
   if (name === "get_map_brawler_stats") {
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from("map_brawler_stats")
       .select("map, brawler_name, picks, wins, win_rate")
       .ilike("map", `%${input.map_name}%`)
@@ -187,7 +193,7 @@ async function executeTool(name: string, input: Record<string, string>): Promise
   }
 
   if (name === "get_brawler_stats") {
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from("map_brawler_stats")
       .select("map, brawler_name, picks, wins, win_rate")
       .ilike("brawler_name", `%${input.brawler_name}%`)
@@ -205,7 +211,7 @@ async function executeTool(name: string, input: Record<string, string>): Promise
   }
 
   if (name === "get_all_maps") {
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from("map_stats")
       .select("map, mode, battle_count")
       .order("battle_count", { ascending: false })
@@ -220,7 +226,7 @@ async function executeTool(name: string, input: Record<string, string>): Promise
     const raw = (input.region || "global").trim()
     const region = raw.toLowerCase() === "global" ? "global" : raw.toUpperCase()
     const limit = Math.min(Number(input.limit) || 10, 50)
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from("leaderboards")
       .select("rank, player_name, player_tag, trophies, club_name")
       .eq("region", region)
@@ -266,7 +272,7 @@ ${top}`
     const raw = (input.region || "global").trim()
     const region = raw.toLowerCase() === "global" ? "global" : raw.toUpperCase()
     const limit = Math.min(Number(input.limit) || 10, 50)
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from("club_leaderboards")
       .select("rank, club_name, club_tag, trophies, member_count")
       .eq("region", region)
@@ -284,7 +290,7 @@ ${top}`
 
   if (name === "get_brawler_leaderboard") {
     const limit = Math.min(Number(input.limit) || 10, 50)
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from("brawler_leaderboards")
       .select("rank, player_name, player_tag, trophies, club_name, brawler_name")
       .ilike("brawler_name", `%${input.brawler_name}%`)
@@ -340,7 +346,7 @@ async function anonymousSubjectKey(request: Request) {
 }
 
 async function incrementChatUsage(subjectType: "anonymous" | "user", subjectKey: string) {
-  const { data, error } = await supabase.rpc("increment_ai_message_usage", {
+  const { data, error } = await getSupabase().rpc("increment_ai_message_usage", {
     p_subject_type: subjectType,
     p_subject_key: subjectKey,
     p_usage_day: usageDay(),
