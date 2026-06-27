@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { unstable_cache } from "next/cache"
+import { memoCache } from "@/lib/memoCache"
 import { createClient } from "@supabase/supabase-js"
 import { getModeName } from "@/lib/modes"
 import { fetchAllPaged } from "@/lib/supabaseFetch"
@@ -132,7 +132,7 @@ async function loadBrawlerStatsPayload() {
   return { stats: payload }
 }
 
-const getCachedBrawlerStatsPayload = unstable_cache(
+const getCachedBrawlerStatsPayload = memoCache(
   loadBrawlerStatsPayload,
   ["brawlers-stats-payload-v1"],
   { revalidate: 300 },

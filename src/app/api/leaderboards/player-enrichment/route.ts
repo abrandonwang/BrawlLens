@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { unstable_cache } from "next/cache"
+import { memoCache } from "@/lib/memoCache"
 import { createClient } from "@supabase/supabase-js"
 import { cleanEnv } from "@/lib/env"
 import { stripTagPrefix } from "@/lib/leaderboardUtils"
@@ -155,16 +155,16 @@ async function fetchClubBadgeId(tag: string): Promise<number | null> {
   }
 }
 
-const fetchCachedPlayerEnrichment = unstable_cache(
+const fetchCachedPlayerEnrichment = memoCache(
   fetchPlayerEnrichment,
   ["leaderboard-player-enrichment-v1"],
-  { revalidate: 300 },
+  { revalidate: 300, maxEntries: 5000 },
 )
 
-const fetchCachedClubBadgeId = unstable_cache(
+const fetchCachedClubBadgeId = memoCache(
   fetchClubBadgeId,
   ["leaderboard-club-badge-id-v1"],
-  { revalidate: 900 },
+  { revalidate: 900, maxEntries: 5000 },
 )
 
 function formatPercentile(rank: number | null, total: number | null) {
@@ -209,7 +209,7 @@ async function fetchGlobalLeaderboardCount() {
   }
 }
 
-const fetchCachedGlobalLeaderboardCount = unstable_cache(
+const fetchCachedGlobalLeaderboardCount = memoCache(
   fetchGlobalLeaderboardCount,
   ["leaderboard-global-count-v1"],
   { revalidate: 300 },
@@ -240,10 +240,10 @@ async function fetchGlobalPlacement(trophies: number) {
   }
 }
 
-const fetchCachedGlobalPlacement = unstable_cache(
+const fetchCachedGlobalPlacement = memoCache(
   fetchGlobalPlacement,
   ["leaderboard-global-placement-v1"],
-  { revalidate: 300 },
+  { revalidate: 300, maxEntries: 5000 },
 )
 
 async function fetchGlobalPlacements(trophyValues: number[]) {

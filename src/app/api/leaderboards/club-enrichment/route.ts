@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { unstable_cache } from "next/cache"
+import { memoCache } from "@/lib/memoCache"
 import { fetchClubResponse, fetchPlayerResponse } from "@/lib/playerLookup"
 import { sanitizePlayerTag } from "@/lib/validation"
 
@@ -129,16 +129,16 @@ async function mapWithConcurrency<T, R>(
   return results
 }
 
-const fetchCachedClubSummaryEnrichment = unstable_cache(
+const fetchCachedClubSummaryEnrichment = memoCache(
   (tag: string) => fetchClubEnrichment(tag, false),
   ["leaderboard-club-summary-enrichment-v1"],
-  { revalidate: 900 },
+  { revalidate: 900, maxEntries: 5000 },
 )
 
-const fetchCachedClubPrestigeEnrichment = unstable_cache(
+const fetchCachedClubPrestigeEnrichment = memoCache(
   (tag: string) => fetchClubEnrichment(tag, true),
   ["leaderboard-club-prestige-enrichment-v1"],
-  { revalidate: 300 },
+  { revalidate: 300, maxEntries: 5000 },
 )
 
 export async function POST(request: Request) {

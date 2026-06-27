@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { unstable_cache } from "next/cache"
+import { memoCache } from "@/lib/memoCache"
 import { createClient } from "@supabase/supabase-js"
 import { cleanEnv } from "@/lib/env"
 import { stripTagPrefix } from "@/lib/leaderboardUtils"
@@ -140,10 +140,10 @@ async function searchLeaderboardClubs(query: string) {
   return (data ?? []) as ClubSearchRow[]
 }
 
-const cachedResolvePlayerTag = unstable_cache(resolvePlayerTag, ["search-player-tag-v1"], { revalidate: 120 })
-const cachedResolveClubTag = unstable_cache(resolveClubTag, ["search-club-tag-v1"], { revalidate: 180 })
-const cachedSearchLeaderboardPlayers = unstable_cache(searchLeaderboardPlayers, ["search-leaderboard-players-v1"], { revalidate: 60 })
-const cachedSearchLeaderboardClubs = unstable_cache(searchLeaderboardClubs, ["search-leaderboard-clubs-v1"], { revalidate: 60 })
+const cachedResolvePlayerTag = memoCache(resolvePlayerTag, ["search-player-tag-v1"], { revalidate: 120 })
+const cachedResolveClubTag = memoCache(resolveClubTag, ["search-club-tag-v1"], { revalidate: 180 })
+const cachedSearchLeaderboardPlayers = memoCache(searchLeaderboardPlayers, ["search-leaderboard-players-v1"], { revalidate: 60 })
+const cachedSearchLeaderboardClubs = memoCache(searchLeaderboardClubs, ["search-leaderboard-clubs-v1"], { revalidate: 60 })
 
 function cachedJson(body: unknown, init?: ResponseInit) {
   const response = NextResponse.json(body, init)

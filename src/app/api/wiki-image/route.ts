@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { unstable_cache } from "next/cache"
+import { memoCache } from "@/lib/memoCache"
 
 const WIKI_API_URL = "https://brawlstars.fandom.com/api.php"
 const CACHE_CONTROL = "public, s-maxage=86400, stale-while-revalidate=604800"
@@ -54,7 +54,7 @@ async function resolveWikiImageUrl(fileName: string) {
   }
 }
 
-const getCachedWikiImageUrl = unstable_cache(
+const getCachedWikiImageUrl = memoCache(
   resolveWikiImageUrl,
   ["brawl-stars-wiki-image-url-v1"],
   { revalidate: 86400 },

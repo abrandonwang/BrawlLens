@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js"
-import { unstable_cache } from "next/cache"
+import { memoCache } from "@/lib/memoCache"
 import { fetchAllPaged } from "@/lib/supabaseFetch"
 
 type StatRow = {
@@ -209,6 +209,6 @@ async function loadGuideDataset(): Promise<GuideDataset> {
   }
 }
 
-export const fetchGuideDataset = unstable_cache(loadGuideDataset, ["brawllens-guide-dataset"], {
+export const fetchGuideDataset = memoCache(loadGuideDataset, ["brawllens-guide-dataset"], {
   revalidate: 300,
 })
