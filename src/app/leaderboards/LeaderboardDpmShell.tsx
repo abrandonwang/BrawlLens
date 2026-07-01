@@ -117,10 +117,10 @@ const leaderboardRegionPillBaseClass =
   "inline-flex h-[26px] min-w-9 cursor-pointer items-center justify-center rounded-[5px] border border-transparent bg-transparent text-[12px] font-[850] text-[var(--lb-text-3)] [font-family:var(--font-geist-mono,var(--font-jetbrains-mono),ui-monospace,monospace)] hover:border-[rgba(245,244,241,0.13)] hover:bg-[var(--panel)] hover:text-[var(--lb-text)]"
 
 const leaderboardRegionPillActiveClass =
-  "!border-[#a78bff] !bg-[#7c5cff] !text-white shadow-none outline-none"
+  "!border-[#FF9494] !bg-[#FF6B6B] !text-white shadow-none outline-none"
 
 export const leaderboardShellClass =
-  "min-h-[calc(100dvh-60px)] w-full overflow-x-clip bg-[var(--bg)] text-[var(--lb-text)] [--lb-accent:#7c5cff] [--lb-bg:#000000] [--lb-blue:#7c5cff] [--lb-line-2:rgba(245,244,241,0.10)] [--lb-line:rgba(245,244,241,0.07)] [--lb-nav:var(--panel)] [--lb-panel-2:#15151b] [--lb-panel-3:#26262d] [--lb-panel:#0d0d11] [--lb-text-2:rgba(245,244,241,0.76)] [--lb-text-3:rgba(245,244,241,0.52)] [--lb-text-4:rgba(245,244,241,0.34)] [--lb-text:#f5f4f1] [--lb-warm:#ff9f6e] [font-family:var(--font-ui)]"
+  "min-h-[calc(100dvh-60px)] w-full overflow-x-clip bg-[var(--bg)] text-[var(--lb-text)] [--lb-accent:#FF6B6B] [--lb-bg:#000000] [--lb-blue:#FF6B6B] [--lb-line-2:rgba(245,244,241,0.10)] [--lb-line:rgba(245,244,241,0.07)] [--lb-nav:var(--panel)] [--lb-panel-2:#15151b] [--lb-panel-3:#26262d] [--lb-panel:#0d0d11] [--lb-text-2:rgba(245,244,241,0.76)] [--lb-text-3:rgba(245,244,241,0.52)] [--lb-text-4:rgba(245,244,241,0.34)] [--lb-text:#f5f4f1] [--lb-warm:#ff9f6e] [font-family:var(--font-ui)]"
 
 export const leaderboardFrameClass =
   "mx-auto w-[min(1120px,calc(100vw-20px))] px-0 pb-[18px] pt-2.5 max-[560px]:w-[min(1120px,calc(100vw-12px))]"
@@ -337,7 +337,7 @@ export function LeaderboardBoard({ children }: { children: ReactNode }) {
   )
 }
 
-const LEADERBOARD_HERO_BORDER_COLORS = ["#7c5cff", "#5aeed0", "#ff6099", "#f5d75e", "#7c5cff"]
+const LEADERBOARD_HERO_BORDER_COLORS = ["#FF6B6B", "#5aeed0", "#ff6099", "#f5d75e", "#FF6B6B"]
 const LEADERBOARD_HERO_BORDER_STYLE: CSSProperties = {
   position: "absolute",
   inset: 0,
@@ -407,7 +407,7 @@ export function LeaderboardHero({
         />
       )}
 
-      <div className="relative z-[2] min-h-[124px] rounded-[10px] border border-[rgba(245,244,241,0.105)] bg-[#101015] px-5 py-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] max-[760px]:px-4 max-[760px]:py-4">
+      <div className="relative z-[2] min-h-[124px] rounded-[10px] border-[2.5px] border-[#FF6B6B] bg-[#101015] px-5 py-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] max-[760px]:px-4 max-[760px]:py-4">
         <div className="mx-auto grid max-w-[1040px] justify-items-center text-center">
           {eyebrow && (
             <span className="mb-1.5 block text-[10px] font-extrabold uppercase leading-none tracking-[0.18em] text-[var(--lb-accent)] [font-family:var(--font-label)]">

@@ -29,7 +29,7 @@ const mapDetailFrameClass =
   "mx-auto w-[min(1180px,calc(100vw-28px))] pb-4 pt-3 max-[560px]:w-[calc(100vw-12px)]"
 const mapDetailAnalyticsClass =
   "mx-auto w-[min(1180px,calc(100vw-28px))] pb-8 max-[560px]:w-[calc(100vw-12px)]"
-const MAP_DETAIL_BORDER_COLORS = ["#7c5cff", "#5aeed0", "#ff6099", "#f5d75e", "#7c5cff"]
+const MAP_DETAIL_BORDER_COLORS = ["#FF6B6B", "#5aeed0", "#ff6099", "#f5d75e", "#FF6B6B"]
 const MAP_DETAIL_BORDER_STYLE: CSSProperties = {
   position: "absolute",
   inset: 0,
@@ -237,7 +237,7 @@ export default function MapDetailClient({ mapName, imageUrl, modeName, totalBatt
             />
           )}
 
-          <div className="relative z-[2] min-h-[132px] rounded-[10px] border border-[rgba(245,244,241,0.105)] bg-[#101015] px-5 py-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] max-[760px]:px-4 max-[760px]:py-4">
+          <div className="relative z-[2] min-h-[132px] rounded-[10px] border-[2.5px] border-[#FF6B6B] bg-[#101015] px-5 py-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] max-[760px]:px-4 max-[760px]:py-4">
             <div className="grid min-h-[92px] grid-cols-[minmax(0,1fr)_minmax(520px,0.9fr)] items-center gap-5 max-[980px]:grid-cols-1 max-[980px]:gap-4">
               <div className="flex min-w-0 items-center gap-3.5 max-[560px]:items-start">
                 <div className="grid h-[100px] w-[66px] shrink-0 place-items-center overflow-hidden rounded-[10px] border border-[rgba(245,244,241,0.09)] bg-[#15151b] max-[560px]:h-[82px] max-[560px]:w-[54px]">
@@ -265,7 +265,7 @@ export default function MapDetailClient({ mapName, imageUrl, modeName, totalBatt
                         {mapName} is grouped under {modeName}.{rotationLabel ? ` ${rotationLabel}.` : ""}
                       </HelpTooltip>
                     )}
-                    {rotationLabel && <span className="rounded-[6px] border border-[rgba(167,139,255,0.26)] bg-[rgba(124,92,255,0.12)] px-2 py-1 text-[9px] font-black uppercase leading-none text-[#c4b5fd] [font-family:var(--font-label)]">{rotationLabel}</span>}
+                    {rotationLabel && <span className="rounded-[6px] border border-[rgba(255, 148, 148,0.26)] bg-[rgba(255, 107, 107,0.12)] px-2 py-1 text-[9px] font-black uppercase leading-none text-[#c4b5fd] [font-family:var(--font-label)]">{rotationLabel}</span>}
                   </h1>
                   <p className="m-0 mt-1.5 max-w-[560px] text-[12px] font-[620] leading-[1.42] text-[rgba(245,244,241,0.82)]">
                     Compare brawler performance, pick volume, and win rates for this map from tracked battle data.
@@ -481,7 +481,7 @@ export default function MapDetailClient({ mapName, imageUrl, modeName, totalBatt
                           <button
                             key={brawler.brawlerId}
                             type="button"
-                            className="flex w-full cursor-pointer items-center gap-2 rounded-[8px] border-0 bg-transparent p-2 text-left text-[rgba(245,244,241,0.78)] transition-colors hover:text-[#a78bff]"
+                            className="flex w-full cursor-pointer items-center gap-2 rounded-[8px] border-0 bg-transparent p-2 text-left text-[rgba(245,244,241,0.78)] transition-colors hover:text-[#FF9494]"
                             onClick={() => {
                               setSearchQuery(formatBrawlerName(brawler.name))
                               setSearchOpen(false)

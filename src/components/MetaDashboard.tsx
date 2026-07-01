@@ -72,7 +72,7 @@ function getPaginationItems(currentPage: number, totalPages: number) {
 function MapPreview({ imageUrl, name, modeColor, priority = false }: { imageUrl?: string; name: string; mode: string | null; modeColor?: string; priority?: boolean }) {
   const [failed, setFailed] = useState(false);
   const [aspectRatio, setAspectRatio] = useState<string>("1 / 1");
-  const fallbackColor = modeColor || "var(--lb-accent, #7c5cff)";
+  const fallbackColor = modeColor || "var(--lb-accent, #FF6B6B)";
 
   if (!imageUrl || failed) {
     return (

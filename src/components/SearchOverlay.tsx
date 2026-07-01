@@ -316,13 +316,13 @@ const cmdPanelClass = (closing: boolean) =>
   `relative z-[1] flex w-[min(620px,calc(100vw-36px))] max-h-[min(540px,calc(100dvh-120px))] flex-col overflow-hidden rounded-[14px] border border-[rgba(245,244,241,0.12)] bg-[rgba(20,21,28,0.96)] shadow-[inset_0_1px_0_rgba(255,255,255,0.045),0_24px_70px_-46px_rgba(0,0,0,0.92)] backdrop-blur-[10px] max-[560px]:w-[calc(100vw-20px)] max-[560px]:max-h-[calc(100dvh-92px)] max-[560px]:rounded-2xl ${closing ? "animate-[cmdPanelOut_180ms_ease_both]" : "animate-[cmdPanelIn_200ms_cubic-bezier(0.16,1,0.3,1)_both]"}`
 
 const cmdTabClass = (active: boolean) =>
-  `relative inline-flex h-[30px] min-w-[72px] cursor-pointer items-center justify-center rounded-full border-0 px-3.5 text-[12px] font-[720] tracking-normal outline-none transition-[background-color,color,box-shadow] duration-150 max-[560px]:min-w-[66px] ${active ? "bg-[#7c5cff] text-white shadow-none hover:bg-[#5b3fcc] focus-visible:bg-[#5b3fcc]" : "bg-transparent text-[rgba(245,244,241,0.74)] hover:text-[rgba(245,244,241,0.92)]"}`
+  `relative inline-flex h-[30px] min-w-[72px] cursor-pointer items-center justify-center rounded-full border-0 px-3.5 text-[12px] font-[720] tracking-normal outline-none transition-[background-color,color,box-shadow] duration-150 max-[560px]:min-w-[66px] ${active ? "bg-[#FF6B6B] text-[#0d0d11] shadow-none hover:bg-[#E85555] focus-visible:bg-[#E85555]" : "bg-transparent text-[rgba(245,244,241,0.74)] hover:text-[rgba(245,244,241,0.92)]"}`
 
 const cmdFormClass =
-  "grid h-12 min-h-12 grid-cols-[auto_minmax(0,1fr)_auto] items-center border-0 bg-transparent shadow-none transition-none focus-within:bg-[rgba(255,255,255,0.055)] focus-within:shadow-none focus-within:outline-none max-[560px]:mx-2.5 max-[560px]:mb-1 max-[560px]:mt-2 max-[560px]:h-[42px] max-[560px]:min-h-[42px]"
+  "grid h-[52px] min-h-[52px] grid-cols-[auto_minmax(0,1fr)_auto] items-center border-0 bg-transparent shadow-none transition-none focus-within:bg-[rgba(255,255,255,0.055)] focus-within:shadow-none focus-within:outline-none"
 
 const cmdInputClass =
-  "min-w-0 border-0 bg-transparent px-3 py-0 text-[15px] font-medium tracking-normal text-[#f5f4f1] shadow-none outline-none placeholder:text-[rgba(245,244,241,0.68)] placeholder:font-medium focus:border-0 focus:bg-transparent focus:shadow-none focus:outline-none max-[560px]:text-[13px] [font-family:var(--font-ui)]"
+  "min-w-0 border-0 bg-transparent px-3 py-0 text-[15px] font-medium tracking-normal text-[#f5f4f1] shadow-none outline-none placeholder:text-[rgba(245,244,241,0.68)] placeholder:font-medium focus:border-0 focus:bg-transparent focus:shadow-none focus:outline-none [font-family:var(--font-ui)]"
 
 const cmdSubmitClass =
   "mr-3 grid size-8 cursor-pointer place-items-center rounded-[8px] border-0 bg-transparent text-[rgba(245,244,241,0.7)] outline-none transition-colors duration-150 hover:bg-[rgba(245,244,241,0.06)] hover:text-[#f5f4f1]"
@@ -331,7 +331,7 @@ const cmdResultsClass =
   "flex-1 overflow-y-auto border-t border-[rgba(255,255,255,0.06)] p-0 [scrollbar-width:none] empty:hidden [&::-webkit-scrollbar]:hidden max-[560px]:px-2 max-[560px]:pb-3"
 
 const cmdRowClass = (recent: boolean) =>
-  `grid items-center gap-3 border-0 bg-transparent text-[var(--bt-text-2)] no-underline shadow-none transition-colors duration-150 hover:border-0 hover:bg-[rgba(245,244,241,0.04)] hover:text-[#f5f4f1] hover:shadow-none hover:[transform:none] max-[560px]:grid-cols-[36px_minmax(0,1fr)] max-[560px]:px-2 max-[560px]:py-1.5 max-[560px]:min-h-[50px] ${recent ? "min-h-[54px] grid-cols-[22px_minmax(0,1fr)_auto] px-3.5 py-2" : "min-h-9 grid-cols-[22px_minmax(0,1fr)] px-3.5 py-1.5"}`
+  `grid items-center gap-3 border-0 bg-transparent px-3.5 text-[var(--bt-text-2)] no-underline shadow-none transition-colors duration-150 hover:border-0 hover:bg-[rgba(245,244,241,0.04)] hover:text-[#f5f4f1] hover:shadow-none hover:[transform:none] max-[560px]:px-2 ${recent ? "min-h-[54px] grid-cols-[22px_minmax(0,1fr)_auto] py-2 max-[560px]:grid-cols-[36px_minmax(0,1fr)_auto]" : "min-h-9 grid-cols-[22px_minmax(0,1fr)] py-1.5 max-[560px]:min-h-[50px] max-[560px]:grid-cols-[36px_minmax(0,1fr)]"}`
 
 const cmdIconClass =
   "grid size-5 place-items-center overflow-hidden rounded bg-[rgba(245,244,241,0.06)] text-[11px] font-semibold text-[rgba(245,244,241,0.72)] shadow-none max-[560px]:size-8"
@@ -342,7 +342,7 @@ const cmdCopyTitleClass = "block overflow-hidden text-ellipsis whitespace-nowrap
 const cmdAiMessageClass = (role: AiMessage["role"]) =>
   `mb-3.5 bg-[var(--bt-shell)] text-[var(--bt-text-2)] shadow-none ${role === "user" ? "text-[13.5px] font-[650] leading-[1.55]" : "text-[13px] font-[540] leading-[1.6]"}`
 const cmdAiSendClass =
-  "grid size-[26px] shrink-0 cursor-pointer place-items-center rounded-[8px] border-0 bg-[#7c5cff] text-white outline-none transition-colors duration-100 hover:bg-[#5b3fcc] focus-visible:bg-[#5b3fcc] disabled:cursor-default disabled:opacity-25"
+  "grid size-[26px] shrink-0 cursor-pointer place-items-center rounded-[8px] border-0 bg-[#FF6B6B] text-[#0d0d11] outline-none transition-colors duration-100 hover:bg-[#E85555] focus-visible:bg-[#E85555] disabled:cursor-default disabled:opacity-25"
 
 export default function SearchOverlay() {
   const router = useRouter()
@@ -414,6 +414,21 @@ export default function SearchOverlay() {
     }
     window.addEventListener("brawllens:open-search", onOpenSearch)
     return () => window.removeEventListener("brawllens:open-search", onOpenSearch)
+  }, [])
+
+  /* Mutual exclusion: another modal (menu/login) opening force-closes search. */
+  useEffect(() => {
+    function onCloseSearch() {
+      if (closeTimerRef.current !== null) {
+        window.clearTimeout(closeTimerRef.current)
+        closeTimerRef.current = null
+      }
+      aiAbortRef.current?.abort()
+      setClosing(false)
+      setOpen(false)
+    }
+    window.addEventListener("brawllens:close-search", onCloseSearch)
+    return () => window.removeEventListener("brawllens:close-search", onCloseSearch)
   }, [])
 
   /* Also listen for open-assistant events */
@@ -696,9 +711,9 @@ export default function SearchOverlay() {
                   {msg.role === "assistant" ? (
                     aiStreaming && i === aiMessages.length - 1 && msg.content === "" ? (
                       <span className="inline-flex gap-1 py-1.5">
-                        <span className="block size-1 animate-[cmdDotPulse_1s_ease_infinite] rounded-full bg-[rgba(91,63,204,0.42)]" />
-                        <span className="block size-1 animate-[cmdDotPulse_1s_ease_infinite] rounded-full bg-[rgba(91,63,204,0.42)] [animation-delay:0.12s]" />
-                        <span className="block size-1 animate-[cmdDotPulse_1s_ease_infinite] rounded-full bg-[rgba(91,63,204,0.42)] [animation-delay:0.24s]" />
+                        <span className="block size-1 animate-[cmdDotPulse_1s_ease_infinite] rounded-full bg-[rgba(232, 85, 85,0.42)]" />
+                        <span className="block size-1 animate-[cmdDotPulse_1s_ease_infinite] rounded-full bg-[rgba(232, 85, 85,0.42)] [animation-delay:0.12s]" />
+                        <span className="block size-1 animate-[cmdDotPulse_1s_ease_infinite] rounded-full bg-[rgba(232, 85, 85,0.42)] [animation-delay:0.24s]" />
                       </span>
                     ) : (
                       <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>{msg.content}</ReactMarkdown>

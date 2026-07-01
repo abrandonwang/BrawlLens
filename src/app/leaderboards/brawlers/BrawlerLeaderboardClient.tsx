@@ -328,7 +328,7 @@ function BrawlerSelector({
                   key={brawler.id}
                   type="button"
                   onClick={() => select(brawler)}
-                  className={`flex w-full cursor-pointer items-center gap-2.5 rounded-[7px] border-0 px-2 py-2 text-left ${activeBrawler?.id === brawler.id ? "bg-[#7c5cff] text-[#171007] hover:bg-[#b9e8ff]" : "bg-transparent hover:bg-[rgba(245,244,241,0.07)]"}`}
+                  className={`flex w-full cursor-pointer items-center gap-2.5 rounded-[7px] border-0 px-2 py-2 text-left ${activeBrawler?.id === brawler.id ? "bg-[#FF6B6B] text-[#171007] hover:bg-[#b9e8ff]" : "bg-transparent hover:bg-[rgba(245,244,241,0.07)]"}`}
                 >
                   <BrawlImage src={brawlerIconUrl(brawler.id)} alt={brawler.name} width={30} height={30} className="size-7 shrink-0 rounded-md object-cover" sizes="30px" />
                   <span className={`min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-[13px] font-bold ${activeBrawler?.id === brawler.id ? "text-[#171007]" : "text-[var(--lb-text)]"}`}>{formatBrawlerName(brawler.name)}</span>

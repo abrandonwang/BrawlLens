@@ -2,8 +2,8 @@
   <title id="title">Lens mark</title>
   <defs>
     <linearGradient id="lens-gradient" x1="24" y1="18" x2="110" y2="112" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#8EA0FF"/>
-      <stop offset="1" stop-color="#7C5CFF"/>
+      <stop stop-color="#FF9494"/>
+      <stop offset="1" stop-color="#FF6B6B"/>
     </linearGradient>
   </defs>
   <path

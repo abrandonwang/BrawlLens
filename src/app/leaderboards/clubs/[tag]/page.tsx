@@ -77,7 +77,7 @@ export default async function ClubDetailPage({
   const team: ProTeam = {
     slug: `club-${tag.toLowerCase()}`,
     name: club.name ?? `#${tag}`,
-    accent: "#7c5cff",
+    accent: "#FF6B6B",
     sourceClubTag: tag,
     description: `${club.name ?? "Club"} member board from club #${tag}.`,
     players,

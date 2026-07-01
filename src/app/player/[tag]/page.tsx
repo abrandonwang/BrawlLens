@@ -910,17 +910,11 @@ export default async function PlayerProfile({ params }: { params: Promise<{ tag:
               <span>Ladder</span>
             </div>
             <div className="bl-profile-rank-main">
-              <span className={`bl-profile-tier-mark bl-profile-tier-${tier.key}`} title={tier.label}>
-                <strong>{tier.short}</strong>
-              </span>
-              <div className="bl-profile-ladder-stack">
-                <div className="bl-profile-ladder-line">
-                  <strong>{formatFullNumber(player.trophies)}</strong>
-                </div>
-                <div className="bl-profile-ladder-line">
-                  <strong>{recentWinRate}% recent winrate</strong>
-                </div>
+              <div className="bl-profile-rank-trophies">
+                <strong>{formatFullNumber(player.trophies)}</strong>
+                <span>Trophies</span>
               </div>
+              <span className="bl-profile-rank-wr">{recentWinRate}% recent WR</span>
             </div>
             <div className="bl-profile-ladder-rank">
               <span>LADDER RANK</span>

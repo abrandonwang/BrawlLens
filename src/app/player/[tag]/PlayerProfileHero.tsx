@@ -19,7 +19,7 @@ const tabs = [
   { tab: "brawlers", label: "Brawlers" },
 ] as const
 
-const HERO_BORDER_COLORS = ["#7c5cff", "#5aeed0", "#ff6099", "#f5d75e", "#7c5cff"]
+const HERO_BORDER_COLORS = ["#FF6B6B", "#5aeed0", "#ff6099", "#f5d75e", "#FF6B6B"]
 const HERO_BORDER_STYLE: CSSProperties = {
   position: "absolute",
   inset: 0,

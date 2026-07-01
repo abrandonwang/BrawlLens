@@ -352,7 +352,7 @@ function TopMemberCell({ member, ready = true }: { member: ClubMemberSummary | n
   const avatar = (
     <span
       aria-hidden="true"
-      className="grid size-[22px] shrink-0 place-items-center overflow-hidden rounded-full border border-[rgba(245,244,241,0.08)] bg-[rgba(124,92,255,0.16)] [font-family:var(--font-geist-mono,var(--font-jetbrains-mono),ui-monospace,monospace)] text-[10px] font-black leading-none text-[#a78bff]"
+      className="grid size-[22px] shrink-0 place-items-center overflow-hidden rounded-full border border-[rgba(245,244,241,0.08)] bg-[rgba(255, 107, 107,0.16)] [font-family:var(--font-geist-mono,var(--font-jetbrains-mono),ui-monospace,monospace)] text-[10px] font-black leading-none text-[#FF9494]"
     >
       {member.iconId ? (
         <BrawlImage src={profileIconUrl(member.iconId)} alt="" width={22} height={22} sizes="22px" />

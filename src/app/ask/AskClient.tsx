@@ -23,11 +23,11 @@ const SUGGESTIONS = [
 ] as const
 
 const askInitialSendButtonClass =
-  "grid size-9 shrink-0 place-items-center rounded-[8px] bg-[#7c5cff] p-0 text-white outline-none transition-[background-color,opacity,transform] duration-150 hover:bg-[#6b4cff] focus-visible:ring-2 focus-visible:ring-[rgba(124,92,255,0.48)] disabled:cursor-default disabled:bg-[rgba(245,244,241,0.07)] disabled:text-[rgba(245,244,241,0.32)] active:translate-y-px"
+  "grid size-9 shrink-0 place-items-center rounded-[8px] bg-[#FF6B6B] p-0 text-white outline-none transition-[background-color,opacity,transform] duration-150 hover:bg-[#6b4cff] focus-visible:ring-2 focus-visible:ring-[rgba(255, 107, 107,0.48)] disabled:cursor-default disabled:bg-[rgba(245,244,241,0.07)] disabled:text-[rgba(245,244,241,0.32)] active:translate-y-px"
 const askComposerSendButtonClass =
-  "grid size-10 shrink-0 place-items-center rounded-[8px] bg-[#7c5cff] p-0 text-white outline-none transition-[background-color,opacity,transform] duration-150 hover:bg-[#6b4cff] focus-visible:ring-2 focus-visible:ring-[rgba(124,92,255,0.48)] disabled:cursor-default disabled:bg-[rgba(245,244,241,0.06)] disabled:text-[rgba(245,244,241,0.32)] active:translate-y-px"
+  "grid size-10 shrink-0 place-items-center rounded-[8px] bg-[#FF6B6B] p-0 text-white outline-none transition-[background-color,opacity,transform] duration-150 hover:bg-[#6b4cff] focus-visible:ring-2 focus-visible:ring-[rgba(255, 107, 107,0.48)] disabled:cursor-default disabled:bg-[rgba(245,244,241,0.06)] disabled:text-[rgba(245,244,241,0.32)] active:translate-y-px"
 const askComposerStopButtonClass =
-  "grid size-10 shrink-0 place-items-center rounded-[8px] border border-[rgba(245,244,241,0.12)] bg-[rgba(245,244,241,0.06)] p-0 text-[#f5f4f1] outline-none transition-[background-color,border-color,color,transform] duration-150 hover:border-[rgba(245,244,241,0.2)] hover:bg-[rgba(245,244,241,0.1)] focus-visible:ring-2 focus-visible:ring-[rgba(124,92,255,0.48)] active:translate-y-px"
+  "grid size-10 shrink-0 place-items-center rounded-[8px] border border-[rgba(245,244,241,0.12)] bg-[rgba(245,244,241,0.06)] p-0 text-[#f5f4f1] outline-none transition-[background-color,border-color,color,transform] duration-150 hover:border-[rgba(245,244,241,0.2)] hover:bg-[rgba(245,244,241,0.1)] focus-visible:ring-2 focus-visible:ring-[rgba(255, 107, 107,0.48)] active:translate-y-px"
 
 function normalizeChatMarkdown(content: string) {
   return content.replace(/\[(\/[^\]\s)]+)\](?!\()/g, "[$1]($1)")
@@ -38,8 +38,8 @@ const askMarkdownComponents: Components = {
   h2: ({ children }) => <h2 className="mb-2 mt-5 text-[16px] font-[800] text-[#f5f4f1] first:mt-0 [font-family:var(--font-heading)]">{children}</h2>,
   h3: ({ children }) => <h3 className="mb-2 mt-4 text-[14px] font-[760] text-[rgba(245,244,241,0.92)] first:mt-0">{children}</h3>,
   strong: ({ children }) => <strong className="font-[780] text-[#ffffff]">{children}</strong>,
-  ul: ({ children }) => <ul className="my-3 flex list-disc flex-col gap-1.5 pl-5 marker:text-[#a78bff]">{children}</ul>,
-  ol: ({ children }) => <ol className="my-3 flex list-decimal flex-col gap-1.5 pl-5 marker:text-[#a78bff]">{children}</ol>,
+  ul: ({ children }) => <ul className="my-3 flex list-disc flex-col gap-1.5 pl-5 marker:text-[#FF9494]">{children}</ul>,
+  ol: ({ children }) => <ol className="my-3 flex list-decimal flex-col gap-1.5 pl-5 marker:text-[#FF9494]">{children}</ol>,
   li: ({ children }) => <li className="leading-[1.6]">{children}</li>,
   table: ({ children }) => (
     <div className="my-4 overflow-x-auto rounded-[10px] border border-[rgba(245,244,241,0.08)]">
@@ -59,7 +59,7 @@ const askMarkdownComponents: Components = {
         href={url}
         target={isExternal ? "_blank" : undefined}
         rel={isExternal ? "noreferrer" : undefined}
-        className="break-words font-[720] text-[#b9a7ff] underline decoration-[rgba(167,139,255,0.42)] decoration-1 underline-offset-[3px] transition-colors hover:text-[#d8d0ff] hover:decoration-[#c4b5fd] focus-visible:rounded-[4px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgba(167,139,255,0.5)]"
+        className="break-words font-[720] text-[#b9a7ff] underline decoration-[rgba(255, 148, 148,0.42)] decoration-1 underline-offset-[3px] transition-colors hover:text-[#d8d0ff] hover:decoration-[#c4b5fd] focus-visible:rounded-[4px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgba(255, 148, 148,0.5)]"
       >
         {children}
       </a>
@@ -227,7 +227,7 @@ export default function AskClient() {
                 key={prompt}
                 type="button"
                 onClick={() => fillAndFocus(prompt)}
-                className="cursor-pointer rounded-[8px] border border-[rgba(245,244,241,0.08)] bg-[rgba(14,14,20,0.62)] px-4 py-3 text-left outline-none transition-[border-color,background-color] duration-150 hover:border-[rgba(167,139,255,0.28)] hover:bg-[rgba(124,92,255,0.075)] focus-visible:border-[rgba(167,139,255,0.48)]"
+                className="cursor-pointer rounded-[8px] border border-[rgba(245,244,241,0.08)] bg-[rgba(14,14,20,0.62)] px-4 py-3 text-left outline-none transition-[border-color,background-color] duration-150 hover:border-[rgba(255, 148, 148,0.28)] hover:bg-[rgba(255, 107, 107,0.075)] focus-visible:border-[rgba(255, 148, 148,0.48)]"
               >
                 <span className="block text-[13.5px] font-[820] leading-[1.2] text-[#f5f4f1]">{headline}</span>
                 <span className="mt-1 block overflow-hidden text-ellipsis whitespace-nowrap text-[12.5px] font-[560] leading-[1.35] text-[rgba(245,244,241,0.56)]">{prompt}</span>
@@ -242,7 +242,7 @@ export default function AskClient() {
               if (message.role === "user") {
                 return (
                   <div key={`u-${index}`} className="ml-auto max-w-[min(84%,560px)]">
-                    <div className="rounded-[14px_14px_4px_14px] bg-[#7c5cff] px-4 py-2.5 text-[15px] font-[620] leading-[1.48] text-white shadow-[0_12px_32px_-22px_rgba(124,92,255,0.8)]">
+                    <div className="rounded-[14px_14px_4px_14px] bg-[#FF6B6B] px-4 py-2.5 text-[15px] font-[620] leading-[1.48] text-white shadow-[0_12px_32px_-22px_rgba(255, 107, 107,0.8)]">
                       {message.content}
                     </div>
                   </div>
@@ -253,7 +253,7 @@ export default function AskClient() {
                 <div key={`a-${index}`}>
                   <div className="text-[15px] font-[520] leading-[1.68] text-[rgba(245,244,241,0.92)]">
                     {isLastEmpty ? (
-                      <span className="inline-flex gap-1.5 py-2 text-[#a78bff]" aria-label="Thinking">
+                      <span className="inline-flex gap-1.5 py-2 text-[#FF9494]" aria-label="Thinking">
                         <span className="block size-1.5 animate-[cmdDotPulse_1s_ease_infinite] rounded-full bg-current" />
                         <span className="block size-1.5 animate-[cmdDotPulse_1s_ease_infinite] rounded-full bg-current [animation-delay:0.12s]" />
                         <span className="block size-1.5 animate-[cmdDotPulse_1s_ease_infinite] rounded-full bg-current [animation-delay:0.24s]" />

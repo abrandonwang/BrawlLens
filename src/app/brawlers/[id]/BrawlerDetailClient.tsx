@@ -105,7 +105,7 @@ const panelMetaClass =
 const rowSurfaceClass =
   "rounded-[7px] border border-[rgba(245,244,241,0.065)] bg-[#0d0d11]"
 
-const DETAIL_INTRO_BORDER_COLORS = ["#7c5cff", "#5aeed0", "#ff6099", "#f5d75e", "#7c5cff"]
+const DETAIL_INTRO_BORDER_COLORS = ["#FF6B6B", "#5aeed0", "#ff6099", "#f5d75e", "#FF6B6B"]
 const DETAIL_INTRO_BORDER_STYLE: CSSProperties = {
   position: "absolute",
   inset: 0,
@@ -321,7 +321,7 @@ function DataRow({ label, value, tone }: { label: string; value: string; tone?: 
     : tone === "bad"
       ? "#ff8585"
       : tone === "accent"
-        ? "#a78bff"
+        ? "#FF9494"
         : "#f5f4f1"
 
   return (
@@ -350,7 +350,7 @@ function HistogramPanel({ histogram }: { histogram: number[] }) {
             <span className="text-[10.5px] font-[780] leading-none text-[rgba(245,244,241,0.78)]">{bucket}</span>
             <span className="h-2 overflow-hidden rounded-full bg-[rgba(245,244,241,0.07)]">
               <span
-                className="block h-full rounded-full bg-[#a78bff]"
+                className="block h-full rounded-full bg-[#FF9494]"
                 style={{ width: `${Math.max(4, (histogram[index] ?? 0) / max * 100)}%`, opacity: 0.42 + index * 0.1 }}
               />
             </span>
@@ -488,7 +488,7 @@ function KitIcon({ item, title }: { item: AbilityItem; title: string }) {
     <span
       key={`${title}-${item.key}`}
       className={cx(
-        "group relative grid size-8 place-items-center overflow-visible rounded-[7px] border text-[rgba(245,244,241,0.78)] outline-none transition-[box-shadow,border-color,background-color] duration-150 focus-visible:border-[rgba(124,92,255,0.58)]",
+        "group relative grid size-8 place-items-center overflow-visible rounded-[7px] border text-[rgba(245,244,241,0.78)] outline-none transition-[box-shadow,border-color,background-color] duration-150 focus-visible:border-[rgba(255, 107, 107,0.58)]",
         tone.wrap,
       )}
       tabIndex={0}
@@ -557,7 +557,7 @@ function MapRow({ map }: { map: BrawlerStats["maps"][number] }) {
   return (
     <Link
       href={`/meta/${encodeURIComponent(map.map)}`}
-      className={`${rowSurfaceClass} grid min-h-[48px] grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2.5 gap-y-1 px-3 py-2 text-inherit no-underline transition-colors hover:border-[rgba(124,92,255,0.28)] hover:bg-[rgba(124,92,255,0.08)]`}
+      className={`${rowSurfaceClass} grid min-h-[48px] grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2.5 gap-y-1 px-3 py-2 text-inherit no-underline transition-colors hover:border-[rgba(255, 107, 107,0.28)] hover:bg-[rgba(255, 107, 107,0.08)]`}
     >
       <span className="grid min-w-0 gap-0.5">
         <b className="overflow-hidden text-ellipsis whitespace-nowrap text-[12px] font-[820] leading-tight text-[#f5f4f1]">{map.map}</b>
@@ -770,7 +770,7 @@ export default function BrawlerDetailClient({ brawler }: { brawler: Brawler }) {
     ? "Need more sample."
     : "No comparison sample yet."
 
-  const rarityColor = brawler.rarity?.color ?? "#a78bff"
+  const rarityColor = brawler.rarity?.color ?? "#FF9494"
   const classLabel = getBrawlerClassName(brawler)
   const rarityLabel = brawler.rarity?.name ?? "Unknown rarity"
   const bestModeLabel = bestMode?.mode ?? "No mode sample"
@@ -813,7 +813,7 @@ export default function BrawlerDetailClient({ brawler }: { brawler: Brawler }) {
               scale={1}
             />
           )}
-          <div className="relative z-[2] min-h-[132px] rounded-[10px] border border-[rgba(245,244,241,0.105)] bg-[#101015] px-5 py-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] max-[760px]:px-4 max-[760px]:py-4">
+          <div className="relative z-[2] min-h-[132px] rounded-[10px] border-[2.5px] border-[#FF6B6B] bg-[#101015] px-5 py-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] max-[760px]:px-4 max-[760px]:py-4">
             <div className="grid min-h-[92px] grid-cols-[minmax(0,1fr)_minmax(520px,0.9fr)] items-center gap-5 max-[980px]:grid-cols-1 max-[980px]:gap-4">
               <div className="flex min-w-0 items-center gap-3.5 max-[560px]:items-start">
                 <div className="grid size-[64px] shrink-0 place-items-center overflow-hidden rounded-[10px] border border-[rgba(245,244,241,0.09)] bg-[#15151b] max-[560px]:size-14">
@@ -924,7 +924,7 @@ export default function BrawlerDetailClient({ brawler }: { brawler: Brawler }) {
                     caption={latestHistory ? `${compactNumber(latestHistory.picks)} latest picks` : historyWindowLabel}
                     points={history}
                     metric="picks"
-                    color="#a78bff"
+                    color="#FF9494"
                     formatValue={value => compactNumber(value)}
                   />
                   <TrendCard
@@ -977,7 +977,7 @@ export default function BrawlerDetailClient({ brawler }: { brawler: Brawler }) {
                 </div>
                 <div className="grid gap-1.5">
                   {topModes.length ? topModes.map(mode => (
-                    <Link key={mode.mode} href={`/meta?mode=${encodeURIComponent(mode.mode)}`} className={`${rowSurfaceClass} grid min-h-[46px] grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2.5 gap-y-1 px-3 py-2 text-inherit no-underline transition-colors hover:border-[rgba(124,92,255,0.28)] hover:bg-[rgba(124,92,255,0.08)]`}>
+                    <Link key={mode.mode} href={`/meta?mode=${encodeURIComponent(mode.mode)}`} className={`${rowSurfaceClass} grid min-h-[46px] grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2.5 gap-y-1 px-3 py-2 text-inherit no-underline transition-colors hover:border-[rgba(255, 107, 107,0.28)] hover:bg-[rgba(255, 107, 107,0.08)]`}>
                       <span className="overflow-hidden text-ellipsis whitespace-nowrap text-[12px] font-[840] text-[#f5f4f1]">{mode.mode}</span>
                       <span className="grid justify-items-end gap-0.5">
                         <strong className="text-[13px] font-black leading-none" style={{ color: winRateColor(mode.winRate) }}>{formatPercent(mode.winRate)}</strong>
@@ -1037,7 +1037,7 @@ export default function BrawlerDetailClient({ brawler }: { brawler: Brawler }) {
                     <DataRow label="Primary mode" value={bestModeLabel} />
                     <DataRow label="Coverage" value={coverageLabel} />
                   </div>
-                  <Link href="/brawlers" className="inline-flex h-8 items-center justify-center rounded-[7px] border border-[rgba(124,92,255,0.28)] bg-[rgba(124,92,255,0.12)] px-3 text-[11.5px] font-black uppercase leading-none text-[#a78bff] no-underline transition-colors hover:bg-[rgba(124,92,255,0.18)]">
+                  <Link href="/brawlers" className="inline-flex h-8 items-center justify-center rounded-[7px] border border-[rgba(255, 107, 107,0.28)] bg-[rgba(255, 107, 107,0.12)] px-3 text-[11.5px] font-black uppercase leading-none text-[#FF9494] no-underline transition-colors hover:bg-[rgba(255, 107, 107,0.18)]">
                     Compare tierlist
                   </Link>
                 </div>
@@ -1064,11 +1064,11 @@ export default function BrawlerDetailClient({ brawler }: { brawler: Brawler }) {
                       {previewGoodMatchups.map(item => <MatchupCard key={item.stat.id} type="good" stat={item.stat} delta={item.delta} />)}
                       <button
                         type="button"
-                        className={`${rowSurfaceClass} grid w-[clamp(84px,7.6vw,104px)] shrink-0 place-items-center content-center gap-1 px-2 text-center text-[12px] font-[850] text-[#f5f4f1] transition-colors hover:border-[rgba(124,92,255,0.28)] hover:bg-[rgba(124,92,255,0.08)]`}
+                        className={`${rowSurfaceClass} grid w-[clamp(84px,7.6vw,104px)] shrink-0 place-items-center content-center gap-1 px-2 text-center text-[12px] font-[850] text-[#f5f4f1] transition-colors hover:border-[rgba(255, 107, 107,0.28)] hover:bg-[rgba(255, 107, 107,0.08)]`}
                         aria-label="Show full matchup list"
                         onClick={() => setShowAllMatchups(true)}
                       >
-                        <span className="text-[28px] font-semibold leading-none text-[#a78bff]">+</span>
+                        <span className="text-[28px] font-semibold leading-none text-[#FF9494]">+</span>
                         <span>Full List</span>
                       </button>
                       {previewBadMatchups.map(item => <MatchupCard key={item.stat.id} type="bad" stat={item.stat} delta={item.delta} />)}

@@ -34,7 +34,7 @@ function formatFullNumber(value: number) {
   return value.toLocaleString("en-US")
 }
 
-const MAP_INTRO_BORDER_COLORS = ["#7c5cff", "#5aeed0", "#ff6099", "#f5d75e", "#7c5cff"]
+const MAP_INTRO_BORDER_COLORS = ["#FF6B6B", "#5aeed0", "#ff6099", "#f5d75e", "#FF6B6B"]
 const MAP_INTRO_BORDER_STYLE: CSSProperties = {
   position: "absolute",
   inset: 0,
@@ -238,7 +238,7 @@ export default function MapsPageClient() {
               />
             )}
 
-            <div className="relative z-[2] min-h-[132px] rounded-[10px] border border-[rgba(245,244,241,0.105)] bg-[#101015] px-5 py-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] max-[760px]:px-4 max-[760px]:py-4">
+            <div className="relative z-[2] min-h-[132px] rounded-[10px] border-[2.5px] border-[#FF6B6B] bg-[#101015] px-5 py-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] max-[760px]:px-4 max-[760px]:py-4">
               <div className="mx-auto grid max-w-[1040px] justify-items-center text-center">
                 <h1
                   id="maps-title"

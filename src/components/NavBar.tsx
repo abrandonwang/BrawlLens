@@ -72,7 +72,7 @@ const mobileMenuGroups: Array<{
 ] as const;
 
 const loginButtonClass =
-  "inline-flex h-[36px] cursor-pointer items-center gap-2 whitespace-nowrap rounded-[10px] border border-transparent bg-[#7c5cff] px-3.5 text-[14px] font-semibold leading-none text-white no-underline shadow-none outline-none transition-[transform,background-color,border-color,color,box-shadow] duration-150 [filter:none] [transform:none] hover:border-transparent hover:bg-[#7c5cff] hover:text-white hover:shadow-none hover:outline-none hover:[filter:none] hover:[transform:none] active:bg-[#7c5cff] active:shadow-none active:[transform:none] focus-visible:border-transparent focus-visible:bg-[#7c5cff] focus-visible:text-white focus-visible:shadow-none focus-visible:outline-none focus-visible:[filter:none] focus-visible:[transform:none]";
+  "inline-flex h-[36px] cursor-pointer items-center gap-2 whitespace-nowrap rounded-[10px] border border-transparent bg-[#FF6B6B] px-3.5 text-[14px] font-semibold leading-none text-[#0d0d11] no-underline shadow-none outline-none transition-[transform,background-color,border-color,color,box-shadow] duration-150 [filter:none] [transform:none] hover:border-transparent hover:bg-[#FF6B6B] hover:text-[#0d0d11] hover:shadow-none hover:outline-none hover:[filter:none] hover:[transform:none] active:bg-[#FF6B6B] active:shadow-none active:[transform:none] focus-visible:border-transparent focus-visible:bg-[#FF6B6B] focus-visible:text-[#0d0d11] focus-visible:shadow-none focus-visible:outline-none focus-visible:[filter:none] focus-visible:[transform:none]";
 
 const authLayerClass =
   "fixed inset-0 z-[320] flex animate-[modalOverlayIn_180ms_ease_both] items-center justify-center px-[18px] py-6 max-[560px]:px-2.5 max-[560px]:py-5";
@@ -256,6 +256,7 @@ export default function NavBar() {
     setSuppressedDesktopPanel(null);
     setLoginRedirectTo(redirectTo);
     setAuthMode(mode);
+    window.dispatchEvent(new CustomEvent("brawllens:close-search"));
     setIsLoginOpen(true);
   }, [closeMenu]);
 
@@ -437,6 +438,17 @@ export default function NavBar() {
     return () => window.removeEventListener("brawllens:open-login", onOpenLogin);
   }, [showLogin]);
 
+  // Mutual exclusion: whenever the search overlay opens (from any source),
+  // close the mobile menu and the login modal so only one modal is ever open.
+  useEffect(() => {
+    function onOpenSearch() {
+      closeMenu();
+      setIsLoginOpen(false);
+    }
+    window.addEventListener("brawllens:open-search", onOpenSearch);
+    return () => window.removeEventListener("brawllens:open-search", onOpenSearch);
+  }, [closeMenu]);
+
   useEffect(() => {
     let active = true;
 
@@ -475,6 +487,8 @@ export default function NavBar() {
       closeMenu();
       return;
     }
+    setIsLoginOpen(false);
+    window.dispatchEvent(new CustomEvent("brawllens:close-search"));
     setMobileOpenGroup(activeMobileMenuGroup(pathname) ?? "tierlists");
     setIsMenuOpen(true);
   }
@@ -668,7 +682,7 @@ export default function NavBar() {
   const renderedDesktopPanel = visibleDesktopPanel ?? lastDesktopPanel;
   const desktopPanelOffset = renderedDesktopPanel === "leaderboards" ? 50 : 0;
   const navTextClass = (active: boolean, isOpenTrigger = false) =>
-    `relative inline-flex h-[36px] items-center rounded-full border-0 px-3 text-[13px] font-semibold leading-none tracking-normal no-underline outline-none text-[rgba(250,250,248,0.90)] hover:text-[#ffffff] hover:bg-[rgba(245,244,241,0.07)] focus-visible:text-[#ffffff] ${active ? "text-[#ffffff] bg-[rgba(124,92,255,0.16)]" : ""} ${isOpenTrigger && !active ? "text-[#ffffff] bg-[rgba(124,92,255,0.14)]" : ""}`;
+    `relative inline-flex h-[36px] items-center rounded-full border-0 px-3 text-[13px] font-semibold leading-none tracking-normal no-underline outline-none text-[rgba(250,250,248,0.90)] hover:text-[#ffffff] hover:bg-[rgba(245,244,241,0.07)] focus-visible:text-[#ffffff] ${active ? "text-[#ffffff] bg-[rgba(255, 107, 107,0.16)]" : ""} ${isOpenTrigger && !active ? "text-[#ffffff] bg-[rgba(255, 107, 107,0.14)]" : ""}`;
 
   const navTextTransitionStyle = {
     transition: "color 220ms cubic-bezier(0.22, 1, 0.36, 1), background-color 260ms cubic-bezier(0.22, 1, 0.36, 1)",
@@ -699,9 +713,9 @@ export default function NavBar() {
             setHoverDesktopPanel(null);
           }}
           style={{ transition: "background-color 240ms cubic-bezier(0.22, 1, 0.36, 1), color 200ms cubic-bezier(0.22, 1, 0.36, 1)" }}
-          className={`group block rounded-[10px] px-2.5 py-[9px] text-inherit no-underline ${active ? "bg-[rgba(124,92,255,0.14)]" : "hover:bg-[rgba(245,244,241,0.05)]"}`}
+          className={`group block rounded-[10px] px-2.5 py-[9px] text-inherit no-underline ${active ? "bg-[rgba(255, 107, 107,0.14)]" : "hover:bg-[rgba(245,244,241,0.05)]"}`}
         >
-          <p className={`m-0 text-[13.5px] font-semibold leading-tight ${active ? "text-[#a78bff]" : "text-[#f5f4f1]"}`}>{item.label}</p>
+          <p className={`m-0 text-[13.5px] font-semibold leading-tight ${active ? "text-[#FF9494]" : "text-[#f5f4f1]"}`}>{item.label}</p>
           <p className="mt-0.5 mb-0 text-[11.5px] leading-snug text-[rgba(245,244,241,0.56)]">{item.description}</p>
         </Link>
       );
@@ -863,7 +877,15 @@ export default function NavBar() {
         </div>
           <button
             type="button"
-            className="relative ml-auto grid size-[34px] cursor-pointer place-items-center overflow-hidden rounded-[8px] border-0 bg-[var(--bt-shell)] p-0 text-[var(--bt-text-2)] shadow-none outline-none transition-colors duration-150 hover:bg-[var(--bt-panel)] hover:text-[var(--bt-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7c5cff]/35 lg:hidden"
+            onClick={() => openSearchOverlay()}
+            className="relative ml-auto grid size-[34px] cursor-pointer place-items-center rounded-[8px] border-0 bg-[var(--bt-shell)] p-0 text-[var(--bt-text-2)] outline-none transition-colors duration-150 hover:bg-[var(--bt-panel)] hover:text-[var(--bt-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6B6B]/35 lg:hidden"
+            aria-label="Open search"
+          >
+            <Search size={16} strokeWidth={2} aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            className="relative ml-1 grid size-[34px] cursor-pointer place-items-center overflow-hidden rounded-[8px] border-0 bg-[var(--bt-shell)] p-0 text-[var(--bt-text-2)] shadow-none outline-none transition-colors duration-150 hover:bg-[var(--bt-panel)] hover:text-[var(--bt-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6B6B]/35 lg:hidden"
           onClick={toggleMenu}
           aria-label={isMenuOpen ? "Close navigation menu" : "Open navigation menu"}
           aria-expanded={isMenuOpen}
@@ -935,7 +957,7 @@ export default function NavBar() {
                   >
                     <button
                       type="button"
-                      className={`flex min-h-[58px] w-full cursor-pointer items-center justify-between border-0 bg-transparent p-0 text-left text-[22px] font-[680] leading-none outline-none transition-colors duration-150 hover:text-[#a78bff] focus-visible:text-[#a78bff] focus-visible:outline-none ${expanded || groupActive ? "text-[#a78bff]" : "text-[var(--bt-text-2)]"}`}
+                      className={`flex min-h-[58px] w-full cursor-pointer items-center justify-between border-0 bg-transparent p-0 text-left text-[22px] font-[680] leading-none outline-none transition-colors duration-150 hover:text-[#FF9494] focus-visible:text-[#FF9494] focus-visible:outline-none ${expanded || groupActive ? "text-[#FF9494]" : "text-[var(--bt-text-2)]"}`}
                       aria-expanded={expanded}
                       onClick={() => setMobileOpenGroup(current => current === group.key ? null : group.key)}
                     >
@@ -956,7 +978,7 @@ export default function NavBar() {
                               key={item.href}
                               href={item.href}
                               onClick={closeMenu}
-                              className={`flex min-h-[42px] items-center justify-start text-[17px] font-[620] leading-none no-underline outline-none transition-colors duration-150 hover:text-[#a78bff] focus-visible:text-[#a78bff] focus-visible:outline-none ${active ? "text-[#a78bff]" : "text-[rgba(245,244,241,0.86)]"}`}
+                              className={`flex min-h-[42px] items-center justify-start text-[17px] font-[620] leading-none no-underline outline-none transition-colors duration-150 hover:text-[#FF9494] focus-visible:text-[#FF9494] focus-visible:outline-none ${active ? "text-[#FF9494]" : "text-[rgba(245,244,241,0.86)]"}`}
                             >
                               {item.label}
                             </Link>
@@ -985,14 +1007,14 @@ export default function NavBar() {
               >
                 {isSignedIn ? (
                   <div className="grid gap-3">
-                    <p className="m-0 truncate text-[22px] font-[680] leading-none text-[#a78bff]">{accountLabel}</p>
+                    <p className="m-0 truncate text-[22px] font-[680] leading-none text-[#FF9494]">{accountLabel}</p>
                     <div className="grid gap-0">
                       {accountNavItems.map(item => (
                         <Link
                           key={item.href}
                           href={item.href ?? "/account"}
                           onClick={closeMenu}
-                          className={`flex min-h-[42px] items-center justify-start text-[17px] font-[620] leading-none no-underline outline-none transition-colors duration-150 hover:text-[#a78bff] focus-visible:text-[#a78bff] focus-visible:outline-none ${item.href && isAccountNavItemActive(item.href) ? "text-[#a78bff]" : "text-[rgba(245,244,241,0.86)]"}`}
+                          className={`flex min-h-[42px] items-center justify-start text-[17px] font-[620] leading-none no-underline outline-none transition-colors duration-150 hover:text-[#FF9494] focus-visible:text-[#FF9494] focus-visible:outline-none ${item.href && isAccountNavItemActive(item.href) ? "text-[#FF9494]" : "text-[rgba(245,244,241,0.86)]"}`}
                         >
                           {item.label}
                         </Link>

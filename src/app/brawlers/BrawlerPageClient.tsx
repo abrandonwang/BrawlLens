@@ -52,7 +52,7 @@ const DEFAULT_SORT_DIRECTIONS: Record<CatalogSort, "asc" | "desc"> = {
   recentBuffs: "desc",
 }
 
-const TIER_INTRO_BORDER_COLORS = ["#7c5cff", "#5aeed0", "#ff6099", "#f5d75e", "#7c5cff"]
+const TIER_INTRO_BORDER_COLORS = ["#FF6B6B", "#5aeed0", "#ff6099", "#f5d75e", "#FF6B6B"]
 const TIER_INTRO_BORDER_STYLE: CSSProperties = {
   position: "absolute",
   inset: 0,
@@ -145,7 +145,7 @@ function getTier(stat: CatalogBrawlerStats | undefined, totalAnalyzedGames = 0) 
   const score = getMetaScore(stat, totalAnalyzedGames)
   if (score == null) return { label: "-", color: "var(--lb-text-4)" }
   if (score >= 64) return { label: "S+", color: "#f5d75e" }
-  if (score >= 60) return { label: "S", color: "#a78bff" }
+  if (score >= 60) return { label: "S", color: "#FF9494" }
   if (score >= 56) return { label: "A", color: "#7dd3fc" }
   if (score >= 52) return { label: "B", color: "#e2e6ee" }
   if (score >= 48) return { label: "C", color: "#ffb38a" }
@@ -396,7 +396,7 @@ export default function BrawlerPageClient({ brawlers }: { brawlers: Brawler[] })
               />
             )}
 
-            <div className="relative z-[2] min-h-[132px] rounded-[10px] border border-[rgba(245,244,241,0.105)] bg-[#101015] px-5 py-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] max-[760px]:px-4 max-[760px]:py-4">
+            <div className="relative z-[2] min-h-[132px] rounded-[10px] border-[2.5px] border-[#FF6B6B] bg-[#101015] px-5 py-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] max-[760px]:px-4 max-[760px]:py-4">
               <div className="mx-auto grid max-w-[1040px] justify-items-center text-center">
                 <h1
                   id="brawlers-title"

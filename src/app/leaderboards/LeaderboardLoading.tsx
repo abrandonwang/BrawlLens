@@ -13,7 +13,7 @@ const loadingToolbarActionsClass =
   "flex min-w-0 items-center justify-end gap-2 max-[1024px]:justify-between max-[560px]:flex-col max-[560px]:items-stretch"
 
 const loadingShellClass =
-  "min-h-[calc(100dvh-60px)] w-full overflow-x-clip bg-[var(--bg)] text-[#f5f4f1] [--lb-accent:#7c5cff] [--lb-line:rgba(245,244,241,0.07)] [--lb-line-2:rgba(245,244,241,0.10)] [--lb-panel:#0d0d11] [--lb-panel-2:#15151b] [--lb-text:#f5f4f1] [--lb-text-3:rgba(245,244,241,0.52)] [font-family:var(--font-ui)]"
+  "min-h-[calc(100dvh-60px)] w-full overflow-x-clip bg-[var(--bg)] text-[#f5f4f1] [--lb-accent:#FF6B6B] [--lb-line:rgba(245,244,241,0.07)] [--lb-line-2:rgba(245,244,241,0.10)] [--lb-panel:#0d0d11] [--lb-panel-2:#15151b] [--lb-text:#f5f4f1] [--lb-text-3:rgba(245,244,241,0.52)] [font-family:var(--font-ui)]"
 
 const loadingFrameClass =
   "mx-auto w-[min(1120px,calc(100vw-20px))] px-0 pb-[18px] pt-2.5 max-[560px]:w-[min(1120px,calc(100vw-12px))]"

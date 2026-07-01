@@ -6,199 +6,52 @@ import {
   useRef,
   useState,
   type ChangeEvent,
-  type CSSProperties,
   type FormEvent,
   type KeyboardEvent,
-  type PointerEvent as ReactPointerEvent,
-  type ReactElement,
-  type WheelEvent as ReactWheelEvent,
 } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { ArrowUp } from "lucide-react"
+import { ArrowUp, ChevronDown } from "lucide-react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import type { Components } from "react-markdown"
 import ChatLimitDialog from "@/components/ChatLimitDialog"
-import AnimatedGradientBackground from "@/components/ui/animated-gradient-background"
 import { chatLimitFromResponse, type ChatLimitPayload } from "@/lib/aiLimits"
 import { authHeaders } from "@/lib/clientAuth"
 
 const DATA_TOPICS = ["players", "brawlers", "maps", "clubs"]
-const LANDING_GRADIENT_COLORS = [
-  "#030407",
-  "#05060a",
-  "#0e1c35",
-  "#245ed8",
-  "#7c5cff",
-  "#ff6da8",
-  "#ff8a1f",
+type LandingDestination = { id: string; label: string; href: string }
+
+const LANDING_DESTINATIONS: LandingDestination[] = [
+  { id: "map-tier", label: "Map Tierlist", href: "/meta" },
+  { id: "brawler-tier", label: "Brawler Tierlist", href: "/brawlers" },
+  { id: "player-rank", label: "Player Rankings", href: "/leaderboards/players" },
+  { id: "club-rank", label: "Club Rankings", href: "/leaderboards/clubs" },
+  { id: "brawler-rank", label: "Brawler Rankings", href: "/leaderboards/brawlers" },
 ]
-const LANDING_GRADIENT_STOPS = [0, 30, 45, 61, 75, 88, 100]
-function MapTierPreview() {
-  const rows = [
-    { tier: "S", color: "rgba(255,91,111,0.92)", count: 4 },
-    { tier: "A", color: "rgba(255,181,71,0.88)", count: 4 },
-    { tier: "B", color: "rgba(95,176,255,0.82)", count: 4 },
-    { tier: "C", color: "rgba(124,92,255,0.78)", count: 3 },
-  ]
-  return (
-    <div className="flex w-full flex-col gap-[5px]">
-      {rows.map(row => (
-        <div key={row.tier} className="flex items-center gap-[6px]">
-          <span
-            className="grid h-[14px] w-[14px] place-items-center rounded-[3px] text-[8px] font-[680] text-white/85"
-            style={{ background: row.color }}
-          >
-            {row.tier}
-          </span>
-          <div className="flex flex-1 gap-[4px]">
-            {Array.from({ length: row.count }).map((_, i) => (
-              <span key={i} className="h-[14px] flex-1 rounded-[3px] bg-white/[0.09]" />
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-function BrawlerTierPreview() {
-  const rows = [
-    { tier: "S", color: "rgba(255,91,111,0.92)", count: 5 },
-    { tier: "A", color: "rgba(255,181,71,0.88)", count: 6 },
-    { tier: "B", color: "rgba(95,176,255,0.82)", count: 5 },
-  ]
-  return (
-    <div className="flex w-full flex-col gap-[6px]">
-      {rows.map(row => (
-        <div key={row.tier} className="flex items-center gap-[6px]">
-          <span
-            className="grid h-[16px] w-[16px] place-items-center rounded-full text-[8px] font-[680] text-white/90"
-            style={{ background: row.color }}
-          >
-            {row.tier}
-          </span>
-          <div className="flex flex-1 gap-[4px]">
-            {Array.from({ length: row.count }).map((_, i) => (
-              <span key={i} className="h-[12px] w-[12px] rounded-full bg-white/[0.11]" />
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-function PlayerLeaderboardPreview() {
-  return (
-    <div className="flex w-full flex-col gap-[6px]">
-      {[1, 2, 3, 4].map(rank => (
-        <div key={rank} className="flex items-center gap-[6px]">
-          <span className="w-[10px] text-right text-[9px] font-[520] text-white/40 tabular-nums">{rank}</span>
-          <span className="h-[14px] w-[14px] rounded-full bg-white/[0.14]" />
-          <span className="h-[5px] flex-1 rounded-full bg-white/[0.07]">
-            <span
-              className="block h-full rounded-full bg-white/30"
-              style={{ width: `${[78, 64, 52, 41][rank - 1]}%` }}
-            />
-          </span>
-          <span className="h-[5px] w-[18px] rounded-full bg-[rgba(255,181,71,0.55)]" />
-        </div>
-      ))}
-    </div>
-  )
-}
-
-function ClubLeaderboardPreview() {
-  return (
-    <div className="flex w-full flex-col gap-[6px]">
-      {[1, 2, 3, 4].map(rank => (
-        <div key={rank} className="flex items-center gap-[6px]">
-          <span className="w-[10px] text-right text-[9px] font-[520] text-white/40 tabular-nums">{rank}</span>
-          <span className="h-[14px] w-[14px] rotate-45 rounded-[3px] bg-white/[0.14]" />
-          <span className="h-[5px] flex-1 rounded-full bg-white/[0.07]">
-            <span
-              className="block h-full rounded-full bg-white/30"
-              style={{ width: `${[82, 71, 58, 45][rank - 1]}%` }}
-            />
-          </span>
-          <span className="h-[5px] w-[14px] rounded-full bg-[rgba(124,92,255,0.55)]" />
-        </div>
-      ))}
-    </div>
-  )
-}
-
-function BrawlerRankingPreview() {
-  const bars = [88, 74, 63, 54, 46]
-  return (
-    <div className="flex w-full flex-col gap-[6px]">
-      {bars.map((w, i) => (
-        <div key={i} className="flex items-center gap-[6px]">
-          <span className="h-[10px] w-[10px] rounded-full bg-white/[0.14]" />
-          <span className="text-[9px] font-[520] text-white/40 tabular-nums">{w}%</span>
-          <span className="h-[5px] flex-1 rounded-full bg-white/[0.07]">
-            <span
-              className="block h-full rounded-full bg-gradient-to-r from-white/35 to-white/15"
-              style={{ width: `${w}%` }}
-            />
-          </span>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-type CarouselItem = {
-  id: string
-  label: string
-  caption: string
-  href: string
-  Preview: () => ReactElement
-}
-
-const LANDING_CAROUSEL_ITEMS: CarouselItem[] = [
-  { id: "map-tier", label: "Map Tierlist", caption: "Best brawlers per map", href: "/meta", Preview: MapTierPreview },
-  { id: "brawler-tier", label: "Brawler Tierlist", caption: "Overall meta strength", href: "/brawlers", Preview: BrawlerTierPreview },
-  { id: "player-rank", label: "Player Rankings", caption: "Top trophy hunters", href: "/leaderboards/players", Preview: PlayerLeaderboardPreview },
-  { id: "club-rank", label: "Club Rankings", caption: "Highest scoring clubs", href: "/leaderboards/clubs", Preview: ClubLeaderboardPreview },
-  { id: "brawler-rank", label: "Brawler Rankings", caption: "Sorted by win rate", href: "/leaderboards/brawlers", Preview: BrawlerRankingPreview },
-]
-const LANDING_CAROUSEL_INITIAL_INDEX = 2
 
 function cx(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(" ")
 }
 
-function getLandingCarouselOffset(index: number, activeIndex: number) {
-  return index - activeIndex
-}
-
-function clampLandingCarouselIndex(index: number) {
-  const last = LANDING_CAROUSEL_ITEMS.length - 1
-  if (index < 0) return 0
-  if (index > last) return last
-  return index
-}
 
 const landingShellClass =
-  "app-landing-shell relative isolate flex min-h-[calc(100dvh-60px)] flex-1 flex-col overflow-hidden bg-[#05060a] p-0 text-[var(--bt-text)]"
+  "app-landing-shell relative isolate flex min-h-[calc(100dvh-60px)] flex-1 flex-col overflow-hidden bg-transparent p-0 text-[var(--bt-text)]"
 const landingStageClass =
   "relative z-[1] mx-auto grid min-h-[calc(100dvh-160px)] w-[min(1000px,calc(100vw_-_40px))] shrink-0 content-center justify-items-center pb-[clamp(46px,8vh,96px)] pt-[clamp(56px,10vh,120px)] [margin-top:clamp(-170px,-14vh,-112px)] max-[640px]:min-h-[calc(100dvh-132px)] max-[640px]:w-[min(calc(100%_-_24px),680px)] max-[640px]:pb-12 max-[640px]:pt-[54px] max-[640px]:[margin-top:-68px] max-[900px]:w-[min(calc(100%_-_24px),680px)]"
 const landingBrandWrapClass = "flex w-full justify-center"
 const landingTextLogoClass =
-  "relative m-0 block bg-[linear-gradient(180deg,#ffffff_0%,#f2f8ff_48%,#9fcfff_100%)] bg-clip-text text-center font-[900] leading-[0.98] tracking-normal text-[#f5f9ff] [filter:drop-shadow(0_8px_18px_rgba(0,0,0,0.34))] [font-family:var(--font-ui)] [text-shadow:0_1px_0_rgba(255,255,255,0.22)] [-webkit-background-clip:text] [-webkit-text-fill-color:transparent] [-webkit-text-stroke:0] text-[clamp(42px,4.8vw,78px)] max-[640px]:text-[clamp(38px,11.5vw,56px)]"
+  "relative m-0 block bg-[linear-gradient(180deg,#ffffff_0%,#fff4ef_100%)] bg-clip-text text-center font-[900] leading-[0.98] tracking-normal text-white [filter:drop-shadow(0_10px_26px_rgba(120,30,30,0.4))] [font-family:var(--font-ui)] [-webkit-background-clip:text] [-webkit-text-fill-color:transparent] [-webkit-text-stroke:0] text-[clamp(42px,4.8vw,78px)] max-[640px]:text-[clamp(38px,11.5vw,56px)]"
 const landingTrackClass =
   "mt-[clamp(10px,1.5vh,18px)] grid w-[min(760px,100%)] justify-items-center gap-[clamp(10px,1.35vh,14px)] max-[640px]:w-[min(100%,calc(100vw_-_24px))]"
 const landingLineClass =
-  "m-0 inline-flex min-h-7 min-w-[min(420px,100%)] items-baseline justify-center text-center text-[clamp(16px,1.7vw,23px)] font-[430] leading-[1.28] tracking-normal text-[rgba(231,236,246,0.82)] [font-family:var(--font-ui)] max-[640px]:min-h-[22px] max-[640px]:text-[clamp(15px,4.7vw,18px)]"
+  "m-0 inline-flex min-h-7 min-w-[min(420px,100%)] items-baseline justify-center text-center text-[clamp(16px,1.7vw,23px)] font-[430] leading-[1.28] tracking-normal text-[rgba(255,255,255,0.9)] [font-family:var(--font-ui)] max-[640px]:min-h-[22px] max-[640px]:text-[clamp(15px,4.7vw,18px)]"
 const landingTypewordClass =
-  "ml-[0.25em] inline-block text-left font-[520] text-[rgba(245,250,255,0.9)]"
+  "ml-[0.25em] inline-block text-left font-[600] text-[#ffffff]"
 const landingPromptFormWrapClass =
   "relative w-[min(740px,100%)] aspect-[5.65/1] max-[640px]:w-[min(100%,calc(100vw_-_24px))]"
 const landingPromptFormBaseClass =
-  "absolute left-0 right-0 top-0 z-[3] flex h-full min-h-0 flex-col items-stretch gap-0 overflow-hidden border border-[rgba(218,232,255,0.18)] p-0 [background:linear-gradient(180deg,rgba(38,44,58,0.94),rgba(20,24,34,0.95))] [box-shadow:inset_0_1px_0_rgba(255,255,255,0.085),inset_0_-1px_0_rgba(148,172,220,0.06),0_26px_70px_-44px_rgba(0,0,0,0.92)] [container-type:inline-size] [backdrop-filter:blur(16px)_saturate(1.08)] [-webkit-backdrop-filter:blur(16px)_saturate(1.08)] rounded-[18px] transition-[height,border-color,border-radius,box-shadow,transform] duration-[460ms] ease-[cubic-bezier(0.16,1,0.3,1)] focus-within:border-[rgba(230,238,255,0.30)] focus-within:[box-shadow:inset_0_1px_0_rgba(255,255,255,0.11),inset_0_-1px_0_rgba(148,172,220,0.08),0_30px_80px_-48px_rgba(0,0,0,0.96)] max-[640px]:rounded-[16px]"
+  "absolute left-0 right-0 top-0 z-[3] flex h-full min-h-0 flex-col items-stretch gap-0 overflow-hidden border border-[rgba(255,255,255,0.24)] p-0 [background:rgba(255,255,255,0.12)] [box-shadow:inset_0_1px_0_rgba(255,255,255,0.18),0_26px_70px_-44px_rgba(90,20,20,0.6)] [container-type:inline-size] [backdrop-filter:blur(20px)_saturate(1.1)] [-webkit-backdrop-filter:blur(20px)_saturate(1.1)] rounded-[18px] transition-[height,border-color,border-radius,box-shadow,transform] duration-[460ms] ease-[cubic-bezier(0.16,1,0.3,1)] focus-within:border-[rgba(255,255,255,0.42)] focus-within:[background:rgba(255,255,255,0.16)] focus-within:[box-shadow:inset_0_1px_0_rgba(255,255,255,0.22),0_30px_80px_-48px_rgba(90,20,20,0.7)] max-[640px]:rounded-[16px]"
 // Expanded ~3x of the collapsed aspect-[5.65/1]. At 740px wide collapsed is ~131px, so ~390-410px is "triple".
 const landingPromptFormExpandedClass =
   "!h-[440px] rounded-[20px] max-[640px]:!h-[380px] max-[640px]:rounded-[18px]"
@@ -210,7 +63,7 @@ const landingPromptInputbarBaseClass =
 const landingPromptInputbarExpandedClass =
   "!static !inset-auto !translate-y-0 !gap-2 grid grid-cols-[minmax(0,1fr)_36px] items-center rounded-[14px] border border-[rgba(218,232,255,0.14)] bg-[rgba(236,244,255,0.055)] p-[8px_10px_8px_14px] [box-shadow:inset_0_1px_0_rgba(255,255,255,0.055),0_2px_10px_-8px_rgba(0,0,0,0.72)] transition-[border-color,box-shadow,background] duration-200 ease-out focus-within:border-[rgba(230,238,255,0.26)] focus-within:bg-[rgba(236,244,255,0.075)] focus-within:[box-shadow:inset_0_1px_0_rgba(255,255,255,0.08),0_3px_12px_-9px_rgba(0,0,0,0.82)] m-[0_14px_14px_14px] max-[640px]:grid-cols-[minmax(0,1fr)_32px] max-[640px]:p-[7px_8px_7px_12px]"
 const landingTextareaBaseClass =
-  "relative z-[2] block h-full min-h-0 max-h-none w-full resize-none self-stretch border-0 bg-transparent p-[0_8px_0_0] text-[15px] font-[520] leading-[1.4] tracking-normal text-white outline-0 placeholder:text-[rgba(245,250,255,0.40)] placeholder:opacity-100 focus:border-0 focus:bg-transparent focus:outline-0 [font-family:var(--font-ui)] max-[640px]:text-[14px] max-[640px]:leading-[1.45]"
+  "relative z-[2] block h-full min-h-0 max-h-none w-full resize-none self-stretch border-0 bg-transparent p-[0_8px_0_0] text-[15px] font-[520] leading-[1.4] tracking-normal text-white outline-0 placeholder:text-[rgba(255,255,255,0.66)] placeholder:opacity-100 focus:border-0 focus:bg-transparent focus:outline-0 [font-family:var(--font-ui)] max-[640px]:text-[14px] max-[640px]:leading-[1.45]"
 // Inside the expanded nested pill the textarea should be one line, vertically centered.
 const landingTextareaExpandedClass =
   "!h-[20px] !min-h-[20px] max-h-[80px] !self-center !text-[14px] !leading-[1.5]"
@@ -222,27 +75,97 @@ const landingSubmitActiveClass = "!bg-[var(--bt-blue)] !text-white hover:enabled
 const landingChatBodyClass =
   "relative z-[2] flex min-h-0 flex-1 flex-col gap-[14px] overflow-y-auto p-[20px_20px_10px_20px] scroll-smooth [scrollbar-color:rgba(255,255,255,0.18)_transparent] [scrollbar-width:thin] max-[640px]:gap-[12px] max-[640px]:p-[14px_14px_6px_14px] [&::-webkit-scrollbar]:w-[6px] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[rgba(255,255,255,0.18)] [&::-webkit-scrollbar-track]:bg-transparent"
 const landingChatUserBubbleClass =
-  "ml-auto max-w-[min(78%,460px)] rounded-[14px_14px_4px_14px] bg-[#7c5cff] px-[13px] py-[8px] text-[13.5px] font-[600] leading-[1.5] text-white [box-shadow:0_10px_22px_-18px_rgba(0,0,0,0.9)] [animation:landingChatMsgIn_380ms_cubic-bezier(0.16,1,0.3,1)_both] max-[640px]:max-w-[88%] max-[640px]:text-[13px]"
+  "ml-auto max-w-[min(78%,460px)] rounded-[14px_14px_4px_14px] bg-[#FF6B6B] px-[13px] py-[8px] text-[13.5px] font-[600] leading-[1.5] text-white [box-shadow:0_10px_22px_-18px_rgba(0,0,0,0.9)] [animation:landingChatMsgIn_380ms_cubic-bezier(0.16,1,0.3,1)_both] max-[640px]:max-w-[88%] max-[640px]:text-[13px]"
 const landingChatAssistantClass =
   "w-full max-w-full text-[13.5px] font-[460] leading-[1.65] text-[rgba(244,248,255,0.92)] [animation:landingChatMsgIn_380ms_cubic-bezier(0.16,1,0.3,1)_both] [&>p]:my-0 max-[640px]:text-[13px]"
 const landingChatDotsClass =
   "inline-flex gap-[5px] py-1 [&>span]:block [&>span]:size-[5px] [&>span]:rounded-full [&>span]:bg-current [&>span]:opacity-[0.72] [&>span]:[animation:landingChatPulse_980ms_ease-in-out_infinite] [&>span:nth-child(2)]:[animation-delay:120ms] [&>span:nth-child(3)]:[animation-delay:240ms]"
 const landingPulseClass =
   "block size-[5px] rounded-full bg-current opacity-[0.72] [animation:landingChatPulse_980ms_ease-in-out_infinite]"
-const landingCarouselShellClass =
-  "absolute inset-x-0 bottom-[clamp(20px,4.4vh,48px)] z-[2] flex justify-center px-4 transition-opacity duration-300 max-[640px]:bottom-[clamp(14px,3.4vh,24px)]"
-const landingCarouselRailClass =
-  "relative h-[clamp(232px,26vh,272px)] w-[min(960px,calc(100vw_-_28px))] select-none outline-none [perspective:1400px] [touch-action:pan-y] max-[640px]:h-[216px] max-[640px]:w-[min(100%,calc(100vw_-_20px))]"
-const landingCarouselCardBaseClass =
-  "group absolute left-1/2 top-1/2 block aspect-[5/4] w-[clamp(196px,22vw,232px)] cursor-pointer overflow-hidden rounded-[18px] border border-[rgba(218,232,255,0.11)] bg-[linear-gradient(180deg,rgba(35,41,55,0.94),rgba(17,21,31,0.92))] p-[14px_14px_12px_14px] text-left no-underline outline-none [-webkit-backdrop-filter:blur(14px)] [backdrop-filter:blur(14px)] [box-shadow:inset_0_1px_0_rgba(255,255,255,0.08),inset_0_-1px_0_rgba(148,172,220,0.05),0_28px_60px_-28px_rgba(0,0,0,0.95)] [transform-style:preserve-3d] [will-change:transform,opacity,filter] focus-visible:[box-shadow:inset_0_1px_0_rgba(255,255,255,0.11),0_0_0_2px_rgba(230,238,255,0.30),0_28px_60px_-28px_rgba(0,0,0,0.95)] max-[640px]:w-[clamp(176px,58vw,208px)] max-[640px]:rounded-[16px] max-[640px]:p-[12px]"
-const LANDING_CARD_SETTLE_TRANSITION =
-  "transform 620ms cubic-bezier(0.16,1,0.3,1), opacity 620ms cubic-bezier(0.16,1,0.3,1), filter 620ms cubic-bezier(0.16,1,0.3,1), box-shadow 620ms cubic-bezier(0.16,1,0.3,1)"
-const landingCarouselCtaClass =
-  "absolute left-1/2 top-1/2 z-[5] inline-flex items-center gap-[8px] whitespace-nowrap rounded-full border border-[rgba(218,232,255,0.16)] bg-[rgba(30,36,49,0.86)] px-[12px] py-[7px] text-[11px] font-[620] tracking-[0.04em] text-white/88 no-underline outline-none [-webkit-backdrop-filter:blur(10px)] [backdrop-filter:blur(10px)] [box-shadow:inset_0_1px_0_rgba(255,255,255,0.09),0_18px_38px_-20px_rgba(0,0,0,0.9)] [font-family:var(--font-ui)] hover:bg-[rgba(38,44,58,0.90)] hover:[box-shadow:inset_0_1px_0_rgba(255,255,255,0.11),0_22px_44px_-20px_rgba(0,0,0,0.95)] focus-visible:[box-shadow:inset_0_1px_0_rgba(255,255,255,0.11),0_0_0_2px_rgba(230,238,255,0.30),0_22px_44px_-20px_rgba(0,0,0,0.95)] max-[640px]:px-[11px] max-[640px]:py-[6px] max-[640px]:text-[10.5px]"
-const LANDING_CTA_TRANSITION =
-  "transform 520ms cubic-bezier(0.16,1,0.3,1), opacity 520ms cubic-bezier(0.16,1,0.3,1), box-shadow 320ms ease-out, background-color 200ms ease-out"
-const landingCarouselKbdClass =
-  "grid h-[17px] min-w-[17px] place-items-center rounded-[4px] border border-white/[0.16] bg-white/[0.06] px-[4px] text-[10px] font-[640] leading-none text-white/75 [font-family:var(--font-ui)]"
+const landingDestNavClass =
+  "absolute inset-x-0 bottom-[clamp(20px,4.4vh,48px)] z-[2] mx-auto flex w-[min(720px,calc(100vw-28px))] flex-wrap items-center justify-center gap-2.5 px-4 transition-opacity duration-300 max-[640px]:bottom-[clamp(16px,3.4vh,28px)] max-[640px]:gap-2"
+const landingDestTriggerClass =
+  "group inline-flex items-center gap-2 rounded-full border border-[rgba(218,232,255,0.16)] bg-[rgba(30,36,49,0.72)] px-5 py-2.5 text-[14px] font-[640] tracking-[-0.005em] text-[rgba(244,248,255,0.92)] no-underline outline-none [backdrop-filter:blur(10px)] [-webkit-backdrop-filter:blur(10px)] [box-shadow:inset_0_1px_0_rgba(255,255,255,0.06),0_10px_30px_-20px_rgba(0,0,0,0.85)] transition-[background,border-color,color] duration-200 [font-family:var(--font-ui)] hover:border-[rgba(255,107,107,0.5)] hover:bg-[rgba(38,44,58,0.88)] hover:text-white focus-visible:border-[rgba(255,107,107,0.6)] max-[640px]:px-4 max-[640px]:py-2 max-[640px]:text-[13.5px]"
+const landingDestMenuClass =
+  "absolute bottom-full left-1/2 mb-2.5 w-[230px] -translate-x-1/2 origin-bottom rounded-[14px] border border-[rgba(245,244,241,0.10)] bg-[rgba(17,19,26,0.98)] p-1.5 [box-shadow:inset_0_1px_0_rgba(255,255,255,0.045),0_24px_60px_-30px_rgba(0,0,0,0.92)] [backdrop-filter:blur(12px)] [-webkit-backdrop-filter:blur(12px)]"
+const landingDestItemClass =
+  "group/item flex items-center justify-between gap-3 rounded-[9px] px-3 py-2.5 text-[13.5px] font-[560] text-[rgba(245,244,241,0.82)] no-underline outline-none transition-colors duration-150 [font-family:var(--font-ui)] hover:bg-[rgba(255,107,107,0.14)] hover:text-white focus-visible:bg-[rgba(255,107,107,0.14)] focus-visible:text-white"
+
+function LandingExploreMenu({ disabled }: { disabled?: boolean }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (disabled) setOpen(false)
+  }, [disabled])
+
+  useEffect(() => {
+    if (!open) return
+    function onPointerDown(event: PointerEvent) {
+      if (!ref.current?.contains(event.target as Node)) setOpen(false)
+    }
+    function onKey(event: globalThis.KeyboardEvent) {
+      if (event.key === "Escape") setOpen(false)
+    }
+    window.addEventListener("pointerdown", onPointerDown)
+    window.addEventListener("keydown", onKey)
+    return () => {
+      window.removeEventListener("pointerdown", onPointerDown)
+      window.removeEventListener("keydown", onKey)
+    }
+  }, [open])
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        className={landingDestTriggerClass}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        disabled={disabled}
+        tabIndex={disabled ? -1 : undefined}
+        onClick={() => setOpen(value => !value)}
+      >
+        <span>Explore BrawlLens</span>
+        <ChevronDown
+          size={15}
+          strokeWidth={2.4}
+          className={cx("opacity-70 transition-transform duration-200", open && "rotate-180")}
+          aria-hidden="true"
+        />
+      </button>
+
+      {open && (
+        <div role="menu" className={cx(landingDestMenuClass, "animate-[authPanelIn_180ms_cubic-bezier(0.16,1,0.3,1)_both]")}>
+          {LANDING_DESTINATIONS.map(item => (
+            <Link
+              key={item.id}
+              href={item.href}
+              role="menuitem"
+              className={landingDestItemClass}
+              onClick={() => setOpen(false)}
+            >
+              <span>{item.label}</span>
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 16 16"
+                className="h-[12px] w-[12px] shrink-0 opacity-40 transition-opacity duration-150 group-hover/item:opacity-90"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M4 8h8" />
+                <path d="M9 4l4 4-4 4" />
+              </svg>
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
 
 const landingMarkdownComponents: Components = {
   p: ({ children }) => <p className="mb-2 mt-0 last:mb-0">{children}</p>,
@@ -272,7 +195,7 @@ const landingMarkdownComponents: Components = {
   ),
   td: ({ children }) => <td className="px-3 py-2 align-top text-[rgba(244,248,255,0.92)]">{children}</td>,
   blockquote: ({ children }) => (
-    <blockquote className="my-2 border-l-2 border-[rgba(167,139,255,0.5)] pl-3 text-[rgba(244,248,255,0.72)]">
+    <blockquote className="my-2 border-l-2 border-[rgba(255, 148, 148,0.5)] pl-3 text-[rgba(244,248,255,0.72)]">
       {children}
     </blockquote>
   ),
@@ -293,58 +216,11 @@ export default function LandingClient() {
   const [landingChatExpanded, setLandingChatExpanded] = useState(false)
   const [landingChatStreaming, setLandingChatStreaming] = useState(false)
   const [landingLimitGate, setLandingLimitGate] = useState<ChatLimitPayload | null>(null)
-  const [landingCarouselIndex, setLandingCarouselIndex] = useState(LANDING_CAROUSEL_INITIAL_INDEX)
-  const [landingCarouselDragPx, setLandingCarouselDragPx] = useState(0)
-  const [landingCarouselDragging, setLandingCarouselDragging] = useState(false)
-  const [landingCarouselSpacingPx, setLandingCarouselSpacingPx] = useState(180)
-  const [landingCarouselCardWidthPx, setLandingCarouselCardWidthPx] = useState(220)
   const landingChatAbortRef = useRef<AbortController | null>(null)
   const landingChatBottomRef = useRef<HTMLDivElement>(null)
   const landingPromptResetRef = useRef<number | null>(null)
-  const landingCarouselPointerRef = useRef<{ x: number; y: number; t: number; pointerId: number; axisLocked: "x" | "y" | null } | null>(null)
-  const landingCarouselWheelAccumRef = useRef(0)
-  const landingCarouselWheelTimerRef = useRef<number | null>(null)
-  const landingCarouselWheelRafRef = useRef<number | null>(null)
-  const landingCarouselIndexRef = useRef(LANDING_CAROUSEL_INITIAL_INDEX)
-  const landingCarouselSuppressClickRef = useRef(false)
-  const landingCarouselRailRef = useRef<HTMLDivElement>(null)
   const landingPromptHasValue = landingQuery.trim().length > 0
   const landingRouter = useRouter()
-  const landingActiveItem = LANDING_CAROUSEL_ITEMS[landingCarouselIndex]
-  const [landingLabelSwap, setLandingLabelSwap] = useState<{
-    current: CarouselItem
-    previous: CarouselItem | null
-    direction: 1 | -1
-    swapId: number
-  }>({
-    current: LANDING_CAROUSEL_ITEMS[LANDING_CAROUSEL_INITIAL_INDEX],
-    previous: null,
-    direction: 1,
-    swapId: 0,
-  })
-
-  useEffect(() => {
-    setLandingLabelSwap(state => {
-      if (state.current.id === landingActiveItem.id) return state
-      const prevIdx = LANDING_CAROUSEL_ITEMS.findIndex(i => i.id === state.current.id)
-      const newIdx = LANDING_CAROUSEL_ITEMS.findIndex(i => i.id === landingActiveItem.id)
-      const direction: 1 | -1 = newIdx >= prevIdx ? 1 : -1
-      return {
-        current: landingActiveItem,
-        previous: state.current,
-        direction,
-        swapId: state.swapId + 1,
-      }
-    })
-  }, [landingActiveItem])
-
-  useEffect(() => {
-    if (!landingLabelSwap.previous) return
-    const t = window.setTimeout(() => {
-      setLandingLabelSwap(state => ({ ...state, previous: null }))
-    }, 540)
-    return () => window.clearTimeout(t)
-  }, [landingLabelSwap.swapId, landingLabelSwap.previous])
 
   useEffect(() => {
     const captureStyles = (element: HTMLElement | null, properties: string[]) => {
@@ -394,9 +270,8 @@ export default function LandingClient() {
     html.style.setProperty("overflow", "hidden", "important")
     html.style.setProperty("overflow-y", "hidden", "important")
     html.style.setProperty("overscroll-behavior", "none", "important")
-    body.style.setProperty("background", "#05060a", "important")
-    body.style.setProperty("background-image", "none", "important")
-    body.style.setProperty("background-attachment", "scroll", "important")
+    body.style.setProperty("background", "linear-gradient(315deg, #E2846F, #D3504E)", "important")
+    body.style.setProperty("background-attachment", "fixed", "important")
     body.style.setProperty("height", "100dvh", "important")
     body.style.setProperty("min-height", "100dvh", "important")
     body.style.setProperty("overflow", "hidden", "important")
@@ -405,10 +280,11 @@ export default function LandingClient() {
     mainShell?.style.setProperty("height", "100dvh", "important")
     mainShell?.style.setProperty("min-height", "100dvh", "important")
     mainShell?.style.setProperty("overflow", "hidden", "important")
-    nav?.style.setProperty("background", "#0d0d11", "important")
-    nav?.style.setProperty("background-color", "#0d0d11", "important")
-    nav?.style.setProperty("backdrop-filter", "none", "important")
-    nav?.style.setProperty("-webkit-backdrop-filter", "none", "important")
+    nav?.style.setProperty("background", "rgba(255,255,255,0.12)", "important")
+    nav?.style.setProperty("background-color", "rgba(255,255,255,0.12)", "important")
+    nav?.style.setProperty("border-color", "rgba(255,255,255,0.22)", "important")
+    nav?.style.setProperty("backdrop-filter", "blur(18px) saturate(1.1)", "important")
+    nav?.style.setProperty("-webkit-backdrop-filter", "blur(18px) saturate(1.1)", "important")
 
     return () => {
       html.classList.remove("landing-bg", "home-landing-bg")
@@ -423,8 +299,6 @@ export default function LandingClient() {
     return () => {
       landingChatAbortRef.current?.abort()
       if (landingPromptResetRef.current) window.clearTimeout(landingPromptResetRef.current)
-      if (landingCarouselWheelTimerRef.current) window.clearTimeout(landingCarouselWheelTimerRef.current)
-      if (landingCarouselWheelRafRef.current !== null) window.cancelAnimationFrame(landingCarouselWheelRafRef.current)
     }
   }, [])
 
@@ -481,55 +355,6 @@ export default function LandingClient() {
     }
   }, [landingChatExpanded, landingChatMessages])
 
-  const rotateLandingCarousel = useCallback((direction: number) => {
-    setLandingCarouselIndex(index => clampLandingCarouselIndex(index + direction))
-  }, [])
-
-  useEffect(() => {
-    landingCarouselIndexRef.current = landingCarouselIndex
-  }, [landingCarouselIndex])
-
-  useEffect(() => {
-    const update = () => {
-      const vw = window.innerWidth
-      setLandingCarouselSpacingPx(Math.max(150, Math.min(220, vw * 0.18)))
-      if (vw <= 640) {
-        setLandingCarouselCardWidthPx(Math.max(176, Math.min(208, vw * 0.58)))
-      } else {
-        setLandingCarouselCardWidthPx(Math.max(196, Math.min(232, vw * 0.22)))
-      }
-    }
-    update()
-    window.addEventListener("resize", update)
-    return () => window.removeEventListener("resize", update)
-  }, [])
-
-  useEffect(() => {
-    const handleLandingCarouselKeyDown = (event: globalThis.KeyboardEvent) => {
-      if (event.defaultPrevented || landingChatExpanded) return
-
-      const target = event.target as HTMLElement | null
-      if (target?.closest("input, textarea, select, [contenteditable='true']")) return
-
-      if (event.key === "ArrowLeft") {
-        event.preventDefault()
-        rotateLandingCarousel(-1)
-      }
-
-      if (event.key === "ArrowRight") {
-        event.preventDefault()
-        rotateLandingCarousel(1)
-      }
-
-      if (event.key === "Enter") {
-        event.preventDefault()
-        landingRouter.push(landingActiveItem.href)
-      }
-    }
-
-    window.addEventListener("keydown", handleLandingCarouselKeyDown)
-    return () => window.removeEventListener("keydown", handleLandingCarouselKeyDown)
-  }, [landingChatExpanded, rotateLandingCarousel, landingRouter, landingActiveItem.href])
 
   const sendLandingMessage = useCallback(async (content: string) => {
     const trimmed = content.trim()
@@ -630,195 +455,9 @@ export default function LandingClient() {
     }, 320)
   }
 
-  function applyLandingCarouselWheelFrame() {
-    landingCarouselWheelRafRef.current = null
-
-    const spacing = landingCarouselSpacingPx
-    if (spacing <= 0) return
-
-    const lastIdx = LANDING_CAROUSEL_ITEMS.length - 1
-    let idx = landingCarouselIndexRef.current
-    let g = landingCarouselWheelAccumRef.current
-
-    // Commit index changes on full-spacing crossings (advance/retreat without visual jump)
-    while (g <= -spacing && idx < lastIdx) {
-      idx += 1
-      g += spacing
-    }
-    while (g >= spacing && idx > 0) {
-      idx -= 1
-      g -= spacing
-    }
-
-    // Hard stop at edges, no rubber-band, no over-scroll
-    if (idx === 0 && g > 0) g = 0
-    if (idx === lastIdx && g < 0) g = 0
-
-    landingCarouselWheelAccumRef.current = g
-    landingCarouselIndexRef.current = idx
-    setLandingCarouselDragging(true)
-    setLandingCarouselDragPx(g)
-    setLandingCarouselIndex(idx)
-  }
-
-  function handleLandingCarouselWheel(event: ReactWheelEvent<HTMLDivElement>) {
-    if (landingCarouselPointerRef.current?.axisLocked === "x") return
-
-    const rawDelta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY
-    if (Math.abs(rawDelta) < 0.4) return
-
-    const lastIdx = LANDING_CAROUSEL_ITEMS.length - 1
-    const curIdx = landingCarouselIndexRef.current
-    const accum = landingCarouselWheelAccumRef.current
-
-    // Hard stop: at first card, ignore wheel that would scroll further backward
-    // accum stays simulated-finger-delta: positive = visually drag right (= go backward)
-    // rawDelta > 0 means scroll right = advance = subtract from accum (accum decreases)
-    // If at start and accum >= 0 and rawDelta < 0 (scroll left, would go backward) → drop
-    if (curIdx === 0 && rawDelta < 0 && accum >= 0) return
-    if (curIdx === lastIdx && rawDelta > 0 && accum <= 0) return
-
-    landingCarouselWheelAccumRef.current = accum - rawDelta
-
-    if (landingCarouselWheelRafRef.current === null) {
-      landingCarouselWheelRafRef.current = window.requestAnimationFrame(applyLandingCarouselWheelFrame)
-    }
-
-    if (landingCarouselWheelTimerRef.current) window.clearTimeout(landingCarouselWheelTimerRef.current)
-    landingCarouselWheelTimerRef.current = window.setTimeout(() => {
-      landingCarouselWheelTimerRef.current = null
-      // Snap any leftover gesture to the nearest card
-      const spacing = landingCarouselSpacingPx
-      const leftover = landingCarouselWheelAccumRef.current
-      landingCarouselWheelAccumRef.current = 0
-      const snapShift = spacing > 0 ? -Math.round(leftover / spacing) : 0
-      setLandingCarouselDragging(false)
-      window.requestAnimationFrame(() => {
-        if (snapShift !== 0) {
-          const nextIdx = clampLandingCarouselIndex(landingCarouselIndexRef.current + snapShift)
-          landingCarouselIndexRef.current = nextIdx
-          setLandingCarouselIndex(nextIdx)
-        }
-        setLandingCarouselDragPx(0)
-      })
-    }, 110)
-  }
-
-  function handleLandingCarouselPointerDown(event: ReactPointerEvent<HTMLDivElement>) {
-    if (event.pointerType === "mouse" && event.button !== 0) return
-    // Cancel any in-flight wheel-driven drag so pointer takes over cleanly
-    if (landingCarouselWheelTimerRef.current) {
-      window.clearTimeout(landingCarouselWheelTimerRef.current)
-      landingCarouselWheelTimerRef.current = null
-      landingCarouselWheelAccumRef.current = 0
-      setLandingCarouselDragPx(0)
-      setLandingCarouselDragging(false)
-    }
-    landingCarouselPointerRef.current = {
-      x: event.clientX,
-      y: event.clientY,
-      t: window.performance.now(),
-      pointerId: event.pointerId,
-      axisLocked: null,
-    }
-  }
-
-  function handleLandingCarouselPointerMove(event: ReactPointerEvent<HTMLDivElement>) {
-    const start = landingCarouselPointerRef.current
-    if (!start) return
-
-    const deltaX = event.clientX - start.x
-    const deltaY = event.clientY - start.y
-
-    if (!start.axisLocked) {
-      if (Math.abs(deltaX) < 4 && Math.abs(deltaY) < 4) return
-      start.axisLocked = Math.abs(deltaX) > Math.abs(deltaY) ? "x" : "y"
-      if (start.axisLocked === "x") {
-        try {
-          event.currentTarget.setPointerCapture(start.pointerId)
-        } catch {}
-        setLandingCarouselDragging(true)
-      } else {
-        landingCarouselPointerRef.current = null
-        return
-      }
-    }
-
-    if (start.axisLocked !== "x") return
-
-    event.preventDefault()
-    const lastIdx = LANDING_CAROUSEL_ITEMS.length - 1
-    const atStart = landingCarouselIndex === 0
-    const atEnd = landingCarouselIndex === lastIdx
-    let effective = Math.max(-landingCarouselSpacingPx * 2.4, Math.min(landingCarouselSpacingPx * 2.4, deltaX))
-    // Hard stop at edges, no over-scroll past the first/last card
-    if (atStart && effective > 0) effective = 0
-    if (atEnd && effective < 0) effective = 0
-    setLandingCarouselDragPx(effective)
-  }
-
-  function endLandingCarouselDrag(event: ReactPointerEvent<HTMLDivElement> | null) {
-    const start = landingCarouselPointerRef.current
-    landingCarouselPointerRef.current = null
-
-    if (!start || start.axisLocked !== "x") {
-      setLandingCarouselDragging(false)
-      setLandingCarouselDragPx(0)
-      return
-    }
-
-    const dx = event ? event.clientX - start.x : 0
-    const dt = window.performance.now() - start.t
-    const velocity = dx / Math.max(dt, 1)
-
-    let shift = -Math.round(dx / landingCarouselSpacingPx)
-    if (shift === 0 && Math.abs(velocity) > 0.55 && Math.abs(dx) > 14) {
-      shift = velocity < 0 ? 1 : -1
-    }
-
-    if (shift !== 0) {
-      landingCarouselSuppressClickRef.current = true
-      window.setTimeout(() => {
-        landingCarouselSuppressClickRef.current = false
-      }, 280)
-    }
-
-    try {
-      event?.currentTarget.releasePointerCapture(start.pointerId)
-    } catch {}
-
-    // Step 1: re-enable transitions while drag offset is still applied (no value change → no animation)
-    setLandingCarouselDragging(false)
-
-    // Step 2: next frame, snap drag offset back + apply index shift so transitions animate to settled state
-    window.requestAnimationFrame(() => {
-      if (shift !== 0) {
-        setLandingCarouselIndex(idx => clampLandingCarouselIndex(idx + shift))
-      }
-      setLandingCarouselDragPx(0)
-    })
-  }
-
-  function handleLandingCarouselPointerUp(event: ReactPointerEvent<HTMLDivElement>) {
-    endLandingCarouselDrag(event)
-  }
-
-  function handleLandingCarouselPointerCancel() {
-    endLandingCarouselDrag(null)
-  }
 
   return (
     <main className={landingShellClass}>
-      <AnimatedGradientBackground
-        Breathing
-        startingGap={88}
-        animationSpeed={0.014}
-        breathingRange={3}
-        topOffset={0}
-        gradientColors={LANDING_GRADIENT_COLORS}
-        gradientStops={LANDING_GRADIENT_STOPS}
-        containerClassName="pointer-events-none z-0"
-      />
       <section className={landingStageClass} aria-label="BrawlLens search">
         <div className={landingBrandWrapClass}>
           <h1 className={landingTextLogoClass} data-text="BrawlLens">BrawlLens</h1>
@@ -898,184 +537,11 @@ export default function LandingClient() {
       </section>
 
       <nav
-        className={cx(landingCarouselShellClass, landingChatExpanded && "pointer-events-none opacity-0")}
+        className={cx(landingDestNavClass, landingChatExpanded && "pointer-events-none opacity-0")}
         aria-label="Explore BrawlLens pages"
         aria-hidden={landingChatExpanded}
       >
-        <div
-          ref={landingCarouselRailRef}
-          className={landingCarouselRailClass}
-          role="group"
-          aria-roledescription="carousel"
-          aria-label="Page destinations"
-          onWheel={landingChatExpanded ? undefined : handleLandingCarouselWheel}
-          onPointerDown={landingChatExpanded ? undefined : handleLandingCarouselPointerDown}
-          onPointerMove={landingChatExpanded ? undefined : handleLandingCarouselPointerMove}
-          onPointerUp={landingChatExpanded ? undefined : handleLandingCarouselPointerUp}
-          onPointerCancel={landingChatExpanded ? undefined : handleLandingCarouselPointerCancel}
-          style={{ cursor: landingChatExpanded ? "default" : landingCarouselDragging ? "grabbing" : "grab" }}
-        >
-          <Link
-            href={landingActiveItem.href}
-            className={landingCarouselCtaClass}
-            aria-label={`Open ${landingActiveItem.label}`}
-            draggable={false}
-            tabIndex={landingChatExpanded ? -1 : undefined}
-            style={{
-              opacity: landingCarouselDragging ? 0.35 : 1,
-              pointerEvents: landingChatExpanded ? "none" : "auto",
-              transform: `translate(-50%, calc(-100% - ${landingCarouselCardWidthPx * 0.4 + (landingCarouselDragging ? 8 : 14)}px))`,
-              transition: LANDING_CTA_TRANSITION,
-            }}
-            onClick={event => {
-              if (landingChatExpanded || landingCarouselSuppressClickRef.current) event.preventDefault()
-            }}
-          >
-            <span className={landingCarouselKbdClass} aria-hidden="true">↵</span>
-            <span className="relative inline-block overflow-hidden align-middle leading-[1.2]">
-              <span aria-hidden="true" className="invisible inline-block whitespace-nowrap">
-                Open {landingLabelSwap.current.label}
-              </span>
-              {landingLabelSwap.previous && (
-                <span
-                  key={`prev-${landingLabelSwap.swapId}`}
-                  aria-hidden="true"
-                  className="absolute inset-0 inline-flex items-center justify-start whitespace-nowrap"
-                  style={{
-                    animation: `landingCtaRollOut${landingLabelSwap.direction === 1 ? "Up" : "Down"} 520ms cubic-bezier(0.55,0,0.2,1) both`,
-                    willChange: "transform, opacity, filter",
-                  }}
-                >
-                  Open {landingLabelSwap.previous.label}
-                </span>
-              )}
-              <span
-                key={`curr-${landingLabelSwap.swapId}`}
-                className="absolute inset-0 inline-flex items-center justify-start whitespace-nowrap"
-                style={{
-                  animation: `landingCtaRollIn${landingLabelSwap.direction === 1 ? "Up" : "Down"} 520ms cubic-bezier(0.55,0,0.2,1) both`,
-                  willChange: "transform, opacity, filter",
-                }}
-              >
-                Open {landingLabelSwap.current.label}
-              </span>
-            </span>
-            <svg
-              aria-hidden="true"
-              viewBox="0 0 16 16"
-              className="h-[11px] w-[11px]"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M4 8h8" />
-              <path d="M9 4l4 4-4 4" />
-            </svg>
-          </Link>
-          {LANDING_CAROUSEL_ITEMS.map((item, index) => {
-            const discreteOffset = getLandingCarouselOffset(index, landingCarouselIndex)
-            const dragFrac = landingCarouselSpacingPx > 0 ? landingCarouselDragPx / landingCarouselSpacingPx : 0
-            const fracOffset = discreteOffset + dragFrac
-            const absFrac = Math.abs(fracOffset)
-            const sign = fracOffset === 0 ? 0 : fracOffset > 0 ? 1 : -1
-
-            const scale = absFrac >= 2 ? 0.6 : absFrac >= 1 ? 0.78 + (1 - absFrac) * 0.22 : 1 - absFrac * 0.22
-            const rotateMag = absFrac >= 2 ? 50 : absFrac >= 1 ? 34 + (absFrac - 1) * 16 : absFrac * 34
-            const rotateY = -sign * rotateMag
-            const txMultiplier = absFrac >= 2 ? 1.62 + (absFrac - 2) * 0.4 : absFrac >= 1 ? 1 + (absFrac - 1) * 0.62 : absFrac
-            const translateX = sign * txMultiplier * landingCarouselSpacingPx
-            const translateZ = absFrac >= 2 ? -200 : absFrac >= 1 ? -90 - (absFrac - 1) * 110 : -absFrac * 90
-            const opacity = absFrac >= 2.6 ? 0 : absFrac >= 2 ? 0.28 * (1 - (absFrac - 2) / 0.6) : absFrac >= 1 ? 0.66 - (absFrac - 1) * 0.38 : 1 - absFrac * 0.34
-            const blur = absFrac >= 1.6 ? Math.min(2.4, (absFrac - 1.6) * 3) : 0
-            const isActive = Math.abs(discreteOffset) === 0
-            const outOfRange = Math.abs(discreteOffset) > 2
-            const isHidden = outOfRange || absFrac >= 2.6
-            const finalOpacity = outOfRange ? 0 : opacity
-            const itemStyle: CSSProperties = {
-              opacity: finalOpacity,
-              pointerEvents: landingChatExpanded || isHidden ? "none" : "auto",
-              transform: `translate(-50%, -50%) translate3d(${translateX.toFixed(2)}px, 0px, ${translateZ.toFixed(1)}px) rotateY(${rotateY.toFixed(2)}deg) scale(${scale.toFixed(3)})`,
-              zIndex: 20 - Math.round(absFrac * 2),
-              filter: blur > 0 ? `blur(${blur.toFixed(2)}px)` : "none",
-              transition: landingCarouselDragging ? "none" : LANDING_CARD_SETTLE_TRANSITION,
-            }
-            const Preview = item.Preview
-
-            const cardBody = (
-              <>
-                <div className="flex items-center justify-center">
-                  <span className="text-[10px] font-[520] uppercase tracking-[0.18em] text-center text-white/45 [font-family:var(--font-ui)]">
-                    {item.caption}
-                  </span>
-                </div>
-                <div className="mt-[10px] flex flex-1 items-center">
-                  <Preview />
-                </div>
-                <div className="mt-[10px] flex items-center justify-between gap-2">
-                  <span className="text-[13px] font-[620] tracking-[-0.005em] text-white/92 [font-family:var(--font-ui)] max-[640px]:text-[12.5px]">
-                    {item.label}
-                  </span>
-                  <svg
-                    aria-hidden="true"
-                    viewBox="0 0 16 16"
-                    className={cx(
-                      "h-[12px] w-[12px] transition-[transform,opacity] duration-300",
-                      isActive ? "opacity-90" : "opacity-40 group-hover:opacity-70",
-                    )}
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.6"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M4 8h8" />
-                    <path d="M9 4l4 4-4 4" />
-                  </svg>
-                </div>
-              </>
-            )
-
-            if (isActive) {
-              return (
-                <Link
-                  key={item.id}
-                  href={item.href}
-                  className={landingCarouselCardBaseClass}
-                  style={itemStyle}
-                  draggable={false}
-                  tabIndex={landingChatExpanded ? -1 : undefined}
-                  aria-hidden={landingChatExpanded}
-                  aria-label={`Open ${item.label}`}
-                  onClick={event => {
-                    if (landingChatExpanded || landingCarouselSuppressClickRef.current) event.preventDefault()
-                  }}
-                >
-                  <div className="flex h-full flex-col">{cardBody}</div>
-                </Link>
-              )
-            }
-
-            return (
-              <button
-                key={item.id}
-                type="button"
-                className={landingCarouselCardBaseClass}
-                style={itemStyle}
-                tabIndex={landingChatExpanded || isHidden ? -1 : 0}
-                aria-hidden={landingChatExpanded || isHidden}
-                aria-label={`Show ${item.label}`}
-                onClick={() => {
-                  if (landingChatExpanded || landingCarouselSuppressClickRef.current) return
-                  setLandingCarouselIndex(index)
-                }}
-              >
-                <div className="flex h-full flex-col">{cardBody}</div>
-              </button>
-            )
-          })}
-        </div>
+        <LandingExploreMenu disabled={landingChatExpanded} />
       </nav>
 
       <ChatLimitDialog gate={landingLimitGate} onClose={() => setLandingLimitGate(null)} />
