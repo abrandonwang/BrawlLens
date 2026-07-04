@@ -51,7 +51,7 @@ const landingTypewordClass =
 const landingPromptFormWrapClass =
   "relative w-[min(740px,100%)] aspect-[5.65/1] max-[640px]:w-[min(100%,calc(100vw_-_24px))]"
 const landingPromptFormBaseClass =
-  "absolute left-0 right-0 top-0 z-[3] flex h-full min-h-0 flex-col items-stretch gap-0 overflow-hidden border border-[rgba(255,255,255,0.24)] p-0 [background:rgba(255,255,255,0.12)] [box-shadow:inset_0_1px_0_rgba(255,255,255,0.18),0_26px_70px_-44px_rgba(90,20,20,0.6)] [container-type:inline-size] [backdrop-filter:blur(20px)_saturate(1.1)] [-webkit-backdrop-filter:blur(20px)_saturate(1.1)] rounded-[18px] transition-[height,border-color,border-radius,box-shadow,transform] duration-[460ms] ease-[cubic-bezier(0.16,1,0.3,1)] focus-within:border-[rgba(255,255,255,0.42)] focus-within:[background:rgba(255,255,255,0.16)] focus-within:[box-shadow:inset_0_1px_0_rgba(255,255,255,0.22),0_30px_80px_-48px_rgba(90,20,20,0.7)] max-[640px]:rounded-[16px]"
+  "absolute left-0 right-0 top-0 z-[3] flex h-full min-h-0 flex-col items-stretch gap-0 overflow-hidden border border-[rgba(218,232,255,0.16)] p-0 [background:rgba(30,36,49,0.72)] [box-shadow:inset_0_1px_0_rgba(255,255,255,0.06),0_26px_70px_-44px_rgba(0,0,0,0.7)] [container-type:inline-size] [backdrop-filter:blur(14px)_saturate(1.1)] [-webkit-backdrop-filter:blur(14px)_saturate(1.1)] rounded-[18px] transition-[height,border-color,border-radius,box-shadow,transform] duration-[460ms] ease-[cubic-bezier(0.16,1,0.3,1)] focus-within:border-[rgba(255,107,107,0.5)] focus-within:[background:rgba(38,44,58,0.85)] focus-within:[box-shadow:inset_0_1px_0_rgba(255,255,255,0.08),0_30px_80px_-48px_rgba(0,0,0,0.78)] max-[640px]:rounded-[16px]"
 // Expanded ~3x of the collapsed aspect-[5.65/1]. At 740px wide collapsed is ~131px, so ~390-410px is "triple".
 const landingPromptFormExpandedClass =
   "!h-[440px] rounded-[20px] max-[640px]:!h-[380px] max-[640px]:rounded-[18px]"
@@ -280,11 +280,12 @@ export default function LandingClient() {
     mainShell?.style.setProperty("height", "100dvh", "important")
     mainShell?.style.setProperty("min-height", "100dvh", "important")
     mainShell?.style.setProperty("overflow", "hidden", "important")
-    nav?.style.setProperty("background", "rgba(255,255,255,0.12)", "important")
-    nav?.style.setProperty("background-color", "rgba(255,255,255,0.12)", "important")
-    nav?.style.setProperty("border-color", "rgba(255,255,255,0.22)", "important")
-    nav?.style.setProperty("backdrop-filter", "blur(18px) saturate(1.1)", "important")
-    nav?.style.setProperty("-webkit-backdrop-filter", "blur(18px) saturate(1.1)", "important")
+    nav?.style.setProperty("background", "rgba(30,36,49,0.72)", "important")
+    nav?.style.setProperty("background-color", "rgba(30,36,49,0.72)", "important")
+    nav?.style.setProperty("border-color", "rgba(218,232,255,0.16)", "important")
+    nav?.style.setProperty("box-shadow", "inset 0 1px 0 rgba(255,255,255,0.06), 0 18px 46px -34px rgba(0,0,0,0.8)", "important")
+    nav?.style.setProperty("backdrop-filter", "blur(14px) saturate(1.1)", "important")
+    nav?.style.setProperty("-webkit-backdrop-filter", "blur(14px) saturate(1.1)", "important")
 
     return () => {
       html.classList.remove("landing-bg", "home-landing-bg")

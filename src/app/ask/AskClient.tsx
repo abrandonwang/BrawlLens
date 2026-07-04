@@ -67,14 +67,17 @@ const askMarkdownComponents: Components = {
   },
 }
 
+const ASK_HISTORY_KEY = "brawllens:ask-history:v1"
+
 export default function AskClient() {
   const searchParams = useSearchParams()
   const initialQuery = searchParams.get("q")?.trim() ?? ""
   const [messages, setMessages] = useState<AiMessage[]>([])
+  const [hydrated, setHydrated] = useState(false)
   const [input, setInput] = useState("")
   const [streaming, setStreaming] = useState(false)
   const [limitGate, setLimitGate] = useState<ChatLimitPayload | null>(null)
-  const sentInitialRef = useRef(false)
+  const lastSentQueryRef = useRef<string | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const abortRef = useRef<AbortController | null>(null)
@@ -140,11 +143,36 @@ export default function AskClient() {
     }
   }, [messages, streaming])
 
+  // Restore saved conversation on mount (client-only to avoid hydration mismatch).
   useEffect(() => {
-    if (!initialQuery || sentInitialRef.current) return
-    sentInitialRef.current = true
+    try {
+      const raw = window.localStorage.getItem(ASK_HISTORY_KEY)
+      if (raw) {
+        const parsed = JSON.parse(raw) as AiMessage[]
+        if (Array.isArray(parsed)) {
+          const valid = parsed.filter(m => m && (m.role === "user" || m.role === "assistant") && typeof m.content === "string")
+          if (valid.length) setMessages(valid)
+        }
+      }
+    } catch { /* ignore corrupt history */ }
+    setHydrated(true)
+  }, [])
+
+  // Persist the conversation (skip partial writes while a response streams).
+  useEffect(() => {
+    if (!hydrated || streaming) return
+    try {
+      window.localStorage.setItem(ASK_HISTORY_KEY, JSON.stringify(messages.slice(-40)))
+    } catch { /* ignore quota errors */ }
+  }, [messages, streaming, hydrated])
+
+  // Send the ?q= query once history has loaded. Keyed on the query itself (not a
+  // one-shot boolean) so a second search-bar question on the same route sends too.
+  useEffect(() => {
+    if (!hydrated || !initialQuery || lastSentQueryRef.current === initialQuery) return
+    lastSentQueryRef.current = initialQuery
     void sendMessage(initialQuery)
-  }, [initialQuery, sendMessage])
+  }, [hydrated, initialQuery, sendMessage])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" })
@@ -180,6 +208,14 @@ export default function AskClient() {
       el.style.height = "auto"
       el.style.height = `${Math.min(el.scrollHeight, 200)}px`
     })
+  }
+
+  function clearChat() {
+    abortRef.current?.abort()
+    setMessages([])
+    setInput("")
+    lastSentQueryRef.current = null
+    try { window.localStorage.removeItem(ASK_HISTORY_KEY) } catch { /* ignore */ }
   }
 
   const isEmpty = messages.length === 0
@@ -237,6 +273,13 @@ export default function AskClient() {
         </section>
       ) : (
         <section className="mx-auto flex w-full max-w-[760px] flex-1 flex-col px-4 pb-[112px] pt-5 max-[560px]:pt-3 max-[560px]:pb-[104px]">
+          <button
+            type="button"
+            onClick={clearChat}
+            className="fixed right-4 top-[92px] z-[3] inline-flex items-center gap-1.5 rounded-full border border-[rgba(245,244,241,0.12)] bg-[rgba(14,14,20,0.82)] px-3 py-1.5 text-[12.5px] font-[680] text-[rgba(245,244,241,0.72)] backdrop-blur-[10px] transition-colors duration-150 hover:border-[rgba(255,107,107,0.42)] hover:text-[#f5f4f1] max-[560px]:top-[84px]"
+          >
+            New chat
+          </button>
           <div className="flex flex-col gap-6" aria-live="polite">
             {messages.map((message, index) => {
               if (message.role === "user") {

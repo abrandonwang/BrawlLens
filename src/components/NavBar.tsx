@@ -72,7 +72,7 @@ const mobileMenuGroups: Array<{
 ] as const;
 
 const loginButtonClass =
-  "inline-flex h-[36px] cursor-pointer items-center gap-2 whitespace-nowrap rounded-[10px] border border-transparent bg-[#FF6B6B] px-3.5 text-[14px] font-semibold leading-none text-[#0d0d11] no-underline shadow-none outline-none transition-[transform,background-color,border-color,color,box-shadow] duration-150 [filter:none] [transform:none] hover:border-transparent hover:bg-[#FF6B6B] hover:text-[#0d0d11] hover:shadow-none hover:outline-none hover:[filter:none] hover:[transform:none] active:bg-[#FF6B6B] active:shadow-none active:[transform:none] focus-visible:border-transparent focus-visible:bg-[#FF6B6B] focus-visible:text-[#0d0d11] focus-visible:shadow-none focus-visible:outline-none focus-visible:[filter:none] focus-visible:[transform:none]";
+  "inline-flex h-[32px] cursor-pointer items-center gap-2 whitespace-nowrap rounded-[9px] border border-transparent bg-[#FF6B6B] px-3 text-[13px] font-semibold leading-none text-[#0d0d11] no-underline shadow-none outline-none transition-[transform,background-color,border-color,color,box-shadow] duration-150 [filter:none] [transform:none] hover:border-transparent hover:bg-[#FF6B6B] hover:text-[#0d0d11] hover:shadow-none hover:outline-none hover:[filter:none] hover:[transform:none] active:bg-[#FF6B6B] active:shadow-none active:[transform:none] focus-visible:border-transparent focus-visible:bg-[#FF6B6B] focus-visible:text-[#0d0d11] focus-visible:shadow-none focus-visible:outline-none focus-visible:[filter:none] focus-visible:[transform:none]";
 
 const authLayerClass =
   "fixed inset-0 z-[320] flex animate-[modalOverlayIn_180ms_ease_both] items-center justify-center px-[18px] py-6 max-[560px]:px-2.5 max-[560px]:py-5";
@@ -449,6 +449,20 @@ export default function NavBar() {
     return () => window.removeEventListener("brawllens:open-search", onOpenSearch);
   }, [closeMenu]);
 
+  // Force the whiteish frosted-glass nav inline on non-landing routes so it wins
+  // over any stale/cached `body > nav` !important rule. The landing sets its own
+  // (dark slate) surface via LandingClient.
+  useEffect(() => {
+    const nav = navWrapperRef.current;
+    if (!nav || pathname === "/") return;
+    nav.style.setProperty("background", "rgba(255,255,255,0.07)", "important");
+    nav.style.setProperty("border-color", "rgba(255,255,255,0.14)", "important");
+    return () => {
+      nav.style.removeProperty("background");
+      nav.style.removeProperty("border-color");
+    };
+  }, [pathname]);
+
   useEffect(() => {
     let active = true;
 
@@ -682,7 +696,7 @@ export default function NavBar() {
   const renderedDesktopPanel = visibleDesktopPanel ?? lastDesktopPanel;
   const desktopPanelOffset = renderedDesktopPanel === "leaderboards" ? 50 : 0;
   const navTextClass = (active: boolean, isOpenTrigger = false) =>
-    `relative inline-flex h-[36px] items-center rounded-full border-0 px-3 text-[13px] font-semibold leading-none tracking-normal no-underline outline-none text-[rgba(250,250,248,0.90)] hover:text-[#ffffff] hover:bg-[rgba(245,244,241,0.07)] focus-visible:text-[#ffffff] ${active ? "text-[#ffffff] bg-[rgba(255, 107, 107,0.16)]" : ""} ${isOpenTrigger && !active ? "text-[#ffffff] bg-[rgba(255, 107, 107,0.14)]" : ""}`;
+    `relative inline-flex h-[32px] items-center rounded-[9px] border-0 px-2.5 text-[13px] font-semibold leading-none tracking-normal no-underline outline-none text-[rgba(250,250,248,0.90)] hover:text-[#ffffff] hover:bg-[rgba(245,244,241,0.07)] focus-visible:text-[#ffffff] ${active ? "text-[#ffffff] bg-[rgba(255, 107, 107,0.16)]" : ""} ${isOpenTrigger && !active ? "text-[#ffffff] bg-[rgba(255, 107, 107,0.14)]" : ""}`;
 
   const navTextTransitionStyle = {
     transition: "color 220ms cubic-bezier(0.22, 1, 0.36, 1), background-color 260ms cubic-bezier(0.22, 1, 0.36, 1)",
@@ -775,17 +789,17 @@ export default function NavBar() {
       <nav
         ref={navWrapperRef}
         data-nav-hidden={isNavHidden ? "true" : undefined}
-        className="bl-nav-scroll-hide fixed left-1/2 top-4 z-[500] isolate w-[70vw] max-w-[1200px] -translate-x-1/2 overflow-visible rounded-[18px] border border-[rgba(218,232,255,0.16)] bg-[rgba(25,29,39,0.88)] text-[#f5f4f1] [box-shadow:inset_0_1px_0_rgba(255,255,255,0.075),inset_0_-1px_0_rgba(148,172,220,0.05),0_18px_46px_-34px_rgba(0,0,0,0.90)] backdrop-blur-md backdrop-saturate-125 [font-family:var(--font-ui)] max-lg:w-[calc(100%-20px)]"
+        className="bl-nav-scroll-hide fixed left-1/2 top-3 z-[500] isolate w-[70vw] max-w-[1200px] -translate-x-1/2 overflow-visible rounded-[13px] border border-[rgba(255,255,255,0.14)] bg-[rgba(255,255,255,0.07)] text-[#f5f4f1] [box-shadow:inset_0_1px_0_rgba(255,255,255,0.075),inset_0_-1px_0_rgba(148,172,220,0.05),0_18px_46px_-34px_rgba(0,0,0,0.90)] backdrop-blur-xl backdrop-saturate-150 [font-family:var(--font-ui)] max-lg:w-[calc(100%-20px)]"
         onMouseEnter={clearDesktopHoverTimer}
         onMouseLeave={scheduleDesktopClose}
       >
-        <span aria-hidden="true" className="pointer-events-none absolute inset-0 z-0 rounded-[inherit] bg-[linear-gradient(180deg,rgba(35,40,53,0.92),rgba(18,22,31,0.94))]" />
-        <div className="relative z-10 flex h-[60px] items-center px-5 max-lg:px-4">
+        <span aria-hidden="true" className="pointer-events-none absolute inset-0 z-0 rounded-[inherit] bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.02))]" />
+        <div className="relative z-10 flex h-[46px] items-center px-3 max-lg:px-2.5">
           <Link href="/" className="relative z-10 inline-flex h-full shrink-0 items-center whitespace-nowrap text-[#f5f4f1] no-underline" aria-label="BrawlLens home">
             <BrandMark size="sm" showWordmark={true} />
           </Link>
 
-        <div ref={desktopNavRef} className="relative z-10 ml-10 hidden h-full min-w-0 items-center gap-1 lg:flex">
+        <div ref={desktopNavRef} className="relative z-10 ml-5 hidden h-full min-w-0 items-center gap-0 lg:flex">
           <div
             ref={browseTriggerRef}
             className="group/nav-popover nav-popover relative"
@@ -842,18 +856,18 @@ export default function NavBar() {
           </Link>
         </div>
 
-        <div className="relative z-10 ml-auto hidden min-w-0 shrink-0 items-center justify-end gap-2 lg:flex">
+        <div className="relative z-10 ml-auto hidden min-w-0 shrink-0 items-center justify-end gap-1.5 lg:flex">
           <button
             type="button"
             onClick={() => openSearchOverlay()}
-            className="inline-flex h-[36px] items-center gap-2 rounded-[10px] border-0 bg-[rgba(245,244,241,0.07)] px-3.5 text-[rgba(250,250,248,0.90)] outline-none transition-colors hover:bg-[rgba(245,244,241,0.11)] hover:text-[#ffffff]"
+            className="inline-flex h-[32px] items-center gap-1.5 rounded-[9px] border border-[rgba(255,255,255,0.10)] bg-[rgba(255,255,255,0.06)] px-2.5 text-[rgba(250,250,248,0.90)] outline-none transition-colors hover:bg-[rgba(255,255,255,0.12)] hover:text-[#ffffff]"
             aria-label="Open search"
             title="Search (⌘K)"
           >
             <Search size={14} strokeWidth={2} aria-hidden="true" />
             <span className="text-[14px] font-medium leading-none tracking-[-0.01em]">⌘K</span>
           </button>
-          <span aria-hidden="true" className="h-5 w-px bg-[rgba(245,244,241,0.12)]" />
+          <span aria-hidden="true" className="mx-0.5 h-4 w-px bg-[rgba(255,255,255,0.14)]" />
           {isSignedIn ? (
             <Link
               href="/account"
@@ -878,14 +892,14 @@ export default function NavBar() {
           <button
             type="button"
             onClick={() => openSearchOverlay()}
-            className="relative ml-auto grid size-[34px] cursor-pointer place-items-center rounded-[8px] border-0 bg-[var(--bt-shell)] p-0 text-[var(--bt-text-2)] outline-none transition-colors duration-150 hover:bg-[var(--bt-panel)] hover:text-[var(--bt-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6B6B]/35 lg:hidden"
+            className="relative ml-auto grid size-[32px] cursor-pointer place-items-center rounded-[8px] border-0 bg-[var(--bt-shell)] p-0 text-[var(--bt-text-2)] outline-none transition-colors duration-150 hover:bg-[var(--bt-panel)] hover:text-[var(--bt-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6B6B]/35 lg:hidden"
             aria-label="Open search"
           >
             <Search size={16} strokeWidth={2} aria-hidden="true" />
           </button>
           <button
             type="button"
-            className="relative ml-1 grid size-[34px] cursor-pointer place-items-center overflow-hidden rounded-[8px] border-0 bg-[var(--bt-shell)] p-0 text-[var(--bt-text-2)] shadow-none outline-none transition-colors duration-150 hover:bg-[var(--bt-panel)] hover:text-[var(--bt-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6B6B]/35 lg:hidden"
+            className="relative ml-1 grid size-[32px] cursor-pointer place-items-center overflow-hidden rounded-[8px] border-0 bg-[var(--bt-shell)] p-0 text-[var(--bt-text-2)] shadow-none outline-none transition-colors duration-150 hover:bg-[var(--bt-panel)] hover:text-[var(--bt-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6B6B]/35 lg:hidden"
           onClick={toggleMenu}
           aria-label={isMenuOpen ? "Close navigation menu" : "Open navigation menu"}
           aria-expanded={isMenuOpen}

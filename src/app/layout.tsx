@@ -3,7 +3,6 @@ import "./globals.css";
 import NavBar from "../components/NavBar";
 import Footer from "../components/Footer";
 import TopLoader from "../components/TopLoader";
-import PageTransition from "../components/PageTransition";
 import PageNav from "../components/PageNav";
 import ScrollToTop from "../components/ScrollToTop";
 import SiteBackdrop from "../components/SiteBackdrop";
@@ -43,7 +42,6 @@ export default function RootLayout({
         <SiteBackdrop />
         <TopLoader />
         <ScrollToTop />
-        <PageTransition />
         <NavBar />
         <div className="app-main-shell flex-1 flex flex-col pt-[40px]">
           <PageNav />

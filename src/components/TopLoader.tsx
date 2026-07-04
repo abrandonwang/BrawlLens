@@ -91,7 +91,7 @@ export default function TopLoader() {
 
   return (
     <div
-      className={`pointer-events-none fixed top-0 left-0 z-[1000] h-[3px] w-full overflow-hidden bg-transparent transition-opacity duration-200 before:absolute before:top-0 before:bottom-0 before:left-[-35%] before:w-[35%] before:rounded-full before:bg-[linear-gradient(90deg,transparent,var(--ink),transparent)] before:animate-[route-progress_1.05s_cubic-bezier(0.65,0,0.35,1)_infinite] before:content-[''] ${visible ? "opacity-100" : "opacity-0"}`}
+      className={`pointer-events-none fixed top-0 left-0 z-[1000] h-[3px] w-full overflow-hidden bg-transparent transition-opacity duration-200 before:absolute before:top-0 before:bottom-0 before:left-[-35%] before:w-[35%] before:rounded-full before:bg-[linear-gradient(90deg,transparent,#FF6B6B,transparent)] before:animate-[route-progress_1.05s_cubic-bezier(0.65,0,0.35,1)_infinite] before:content-[''] ${visible ? "opacity-100" : "opacity-0"}`}
       aria-hidden="true"
     />
   )

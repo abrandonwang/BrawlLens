@@ -357,6 +357,7 @@ export default function SearchOverlay() {
   const [recentItems, setRecentItems] = useState<SearchItem[]>([])
   const inputRef = useRef<HTMLInputElement>(null)
   const closeTimerRef = useRef<number | null>(null)
+  const attemptedIconsRef = useRef<Set<string>>(new Set())
 
   /* AI state */
   const [mode, setMode] = useState<Mode>("search")
@@ -516,11 +517,17 @@ export default function SearchOverlay() {
 
   const primaryResult = useMemo(() => visibleSearchGroups.flatMap(g => g.items)[0] ?? null, [visibleSearchGroups])
 
-  /* Player icon loading */
+  /* Player icon loading — each tag is fetched at most once (attempts are
+     tracked in a ref) and we only update state when an icon actually
+     resolves, so an unresolved tag never retriggers this effect. */
   useEffect(() => {
     if (!open || mode !== "search") return
-    const tags = visibleSearchGroups.flatMap(g => g.items).map(i => i.playerTag).filter((t): t is string => Boolean(t && !playerIcons[t]))
+    const tags = visibleSearchGroups
+      .flatMap(g => g.items)
+      .map(i => i.playerTag)
+      .filter((t): t is string => Boolean(t && !playerIcons[t] && !attemptedIconsRef.current.has(t)))
     if (!tags.length) return
+    tags.forEach(t => attemptedIconsRef.current.add(t))
     let cancelled = false
     async function loadIcons() {
       const entries = await Promise.all(tags.map(async tag => {
@@ -532,7 +539,8 @@ export default function SearchOverlay() {
         } catch { return null }
       }))
       if (cancelled) return
-      setPlayerIcons(c => ({ ...c, ...Object.fromEntries(entries.filter((e): e is readonly [string, number] => Boolean(e))) }))
+      const found = entries.filter((e): e is readonly [string, number] => Boolean(e))
+      if (found.length) setPlayerIcons(c => ({ ...c, ...Object.fromEntries(found) }))
     }
     loadIcons()
     return () => { cancelled = true }

@@ -23,22 +23,16 @@ export default function SiteBackdrop() {
 
     html.classList.remove("landing-bg", "home-landing-bg")
 
-    const stripProps = [
-      "background",
-      "background-image",
-      "background-color",
-      "background-attachment",
-      "height",
-      "min-height",
-      "overflow",
-      "overflow-y",
-      "overscroll-behavior",
-    ] as const
-
-    stripProps.forEach(property => {
+    ;(["height", "min-height", "overflow", "overflow-y", "overscroll-behavior"] as const).forEach(property => {
       html.style.removeProperty(property)
       body.style.removeProperty(property)
     })
+
+    // Force a flat black page background inline so it wins over any stale/cached
+    // global gradient (Turbopack CSS caching) and lingering landing styles.
+    html.style.setProperty("background", "#0a0a0d", "important")
+    body.style.setProperty("background", "#0a0a0d", "important")
+    body.style.setProperty("background-attachment", "fixed", "important")
 
     if (mainShell) {
       ;(["height", "min-height", "overflow"] as const).forEach(property => {
