@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { ChevronDown, LogOut, Search, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -191,7 +191,6 @@ export default function NavBar() {
   const [desktopPanel, setDesktopPanel] = useState<DesktopPanel | null>(null);
   const [hoverDesktopPanel, setHoverDesktopPanel] = useState<DesktopPanel | null>(null);
   const [suppressedDesktopPanel, setSuppressedDesktopPanel] = useState<DesktopPanel | null>(null);
-  const [lastDesktopPanel, setLastDesktopPanel] = useState<DesktopPanel>("browse");
   const [isSignedIn, setIsSignedIn] = useState(false);
   const [accountName, setAccountName] = useState<string | null>(null);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
@@ -203,18 +202,13 @@ export default function NavBar() {
   const [loginError, setLoginError] = useState<string | null>(null);
   const [loginRedirectTo, setLoginRedirectTo] = useState<string | null>(null);
   const [accountTab, setAccountTab] = useState<AccountNavTab>("profile");
-  const [isNavHidden, setIsNavHidden] = useState(false);
+  const [isNavCompact, setIsNavCompact] = useState(false);
   const previousPathnameRef = useRef(pathname);
   const desktopNavRef = useRef<HTMLDivElement>(null);
   const navWrapperRef = useRef<HTMLElement>(null);
-  const browseTriggerRef = useRef<HTMLDivElement>(null);
-  const leaderboardsTriggerRef = useRef<HTMLDivElement>(null);
-  const navPanelTrackRef = useRef<HTMLDivElement>(null);
-  const prevVisiblePanelRef = useRef<DesktopPanel | null>(null);
   const menuCloseTimerRef = useRef<number | null>(null);
   const desktopHoverTimerRef = useRef<number | null>(null);
   const loginInputRef = useRef<HTMLInputElement>(null);
-  const [triggerOffsets, setTriggerOffsets] = useState<{ browse: number; leaderboards: number }>({ browse: 0, leaderboards: 0 });
   const bodyScrollLocked = isMenuOpen || menuClosing || isLoginOpen;
 
   const applyAccountUser = useCallback((user: PremiumUser | null) => {
@@ -273,32 +267,16 @@ export default function NavBar() {
     return lockBodyScroll();
   }, [bodyScrollLocked]);
 
-  // Hide-on-scroll: tuck the nav out of the way when scrolling down past a
-  // small threshold; reveal again on scroll-up or near the top.
+  // Scroll morph: full floating navbar at the very top, compact full-width
+  // black bar once the page is scrolled.
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (isMenuOpen || menuClosing || isLoginOpen) return;
 
-    let lastY = window.scrollY;
     let frame = 0;
-    const REVEAL_AT_TOP = 80;
-    const HIDE_DELTA = 8;
-    const SHOW_DELTA = 4;
 
     const update = () => {
       frame = 0;
-      const currentY = window.scrollY;
-      const delta = currentY - lastY;
-
-      if (currentY <= REVEAL_AT_TOP) {
-        setIsNavHidden(false);
-      } else if (delta > HIDE_DELTA) {
-        setIsNavHidden(true);
-      } else if (delta < -SHOW_DELTA) {
-        setIsNavHidden(false);
-      }
-
-      lastY = currentY;
+      setIsNavCompact(window.scrollY > 8);
     };
 
     const onScroll = () => {
@@ -306,17 +284,13 @@ export default function NavBar() {
       frame = window.requestAnimationFrame(update);
     };
 
+    update();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => {
       window.removeEventListener("scroll", onScroll);
       if (frame) window.cancelAnimationFrame(frame);
     };
-  }, [isMenuOpen, menuClosing, isLoginOpen]);
-
-  // Always reveal when any modal/menu opens so users can dismiss it.
-  useEffect(() => {
-    if (isMenuOpen || menuClosing || isLoginOpen) setIsNavHidden(false);
-  }, [isMenuOpen, menuClosing, isLoginOpen]);
+  }, []);
 
   useEffect(() => {
     document.documentElement.classList.toggle("bl-auth-open", isLoginOpen);
@@ -449,19 +423,27 @@ export default function NavBar() {
     return () => window.removeEventListener("brawllens:open-search", onOpenSearch);
   }, [closeMenu]);
 
-  // Force the whiteish frosted-glass nav inline on non-landing routes so it wins
-  // over any stale/cached `body > nav` !important rule. The landing sets its own
-  // (dark slate) surface via LandingClient.
+  // Force the nav surface inline so it wins over any stale/cached
+  // `body > nav` !important rule: pure black when compact, frosted glass otherwise.
   useEffect(() => {
     const nav = navWrapperRef.current;
-    if (!nav || pathname === "/") return;
-    nav.style.setProperty("background", "rgba(255,255,255,0.07)", "important");
-    nav.style.setProperty("border-color", "rgba(255,255,255,0.14)", "important");
+    if (!nav) return;
+    if (isNavCompact) {
+      nav.style.setProperty("background", "#000000", "important");
+      nav.style.setProperty("border-color", "transparent", "important");
+    } else if (pathname !== "/") {
+      nav.style.setProperty("background", "rgba(255,255,255,0.07)", "important");
+      nav.style.setProperty("border-color", "rgba(255,255,255,0.14)", "important");
+    } else {
+      nav.style.removeProperty("background");
+      nav.style.removeProperty("border-color");
+      return;
+    }
     return () => {
       nav.style.removeProperty("background");
       nav.style.removeProperty("border-color");
     };
-  }, [pathname]);
+  }, [pathname, isNavCompact]);
 
   useEffect(() => {
     let active = true;
@@ -528,27 +510,9 @@ export default function NavBar() {
     }, 180);
   }
 
-  const measureTriggers = useCallback(() => {
-    const navRect = navWrapperRef.current?.getBoundingClientRect();
-    const browseRect = browseTriggerRef.current?.getBoundingClientRect();
-    const lbRect = leaderboardsTriggerRef.current?.getBoundingClientRect();
-    if (!navRect || !browseRect || !lbRect) return;
-    setTriggerOffsets({
-      browse: browseRect.left - navRect.left,
-      leaderboards: lbRect.left - navRect.left,
-    });
-  }, []);
-
-  useEffect(() => {
-    measureTriggers();
-    window.addEventListener("resize", measureTriggers);
-    return () => window.removeEventListener("resize", measureTriggers);
-  }, [measureTriggers, pathname]);
-
   function openHoverDesktopPanel(panel: DesktopPanel) {
     if (suppressedDesktopPanel === panel) return;
     clearDesktopHoverTimer();
-    measureTriggers();
     setHoverDesktopPanel(panel);
   }
 
@@ -693,8 +657,6 @@ export default function NavBar() {
   const canSubmitLogin = loginEmailReady && loginPasswordValid && loginState !== "sending";
   const menuVisible = isMenuOpen || menuClosing;
   const visibleDesktopPanel = hoverDesktopPanel ?? desktopPanel;
-  const renderedDesktopPanel = visibleDesktopPanel ?? lastDesktopPanel;
-  const desktopPanelOffset = renderedDesktopPanel === "leaderboards" ? 50 : 0;
   const navTextClass = (active: boolean, isOpenTrigger = false) =>
     `relative inline-flex h-[32px] items-center rounded-[9px] border-0 px-2.5 text-[13px] font-semibold leading-none tracking-normal no-underline outline-none text-[rgba(250,250,248,0.90)] hover:text-[#ffffff] hover:bg-[rgba(245,244,241,0.07)] focus-visible:text-[#ffffff] ${active ? "text-[#ffffff] bg-[rgba(255, 107, 107,0.16)]" : ""} ${isOpenTrigger && !active ? "text-[#ffffff] bg-[rgba(255, 107, 107,0.14)]" : ""}`;
 
@@ -709,10 +671,9 @@ export default function NavBar() {
           <div
             key={item.label}
             aria-disabled="true"
-            className="rounded-[10px] px-2.5 py-2 opacity-60"
+            className="flex items-center rounded-[8px] px-2.5 py-[7px] text-[13px] font-[600] leading-none text-[rgba(245,244,241,0.38)]"
           >
-            <p className="m-0 text-[13.5px] font-semibold leading-tight text-[rgba(245,244,241,0.72)]">{item.label}</p>
-            <p className="mt-0.5 mb-0 text-[11.5px] leading-snug text-[rgba(245,244,241,0.56)]">{item.description}</p>
+            {item.label}
           </div>
         );
       }
@@ -726,11 +687,10 @@ export default function NavBar() {
             setDesktopPanel(null);
             setHoverDesktopPanel(null);
           }}
-          style={{ transition: "background-color 240ms cubic-bezier(0.22, 1, 0.36, 1), color 200ms cubic-bezier(0.22, 1, 0.36, 1)" }}
-          className={`group block rounded-[10px] px-2.5 py-[9px] text-inherit no-underline ${active ? "bg-[rgba(255, 107, 107,0.14)]" : "hover:bg-[rgba(245,244,241,0.05)]"}`}
+          style={{ transition: "background-color 200ms cubic-bezier(0.22, 1, 0.36, 1), color 180ms cubic-bezier(0.22, 1, 0.36, 1)" }}
+          className={`flex items-center rounded-[8px] px-2.5 py-[7px] text-[13px] font-[600] leading-none no-underline ${active ? "bg-[rgba(255,255,255,0.09)] text-[#ffffff]" : "text-[rgba(245,244,241,0.75)] hover:bg-[rgba(255,255,255,0.06)] hover:text-[#ffffff]"}`}
         >
-          <p className={`m-0 text-[13.5px] font-semibold leading-tight ${active ? "text-[#FF9494]" : "text-[#f5f4f1]"}`}>{item.label}</p>
-          <p className="mt-0.5 mb-0 text-[11.5px] leading-snug text-[rgba(245,244,241,0.56)]">{item.description}</p>
+          {item.label}
         </Link>
       );
     });
@@ -754,58 +714,47 @@ export default function NavBar() {
     };
   }, [isLeaderboardsRoute, isPlayerRoute, isTierlistRoute]);
 
-  useEffect(() => {
-    if (visibleDesktopPanel) setLastDesktopPanel(visibleDesktopPanel);
-  }, [visibleDesktopPanel]);
-
-  // Animate the inner content slide only when switching between panels.
-  // When opening from closed -> first panel, snap to position without animating
-  // so it doesn't look like "Browse content sliding in from the side".
-  useLayoutEffect(() => {
-    const prev = prevVisiblePanelRef.current;
-    const track = navPanelTrackRef.current;
-    if (track) {
-      if (prev === null && visibleDesktopPanel !== null) {
-        // First-open: jump to correct position with no slide animation.
-        track.style.transition = "none";
-        // Force a reflow so the no-transition state commits before we restore it.
-        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-        track.offsetHeight;
-        requestAnimationFrame(() => {
-          if (navPanelTrackRef.current) {
-            navPanelTrackRef.current.style.transition = "";
-          }
-        });
-      } else {
-        // Switching between panels (or closing): use default CSS transition.
-        track.style.transition = "";
-      }
-    }
-    prevVisiblePanelRef.current = visibleDesktopPanel;
-  }, [visibleDesktopPanel]);
+  function renderDesktopMenu(panel: DesktopPanel, items: NavPanelItem[]) {
+    const open = visibleDesktopPanel === panel;
+    return (
+      <div
+        className={`pointer-events-none absolute left-0 top-full z-20 ${isNavCompact ? "pt-2" : "pt-[13px]"} ${open ? "translate-y-0 opacity-100" : "-translate-y-1 opacity-0"}`}
+        style={{ transition: "opacity 200ms cubic-bezier(0.22, 1, 0.36, 1), transform 280ms cubic-bezier(0.22, 1, 0.36, 1), translate 280ms cubic-bezier(0.22, 1, 0.36, 1)" }}
+        aria-hidden={!open}
+      >
+        <div className={`bl-nav-panel w-[200px] overflow-hidden rounded-[10px] p-1.5 ${open ? "pointer-events-auto" : ""}`}>
+          <div className="grid gap-0.5">
+            {renderDesktopPanelItems(items)}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
       <nav
         ref={navWrapperRef}
-        data-nav-hidden={isNavHidden ? "true" : undefined}
-        className="bl-nav-scroll-hide fixed left-1/2 top-3 z-[500] isolate w-[70vw] max-w-[1200px] -translate-x-1/2 overflow-visible rounded-[13px] border border-[rgba(255,255,255,0.14)] bg-[rgba(255,255,255,0.07)] text-[#f5f4f1] [box-shadow:inset_0_1px_0_rgba(255,255,255,0.075),inset_0_-1px_0_rgba(148,172,220,0.05),0_18px_46px_-34px_rgba(0,0,0,0.90)] backdrop-blur-xl backdrop-saturate-150 [font-family:var(--font-ui)] max-lg:w-[calc(100%-20px)]"
+        data-nav-compact={isNavCompact ? "true" : undefined}
+        className={`bl-nav-morph fixed left-1/2 z-[500] isolate -translate-x-1/2 overflow-visible border text-[#f5f4f1] [font-family:var(--font-ui)] ${isNavCompact
+          ? "top-0 w-full max-w-none rounded-none border-transparent bg-[#000000]"
+          : "top-3 w-[70vw] max-w-[1200px] rounded-[13px] border-[rgba(255,255,255,0.14)] bg-[rgba(255,255,255,0.07)] [box-shadow:inset_0_1px_0_rgba(255,255,255,0.075),inset_0_-1px_0_rgba(148,172,220,0.05),0_18px_46px_-34px_rgba(0,0,0,0.90)] backdrop-blur-xl backdrop-saturate-150 max-lg:w-[calc(100%-20px)]"}`}
         onMouseEnter={clearDesktopHoverTimer}
         onMouseLeave={scheduleDesktopClose}
       >
-        <span aria-hidden="true" className="pointer-events-none absolute inset-0 z-0 rounded-[inherit] bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.02))]" />
-        <div className="relative z-10 flex h-[46px] items-center px-3 max-lg:px-2.5">
+        <span aria-hidden="true" className={`pointer-events-none absolute inset-0 z-0 rounded-[inherit] bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.02))] transition-opacity duration-200 ${isNavCompact ? "opacity-0" : "opacity-100"}`} />
+        <div className={`relative z-10 flex items-center px-3 transition-[height] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] max-lg:px-2.5 ${isNavCompact ? "mx-auto h-[36px] w-full max-w-[1200px]" : "h-[46px]"}`}>
           <Link href="/" className="relative z-10 inline-flex h-full shrink-0 items-center whitespace-nowrap text-[#f5f4f1] no-underline" aria-label="BrawlLens home">
             <BrandMark size="sm" showWordmark={true} />
           </Link>
 
         <div ref={desktopNavRef} className="relative z-10 ml-5 hidden h-full min-w-0 items-center gap-0 lg:flex">
           <div
-            ref={browseTriggerRef}
             className="group/nav-popover nav-popover relative"
             data-open={visibleDesktopPanel === "browse" ? "true" : undefined}
             onPointerEnter={() => openHoverDesktopPanel("browse")}
             onMouseEnter={() => openHoverDesktopPanel("browse")}
+            onMouseLeave={scheduleDesktopClose}
           >
             <Link
               href="/brawlers"
@@ -822,13 +771,14 @@ export default function NavBar() {
                 style={{ transition: "transform 320ms cubic-bezier(0.22, 1, 0.36, 1), rotate 320ms cubic-bezier(0.22, 1, 0.36, 1), color 220ms cubic-bezier(0.22, 1, 0.36, 1)" }}
               />
             </Link>
+            {renderDesktopMenu("browse", browseItems)}
           </div>
           <div
-            ref={leaderboardsTriggerRef}
             className="group/nav-popover nav-popover relative"
             data-open={visibleDesktopPanel === "leaderboards" ? "true" : undefined}
             onPointerEnter={() => openHoverDesktopPanel("leaderboards")}
             onMouseEnter={() => openHoverDesktopPanel("leaderboards")}
+            onMouseLeave={scheduleDesktopClose}
           >
             <Link
               href="/leaderboards/players"
@@ -845,6 +795,7 @@ export default function NavBar() {
                 style={{ transition: "transform 320ms cubic-bezier(0.22, 1, 0.36, 1), rotate 320ms cubic-bezier(0.22, 1, 0.36, 1), color 220ms cubic-bezier(0.22, 1, 0.36, 1)" }}
               />
             </Link>
+            {renderDesktopMenu("leaderboards", leaderboardItems)}
           </div>
           <Link
             href="/ask"
@@ -910,42 +861,6 @@ export default function NavBar() {
             <span className={`absolute left-0 block h-0.5 w-[18px] origin-center rounded-full bg-current transition-[top,opacity,transform] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] ${isMenuOpen ? "top-[6px] -rotate-45" : "top-[12px]"}`} />
           </span>
         </button>
-        </div>
-        <div
-          className={`pointer-events-none absolute left-0 top-full z-10 hidden pt-1.5 lg:block ${visibleDesktopPanel ? "translate-y-0 opacity-100" : "-translate-y-1.5 opacity-0"}`}
-          style={{
-            paddingLeft: `${Math.max(8, triggerOffsets.browse)}px`,
-            transition: "opacity 220ms cubic-bezier(0.22, 1, 0.36, 1), transform 320ms cubic-bezier(0.22, 1, 0.36, 1), translate 320ms cubic-bezier(0.22, 1, 0.36, 1)",
-          }}
-          aria-hidden={!visibleDesktopPanel}
-          onMouseEnter={() => {
-            clearDesktopHoverTimer();
-            openHoverDesktopPanel(renderedDesktopPanel);
-          }}
-          onMouseLeave={scheduleDesktopClose}
-        >
-          <div
-            className={`w-[296px] overflow-hidden rounded-[14px] border border-[rgba(245,244,241,0.10)] bg-[rgba(17,19,26,0.98)] [box-shadow:inset_0_1px_0_rgba(255,255,255,0.045),0_18px_44px_-26px_rgba(0,0,0,0.85)] ${visibleDesktopPanel ? "pointer-events-auto" : ""}`}
-          >
-            <div className="overflow-hidden p-1">
-              <div
-                ref={navPanelTrackRef}
-                className="nav-panel-track"
-                style={{ transform: `translateX(-${desktopPanelOffset}%)` }}
-              >
-                <div className="nav-panel-page">
-                  <div className="grid gap-px">
-                    {renderDesktopPanelItems(browseItems)}
-                  </div>
-                </div>
-                <div className="nav-panel-page">
-                  <div className="grid gap-px">
-                    {renderDesktopPanelItems(leaderboardItems)}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </nav>
 

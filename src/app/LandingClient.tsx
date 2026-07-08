@@ -41,7 +41,7 @@ const landingStageClass =
   "relative z-[1] mx-auto grid min-h-[calc(100dvh-160px)] w-[min(1000px,calc(100vw_-_40px))] shrink-0 content-center justify-items-center pb-[clamp(46px,8vh,96px)] pt-[clamp(56px,10vh,120px)] [margin-top:clamp(-170px,-14vh,-112px)] max-[640px]:min-h-[calc(100dvh-132px)] max-[640px]:w-[min(calc(100%_-_24px),680px)] max-[640px]:pb-12 max-[640px]:pt-[54px] max-[640px]:[margin-top:-68px] max-[900px]:w-[min(calc(100%_-_24px),680px)]"
 const landingBrandWrapClass = "flex w-full justify-center"
 const landingTextLogoClass =
-  "relative m-0 block bg-[linear-gradient(180deg,#ffffff_0%,#fff4ef_100%)] bg-clip-text text-center font-[900] leading-[0.98] tracking-normal text-white [filter:drop-shadow(0_10px_26px_rgba(120,30,30,0.4))] [font-family:var(--font-ui)] [-webkit-background-clip:text] [-webkit-text-fill-color:transparent] [-webkit-text-stroke:0] text-[clamp(42px,4.8vw,78px)] max-[640px]:text-[clamp(38px,11.5vw,56px)]"
+  "relative m-0 block bg-[linear-gradient(180deg,#ffffff_0%,#fff4ef_100%)] bg-clip-text text-center font-[900] leading-[0.98] tracking-normal text-white [filter:drop-shadow(0_10px_26px_rgba(0,0,0,0.45))] [font-family:var(--font-ui)] [-webkit-background-clip:text] [-webkit-text-fill-color:transparent] [-webkit-text-stroke:0] text-[clamp(42px,4.8vw,78px)] max-[640px]:text-[clamp(38px,11.5vw,56px)]"
 const landingTrackClass =
   "mt-[clamp(10px,1.5vh,18px)] grid w-[min(760px,100%)] justify-items-center gap-[clamp(10px,1.35vh,14px)] max-[640px]:w-[min(100%,calc(100vw_-_24px))]"
 const landingLineClass =
@@ -51,7 +51,7 @@ const landingTypewordClass =
 const landingPromptFormWrapClass =
   "relative w-[min(740px,100%)] aspect-[5.65/1] max-[640px]:w-[min(100%,calc(100vw_-_24px))]"
 const landingPromptFormBaseClass =
-  "absolute left-0 right-0 top-0 z-[3] flex h-full min-h-0 flex-col items-stretch gap-0 overflow-hidden border border-[rgba(218,232,255,0.16)] p-0 [background:rgba(30,36,49,0.72)] [box-shadow:inset_0_1px_0_rgba(255,255,255,0.06),0_26px_70px_-44px_rgba(0,0,0,0.7)] [container-type:inline-size] [backdrop-filter:blur(14px)_saturate(1.1)] [-webkit-backdrop-filter:blur(14px)_saturate(1.1)] rounded-[18px] transition-[height,border-color,border-radius,box-shadow,transform] duration-[460ms] ease-[cubic-bezier(0.16,1,0.3,1)] focus-within:border-[rgba(255,107,107,0.5)] focus-within:[background:rgba(38,44,58,0.85)] focus-within:[box-shadow:inset_0_1px_0_rgba(255,255,255,0.08),0_30px_80px_-48px_rgba(0,0,0,0.78)] max-[640px]:rounded-[16px]"
+  "absolute left-0 right-0 top-0 z-[3] flex h-full min-h-0 flex-col items-stretch gap-0 overflow-hidden border border-[rgba(255,255,255,0.14)] p-0 [background:linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.02)),rgba(17,19,26,0.62)] [box-shadow:inset_0_1px_0_rgba(255,255,255,0.075),0_26px_70px_-44px_rgba(0,0,0,0.7)] [container-type:inline-size] [backdrop-filter:blur(20px)_saturate(1.4)] [-webkit-backdrop-filter:blur(20px)_saturate(1.4)] rounded-[18px] transition-[height,border-color,border-radius,box-shadow,transform] duration-[460ms] ease-[cubic-bezier(0.16,1,0.3,1)] focus-within:border-[rgba(255,107,107,0.5)] focus-within:[background:linear-gradient(180deg,rgba(255,255,255,0.10),rgba(255,255,255,0.03)),rgba(22,24,32,0.78)] focus-within:[box-shadow:inset_0_1px_0_rgba(255,255,255,0.08),0_30px_80px_-48px_rgba(0,0,0,0.78)] max-[640px]:rounded-[16px]"
 // Expanded ~3x of the collapsed aspect-[5.65/1]. At 740px wide collapsed is ~131px, so ~390-410px is "triple".
 const landingPromptFormExpandedClass =
   "!h-[440px] rounded-[20px] max-[640px]:!h-[380px] max-[640px]:rounded-[18px]"
@@ -61,7 +61,7 @@ const landingPromptInputbarBaseClass =
   "absolute inset-[14px_14px_12px_18px] z-[2] grid shrink-0 grid-cols-[minmax(0,1fr)_36px] items-end gap-2.5 max-[640px]:inset-[12px_10px_10px_14px] max-[640px]:grid-cols-[minmax(0,1fr)_32px] max-[640px]:gap-2"
 // Expanded: inputbar becomes a real nested pill at the bottom of the column.
 const landingPromptInputbarExpandedClass =
-  "!static !inset-auto !translate-y-0 !gap-2 grid grid-cols-[minmax(0,1fr)_36px] items-center rounded-[14px] border border-[rgba(218,232,255,0.14)] bg-[rgba(236,244,255,0.055)] p-[8px_10px_8px_14px] [box-shadow:inset_0_1px_0_rgba(255,255,255,0.055),0_2px_10px_-8px_rgba(0,0,0,0.72)] transition-[border-color,box-shadow,background] duration-200 ease-out focus-within:border-[rgba(230,238,255,0.26)] focus-within:bg-[rgba(236,244,255,0.075)] focus-within:[box-shadow:inset_0_1px_0_rgba(255,255,255,0.08),0_3px_12px_-9px_rgba(0,0,0,0.82)] m-[0_14px_14px_14px] max-[640px]:grid-cols-[minmax(0,1fr)_32px] max-[640px]:p-[7px_8px_7px_12px]"
+  "!static !inset-auto !translate-y-0 !gap-2 grid grid-cols-[minmax(0,1fr)_36px] items-center rounded-[14px] border border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.055)] p-[8px_10px_8px_14px] [box-shadow:inset_0_1px_0_rgba(255,255,255,0.055),0_2px_10px_-8px_rgba(0,0,0,0.72)] transition-[border-color,box-shadow,background] duration-200 ease-out focus-within:border-[rgba(255,255,255,0.24)] focus-within:bg-[rgba(255,255,255,0.075)] focus-within:[box-shadow:inset_0_1px_0_rgba(255,255,255,0.08),0_3px_12px_-9px_rgba(0,0,0,0.82)] m-[0_14px_14px_14px] max-[640px]:grid-cols-[minmax(0,1fr)_32px] max-[640px]:p-[7px_8px_7px_12px]"
 const landingTextareaBaseClass =
   "relative z-[2] block h-full min-h-0 max-h-none w-full resize-none self-stretch border-0 bg-transparent p-[0_8px_0_0] text-[15px] font-[520] leading-[1.4] tracking-normal text-white outline-0 placeholder:text-[rgba(255,255,255,0.66)] placeholder:opacity-100 focus:border-0 focus:bg-transparent focus:outline-0 [font-family:var(--font-ui)] max-[640px]:text-[14px] max-[640px]:leading-[1.45]"
 // Inside the expanded nested pill the textarea should be one line, vertically centered.
@@ -85,9 +85,9 @@ const landingPulseClass =
 const landingDestNavClass =
   "absolute inset-x-0 bottom-[clamp(20px,4.4vh,48px)] z-[2] mx-auto flex w-[min(720px,calc(100vw-28px))] flex-wrap items-center justify-center gap-2.5 px-4 transition-opacity duration-300 max-[640px]:bottom-[clamp(16px,3.4vh,28px)] max-[640px]:gap-2"
 const landingDestTriggerClass =
-  "group inline-flex items-center gap-2 rounded-full border border-[rgba(218,232,255,0.16)] bg-[rgba(30,36,49,0.72)] px-5 py-2.5 text-[14px] font-[640] tracking-[-0.005em] text-[rgba(244,248,255,0.92)] no-underline outline-none [backdrop-filter:blur(10px)] [-webkit-backdrop-filter:blur(10px)] [box-shadow:inset_0_1px_0_rgba(255,255,255,0.06),0_10px_30px_-20px_rgba(0,0,0,0.85)] transition-[background,border-color,color] duration-200 [font-family:var(--font-ui)] hover:border-[rgba(255,107,107,0.5)] hover:bg-[rgba(38,44,58,0.88)] hover:text-white focus-visible:border-[rgba(255,107,107,0.6)] max-[640px]:px-4 max-[640px]:py-2 max-[640px]:text-[13.5px]"
+  "bl-glass bl-glass-interactive group inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-[14px] font-[640] tracking-[-0.005em] text-[rgba(244,248,255,0.92)] no-underline outline-none transition-[background,border-color,color] duration-200 [font-family:var(--font-ui)] hover:text-white max-[640px]:px-4 max-[640px]:py-2 max-[640px]:text-[13.5px]"
 const landingDestMenuClass =
-  "absolute bottom-full left-1/2 mb-2.5 w-[230px] -translate-x-1/2 origin-bottom rounded-[14px] border border-[rgba(245,244,241,0.10)] bg-[rgba(17,19,26,0.98)] p-1.5 [box-shadow:inset_0_1px_0_rgba(255,255,255,0.045),0_24px_60px_-30px_rgba(0,0,0,0.92)] [backdrop-filter:blur(12px)] [-webkit-backdrop-filter:blur(12px)]"
+  "bl-glass absolute bottom-full left-1/2 mb-2.5 w-[230px] -translate-x-1/2 origin-bottom rounded-[14px] p-1.5"
 const landingDestItemClass =
   "group/item flex items-center justify-between gap-3 rounded-[9px] px-3 py-2.5 text-[13.5px] font-[560] text-[rgba(245,244,241,0.82)] no-underline outline-none transition-colors duration-150 [font-family:var(--font-ui)] hover:bg-[rgba(255,107,107,0.14)] hover:text-white focus-visible:bg-[rgba(255,107,107,0.14)] focus-visible:text-white"
 
@@ -249,7 +249,6 @@ export default function LandingClient() {
     const html = document.documentElement
     const body = document.body
     const mainShell = document.querySelector<HTMLElement>(".app-main-shell")
-    const nav = document.querySelector<HTMLElement>("body > nav")
     const previousHtmlStyles = captureStyles(html, ["height", "min-height", "overflow", "overflow-y", "overscroll-behavior"])
     const previousBodyStyles = captureStyles(body, [
       "background",
@@ -262,7 +261,6 @@ export default function LandingClient() {
       "overscroll-behavior",
     ])
     const previousMainShellStyles = captureStyles(mainShell, ["height", "min-height", "overflow"])
-    const previousNavStyles = captureStyles(nav, ["background", "background-color", "border-color", "box-shadow", "backdrop-filter", "-webkit-backdrop-filter"])
 
     html.classList.add("landing-bg", "home-landing-bg")
     html.style.setProperty("height", "100dvh", "important")
@@ -270,7 +268,11 @@ export default function LandingClient() {
     html.style.setProperty("overflow", "hidden", "important")
     html.style.setProperty("overflow-y", "hidden", "important")
     html.style.setProperty("overscroll-behavior", "none", "important")
-    body.style.setProperty("background", "linear-gradient(315deg, #E2846F, #D3504E)", "important")
+    body.style.setProperty(
+      "background",
+      "url('/landing-triangles.svg') center / cover no-repeat #0a0a0d",
+      "important",
+    )
     body.style.setProperty("background-attachment", "fixed", "important")
     body.style.setProperty("height", "100dvh", "important")
     body.style.setProperty("min-height", "100dvh", "important")
@@ -280,19 +282,12 @@ export default function LandingClient() {
     mainShell?.style.setProperty("height", "100dvh", "important")
     mainShell?.style.setProperty("min-height", "100dvh", "important")
     mainShell?.style.setProperty("overflow", "hidden", "important")
-    nav?.style.setProperty("background", "rgba(30,36,49,0.72)", "important")
-    nav?.style.setProperty("background-color", "rgba(30,36,49,0.72)", "important")
-    nav?.style.setProperty("border-color", "rgba(218,232,255,0.16)", "important")
-    nav?.style.setProperty("box-shadow", "inset 0 1px 0 rgba(255,255,255,0.06), 0 18px 46px -34px rgba(0,0,0,0.8)", "important")
-    nav?.style.setProperty("backdrop-filter", "blur(14px) saturate(1.1)", "important")
-    nav?.style.setProperty("-webkit-backdrop-filter", "blur(14px) saturate(1.1)", "important")
 
     return () => {
       html.classList.remove("landing-bg", "home-landing-bg")
       restoreStyles(html, previousHtmlStyles)
       restoreStyles(body, previousBodyStyles)
       restoreStyles(mainShell, previousMainShellStyles)
-      restoreStyles(nav, previousNavStyles)
     }
   }, [])
 
