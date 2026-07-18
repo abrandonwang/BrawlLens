@@ -432,8 +432,8 @@ export default function NavBar() {
       nav.style.setProperty("background", "#000000", "important");
       nav.style.setProperty("border-color", "transparent", "important");
     } else if (pathname !== "/") {
-      nav.style.setProperty("background", "rgba(255,255,255,0.07)", "important");
-      nav.style.setProperty("border-color", "rgba(255,255,255,0.14)", "important");
+      nav.style.setProperty("background", "rgba(15,16,20,0.72)", "important");
+      nav.style.setProperty("border-color", "rgba(255,255,255,0.10)", "important");
     } else {
       nav.style.removeProperty("background");
       nav.style.removeProperty("border-color");
@@ -738,11 +738,10 @@ export default function NavBar() {
         data-nav-compact={isNavCompact ? "true" : undefined}
         className={`bl-nav-morph fixed left-1/2 z-[500] isolate -translate-x-1/2 overflow-visible border text-[#f5f4f1] [font-family:var(--font-ui)] ${isNavCompact
           ? "top-0 w-full max-w-none rounded-none border-transparent bg-[#000000]"
-          : "top-3 w-[70vw] max-w-[1200px] rounded-[13px] border-[rgba(255,255,255,0.14)] bg-[rgba(255,255,255,0.07)] [box-shadow:inset_0_1px_0_rgba(255,255,255,0.075),inset_0_-1px_0_rgba(148,172,220,0.05),0_18px_46px_-34px_rgba(0,0,0,0.90)] backdrop-blur-xl backdrop-saturate-150 max-lg:w-[calc(100%-20px)]"}`}
+          : "top-3 w-[70vw] max-w-[1200px] rounded-[13px] border-[rgba(255,255,255,0.10)] bg-[rgba(15,16,20,0.72)] [box-shadow:inset_0_1px_0_rgba(255,255,255,0.06),0_18px_46px_-34px_rgba(0,0,0,0.90)] backdrop-blur-xl backdrop-saturate-150 max-lg:w-[calc(100%-20px)]"}`}
         onMouseEnter={clearDesktopHoverTimer}
         onMouseLeave={scheduleDesktopClose}
       >
-        <span aria-hidden="true" className={`pointer-events-none absolute inset-0 z-0 rounded-[inherit] bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.02))] transition-opacity duration-200 ${isNavCompact ? "opacity-0" : "opacity-100"}`} />
         <div className={`relative z-10 flex items-center px-3 transition-[height] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] max-lg:px-2.5 ${isNavCompact ? "mx-auto h-[36px] w-full max-w-[1200px]" : "h-[46px]"}`}>
           <Link href="/" className="relative z-10 inline-flex h-full shrink-0 items-center whitespace-nowrap text-[#f5f4f1] no-underline" aria-label="BrawlLens home">
             <BrandMark size="sm" showWordmark={true} />

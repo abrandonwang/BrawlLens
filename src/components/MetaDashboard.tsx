@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, type CSSProperties, type ReactNode } from "react";
+import { useState, useEffect, useMemo, type ReactNode } from "react";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, MoreHorizontal, X } from "lucide-react";
 import { BrawlImage } from "@/components/BrawlImage";
@@ -41,16 +41,6 @@ function mapHref(name: string) {
   return `/meta/${encodeURIComponent(name)}`;
 }
 
-function mapInitials(name: string) {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map(part => part[0])
-    .join("")
-    .toUpperCase();
-}
-
 function getPaginationItems(currentPage: number, totalPages: number) {
   if (totalPages <= 7) {
     return Array.from({ length: totalPages }, (_, index) => index);
@@ -69,34 +59,17 @@ function getPaginationItems(currentPage: number, totalPages: number) {
   return items;
 }
 
-function MapPreview({ imageUrl, name, modeColor, modeIconUrl, priority = false }: { imageUrl?: string; name: string; mode: string | null; modeColor?: string; modeIconUrl?: string; priority?: boolean }) {
+function MapPreview({ imageUrl, name, priority = false }: { imageUrl?: string; name: string; mode: string | null; modeColor?: string; priority?: boolean }) {
   const [failed, setFailed] = useState(false);
-  const [iconFailed, setIconFailed] = useState(false);
   const [aspectRatio, setAspectRatio] = useState<string>("1 / 1");
-  const fallbackColor = modeColor || "var(--lb-accent, #FF6B6B)";
 
   if (!imageUrl || failed) {
     return (
       <div
-        className="map-preview-frame map-preview-fallback relative grid w-full place-items-center overflow-hidden p-[18px] text-center"
-        style={{ aspectRatio, "--map-accent": fallbackColor } as CSSProperties}
-      >
-        {modeIconUrl && !iconFailed ? (
-          <BrawlImage
-            src={modeIconUrl}
-            alt=""
-            width={64}
-            height={64}
-            sizes="64px"
-            className="relative z-[1] size-16 object-contain [filter:drop-shadow(0_8px_18px_rgba(0,0,0,0.5))]"
-            loading="lazy"
-            onError={() => setIconFailed(true)}
-          />
-        ) : (
-          <div className="map-preview-fallback-mark" aria-hidden="true">{mapInitials(name)}</div>
-        )}
-        <span className="map-preview-fallback-name">{name}</span>
-      </div>
+        aria-label={`No preview available for ${name}`}
+        className="map-preview-frame map-preview-fallback relative w-full overflow-hidden"
+        style={{ aspectRatio }}
+      />
     );
   }
 
@@ -126,7 +99,6 @@ function MapPreview({ imageUrl, name, modeColor, modeIconUrl, priority = false }
 
 export default function MetaDashboard({ modes, loading, selectedMode, mapSearch, onClearFilters, filterControls, searchControl }: Props) {
   const [mapImageLookup, setMapImageLookup] = useState<Map<string, string>>(new Map());
-  const [modeIconLookup, setModeIconLookup] = useState<Map<string, string>>(new Map());
   const [rotationByMap, setRotationByMap] = useState<Map<string, RotationEvent>>(new Map());
   const [mapPage, setMapPage] = useState(0);
   const [liveOnly, setLiveOnly] = useState(false);
@@ -150,18 +122,11 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch,
       setRotationByMap(activeMaps);
 
       const lookup = new Map<string, string>();
-      const iconLookup = new Map<string, string>();
       for (const map of mapsData.list || []) {
         lookup.set(map.name, map.imageUrl);
         lookup.set(normalizeMapName(map.name), map.imageUrl);
-        const modeIcon = map.gameMode?.imageUrl;
-        if (modeIcon) {
-          iconLookup.set(map.name, modeIcon);
-          iconLookup.set(normalizeMapName(map.name), modeIcon);
-        }
       }
       setMapImageLookup(lookup);
-      setModeIconLookup(iconLookup);
     });
   }, []);
 
@@ -286,7 +251,6 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch,
       <div className="mt-4 mb-5 grid grid-cols-[repeat(auto-fill,minmax(170px,1fr))] gap-2 max-[520px]:mt-3 max-[520px]:grid-cols-2 max-[520px]:gap-2">
         {paginatedMaps.map((map, index) => {
           const imageUrl = mapImageLookup.get(map.name) ?? mapImageLookup.get(normalizeMapName(map.name));
-          const modeIconUrl = modeIconLookup.get(map.name) ?? modeIconLookup.get(normalizeMapName(map.name));
           const rotationSlot = rotationByMap.get(map.name);
           const rotationLabel = formatRotationTimeRemaining(rotationSlot?.endTime, now);
           const isLive = Boolean(rotationSlot);
@@ -300,7 +264,7 @@ export default function MetaDashboard({ modes, loading, selectedMode, mapSearch,
               className="map-card group relative flex h-full w-full cursor-pointer flex-col overflow-hidden border border-[var(--line)] bg-[var(--panel)] p-0 text-left transition-[border-color,background] duration-150 hover:border-[var(--line-2)]"
             >
               <div className="relative z-[1] flex flex-1 flex-col justify-center overflow-hidden rounded-t-[5px] bg-[var(--panel-2)]">
-                <MapPreview imageUrl={imageUrl} name={map.name} mode={mode} modeColor={modeColor} modeIconUrl={modeIconUrl} priority={mapPage === 0 && index < 6} />
+                <MapPreview imageUrl={imageUrl} name={map.name} mode={mode} modeColor={modeColor} priority={mapPage === 0 && index < 6} />
                 {modeColor && (
                   <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, ${modeColor}, transparent)`, opacity: 0.6 }} />
                 )}

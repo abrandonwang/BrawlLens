@@ -180,7 +180,7 @@ async function executeTool(name: string, input: Record<string, string>): Promise
       .select("map, brawler_name, picks, wins, win_rate")
       .ilike("map", `%${input.map_name}%`)
       .order("picks", { ascending: false })
-      .limit(60)
+      .limit(40)
 
     if (error) return `Error fetching data: ${error.message}`
     if (!data?.length) return `No data found for map matching "${input.map_name}".`
@@ -198,7 +198,7 @@ async function executeTool(name: string, input: Record<string, string>): Promise
       .select("map, brawler_name, picks, wins, win_rate")
       .ilike("brawler_name", `%${input.brawler_name}%`)
       .order("picks", { ascending: false })
-      .limit(50)
+      .limit(30)
 
     if (error) return `Error fetching data: ${error.message}`
     if (!data?.length) return `No tracked brawler-performance rows found for "${input.brawler_name}".`
@@ -219,7 +219,19 @@ async function executeTool(name: string, input: Record<string, string>): Promise
     if (error) return `Error fetching data: ${error.message}`
     if (!data?.length) return "No map data available."
 
-    return data.map(r => `${r.map} (${r.mode}): ${r.battle_count} battles`).join("\n")
+    const top = data.slice(0, 10)
+      .map(r => `${r.map} (${r.mode}): ${r.battle_count} battles`)
+      .join("\n")
+    const byMode = new Map<string, string[]>()
+    for (const r of data) {
+      const maps = byMode.get(r.mode) ?? []
+      maps.push(r.map)
+      byMode.set(r.mode, maps)
+    }
+    const grouped = [...byMode.entries()]
+      .map(([mode, maps]) => `${mode}: ${maps.join(", ")}`)
+      .join("\n")
+    return `Top 10 maps by battles:\n${top}\n\nAll maps by mode (use get_map_brawler_stats for per-map data):\n${grouped}`
   }
 
   if (name === "get_leaderboard") {
@@ -313,7 +325,7 @@ ${top}`
 type AssistantBlock = { type: "text"; text: string } | { type: "tool_use"; id: string; name: string; input: Record<string, string> }
 
 function chatModelForUser(): string {
-  return process.env.ANTHROPIC_FREE_MODEL ?? "claude-sonnet-4-6"
+  return process.env.ANTHROPIC_FREE_MODEL ?? "claude-haiku-4-5"
 }
 
 function tomorrowUtcIso() {
@@ -497,12 +509,36 @@ function formatPageContext(value: unknown): string | null {
   return lines.join("\n").slice(0, 7600)
 }
 
+// Cache breakpoint on the last content block so the growing history is served
+// from cache on every tool-loop hop and follow-up turn.
+function withCacheBreakpoint(messages: Anthropic.MessageParam[]): Anthropic.MessageParam[] {
+  if (messages.length === 0) return messages
+  const last = messages[messages.length - 1]
+
+  if (typeof last.content === "string") {
+    return [
+      ...messages.slice(0, -1),
+      { ...last, content: [{ type: "text" as const, text: last.content, cache_control: { type: "ephemeral" as const } }] },
+    ]
+  }
+
+  const blocks = last.content
+  if (!Array.isArray(blocks) || blocks.length === 0) return messages
+  const lastBlock = blocks[blocks.length - 1]
+  if (lastBlock.type !== "text" && lastBlock.type !== "tool_result") return messages
+  const cachedBlock: Anthropic.ContentBlockParam = { ...lastBlock, cache_control: { type: "ephemeral" } }
+  return [
+    ...messages.slice(0, -1),
+    { ...last, content: [...blocks.slice(0, -1), cachedBlock] },
+  ]
+}
+
 async function runStream(
   messages: Anthropic.MessageParam[],
   controller: ReadableStreamDefaultController,
   encoder: TextEncoder,
   model: string,
-  systemPrompt: string,
+  systemBlocks: Anthropic.TextBlockParam[],
   depth = 0
 ): Promise<void> {
   if (depth > 5) return
@@ -510,9 +546,9 @@ async function runStream(
   const stream = client.messages.stream({
     model,
     max_tokens: 4096,
-    system: systemPrompt,
+    system: systemBlocks,
     tools,
-    messages,
+    messages: withCacheBreakpoint(messages),
   })
 
   const assistantContent: AssistantBlock[] = []
@@ -567,7 +603,7 @@ async function runStream(
       controller,
       encoder,
       model,
-      systemPrompt,
+      systemBlocks,
       depth + 1
     )
   }
@@ -599,13 +635,19 @@ export async function POST(request: Request) {
   const model = chatModelForUser()
   const encoder = new TextEncoder()
   const pageContext = formatPageContext(body.pageContext)
-  const systemPrompt = pageContext
-    ? `${SYSTEM_PROMPT}\n\nCurrent Page Context:\n${pageContext}`
-    : SYSTEM_PROMPT
+
+  // Stable prompt first with a cache breakpoint (caches tools + system across
+  // requests and tool-loop hops); volatile page context follows uncached.
+  const systemBlocks: Anthropic.TextBlockParam[] = [
+    { type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } },
+  ]
+  if (pageContext) {
+    systemBlocks.push({ type: "text", text: `Current Page Context:\n${pageContext}` })
+  }
 
   const readable = new ReadableStream({
     async start(controller) {
-      await runStream(messages, controller, encoder, model, systemPrompt)
+      await runStream(messages, controller, encoder, model, systemBlocks)
       controller.close()
     }
   })

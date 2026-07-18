@@ -3,6 +3,7 @@
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type ChangeEvent,
@@ -11,16 +12,26 @@ import {
 } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { ArrowUp, ChevronDown } from "lucide-react"
+import { ArrowRight, ArrowUp, ChevronDown } from "lucide-react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import type { Components } from "react-markdown"
 import ChatLimitDialog from "@/components/ChatLimitDialog"
 import { chatLimitFromResponse, type ChatLimitPayload } from "@/lib/aiLimits"
 import { authHeaders } from "@/lib/clientAuth"
+import { sanitizePlayerTag } from "@/lib/validation"
 
 const DATA_TOPICS = ["players", "brawlers", "maps", "clubs"]
+
 type LandingDestination = { id: string; label: string; href: string }
+
+type QuickFindMode = "tag" | "brawler" | "map"
+
+const QUICK_FIND_MODES: Array<{ id: QuickFindMode; label: string; placeholder: string }> = [
+  { id: "tag", label: "Tag", placeholder: "Enter a player tag, e.g. #2PP0V9L2R" },
+  { id: "brawler", label: "Brawler", placeholder: "Search a brawler..." },
+  { id: "map", label: "Map", placeholder: "Search a map..." },
+]
 
 const LANDING_DESTINATIONS: LandingDestination[] = [
   { id: "map-tier", label: "Map Tierlist", href: "/meta" },
@@ -51,7 +62,7 @@ const landingTypewordClass =
 const landingPromptFormWrapClass =
   "relative w-[min(740px,100%)] aspect-[5.65/1] max-[640px]:w-[min(100%,calc(100vw_-_24px))]"
 const landingPromptFormBaseClass =
-  "absolute left-0 right-0 top-0 z-[3] flex h-full min-h-0 flex-col items-stretch gap-0 overflow-hidden border border-[rgba(255,255,255,0.14)] p-0 [background:linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.02)),rgba(17,19,26,0.62)] [box-shadow:inset_0_1px_0_rgba(255,255,255,0.075),0_26px_70px_-44px_rgba(0,0,0,0.7)] [container-type:inline-size] [backdrop-filter:blur(20px)_saturate(1.4)] [-webkit-backdrop-filter:blur(20px)_saturate(1.4)] rounded-[18px] transition-[height,border-color,border-radius,box-shadow,transform] duration-[460ms] ease-[cubic-bezier(0.16,1,0.3,1)] focus-within:border-[rgba(255,107,107,0.5)] focus-within:[background:linear-gradient(180deg,rgba(255,255,255,0.10),rgba(255,255,255,0.03)),rgba(22,24,32,0.78)] focus-within:[box-shadow:inset_0_1px_0_rgba(255,255,255,0.08),0_30px_80px_-48px_rgba(0,0,0,0.78)] max-[640px]:rounded-[16px]"
+  "absolute left-0 right-0 top-0 z-[3] flex h-full min-h-0 flex-col items-stretch gap-0 overflow-hidden border border-[rgba(255,255,255,0.14)] p-0 [background:linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.02)),rgba(17,19,26,0.62)] [box-shadow:inset_0_1px_0_rgba(255,255,255,0.075),0_26px_70px_-44px_rgba(0,0,0,0.7)] [container-type:inline-size] [backdrop-filter:blur(20px)_saturate(1.4)] [-webkit-backdrop-filter:blur(20px)_saturate(1.4)] rounded-[18px] transition-[height,border-radius] duration-[460ms] ease-[cubic-bezier(0.16,1,0.3,1)] max-[640px]:rounded-[16px]"
 // Expanded ~3x of the collapsed aspect-[5.65/1]. At 740px wide collapsed is ~131px, so ~390-410px is "triple".
 const landingPromptFormExpandedClass =
   "!h-[440px] rounded-[20px] max-[640px]:!h-[380px] max-[640px]:rounded-[18px]"
@@ -61,12 +72,12 @@ const landingPromptInputbarBaseClass =
   "absolute inset-[14px_14px_12px_18px] z-[2] grid shrink-0 grid-cols-[minmax(0,1fr)_36px] items-end gap-2.5 max-[640px]:inset-[12px_10px_10px_14px] max-[640px]:grid-cols-[minmax(0,1fr)_32px] max-[640px]:gap-2"
 // Expanded: inputbar becomes a real nested pill at the bottom of the column.
 const landingPromptInputbarExpandedClass =
-  "!static !inset-auto !translate-y-0 !gap-2 grid grid-cols-[minmax(0,1fr)_36px] items-center rounded-[14px] border border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.055)] p-[8px_10px_8px_14px] [box-shadow:inset_0_1px_0_rgba(255,255,255,0.055),0_2px_10px_-8px_rgba(0,0,0,0.72)] transition-[border-color,box-shadow,background] duration-200 ease-out focus-within:border-[rgba(255,255,255,0.24)] focus-within:bg-[rgba(255,255,255,0.075)] focus-within:[box-shadow:inset_0_1px_0_rgba(255,255,255,0.08),0_3px_12px_-9px_rgba(0,0,0,0.82)] m-[0_14px_14px_14px] max-[640px]:grid-cols-[minmax(0,1fr)_32px] max-[640px]:p-[7px_8px_7px_12px]"
+  "!static !inset-auto !translate-y-0 !gap-2 grid grid-cols-[minmax(0,1fr)_36px] items-center rounded-[14px] border border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.055)] p-[8px_10px_8px_14px] [box-shadow:inset_0_1px_0_rgba(255,255,255,0.055),0_2px_10px_-8px_rgba(0,0,0,0.72)] m-[0_14px_14px_14px] max-[640px]:grid-cols-[minmax(0,1fr)_32px] max-[640px]:p-[7px_8px_7px_12px]"
 const landingTextareaBaseClass =
-  "relative z-[2] block h-full min-h-0 max-h-none w-full resize-none self-stretch border-0 bg-transparent p-[0_8px_0_0] text-[15px] font-[520] leading-[1.4] tracking-normal text-white outline-0 placeholder:text-[rgba(255,255,255,0.66)] placeholder:opacity-100 focus:border-0 focus:bg-transparent focus:outline-0 [font-family:var(--font-ui)] max-[640px]:text-[14px] max-[640px]:leading-[1.45]"
+  "relative z-[2] block h-full min-h-0 max-h-none w-full resize-none self-stretch border-0 bg-transparent p-[0_8px_0_0] text-[15px] font-[520] leading-[1.4] tracking-normal text-white caret-white outline-0 placeholder:text-[rgba(255,255,255,0.66)] placeholder:opacity-100 focus:border-0 focus:bg-transparent focus:outline-0 focus:placeholder:opacity-0 [font-family:var(--font-ui)] max-[640px]:text-[16px] max-[640px]:leading-[1.45]"
 // Inside the expanded nested pill the textarea should be one line, vertically centered.
 const landingTextareaExpandedClass =
-  "!h-[20px] !min-h-[20px] max-h-[80px] !self-center !text-[14px] !leading-[1.5]"
+  "!h-[20px] !min-h-[20px] max-h-[80px] !self-center !text-[14px] !leading-[1.5] max-[640px]:!text-[16px] max-[640px]:!h-[24px] max-[640px]:!min-h-[24px]"
 const landingSubmitBaseClass =
   "box-border grid size-[30px] min-h-[30px] min-w-[30px] cursor-pointer place-items-center self-end justify-self-end rounded-full border-0 bg-white p-0 text-[#0f172a] outline-none [box-shadow:inset_0_1px_0_rgba(255,255,255,0.55),0_8px_18px_-14px_rgba(0,0,0,0.72)] transition-[background,color,transform,box-shadow] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] hover:enabled:[box-shadow:inset_0_1px_0_rgba(255,255,255,0.65),0_10px_24px_-16px_rgba(0,0,0,0.8)] hover:enabled:scale-105 active:enabled:scale-95 disabled:cursor-default disabled:bg-white/[0.08] disabled:text-white/[0.32] disabled:[box-shadow:none] disabled:opacity-100 max-[640px]:size-[28px] max-[640px]:min-h-[28px] max-[640px]:min-w-[28px]"
 // Inside the expanded nested pill the submit sits vertically centered.
@@ -86,18 +97,161 @@ const landingDestNavClass =
   "absolute inset-x-0 bottom-[clamp(20px,4.4vh,48px)] z-[2] mx-auto flex w-[min(720px,calc(100vw-28px))] flex-wrap items-center justify-center gap-2.5 px-4 transition-opacity duration-300 max-[640px]:bottom-[clamp(16px,3.4vh,28px)] max-[640px]:gap-2"
 const landingDestTriggerClass =
   "bl-glass bl-glass-interactive group inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-[14px] font-[640] tracking-[-0.005em] text-[rgba(244,248,255,0.92)] no-underline outline-none transition-[background,border-color,color] duration-200 [font-family:var(--font-ui)] hover:text-white max-[640px]:px-4 max-[640px]:py-2 max-[640px]:text-[13.5px]"
-const landingDestMenuClass =
-  "bl-glass absolute bottom-full left-1/2 mb-2.5 w-[230px] -translate-x-1/2 origin-bottom rounded-[14px] p-1.5"
 const landingDestItemClass =
-  "group/item flex items-center justify-between gap-3 rounded-[9px] px-3 py-2.5 text-[13.5px] font-[560] text-[rgba(245,244,241,0.82)] no-underline outline-none transition-colors duration-150 [font-family:var(--font-ui)] hover:bg-[rgba(255,107,107,0.14)] hover:text-white focus-visible:bg-[rgba(255,107,107,0.14)] focus-visible:text-white"
+  "flex items-center rounded-[8px] px-2.5 py-[7px] text-[13px] font-[600] leading-none text-[rgba(245,244,241,0.75)] no-underline outline-none transition-colors duration-150 [font-family:var(--font-ui)] hover:bg-[rgba(255,255,255,0.06)] hover:text-white focus-visible:bg-[rgba(255,255,255,0.06)] focus-visible:text-white"
+
+function LandingQuickFind({ brawlers, maps, disabled }: { brawlers: string[]; maps: string[]; disabled?: boolean }) {
+  const [mode, setMode] = useState<QuickFindMode>("tag")
+  const [value, setValue] = useState("")
+  const [invalid, setInvalid] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const wrapRef = useRef<HTMLDivElement>(null)
+  const router = useRouter()
+
+  const activeMode = QUICK_FIND_MODES.find(m => m.id === mode) ?? QUICK_FIND_MODES[0]
+
+  const suggestions = useMemo(() => {
+    if (mode === "tag") return []
+    const query = value.trim().toLowerCase()
+    if (!query) return []
+    const source = mode === "brawler" ? brawlers : maps
+    return source.filter(name => name.toLowerCase().includes(query)).slice(0, 6)
+  }, [mode, value, brawlers, maps])
+
+  useEffect(() => {
+    if (!menuOpen) return
+    function onPointerDown(event: PointerEvent) {
+      if (!wrapRef.current?.contains(event.target as Node)) setMenuOpen(false)
+    }
+    window.addEventListener("pointerdown", onPointerDown)
+    return () => window.removeEventListener("pointerdown", onPointerDown)
+  }, [menuOpen])
+
+  function selectMode(next: QuickFindMode) {
+    setMode(next)
+    setValue("")
+    setInvalid(false)
+    setMenuOpen(false)
+  }
+
+  function go(target?: string) {
+    if (mode === "tag") {
+      const tag = sanitizePlayerTag(value)
+      if (!tag) {
+        setInvalid(true)
+        return
+      }
+      router.push(`/player/${tag}`)
+      return
+    }
+
+    const name = target ?? suggestions[0] ?? value.trim()
+    if (!name) return
+    setMenuOpen(false)
+    if (mode === "brawler") {
+      router.push(`/brawlers/${name.toLowerCase().replace(/\s+/g, "-")}`)
+    } else {
+      router.push(`/meta/${encodeURIComponent(name)}`)
+    }
+  }
+
+  return (
+    <div
+      ref={wrapRef}
+      className={cx("landing-quick", invalid && "is-invalid", disabled && "pointer-events-none opacity-0")}
+      aria-hidden={disabled}
+    >
+      <div className="landing-quick-modes" role="tablist" aria-label="Quick find type">
+        {QUICK_FIND_MODES.map(item => (
+          <button
+            key={item.id}
+            type="button"
+            role="tab"
+            aria-selected={mode === item.id}
+            className={cx("landing-quick-mode", mode === item.id && "is-active")}
+            tabIndex={disabled ? -1 : undefined}
+            onClick={() => selectMode(item.id)}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
+      <input
+        className="landing-quick-input"
+        value={value}
+        placeholder={activeMode.placeholder}
+        aria-label={activeMode.placeholder}
+        autoComplete="off"
+        spellCheck={false}
+        tabIndex={disabled ? -1 : undefined}
+        onChange={event => {
+          setValue(event.target.value)
+          setInvalid(false)
+          setMenuOpen(mode !== "tag" && event.target.value.trim().length > 0)
+        }}
+        onFocus={() => setMenuOpen(mode !== "tag" && value.trim().length > 0)}
+        onKeyDown={event => {
+          if (event.key === "Enter") {
+            event.preventDefault()
+            go()
+          }
+          if (event.key === "Escape") setMenuOpen(false)
+        }}
+      />
+      <button
+        type="button"
+        className="landing-quick-go"
+        aria-label="Open"
+        tabIndex={disabled ? -1 : undefined}
+        onClick={() => go()}
+      >
+        <ArrowRight size={15} strokeWidth={2.2} aria-hidden="true" />
+      </button>
+
+      {menuOpen && suggestions.length > 0 && (
+        <div className="landing-quick-menu">
+          <div className="bl-nav-panel overflow-hidden rounded-[10px] p-1.5">
+            <div className="grid gap-0.5">
+              {suggestions.map(name => (
+                <button
+                  key={name}
+                  type="button"
+                  className="flex cursor-pointer items-center rounded-[8px] border-0 bg-transparent px-2.5 py-[7px] text-left text-[13px] font-[600] leading-none text-[rgba(245,244,241,0.75)] transition-colors duration-150 [font-family:var(--font-ui)] hover:bg-[rgba(255,255,255,0.06)] hover:text-white"
+                  onClick={() => go(name)}
+                >
+                  {name}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
 
 function LandingExploreMenu({ disabled }: { disabled?: boolean }) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
+  const closeTimerRef = useRef<number | null>(null)
+
+  const cancelClose = () => {
+    if (closeTimerRef.current !== null) {
+      window.clearTimeout(closeTimerRef.current)
+      closeTimerRef.current = null
+    }
+  }
+
+  const scheduleClose = () => {
+    cancelClose()
+    closeTimerRef.current = window.setTimeout(() => setOpen(false), 160)
+  }
 
   useEffect(() => {
     if (disabled) setOpen(false)
   }, [disabled])
+
+  useEffect(() => cancelClose, [])
 
   useEffect(() => {
     if (!open) return
@@ -116,7 +270,18 @@ function LandingExploreMenu({ disabled }: { disabled?: boolean }) {
   }, [open])
 
   return (
-    <div ref={ref} className="relative">
+    <div
+      ref={ref}
+      className="relative"
+      onPointerEnter={event => {
+        if (event.pointerType !== "mouse" || disabled) return
+        cancelClose()
+        setOpen(true)
+      }}
+      onPointerLeave={event => {
+        if (event.pointerType === "mouse") scheduleClose()
+      }}
+    >
       <button
         type="button"
         className={landingDestTriggerClass}
@@ -135,34 +300,33 @@ function LandingExploreMenu({ disabled }: { disabled?: boolean }) {
         />
       </button>
 
-      {open && (
-        <div role="menu" className={cx(landingDestMenuClass, "animate-[authPanelIn_180ms_cubic-bezier(0.16,1,0.3,1)_both]")}>
-          {LANDING_DESTINATIONS.map(item => (
-            <Link
-              key={item.id}
-              href={item.href}
-              role="menuitem"
-              className={landingDestItemClass}
-              onClick={() => setOpen(false)}
-            >
-              <span>{item.label}</span>
-              <svg
-                aria-hidden="true"
-                viewBox="0 0 16 16"
-                className="h-[12px] w-[12px] shrink-0 opacity-40 transition-opacity duration-150 group-hover/item:opacity-90"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+      <div
+        className={cx("absolute bottom-full left-1/2 z-[5] -translate-x-1/2 pb-2.5", !open && "pointer-events-none")}
+        aria-hidden={!open}
+      >
+        <div
+          role="menu"
+          className={cx(
+            "bl-nav-panel w-[210px] rounded-[10px] p-1.5 transition-[opacity,transform] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]",
+            open ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0",
+          )}
+        >
+          <div className="grid gap-0.5">
+            {LANDING_DESTINATIONS.map(item => (
+              <Link
+                key={item.id}
+                href={item.href}
+                role="menuitem"
+                tabIndex={open ? undefined : -1}
+                className={landingDestItemClass}
+                onClick={() => setOpen(false)}
               >
-                <path d="M4 8h8" />
-                <path d="M9 4l4 4-4 4" />
-              </svg>
-            </Link>
-          ))}
+                {item.label}
+              </Link>
+            ))}
+          </div>
         </div>
-      )}
+      </div>
     </div>
   )
 }
@@ -216,6 +380,8 @@ export default function LandingClient() {
   const [landingChatExpanded, setLandingChatExpanded] = useState(false)
   const [landingChatStreaming, setLandingChatStreaming] = useState(false)
   const [landingLimitGate, setLandingLimitGate] = useState<ChatLimitPayload | null>(null)
+  const [landingBrawlerNames, setLandingBrawlerNames] = useState<string[]>([])
+  const [landingMapNames, setLandingMapNames] = useState<string[]>([])
   const landingChatAbortRef = useRef<AbortController | null>(null)
   const landingChatBottomRef = useRef<HTMLDivElement>(null)
   const landingPromptResetRef = useRef<number | null>(null)
@@ -270,7 +436,7 @@ export default function LandingClient() {
     html.style.setProperty("overscroll-behavior", "none", "important")
     body.style.setProperty(
       "background",
-      "url('/landing-triangles.svg') center / cover no-repeat #0a0a0d",
+      "radial-gradient(1000px 640px at 50% -12%, rgba(255,107,107,0.12), transparent 62%), #0a0a0d",
       "important",
     )
     body.style.setProperty("background-attachment", "fixed", "important")
@@ -296,6 +462,29 @@ export default function LandingClient() {
       landingChatAbortRef.current?.abort()
       if (landingPromptResetRef.current) window.clearTimeout(landingPromptResetRef.current)
     }
+  }, [])
+
+  useEffect(() => {
+    fetch("https://api.brawlapi.com/v1/brawlers")
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        const names = (data?.list ?? [])
+          .map((b: { name?: string }) => b.name)
+          .filter(Boolean) as string[]
+        setLandingBrawlerNames([...new Set(names)])
+      })
+      .catch(() => {})
+
+    fetch("https://api.brawlapi.com/v1/maps")
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        const names = (data?.list ?? [])
+          .filter((m: { disabled?: boolean }) => !m.disabled)
+          .map((m: { name?: string }) => m.name)
+          .filter(Boolean) as string[]
+        setLandingMapNames([...new Set(names)])
+      })
+      .catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -529,6 +718,11 @@ export default function LandingClient() {
             </div>
           </form>
           </div>
+          <LandingQuickFind
+            brawlers={landingBrawlerNames}
+            maps={landingMapNames}
+            disabled={landingChatExpanded}
+          />
         </div>
       </section>
 

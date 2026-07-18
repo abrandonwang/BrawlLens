@@ -209,8 +209,173 @@ html.landing-bg:not(.home-landing-bg) body {
 }
 
 html.home-landing-bg body {
-  background: url("/landing-triangles.svg") center / cover no-repeat #0a0a0d !important;
+  background:
+    radial-gradient(1000px 640px at 50% -12%, rgba(255, 107, 107, 0.12), transparent 62%),
+    #0a0a0d !important;
   background-attachment: fixed !important;
+}
+
+/* ───── Landing quick find ───── */
+.landing-quick {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: min(560px, 100%);
+  min-height: 46px;
+  padding: 5px 6px 5px 5px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 13px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)),
+    rgba(17, 19, 26, 0.62);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.075),
+    0 18px 46px -34px rgba(0, 0, 0, 0.9);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  backdrop-filter: blur(20px) saturate(1.4);
+  font-family: var(--font-ui);
+  transition: border-color 200ms ease, opacity 300ms ease;
+}
+
+.landing-quick.is-invalid {
+  border-color: rgba(255, 107, 107, 0.55);
+}
+
+.landing-quick-modes {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 9px;
+  background: rgba(8, 8, 12, 0.5);
+}
+
+.landing-quick-mode {
+  height: 28px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: rgba(245, 244, 241, 0.62);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 640;
+  line-height: 1;
+  cursor: pointer;
+  transition: color 150ms ease, background-color 150ms ease;
+}
+
+.landing-quick-mode:hover {
+  color: #f5f4f1;
+}
+
+.landing-quick-mode.is-active {
+  background: #f5f4f1;
+  color: #0d0d11;
+}
+
+.landing-quick-input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: #ffffff;
+  caret-color: #ffffff;
+  font-family: var(--font-ui);
+  font-size: 13.5px;
+  font-weight: 520;
+  outline: 0;
+}
+
+.landing-quick-input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.landing-quick-go {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border: 0;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.85);
+  cursor: pointer;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+.landing-quick-go:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+}
+
+.landing-quick-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 6;
+}
+
+/* Mobile: modes row on top, full-width input row below. Also keeps the bar's
+   intrinsic width small so it can't stretch the centered hero column. */
+@media (max-width: 640px) {
+  .landing-quick {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .landing-quick-modes {
+    display: flex;
+    width: 100%;
+  }
+
+  .landing-quick-mode {
+    flex: 1;
+    height: 34px;
+  }
+
+  .landing-quick-input {
+    flex: 1 1 0;
+    width: 0;
+    height: 38px;
+    font-size: 16px;
+  }
+
+  .landing-quick-go {
+    width: 38px;
+    height: 38px;
+  }
+
+}
+
+/* Short viewports (landscape phones, small laptops with the window tucked):
+   compress the hero stack so nothing clips against the locked viewport. */
+@media (max-height: 620px) {
+  .app-landing-shell > section {
+    min-height: 0 !important;
+    margin-top: 0 !important;
+    padding-top: 8px !important;
+    padding-bottom: 10px !important;
+  }
+
+  .app-landing-shell h1 {
+    font-size: clamp(30px, 7vh, 44px) !important;
+  }
+}
+
+@media (max-height: 560px) {
+  .app-landing-shell nav[aria-label="Explore BrawlLens pages"] {
+    display: none;
+  }
+}
+
+/* Cap the prompt form (incl. expanded chat) to the visible viewport. */
+.app-landing-shell form {
+  max-height: calc(100dvh - 132px);
 }
 
 * { box-sizing: border-box; }
@@ -359,10 +524,10 @@ body > .app-footer {
 
 /* Keep the navbar chrome consistent even when Tailwind drops arbitrary shadows. */
 body > nav {
-  border-color: rgba(255, 255, 255, 0.14) !important;
-  background: rgba(255, 255, 255, 0.07) !important;
+  border-color: rgba(255, 255, 255, 0.10) !important;
+  background: rgba(15, 16, 20, 0.72) !important;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
     0 18px 46px -34px rgba(0, 0, 0, 0.9) !important;
   -webkit-backdrop-filter: blur(20px) saturate(1.4) !important;
   backdrop-filter: blur(20px) saturate(1.4) !important;
@@ -410,7 +575,7 @@ body > nav[data-nav-compact="true"] {
 }
 
 /* ───── Nav dropdown panel ───── */
-body > nav .bl-nav-panel {
+.bl-nav-panel {
   border: 1px solid rgba(255, 255, 255, 0.10);
   background: #101014;
   box-shadow: 0 16px 40px -20px rgba(0, 0, 0, 0.8);
@@ -669,60 +834,19 @@ html.bl-auth-open body > .app-footer {
 }
 
 .map-preview-fallback {
-  isolation: isolate;
+  background: var(--panel);
 }
 
 .map-preview-fallback::after {
   content: "";
   position: absolute;
   inset: 0;
-  z-index: 0;
-  background:
-    linear-gradient(color-mix(in srgb, var(--map-accent) 10%, transparent) 1px, transparent 1px),
-    linear-gradient(90deg, color-mix(in srgb, var(--map-accent) 10%, transparent) 1px, transparent 1px),
-    radial-gradient(circle at 50% 28%, color-mix(in srgb, var(--map-accent) 24%, transparent), transparent 48%);
-  background-size: 28px 28px, 28px 28px, 100% 100%;
-  opacity: 0.72;
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(245, 244, 241, 0.055) 0 1px,
+    transparent 1px 9px
+  );
   pointer-events: none;
-}
-
-.map-preview-fallback-mark {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  width: 56px;
-  height: 56px;
-  place-items: center;
-  border: 1px solid color-mix(in srgb, var(--map-accent) 38%, rgba(245,244,241,0.12));
-  border-radius: 10px;
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0.18), transparent),
-    color-mix(in srgb, var(--map-accent) 18%, var(--panel));
-  box-shadow:
-    color-mix(in srgb, var(--map-accent) 20%, transparent) 0 0 16px -4px,
-    rgba(0,0,0,0.06) 0 4px 12px -6px;
-  color: color-mix(in srgb, var(--map-accent) 58%, white 32%);
-  font-family: var(--font-label);
-  font-size: 18px;
-  font-weight: 850;
-  letter-spacing: 0;
-}
-
-.map-preview-fallback-name {
-  position: absolute;
-  right: 12px;
-  bottom: 16px;
-  left: 12px;
-  z-index: 1;
-  overflow: hidden;
-  color: color-mix(in srgb, var(--ink) 70%, var(--map-accent) 30%);
-  font-family: var(--font-label);
-  font-size: 11px;
-  font-weight: 760;
-  letter-spacing: 0;
-  text-overflow: ellipsis;
-  text-shadow: rgba(0,0,0,0.14) 0 1px 8px;
-  white-space: nowrap;
 }
 
 .map-card-meta {
@@ -3691,6 +3815,13 @@ body:has(.bl-account-shell) > nav {
   .bl-md-performance-row > :nth-child(3) {
     justify-self: end;
     white-space: nowrap;
+  }
+
+  /* The row collapses to rank | brawler | win rate here, so the shared
+     LeaderboardPanel's 760px min-width is pure dead space that shoves the win
+     rate off-screen. Let the table fit the viewport instead of scrolling. */
+  .bl-md-table-panel .bl-lb-table-inner {
+    min-width: 0 !important;
   }
 }
 
