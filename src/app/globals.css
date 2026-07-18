@@ -12568,6 +12568,52 @@ html body .bl-tier-menu-row.is-active {
   }
 }
 
+/* ── Map detail toolbar: balanced mobile stack ──
+   The shared toolbar defaults to a 3-column grid (built for the maps index,
+   which has 3 controls). The map detail page only has 2 dropdowns, leaving a
+   dead 3rd column, and the search sat at a fixed 248px while its input is forced
+   to 16px by the global iOS anti-zoom rule — a jarring size/width mismatch.
+   Here the two dropdowns share the full row, the search spans it below, and the
+   heights/radii/type scale read as one intentional group. Scoped so the maps
+   index and other tier toolbars are untouched. */
+@media (max-width: 640px) {
+  html body .bl-md-table-panel .bl-tier-selector-group {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    width: 100% !important;
+    gap: 8px !important;
+  }
+
+  html body .bl-md-table-panel .bl-tier-search-anchor {
+    width: 100% !important;
+    height: 40px !important;
+  }
+
+  html body .bl-md-table-panel .bl-tier-selector-anchor {
+    width: 100% !important;
+    height: 40px !important;
+  }
+
+  html body .bl-md-table-panel .bl-tier-selector-anchor .bl-tier-selector-wrap,
+  html body .bl-md-table-panel .bl-tier-search-anchor .bl-tier-search {
+    min-width: 0 !important;
+    border-radius: 12px !important;
+  }
+
+  html body .bl-md-table-panel .bl-tier-selector-anchor .bl-tier-selector,
+  html body .bl-md-table-panel .bl-tier-search-anchor .bl-tier-search-bar {
+    height: 40px !important;
+    padding-inline: 13px !important;
+    font-size: 13px !important;
+  }
+
+  /* Match the search icon + placeholder to the pill hierarchy (input itself
+     stays 16px for iOS, but the icon and gap scale to feel deliberate). */
+  html body .bl-md-table-panel .bl-tier-search-anchor .bl-tier-search-bar {
+    gap: 9px !important;
+  }
+}
+
 html body .bl-meta-toolbar {
   margin-bottom: 18px !important;
 }
